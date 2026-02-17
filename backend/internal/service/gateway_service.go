@@ -1323,34 +1323,86 @@ func (s *GatewayService) SelectAccountWithLoadAwareness(ctx context.Context, gro
 
 	// ============ Layer 2: 负载感知选择 ============
 	candidates := make([]*Account, 0, len(accounts))
+	var l2Excluded, l2Unsched, l2Platform, l2ModelMapping, l2ModelScope, l2WindowCost int
+	var l2ModelScopeIDs []int64
+	var l2UnschedReasons []string // 记录不可调度的具体原因
+	// 记录因模型限流被跳过但其他条件满足的账号（用于兜底选择）
+	var modelRateLimitedCandidates []*Account
 	for i := range accounts {
 		acc := &accounts[i]
 		if isExcluded(acc.ID) {
+			l2Excluded++
 			continue
 		}
 		// Scheduler snapshots can be temporarily stale (bucket rebuild is throttled);
 		// re-check schedulability here so recently rate-limited/overloaded accounts
 		// are not selected again before the bucket is rebuilt.
 		if !acc.IsSchedulable() {
+			l2Unsched++
+			l2UnschedReasons = append(l2UnschedReasons, acc.unschedulableReason())
 			continue
 		}
 		if !s.isAccountAllowedForPlatform(acc, platform, useMixed) {
+			l2Platform++
 			continue
 		}
 		if requestedModel != "" && !s.isModelSupportedByAccountWithContext(ctx, acc, requestedModel) {
+			l2ModelMapping++
 			continue
 		}
 		if !acc.IsSchedulableForModelWithContext(ctx, requestedModel) {
+			l2ModelScope++
+			l2ModelScopeIDs = append(l2ModelScopeIDs, acc.ID)
+			modelRateLimitedCandidates = append(modelRateLimitedCandidates, acc)
 			continue
 		}
 		// 窗口费用检查（非粘性会话路径）
 		if !s.isAccountSchedulableForWindowCost(ctx, acc, false) {
+			l2WindowCost++
 			continue
 		}
 		candidates = append(candidates, acc)
 	}
 
 	if len(candidates) == 0 {
+		// 兜底：如果所有账号都因模型限流被跳过，选择剩余限流时间最短的账号
+		// 避免因短暂的模型限流（通常 < 30s）导致请求直接失败
+		if len(modelRateLimitedCandidates) > 0 {
+			best := modelRateLimitedCandidates[0]
+			bestRemaining := best.GetRateLimitRemainingTimeWithContext(ctx, requestedModel)
+			for _, acc := range modelRateLimitedCandidates[1:] {
+				remaining := acc.GetRateLimitRemainingTimeWithContext(ctx, requestedModel)
+				if remaining < bestRemaining {
+					best = acc
+					bestRemaining = remaining
+				}
+			}
+			slog.Info("model_rate_limit_fallback",
+				"group_id", derefGroupID(groupID),
+				"model", requestedModel,
+				"account_id", best.ID,
+				"remaining", bestRemaining.Round(time.Second),
+				"total_model_limited", len(modelRateLimitedCandidates),
+			)
+			candidates = append(candidates, best)
+		}
+	}
+
+	if len(candidates) == 0 {
+		slog.Warn("no_available_accounts_diagnostic",
+			"group_id", derefGroupID(groupID),
+			"model", requestedModel,
+			"platform", platform,
+			"total_accounts", len(accounts),
+			"excluded", l2Excluded,
+			"unschedulable", l2Unsched,
+			"unsched_reasons", l2UnschedReasons,
+			"platform_mismatch", l2Platform,
+			"model_mapping_miss", l2ModelMapping,
+			"model_rate_limited", l2ModelScope,
+			"model_rate_limited_ids", l2ModelScopeIDs,
+			"window_cost_exceeded", l2WindowCost,
+		)
 		return nil, errors.New("no available accounts")
 	}
 

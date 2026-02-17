@@ -3,6 +3,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -95,6 +96,30 @@ func (a *Account) IsSchedulable() bool {
 		return false
 	}
 	return true
+}
+
+// unschedulableReason 返回账号不可调度的具体原因（用于诊断日志）
+func (a *Account) unschedulableReason() string {
+	if !a.IsActive() {
+		return fmt.Sprintf("id=%d:inactive(status=%s)", a.ID, a.Status)
+	}
+	if !a.Schedulable {
+		return fmt.Sprintf("id=%d:schedulable=false", a.ID)
+	}
+	now := time.Now()
+	if a.AutoPauseOnExpired && a.ExpiresAt != nil && !now.Before(*a.ExpiresAt) {
+		return fmt.Sprintf("id=%d:expired(%s)", a.ID, a.ExpiresAt.Format(time.RFC3339))
+	}
+	if a.OverloadUntil != nil && now.Before(*a.OverloadUntil) {
+		return fmt.Sprintf("id=%d:overloaded(until=%s,remaining=%v)", a.ID, a.OverloadUntil.Format(time.RFC3339), time.Until(*a.OverloadUntil).Round(time.Second))
+	}
+	if a.RateLimitResetAt != nil && now.Before(*a.RateLimitResetAt) {
+		return fmt.Sprintf("id=%d:rate_limited(reset=%s,remaining=%v)", a.ID, a.RateLimitResetAt.Format(time.RFC3339), time.Until(*a.RateLimitResetAt).Round(time.Second))
+	}
+	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) {
+		return fmt.Sprintf("id=%d:temp_unsched(until=%s,remaining=%v,reason=%s)", a.ID, a.TempUnschedulableUntil.Format(time.RFC3339), time.Until(*a.TempUnschedulableUntil).Round(time.Second), a.TempUnschedulableReason)
+	}
+	return fmt.Sprintf("id=%d:unknown", a.ID)
 }
 
 func (a *Account) IsRateLimited() bool {
