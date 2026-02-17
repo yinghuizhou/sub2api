@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
   // 加载环境变量
   const env = loadEnv(mode, process.cwd(), '')
   const backendUrl = env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080'
-  const devPort = Number(env.VITE_DEV_PORT || 3000)
+  const devPort = Number(env.VITE_DEV_PORT || 5174)
 
   return {
     plugins: [
@@ -63,6 +63,7 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: '../backend/internal/web/dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         /**
@@ -81,8 +82,13 @@ export default defineConfig(({ mode }) => {
               return 'vendor-vue'
             }
 
-            // UI 工具库（较大，单独分离）
-            if (id.includes('/@vueuse/') || id.includes('/xlsx/')) {
+            // Excel 导出（仅 UsageView 使用，按需加载）
+            if (id.includes('/exceljs/')) {
+              return 'vendor-excel'
+            }
+
+            // UI 工具库
+            if (id.includes('/@vueuse/')) {
               return 'vendor-ui'
             }
 
@@ -109,6 +115,10 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: devPort,
+      hmr: {
+        // Dev container: use polling-based HMR to avoid WebSocket issues with port forwarding
+        clientPort: devPort
+      },
       proxy: {
         '/api': {
           target: backendUrl,

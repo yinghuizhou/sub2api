@@ -58,6 +58,7 @@ describe('ImportDataModal', () => {
 
     const input = wrapper.find('input[type="file"]')
     const file = new File(['invalid json'], 'data.json', { type: 'application/json' })
+    file.text = () => Promise.resolve('invalid json')
     Object.defineProperty(input.element, 'files', {
       value: [file]
     })

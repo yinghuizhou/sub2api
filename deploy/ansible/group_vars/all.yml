@@ -1,0 +1,54 @@
+# =============================================================================
+# Sub2API Ansible 变量配置
+# =============================================================================
+
+# 基础配置
+sub2api_domain: "api.example.com"
+sub2api_email: "admin@example.com"
+sub2api_admin_email: "admin@sub2api.local"
+sub2api_admin_password: ""
+sub2api_http_port: 8080
+
+# 安装路径
+sub2api_install_dir: "/opt/sub2api"
+sub2api_backup_dir: "/backup/sub2api"
+
+# 数据库配置
+sub2api_postgres_user: "sub2api"
+sub2api_postgres_db: "sub2api"
+sub2api_postgres_password: ""
+
+# 安全密钥（留空则自动生成）
+sub2api_jwt_secret: ""
+sub2api_totp_key: ""
+
+# Docker 镜像
+sub2api_image: "weishaw/sub2api:latest"
+
+# 性能调优
+sub2api_h2c_enabled: true
+sub2api_max_concurrent_streams: 50
+
+# 数据保留
+sub2api_retention_logs_days: 90
+sub2api_retention_hourly_days: 180
+sub2api_retention_daily_days: 730
+
+# 备份配置
+sub2api_backup_enabled: true
+sub2api_backup_retention_days: 30
+sub2api_backup_remote_enabled: false
+sub2api_backup_remote_type: "s3"  # s3, oss, gcs
+sub2api_backup_remote_endpoint: ""
+sub2api_backup_remote_bucket: ""
+sub2api_backup_remote_access_key: ""
+sub2api_backup_remote_secret_key: ""
+
+# 监控配置
+sub2api_monitoring_enabled: true
+sub2api_alert_webhook: ""  # 钉钉/企业微信/Slack Webhook
+
+# SSL 配置
+sub2api_ssl_enabled: true
+sub2api_ssl_email: "{{ sub2api_email }}"
+sub2api_ssl_staging: false  # 设为 true 使用 Let's Encrypt 测试环境

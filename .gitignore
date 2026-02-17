@@ -112,6 +112,22 @@ deploy/config.yaml
 backend/.installed
 
 # ===================
+# Git Worktrees
+# ===================
+.worktrees/
+
+# ===================
+# pnpm 缓存
+# ===================
+.pnpm-store/
+
+# npm lock（项目使用 pnpm）
+frontend/package-lock.json
+
+# 延迟测试日志
+latency-logs/
+
+# ===================
 # 其他
 # ===================
 tests

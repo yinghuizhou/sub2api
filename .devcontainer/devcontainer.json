@@ -1,0 +1,86 @@
+{
+  "name": "Sub2API Full Stack",
+
+  // Multi-container setup: app + postgres + redis
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  // VS Code settings inside the container
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Go
+        "go.toolsManagement.autoUpdate": true,
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "go.lintFlags": ["--fast"],
+        "go.testFlags": ["-v"],
+        "go.buildTags": "unit",
+
+        // Frontend
+        "eslint.workingDirectories": ["frontend"],
+        "typescript.tsdk": "frontend/node_modules/typescript/lib",
+
+        // Editor
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[go]": {
+          "editor.defaultFormatter": "golang.go"
+        },
+        "[vue]": {
+          "editor.defaultFormatter": "Vue.volar"
+        },
+
+        // Terminal
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.cwd": "/workspace",
+
+        // Files
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/vendor/**": true,
+          "**/.git/**": true,
+          "**/backend/ent/**": true
+        }
+      },
+
+      "extensions": [
+        // Go
+        "golang.go",
+        // Vue / TypeScript
+        "Vue.volar",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        // Tailwind CSS
+        "bradlc.vscode-tailwindcss",
+        // Git
+        "eamodio.gitlens",
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // Database
+        "ckolkman.vscode-postgres",
+        // Utilities
+        "EditorConfig.EditorConfig",
+        "streetsidesoftware.code-spell-checker"
+      ]
+    }
+  },
+
+  // Port forwarding (app container ports only; postgres/redis are mapped in docker-compose.yml)
+  "forwardPorts": [
+    5174,
+    8080
+  ],
+  "portsAttributes": {
+    "5174": { "label": "Frontend (Vite)", "onAutoForward": "notify" },
+    "8080": { "label": "Backend API", "onAutoForward": "notify" }
+  },
+
+  // Lifecycle commands
+  "postCreateCommand": "make install",
+  "postStartCommand": "echo '✅ Dev container ready! Run: pnpm --dir frontend dev (frontend) or cd backend && air (backend with hot reload)'",
+
+  // Run as vscode user (non-root)
+  "remoteUser": "vscode"
+}

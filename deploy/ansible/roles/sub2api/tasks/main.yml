@@ -1,0 +1,60 @@
+# =============================================================================
+# Sub2API Ansible Role - 主任务文件
+# =============================================================================
+
+- name: "导入系统检查任务"
+  import_tasks: preflight.yml
+
+- name: "导入 Docker 安装任务"
+  import_tasks: docker.yml
+
+- name: "导入目录创建任务"
+  import_tasks: directories.yml
+
+- name: "导入安全密钥生成任务"
+  import_tasks: secrets.yml
+
+- name: "导入配置生成任务"
+  import_tasks: config.yml
+
+- name: "导入防火墙配置任务"
+  import_tasks: firewall.yml
+
+- name: "导入服务启动任务"
+  import_tasks: service.yml
+
+- name: "导入反向代理配置任务"
+  import_tasks: reverse-proxy.yml
+  when: sub2api_ssl_enabled | bool
+
+- name: "导入备份配置任务"
+  import_tasks: backup.yml
+  when: sub2api_backup_enabled | bool
+
+- name: "导入监控配置任务"
+  import_tasks: monitoring.yml
+  when: sub2api_monitoring_enabled | bool
+
+- name: "生成部署报告"
+  template:
+    src: install-report.txt.j2
+    dest: "{{ sub2api_install_dir }}/install-report.txt"
+    mode: '0600'
+    owner: root
+    group: root
+
+- name: "显示部署完成信息"
+  debug:
+    msg:
+      - "========================================="
+      - "Sub2API 部署成功！"
+      - "========================================="
+      - "访问地址: {{ 'https' if sub2api_ssl_enabled else 'http' }}://{{ sub2api_domain if sub2api_domain != 'api.example.com' else ansible_default_ipv4.address + ':' + sub2api_http_port|string }}"
+      - "管理员邮箱: {{ sub2api_admin_email }}"
+      - "管理员密码: {{ sub2api_admin_password }}"
+      - "========================================="
+      - "重要: 请保存以下安全密钥到密码管理器！"
+      - "JWT_SECRET: {{ sub2api_jwt_secret }}"
+      - "TOTP_ENCRYPTION_KEY: {{ sub2api_totp_key }}"
+      - "PostgreSQL密码: {{ sub2api_postgres_password }}"
+      - "========================================="

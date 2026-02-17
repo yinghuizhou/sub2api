@@ -18,6 +18,9 @@ docs/
 *.swp
 *.swo
 
+# Dev Container (not needed in production image)
+.devcontainer/
+
 # OS files
 .DS_Store
 Thumbs.db

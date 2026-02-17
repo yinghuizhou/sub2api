@@ -1,0 +1,62 @@
+# =============================================================================
+# 系统预检任务
+# =============================================================================
+
+- name: "检查操作系统支持"
+  fail:
+    msg: "不支持的操作系统: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+  when: ansible_distribution not in ['Ubuntu', 'Debian', 'CentOS', 'Rocky', 'AlmaLinux']
+
+- name: "检查系统架构"
+  fail:
+    msg: "不支持的架构: {{ ansible_architecture }} (仅支持 x86_64 和 aarch64)"
+  when: ansible_architecture not in ['x86_64', 'aarch64']
+
+- name: "检查内存大小"
+  debug:
+    msg: "内存检查通过: {{ ansible_memtotal_mb }}MB"
+  when: ansible_memtotal_mb >= 2048
+
+- name: "警告内存不足"
+  debug:
+    msg: "警告: 内存不足 2GB (当前: {{ ansible_memtotal_mb }}MB)，建议至少 4GB"
+  when: ansible_memtotal_mb < 2048
+
+- name: "检查磁盘空间"
+  shell: "df -BG {{ sub2api_install_dir }} | awk 'NR==2 {print $4}' | sed 's/G//'"
+  register: disk_space
+  ignore_errors: true
+  changed_when: false
+
+- name: "警告磁盘空间不足"
+  debug:
+    msg: "警告: 磁盘空间可能不足，建议至少 20GB 可用空间"
+  when: disk_space.stdout|int < 10
+
+- name: "安装基础依赖"
+  package:
+    name:
+      - curl
+      - wget
+      - openssl
+      - gnupg
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - jq
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: "安装基础依赖 (RedHat)"
+  package:
+    name:
+      - curl
+      - wget
+      - openssl
+      - gnupg
+      - yum-utils
+      - jq
+    state: present
+    update_cache: true
+  when: ansible_os_family == "RedHat"

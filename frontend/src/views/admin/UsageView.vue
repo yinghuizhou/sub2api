@@ -103,8 +103,10 @@ const exportToExcel = async () => {
       if (all.length >= total || res.items.length < 100) break; p++
     }
     if(!c.signal.aborted) {
-      const XLSX = await import('xlsx')
-      const headers = [
+      const ExcelJS = await import('exceljs')
+      const wb = new ExcelJS.Workbook()
+      const ws = wb.addWorksheet('Usage')
+      ws.addRow([
         t('usage.time'), t('admin.usage.user'), t('usage.apiKeyFilter'),
         t('admin.usage.account'), t('usage.model'), t('usage.reasoningEffort'), t('admin.usage.group'),
         t('usage.type'),
@@ -115,39 +117,39 @@ const exportToExcel = async () => {
         t('usage.rate'), t('usage.accountMultiplier'), t('usage.original'), t('usage.userBilled'), t('usage.accountBilled'),
         t('usage.firstToken'), t('usage.duration'),
         t('admin.usage.requestId'), t('usage.userAgent'), t('admin.usage.ipAddress')
-      ]
-      const rows = all.map(log => [
-        log.created_at,
-        log.user?.email || '',
-        log.api_key?.name || '',
-        log.account?.name || '',
-        log.model,
-        formatReasoningEffort(log.reasoning_effort),
-        log.group?.name || '',
-        log.stream ? t('usage.stream') : t('usage.sync'),
-        log.input_tokens,
-        log.output_tokens,
-        log.cache_read_tokens,
-        log.cache_creation_tokens,
-        log.input_cost?.toFixed(6) || '0.000000',
-        log.output_cost?.toFixed(6) || '0.000000',
-        log.cache_read_cost?.toFixed(6) || '0.000000',
-        log.cache_creation_cost?.toFixed(6) || '0.000000',
-        log.rate_multiplier?.toFixed(2) || '1.00',
-        (log.account_rate_multiplier ?? 1).toFixed(2),
-        log.total_cost?.toFixed(6) || '0.000000',
-        log.actual_cost?.toFixed(6) || '0.000000',
-        (log.total_cost * (log.account_rate_multiplier ?? 1)).toFixed(6),
-        log.first_token_ms ?? '',
-        log.duration_ms,
-        log.request_id || '',
-        log.user_agent || '',
-        log.ip_address || ''
       ])
-      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Usage')
-      saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `usage_${filters.value.start_date}_to_${filters.value.end_date}.xlsx`)
+      for (const log of all) {
+        ws.addRow([
+          log.created_at,
+          log.user?.email || '',
+          log.api_key?.name || '',
+          log.account?.name || '',
+          log.model,
+          formatReasoningEffort(log.reasoning_effort),
+          log.group?.name || '',
+          log.stream ? t('usage.stream') : t('usage.sync'),
+          log.input_tokens,
+          log.output_tokens,
+          log.cache_read_tokens,
+          log.cache_creation_tokens,
+          log.input_cost?.toFixed(6) || '0.000000',
+          log.output_cost?.toFixed(6) || '0.000000',
+          log.cache_read_cost?.toFixed(6) || '0.000000',
+          log.cache_creation_cost?.toFixed(6) || '0.000000',
+          log.rate_multiplier?.toFixed(2) || '1.00',
+          (log.account_rate_multiplier ?? 1).toFixed(2),
+          log.total_cost?.toFixed(6) || '0.000000',
+          log.actual_cost?.toFixed(6) || '0.000000',
+          (log.total_cost * (log.account_rate_multiplier ?? 1)).toFixed(6),
+          log.first_token_ms ?? '',
+          log.duration_ms,
+          log.request_id || '',
+          log.user_agent || '',
+          log.ip_address || ''
+        ])
+      }
+      const buf = await wb.xlsx.writeBuffer()
+      saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `usage_${filters.value.start_date}_to_${filters.value.end_date}.xlsx`)
       appStore.showSuccess(t('usage.exportSuccess'))
     }
   } catch (error) { console.error('Failed to export:', error); appStore.showError('Export Failed') }
