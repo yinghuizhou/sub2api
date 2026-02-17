@@ -382,6 +382,17 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					}
 
 					failedAccountIDs[account.ID] = struct{}{}
+
+					// 429 同代理排除：按 IP 限流时，同代理的其他账号也会被拒绝
+					if failoverErr.StatusCode == 429 && account.ProxyID != nil {
+						sameProxyIDs := h.gatewayService.GetSameProxyAccountIDs(c.Request.Context(), apiKey.GroupID, *account.ProxyID, service.PlatformGemini)
+						for _, id := range sameProxyIDs {
+							failedAccountIDs[id] = struct{}{}
+						}
+						log.Printf("Account %d: 429 with proxy %d, excluded %d same-proxy accounts from failover",
+							account.ID, *account.ProxyID, len(sameProxyIDs))
+					}
+
 					if switchCount >= maxAccountSwitches {
 						h.handleFailoverExhausted(c, failoverErr, service.PlatformGemini, streamStarted)
 						return
@@ -620,6 +631,18 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					}
 
 					failedAccountIDs[account.ID] = struct{}{}
+
+					// 429 同代理排除：Anthropic 按 IP 限流，同代理的其他账号也会被拒绝，
+					// 直接跳过避免无效请求和全员限流标记。
+					if failoverErr.StatusCode == 429 && account.ProxyID != nil {
+						sameProxyIDs := h.gatewayService.GetSameProxyAccountIDs(c.Request.Context(), currentAPIKey.GroupID, *account.ProxyID, platform)
+						for _, id := range sameProxyIDs {
+							failedAccountIDs[id] = struct{}{}
+						}
+						log.Printf("Account %d: 429 with proxy %d, excluded %d same-proxy accounts from failover",
+							account.ID, *account.ProxyID, len(sameProxyIDs))
+					}
+
 					if switchCount >= maxAccountSwitches {
 						h.handleFailoverExhausted(c, failoverErr, account.Platform, streamStarted)
 						return

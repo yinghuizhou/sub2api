@@ -887,7 +887,6 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 	// Send request
 	resp, err := s.httpUpstream.Do(upstreamReq, proxyURL, account.ID, account.Concurrency)
 	if err != nil {
-		// Ensure the client receives an error response (handlers assume Forward writes on non-failover errors).
 		safeErr := sanitizeUpstreamErrorMessage(err.Error())
 		setOpsUpstreamError(c, 0, safeErr, "")
 		appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
@@ -898,13 +897,9 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 			Kind:               "request_error",
 			Message:            safeErr,
 		})
-		c.JSON(http.StatusBadGateway, gin.H{
-			"error": gin.H{
-				"type":    "upstream_error",
-				"message": "Upstream request failed",
-			},
-		})
-		return nil, fmt.Errorf("upstream request failed: %s", safeErr)
+		// Network errors should trigger account failover instead of returning error directly.
+		log.Printf("[OpenAI Forward] Network error (failover): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
+		return nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -2048,4 +2043,21 @@ func normalizeOpenAIReasoningEffort(raw string) string {
 		// Only store known effort levels for now to keep UI consistent.
 		return ""
 	}
+}
+
+// GetSameProxyAccountIDs returns all schedulable account IDs in the group
+// that share the same proxyID. Used by handler to exclude co-located accounts
+// on 429 (IP-level rate limit) during failover.
+func (s *OpenAIGatewayService) GetSameProxyAccountIDs(ctx context.Context, groupID *int64, proxyID int64) []int64 {
+	accounts, err := s.listSchedulableAccounts(ctx, groupID)
+	if err != nil {
+		return nil
+	}
+	var ids []int64
+	for _, acc := range accounts {
+		if acc.ProxyID != nil && *acc.ProxyID == proxyID {
+			ids = append(ids, acc.ID)
+		}
+	}
+	return ids
 }

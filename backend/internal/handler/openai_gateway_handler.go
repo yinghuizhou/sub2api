@@ -291,6 +291,17 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 			if errors.As(err, &failoverErr) {
 				failedAccountIDs[account.ID] = struct{}{}
 				lastFailoverErr = failoverErr
+
+				// 429 同代理排除：按 IP 限流时，同代理的其他账号也会被拒绝
+				if failoverErr.StatusCode == 429 && account.ProxyID != nil {
+					sameProxyIDs := h.gatewayService.GetSameProxyAccountIDs(c.Request.Context(), apiKey.GroupID, *account.ProxyID)
+					for _, id := range sameProxyIDs {
+						failedAccountIDs[id] = struct{}{}
+					}
+					log.Printf("Account %d: 429 with proxy %d, excluded %d same-proxy accounts from failover",
+						account.ID, *account.ProxyID, len(sameProxyIDs))
+				}
+
 				if switchCount >= maxAccountSwitches {
 					h.handleFailoverExhausted(c, failoverErr, streamStarted)
 					return

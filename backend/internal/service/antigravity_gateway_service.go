@@ -621,9 +621,10 @@ urlFallbackLoop:
 					}
 					continue
 				}
-				log.Printf("%s status=request_failed retries_exhausted error=%v", p.prefix, err)
+				log.Printf("%s status=request_failed retries_exhausted error=%v (failover)", p.prefix, err)
 				setOpsUpstreamError(p.c, 0, safeErr, "")
-				return nil, fmt.Errorf("upstream request failed after retries: %w", err)
+				// Network errors after retries exhausted should trigger account failover.
+				return nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
 			}
 
 			// 统一处理错误响应
