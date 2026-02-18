@@ -1107,6 +1107,14 @@ func (stubProxyRepo) ListAccountSummariesByProxyID(ctx context.Context, proxyID 
 	return nil, errors.New("not implemented")
 }
 
+func (stubProxyRepo) ListByGroupName(ctx context.Context, groupName string) ([]service.Proxy, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (stubProxyRepo) ListGroupNames(ctx context.Context) ([]string, error) {
+	return nil, errors.New("not implemented")
+}
+
 type stubRedeemCodeRepo struct {
 	byUser map[int64][]service.RedeemCode
 }

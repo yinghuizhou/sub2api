@@ -501,6 +501,19 @@ export interface Proxy {
   city?: string
   created_at: string
   updated_at: string
+
+  // OpenVPN / proxy group fields
+  group_name?: string | null
+  ovpn_config?: string | null
+  ovpn_username?: string | null
+  ovpn_password?: string | null
+  is_dedicated?: boolean
+  vpn_status?: 'connected' | 'disconnected' | 'error' | null
+  vpn_exit_ip?: string | null
+  health_status?: 'healthy' | 'degraded' | 'unhealthy' | null
+  health_latency_ms?: number | null
+  last_health_at?: string | null
+  health_check_failures?: number
 }
 
 export interface ProxyAccountSummary {
@@ -571,6 +584,7 @@ export interface Account {
     model_rate_limits?: Record<string, { rate_limited_at: string; rate_limit_reset_at: string }>
   } & Record<string, unknown>)
   proxy_id: number | null
+  proxy_group?: string // Proxy group name for shared proxy mode
   concurrency: number
   current_concurrency?: number // Real-time concurrency count from Redis
   priority: number
@@ -722,6 +736,12 @@ export interface CreateProxyRequest {
   port: number
   username?: string | null
   password?: string | null
+  region?: string
+  group_name?: string
+  ovpn_config?: string
+  ovpn_username?: string
+  ovpn_password?: string
+  is_dedicated?: boolean
 }
 
 export interface UpdateProxyRequest {
@@ -732,6 +752,12 @@ export interface UpdateProxyRequest {
   username?: string | null
   password?: string | null
   status?: 'active' | 'inactive'
+  region?: string
+  group_name?: string
+  ovpn_config?: string
+  ovpn_username?: string
+  ovpn_password?: string
+  is_dedicated?: boolean
 }
 
 export interface AdminDataPayload {

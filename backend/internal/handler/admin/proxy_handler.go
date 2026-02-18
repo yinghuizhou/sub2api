@@ -25,23 +25,35 @@ func NewProxyHandler(adminService service.AdminService) *ProxyHandler {
 
 // CreateProxyRequest represents create proxy request
 type CreateProxyRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Protocol string `json:"protocol" binding:"required,oneof=http https socks5 socks5h"`
-	Host     string `json:"host" binding:"required"`
-	Port     int    `json:"port" binding:"required,min=1,max=65535"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Name         string `json:"name" binding:"required"`
+	Protocol     string `json:"protocol" binding:"required,oneof=http https socks5 socks5h"`
+	Host         string `json:"host" binding:"required"`
+	Port         int    `json:"port" binding:"required,min=1,max=65535"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Region       string `json:"region"`
+	GroupName    string `json:"group_name"`
+	OvpnConfig   string `json:"ovpn_config"`
+	OvpnUsername string `json:"ovpn_username"`
+	OvpnPassword string `json:"ovpn_password"`
+	IsDedicated  bool   `json:"is_dedicated"`
 }
 
 // UpdateProxyRequest represents update proxy request
 type UpdateProxyRequest struct {
-	Name     string `json:"name"`
-	Protocol string `json:"protocol" binding:"omitempty,oneof=http https socks5 socks5h"`
-	Host     string `json:"host"`
-	Port     int    `json:"port" binding:"omitempty,min=1,max=65535"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Status   string `json:"status" binding:"omitempty,oneof=active inactive"`
+	Name         string  `json:"name"`
+	Protocol     string  `json:"protocol" binding:"omitempty,oneof=http https socks5 socks5h"`
+	Host         string  `json:"host"`
+	Port         int     `json:"port" binding:"omitempty,min=1,max=65535"`
+	Username     string  `json:"username"`
+	Password     string  `json:"password"`
+	Status       string  `json:"status" binding:"omitempty,oneof=active inactive"`
+	Region       *string `json:"region"`
+	GroupName    *string `json:"group_name"`
+	OvpnConfig   *string `json:"ovpn_config"`
+	OvpnUsername *string `json:"ovpn_username"`
+	OvpnPassword *string `json:"ovpn_password"`
+	IsDedicated  *bool   `json:"is_dedicated"`
 }
 
 // List handles listing all proxies with pagination
@@ -131,12 +143,18 @@ func (h *ProxyHandler) Create(c *gin.Context) {
 	}
 
 	proxy, err := h.adminService.CreateProxy(c.Request.Context(), &service.CreateProxyInput{
-		Name:     strings.TrimSpace(req.Name),
-		Protocol: strings.TrimSpace(req.Protocol),
-		Host:     strings.TrimSpace(req.Host),
-		Port:     req.Port,
-		Username: strings.TrimSpace(req.Username),
-		Password: strings.TrimSpace(req.Password),
+		Name:         strings.TrimSpace(req.Name),
+		Protocol:     strings.TrimSpace(req.Protocol),
+		Host:         strings.TrimSpace(req.Host),
+		Port:         req.Port,
+		Username:     strings.TrimSpace(req.Username),
+		Password:     strings.TrimSpace(req.Password),
+		Region:       strings.TrimSpace(req.Region),
+		GroupName:    strings.TrimSpace(req.GroupName),
+		OvpnConfig:   strings.TrimSpace(req.OvpnConfig),
+		OvpnUsername: strings.TrimSpace(req.OvpnUsername),
+		OvpnPassword: strings.TrimSpace(req.OvpnPassword),
+		IsDedicated:  req.IsDedicated,
 	})
 	if err != nil {
 		response.ErrorFrom(c, err)
@@ -161,15 +179,22 @@ func (h *ProxyHandler) Update(c *gin.Context) {
 		return
 	}
 
-	proxy, err := h.adminService.UpdateProxy(c.Request.Context(), proxyID, &service.UpdateProxyInput{
-		Name:     strings.TrimSpace(req.Name),
-		Protocol: strings.TrimSpace(req.Protocol),
-		Host:     strings.TrimSpace(req.Host),
-		Port:     req.Port,
-		Username: strings.TrimSpace(req.Username),
-		Password: strings.TrimSpace(req.Password),
-		Status:   strings.TrimSpace(req.Status),
-	})
+	updateInput := &service.UpdateProxyInput{
+		Name:         strings.TrimSpace(req.Name),
+		Protocol:     strings.TrimSpace(req.Protocol),
+		Host:         strings.TrimSpace(req.Host),
+		Port:         req.Port,
+		Username:     strings.TrimSpace(req.Username),
+		Password:     strings.TrimSpace(req.Password),
+		Status:       strings.TrimSpace(req.Status),
+		Region:       req.Region,
+		GroupName:    req.GroupName,
+		OvpnConfig:   req.OvpnConfig,
+		OvpnUsername: req.OvpnUsername,
+		OvpnPassword: req.OvpnPassword,
+		IsDedicated:  req.IsDedicated,
+	}
+	proxy, err := h.adminService.UpdateProxy(c.Request.Context(), proxyID, updateInput)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -276,6 +301,17 @@ func (h *ProxyHandler) GetProxyAccounts(c *gin.Context) {
 		out = append(out, *dto.ProxyAccountSummaryFromService(&accounts[i]))
 	}
 	response.Success(c, out)
+}
+
+// GetGroupNames handles listing all distinct proxy group names
+// GET /api/v1/admin/proxies/group-names
+func (h *ProxyHandler) GetGroupNames(c *gin.Context) {
+	names, err := h.adminService.ListProxyGroupNames(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, names)
 }
 
 // BatchCreateProxyItem represents a single proxy in batch create request

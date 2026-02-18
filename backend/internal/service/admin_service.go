@@ -65,6 +65,7 @@ type AdminService interface {
 	GetProxyAccounts(ctx context.Context, proxyID int64) ([]ProxyAccountSummary, error)
 	CheckProxyExists(ctx context.Context, host string, port int, username, password string) (bool, error)
 	TestProxy(ctx context.Context, id int64) (*ProxyTestResult, error)
+	ListProxyGroupNames(ctx context.Context) ([]string, error)
 
 	// Redeem code management
 	ListRedeemCodes(ctx context.Context, page, pageSize int, codeType, status, search string) ([]RedeemCode, int64, error)
@@ -233,22 +234,34 @@ type BulkUpdateAccountsResult struct {
 }
 
 type CreateProxyInput struct {
-	Name     string
-	Protocol string
-	Host     string
-	Port     int
-	Username string
-	Password string
+	Name         string
+	Protocol     string
+	Host         string
+	Port         int
+	Username     string
+	Password     string
+	Region       string
+	GroupName    string
+	OvpnConfig   string
+	OvpnUsername string
+	OvpnPassword string
+	IsDedicated  bool
 }
 
 type UpdateProxyInput struct {
-	Name     string
-	Protocol string
-	Host     string
-	Port     int
-	Username string
-	Password string
-	Status   string
+	Name         string
+	Protocol     string
+	Host         string
+	Port         int
+	Username     string
+	Password     string
+	Status       string
+	Region       *string
+	GroupName    *string
+	OvpnConfig   *string
+	OvpnUsername *string
+	OvpnPassword *string
+	IsDedicated  *bool
 }
 
 type GenerateRedeemCodesInput struct {
@@ -1407,13 +1420,19 @@ func (s *adminServiceImpl) GetProxiesByIDs(ctx context.Context, ids []int64) ([]
 
 func (s *adminServiceImpl) CreateProxy(ctx context.Context, input *CreateProxyInput) (*Proxy, error) {
 	proxy := &Proxy{
-		Name:     input.Name,
-		Protocol: input.Protocol,
-		Host:     input.Host,
-		Port:     input.Port,
-		Username: input.Username,
-		Password: input.Password,
-		Status:   StatusActive,
+		Name:         input.Name,
+		Protocol:     input.Protocol,
+		Host:         input.Host,
+		Port:         input.Port,
+		Username:     input.Username,
+		Password:     input.Password,
+		Status:       StatusActive,
+		Region:       input.Region,
+		GroupName:    input.GroupName,
+		OvpnConfig:   input.OvpnConfig,
+		OvpnUsername: input.OvpnUsername,
+		OvpnPassword: input.OvpnPassword,
+		IsDedicated:  input.IsDedicated,
 	}
 	if err := s.proxyRepo.Create(ctx, proxy); err != nil {
 		return nil, err
@@ -1450,11 +1469,33 @@ func (s *adminServiceImpl) UpdateProxy(ctx context.Context, id int64, input *Upd
 	if input.Status != "" {
 		proxy.Status = input.Status
 	}
+	if input.Region != nil {
+		proxy.Region = *input.Region
+	}
+	if input.GroupName != nil {
+		proxy.GroupName = *input.GroupName
+	}
+	if input.OvpnConfig != nil {
+		proxy.OvpnConfig = *input.OvpnConfig
+	}
+	if input.OvpnUsername != nil {
+		proxy.OvpnUsername = *input.OvpnUsername
+	}
+	if input.OvpnPassword != nil && *input.OvpnPassword != "" {
+		proxy.OvpnPassword = *input.OvpnPassword
+	}
+	if input.IsDedicated != nil {
+		proxy.IsDedicated = *input.IsDedicated
+	}
 
 	if err := s.proxyRepo.Update(ctx, proxy); err != nil {
 		return nil, err
 	}
 	return proxy, nil
+}
+
+func (s *adminServiceImpl) ListProxyGroupNames(ctx context.Context) ([]string, error) {
+	return s.proxyRepo.ListGroupNames(ctx)
 }
 
 func (s *adminServiceImpl) DeleteProxy(ctx context.Context, id int64) error {

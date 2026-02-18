@@ -238,6 +238,15 @@ export async function importData(payload: {
   return data
 }
 
+/**
+ * Get all distinct proxy group names
+ * @returns List of group names
+ */
+export async function getGroupNames(): Promise<string[]> {
+  const { data } = await apiClient.get<string[]>('/admin/proxies/group-names')
+  return data
+}
+
 export const proxiesAPI = {
   list,
   getAll,
@@ -253,7 +262,8 @@ export const proxiesAPI = {
   batchCreate,
   batchDelete,
   exportData,
-  importData
+  importData,
+  getGroupNames
 }
 
 export default proxiesAPI

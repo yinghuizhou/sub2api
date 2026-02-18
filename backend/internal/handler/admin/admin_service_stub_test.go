@@ -327,6 +327,10 @@ func (s *stubAdminService) TestProxy(ctx context.Context, id int64) (*service.Pr
 	return &service.ProxyTestResult{Success: true, Message: "ok"}, nil
 }
 
+func (s *stubAdminService) ListProxyGroupNames(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
+
 func (s *stubAdminService) ListRedeemCodes(ctx context.Context, page, pageSize int, codeType, status, search string) ([]service.RedeemCode, int64, error) {
 	return s.redeems, int64(len(s.redeems)), nil
 }

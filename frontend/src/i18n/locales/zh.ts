@@ -2170,6 +2170,8 @@ export default {
         name: '名称',
         protocol: '协议',
         address: '地址',
+        group: '分组',
+        health: '健康状态',
         location: '地理位置',
         status: '状态',
         accounts: '账号数',

@@ -118,6 +118,33 @@
             <code class="code text-xs">{{ row.host }}:{{ row.port }}</code>
           </template>
 
+          <template #cell-group_name="{ row }">
+            <span v-if="row.group_name" class="badge badge-primary">
+              {{ row.group_name }}
+            </span>
+            <span v-else class="text-sm text-gray-400">-</span>
+          </template>
+
+          <template #cell-health="{ row }">
+            <div class="flex items-center gap-1.5">
+              <span
+                v-if="row.health_status"
+                :class="[
+                  'inline-block h-2.5 w-2.5 rounded-full',
+                  row.health_status === 'healthy' ? 'bg-emerald-500' :
+                  row.health_status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'
+                ]"
+              ></span>
+              <span v-if="row.vpn_exit_ip" class="text-xs text-gray-500 dark:text-gray-400">
+                {{ row.vpn_exit_ip }}
+              </span>
+              <span v-else-if="row.health_status" class="text-xs text-gray-500">
+                {{ row.health_status }}
+              </span>
+              <span v-else class="text-sm text-gray-400">-</span>
+            </div>
+          </template>
+
           <template #cell-location="{ row }">
             <div class="flex items-center gap-2">
               <img
@@ -356,6 +383,66 @@
           />
         </div>
 
+        <!-- OpenVPN / Proxy Group Section -->
+        <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
+          <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">VPN / 分组配置</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="input-label">地区</label>
+              <input
+                v-model="createForm.region"
+                type="text"
+                class="input"
+                placeholder="us-east / us-west / eu-west"
+              />
+            </div>
+            <div>
+              <label class="input-label">分组名</label>
+              <input
+                v-model="createForm.group_name"
+                type="text"
+                class="input"
+                placeholder="美东共享组"
+              />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="flex items-center gap-2">
+              <input v-model="createForm.is_dedicated" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">专用 IP（1账号独占）</span>
+            </label>
+          </div>
+          <div class="mt-3">
+            <label class="input-label">.ovpn 配置内容</label>
+            <textarea
+              v-model="createForm.ovpn_config"
+              rows="4"
+              class="input font-mono text-xs"
+              placeholder="粘贴 .ovpn 文件内容，或留空使用标准代理模式"
+            ></textarea>
+          </div>
+          <div v-if="createForm.ovpn_config" class="mt-3 grid grid-cols-2 gap-4">
+            <div>
+              <label class="input-label">OpenVPN 用户名</label>
+              <input
+                v-model="createForm.ovpn_username"
+                type="text"
+                class="input"
+                placeholder="Astrill 账号"
+              />
+            </div>
+            <div>
+              <label class="input-label">OpenVPN 密码</label>
+              <input
+                v-model="createForm.ovpn_password"
+                type="password"
+                class="input"
+                placeholder="Astrill 密码"
+              />
+            </div>
+          </div>
+        </div>
+
       </form>
 
       <!-- Batch Add Form -->
@@ -544,6 +631,66 @@
           <Select v-model="editForm.status" :options="editStatusOptions" />
         </div>
 
+        <!-- OpenVPN / Proxy Group Section -->
+        <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
+          <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">VPN / 分组配置</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="input-label">地区</label>
+              <input
+                v-model="editForm.region"
+                type="text"
+                class="input"
+                placeholder="us-east / us-west / eu-west"
+              />
+            </div>
+            <div>
+              <label class="input-label">分组名</label>
+              <input
+                v-model="editForm.group_name"
+                type="text"
+                class="input"
+                placeholder="美东共享组"
+              />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="flex items-center gap-2">
+              <input v-model="editForm.is_dedicated" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">专用 IP（1账号独占）</span>
+            </label>
+          </div>
+          <div class="mt-3">
+            <label class="input-label">.ovpn 配置内容</label>
+            <textarea
+              v-model="editForm.ovpn_config"
+              rows="4"
+              class="input font-mono text-xs"
+              placeholder="粘贴 .ovpn 文件内容，或留空使用标准代理模式"
+            ></textarea>
+          </div>
+          <div v-if="editForm.ovpn_config" class="mt-3 grid grid-cols-2 gap-4">
+            <div>
+              <label class="input-label">OpenVPN 用户名</label>
+              <input
+                v-model="editForm.ovpn_username"
+                type="text"
+                class="input"
+                placeholder="Astrill 账号"
+              />
+            </div>
+            <div>
+              <label class="input-label">OpenVPN 密码</label>
+              <input
+                v-model="editForm.ovpn_password"
+                type="password"
+                class="input"
+                placeholder="留空则保持不变"
+              />
+            </div>
+          </div>
+        </div>
+
       </form>
 
       <template #footer>
@@ -697,6 +844,8 @@ const columns = computed<Column[]>(() => [
   { key: 'name', label: t('admin.proxies.columns.name'), sortable: true },
   { key: 'protocol', label: t('admin.proxies.columns.protocol'), sortable: true },
   { key: 'address', label: t('admin.proxies.columns.address'), sortable: false },
+  { key: 'group_name', label: t('admin.proxies.columns.group'), sortable: true },
+  { key: 'health', label: t('admin.proxies.columns.health'), sortable: false },
   { key: 'location', label: t('admin.proxies.columns.location'), sortable: false },
   { key: 'account_count', label: t('admin.proxies.columns.accounts'), sortable: true },
   { key: 'latency', label: t('admin.proxies.columns.latency'), sortable: false },
@@ -793,7 +942,13 @@ const createForm = reactive({
   host: '',
   port: 8080,
   username: '',
-  password: ''
+  password: '',
+  region: '',
+  group_name: '',
+  is_dedicated: false,
+  ovpn_config: '',
+  ovpn_username: '',
+  ovpn_password: ''
 })
 
 const editForm = reactive({
@@ -803,7 +958,13 @@ const editForm = reactive({
   port: 8080,
   username: '',
   password: '',
-  status: 'active' as 'active' | 'inactive'
+  status: 'active' as 'active' | 'inactive',
+  region: '',
+  group_name: '',
+  is_dedicated: false,
+  ovpn_config: '',
+  ovpn_username: '',
+  ovpn_password: ''
 })
 
 let abortController: AbortController | null = null
@@ -900,6 +1061,12 @@ const closeCreateModal = () => {
   createForm.port = 8080
   createForm.username = ''
   createForm.password = ''
+  createForm.region = ''
+  createForm.group_name = ''
+  createForm.is_dedicated = false
+  createForm.ovpn_config = ''
+  createForm.ovpn_username = ''
+  createForm.ovpn_password = ''
   batchInput.value = ''
   batchParseResult.total = 0
   batchParseResult.valid = 0
@@ -1023,7 +1190,13 @@ const handleCreateProxy = async () => {
       host: createForm.host.trim(),
       port: createForm.port,
       username: createForm.username.trim() || null,
-      password: createForm.password.trim() || null
+      password: createForm.password.trim() || null,
+      region: createForm.region.trim() || undefined,
+      group_name: createForm.group_name.trim() || undefined,
+      is_dedicated: createForm.is_dedicated,
+      ovpn_config: createForm.ovpn_config.trim() || undefined,
+      ovpn_username: createForm.ovpn_username.trim() || undefined,
+      ovpn_password: createForm.ovpn_password.trim() || undefined
     })
     appStore.showSuccess(t('admin.proxies.proxyCreated'))
     closeCreateModal()
@@ -1045,6 +1218,12 @@ const handleEdit = (proxy: Proxy) => {
   editForm.username = proxy.username || ''
   editForm.password = ''
   editForm.status = proxy.status
+  editForm.region = proxy.region || ''
+  editForm.group_name = proxy.group_name || ''
+  editForm.is_dedicated = proxy.is_dedicated || false
+  editForm.ovpn_config = proxy.ovpn_config || ''
+  editForm.ovpn_username = proxy.ovpn_username || ''
+  editForm.ovpn_password = ''
   showEditModal.value = true
 }
 
@@ -1076,13 +1255,22 @@ const handleUpdateProxy = async () => {
       host: editForm.host.trim(),
       port: editForm.port,
       username: editForm.username.trim() || null,
-      status: editForm.status
+      status: editForm.status,
+      region: editForm.region.trim() || null,
+      group_name: editForm.group_name.trim() || null,
+      is_dedicated: editForm.is_dedicated,
+      ovpn_config: editForm.ovpn_config.trim() || null,
+      ovpn_username: editForm.ovpn_username.trim() || null
     }
 
     // Only include password if it was changed
     const trimmedPassword = editForm.password.trim()
     if (trimmedPassword) {
       updateData.password = trimmedPassword
+    }
+    const trimmedOvpnPassword = editForm.ovpn_password.trim()
+    if (trimmedOvpnPassword) {
+      updateData.ovpn_password = trimmedOvpnPassword
     }
 
     await adminAPI.proxies.update(editingProxy.value.id, updateData)

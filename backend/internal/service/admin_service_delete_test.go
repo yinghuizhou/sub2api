@@ -239,6 +239,14 @@ func (s *proxyRepoStub) ListAccountSummariesByProxyID(ctx context.Context, proxy
 	panic("unexpected ListAccountSummariesByProxyID call")
 }
 
+func (s *proxyRepoStub) ListByGroupName(ctx context.Context, groupName string) ([]Proxy, error) {
+	panic("unexpected ListByGroupName call")
+}
+
+func (s *proxyRepoStub) ListGroupNames(ctx context.Context) ([]string, error) {
+	panic("unexpected ListGroupNames call")
+}
+
 type redeemRepoStub struct {
 	deleteErrByID map[int64]error
 	deletedIDs    []int64
