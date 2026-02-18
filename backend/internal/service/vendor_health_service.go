@@ -82,8 +82,8 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 		result.Status = VendorHealthTimeout
 		result.Error = fmt.Sprintf("request failed: %v", err)
 	} else {
-		defer resp.Body.Close()
-		io.Copy(io.Discard, resp.Body)
+		defer resp.Body.Close() //nolint:errcheck
+		_, _ = io.Copy(io.Discard, resp.Body)
 
 		if resp.StatusCode >= 200 && resp.StatusCode < 500 {
 			if latency > 10000 {

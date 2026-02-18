@@ -7,18 +7,18 @@ import (
 
 // VendorDiscoveryResult 供应商发现结果
 type VendorDiscoveryResult struct {
-	URL         string    `json:"url"`
-	Name        string    `json:"name"`
-	APIFormat   string    `json:"api_format"`
-	IsAvailable bool      `json:"is_available"`
-	Latency     int       `json:"latency_ms"`
-	Price       string    `json:"price"`
+	URL          string    `json:"url"`
+	Name         string    `json:"name"`
+	APIFormat    string    `json:"api_format"`
+	IsAvailable  bool      `json:"is_available"`
+	Latency      int       `json:"latency_ms"`
+	Price        string    `json:"price"`
 	DiscoveredAt time.Time `json:"discovered_at"`
 }
 
 // VendorDiscoveryService 供应商发现服务（Phase 3 框架）
 type VendorDiscoveryService struct {
-	vendorRepo VendorRepository
+	vendorRepo VendorRepository //nolint:unused // Phase 3 placeholder
 }
 
 // NewVendorDiscoveryService 创建发现服务

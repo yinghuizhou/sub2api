@@ -415,7 +415,7 @@ type GatewayService struct {
 	claudeTokenProvider *ClaudeTokenProvider
 	sessionLimitCache   SessionLimitCache // 会话数量限制缓存（仅 Anthropic OAuth/SetupToken）
 	vendorRepo          VendorRepository
-	vendorAdapter       *VendorProtocolAdapter
+	vendorAdapter       *VendorProtocolAdapter //nolint:unused // Phase 3 placeholder
 }
 
 // NewGatewayService creates a new GatewayService

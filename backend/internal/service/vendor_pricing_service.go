@@ -7,12 +7,12 @@ import (
 
 // VendorPricingSuggestion 定价建议
 type VendorPricingSuggestion struct {
-	VendorID          int64   `json:"vendor_id"`
-	VendorName        string  `json:"vendor_name"`
-	CostPer1kInput    float64 `json:"cost_per_1k_input"`
-	CostPer1kOutput   float64 `json:"cost_per_1k_output"`
+	VendorID            int64   `json:"vendor_id"`
+	VendorName          string  `json:"vendor_name"`
+	CostPer1kInput      float64 `json:"cost_per_1k_input"`
+	CostPer1kOutput     float64 `json:"cost_per_1k_output"`
 	SuggestedMultiplier float64 `json:"suggested_multiplier"`
-	MarginPercent     float64 `json:"margin_percent"`
+	MarginPercent       float64 `json:"margin_percent"`
 }
 
 // VendorPricingService 动态定价引擎（Phase 3 框架）
