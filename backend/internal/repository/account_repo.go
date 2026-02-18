@@ -93,6 +93,9 @@ func (r *accountRepository) Create(ctx context.Context, account *service.Account
 	if account.ProxyID != nil {
 		builder.SetProxyID(*account.ProxyID)
 	}
+	if account.ProxyGroup != "" {
+		builder.SetProxyGroup(account.ProxyGroup)
+	}
 	if account.LastUsedAt != nil {
 		builder.SetLastUsedAt(*account.LastUsedAt)
 	}
@@ -343,6 +346,11 @@ func (r *accountRepository) Update(ctx context.Context, account *service.Account
 		builder.SetProxyID(*account.ProxyID)
 	} else {
 		builder.ClearProxyID()
+	}
+	if account.ProxyGroup != "" {
+		builder.SetProxyGroup(account.ProxyGroup)
+	} else {
+		builder.ClearProxyGroup()
 	}
 	if account.LastUsedAt != nil {
 		builder.SetLastUsedAt(*account.LastUsedAt)
@@ -1128,6 +1136,15 @@ func (r *accountRepository) BulkUpdate(ctx context.Context, ids []int64, updates
 			idx++
 		}
 	}
+	if updates.ProxyGroup != nil {
+		if *updates.ProxyGroup == "" {
+			setClauses = append(setClauses, "proxy_group = NULL")
+		} else {
+			setClauses = append(setClauses, "proxy_group = $"+itoa(idx))
+			args = append(args, *updates.ProxyGroup)
+			idx++
+		}
+	}
 	if updates.Concurrency != nil {
 		setClauses = append(setClauses, "concurrency = $"+itoa(idx))
 		args = append(args, *updates.Concurrency)
@@ -1514,6 +1531,7 @@ func accountEntityToService(m *dbent.Account) *service.Account {
 		Credentials:         copyJSONMap(m.Credentials),
 		Extra:               copyJSONMap(m.Extra),
 		ProxyID:             m.ProxyID,
+		ProxyGroup:          derefString(m.ProxyGroup),
 		Concurrency:         m.Concurrency,
 		Priority:            m.Priority,
 		RateMultiplier:      &rateMultiplier,

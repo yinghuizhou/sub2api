@@ -34,12 +34,44 @@ func (r *proxyRepository) Create(ctx context.Context, proxyIn *service.Proxy) er
 		SetProtocol(proxyIn.Protocol).
 		SetHost(proxyIn.Host).
 		SetPort(proxyIn.Port).
-		SetStatus(proxyIn.Status)
+		SetStatus(proxyIn.Status).
+		SetIsDedicated(proxyIn.IsDedicated).
+		SetHealthCheckFailures(proxyIn.HealthCheckFailures)
 	if proxyIn.Username != "" {
 		builder.SetUsername(proxyIn.Username)
 	}
 	if proxyIn.Password != "" {
 		builder.SetPassword(proxyIn.Password)
+	}
+	if proxyIn.Region != "" {
+		builder.SetRegion(proxyIn.Region)
+	}
+	if proxyIn.GroupName != "" {
+		builder.SetGroupName(proxyIn.GroupName)
+	}
+	if proxyIn.OvpnConfig != "" {
+		builder.SetOvpnConfig(proxyIn.OvpnConfig)
+	}
+	if proxyIn.OvpnUsername != "" {
+		builder.SetOvpnUsername(proxyIn.OvpnUsername)
+	}
+	if proxyIn.OvpnPassword != "" {
+		builder.SetOvpnPassword(proxyIn.OvpnPassword)
+	}
+	if proxyIn.VpnStatus != "" {
+		builder.SetVpnStatus(proxyIn.VpnStatus)
+	}
+	if proxyIn.VpnExitIP != "" {
+		builder.SetVpnExitIP(proxyIn.VpnExitIP)
+	}
+	if proxyIn.HealthStatus != "" {
+		builder.SetHealthStatus(proxyIn.HealthStatus)
+	}
+	if proxyIn.LatencyMs != nil {
+		builder.SetLatencyMs(*proxyIn.LatencyMs)
+	}
+	if proxyIn.LastHealthAt != nil {
+		builder.SetLastHealthAt(*proxyIn.LastHealthAt)
 	}
 
 	created, err := builder.Save(ctx)
@@ -85,7 +117,9 @@ func (r *proxyRepository) Update(ctx context.Context, proxyIn *service.Proxy) er
 		SetProtocol(proxyIn.Protocol).
 		SetHost(proxyIn.Host).
 		SetPort(proxyIn.Port).
-		SetStatus(proxyIn.Status)
+		SetStatus(proxyIn.Status).
+		SetIsDedicated(proxyIn.IsDedicated).
+		SetHealthCheckFailures(proxyIn.HealthCheckFailures)
 	if proxyIn.Username != "" {
 		builder.SetUsername(proxyIn.Username)
 	} else {
@@ -95,6 +129,56 @@ func (r *proxyRepository) Update(ctx context.Context, proxyIn *service.Proxy) er
 		builder.SetPassword(proxyIn.Password)
 	} else {
 		builder.ClearPassword()
+	}
+	if proxyIn.Region != "" {
+		builder.SetRegion(proxyIn.Region)
+	} else {
+		builder.ClearRegion()
+	}
+	if proxyIn.GroupName != "" {
+		builder.SetGroupName(proxyIn.GroupName)
+	} else {
+		builder.ClearGroupName()
+	}
+	if proxyIn.OvpnConfig != "" {
+		builder.SetOvpnConfig(proxyIn.OvpnConfig)
+	} else {
+		builder.ClearOvpnConfig()
+	}
+	if proxyIn.OvpnUsername != "" {
+		builder.SetOvpnUsername(proxyIn.OvpnUsername)
+	} else {
+		builder.ClearOvpnUsername()
+	}
+	if proxyIn.OvpnPassword != "" {
+		builder.SetOvpnPassword(proxyIn.OvpnPassword)
+	} else {
+		builder.ClearOvpnPassword()
+	}
+	if proxyIn.VpnStatus != "" {
+		builder.SetVpnStatus(proxyIn.VpnStatus)
+	} else {
+		builder.ClearVpnStatus()
+	}
+	if proxyIn.VpnExitIP != "" {
+		builder.SetVpnExitIP(proxyIn.VpnExitIP)
+	} else {
+		builder.ClearVpnExitIP()
+	}
+	if proxyIn.HealthStatus != "" {
+		builder.SetHealthStatus(proxyIn.HealthStatus)
+	} else {
+		builder.ClearHealthStatus()
+	}
+	if proxyIn.LatencyMs != nil {
+		builder.SetLatencyMs(*proxyIn.LatencyMs)
+	} else {
+		builder.ClearLatencyMs()
+	}
+	if proxyIn.LastHealthAt != nil {
+		builder.SetLastHealthAt(*proxyIn.LastHealthAt)
+	} else {
+		builder.ClearLastHealthAt()
 	}
 
 	updated, err := builder.Save(ctx)
@@ -350,20 +434,52 @@ func proxyEntityToService(m *dbent.Proxy) *service.Proxy {
 		return nil
 	}
 	out := &service.Proxy{
-		ID:        m.ID,
-		Name:      m.Name,
-		Protocol:  m.Protocol,
-		Host:      m.Host,
-		Port:      m.Port,
-		Status:    m.Status,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		ID:                  m.ID,
+		Name:                m.Name,
+		Protocol:            m.Protocol,
+		Host:                m.Host,
+		Port:                m.Port,
+		Status:              m.Status,
+		IsDedicated:         m.IsDedicated,
+		HealthCheckFailures: m.HealthCheckFailures,
+		CreatedAt:           m.CreatedAt,
+		UpdatedAt:           m.UpdatedAt,
 	}
 	if m.Username != nil {
 		out.Username = *m.Username
 	}
 	if m.Password != nil {
 		out.Password = *m.Password
+	}
+	if m.Region != nil {
+		out.Region = *m.Region
+	}
+	if m.GroupName != nil {
+		out.GroupName = *m.GroupName
+	}
+	if m.OvpnConfig != nil {
+		out.OvpnConfig = *m.OvpnConfig
+	}
+	if m.OvpnUsername != nil {
+		out.OvpnUsername = *m.OvpnUsername
+	}
+	if m.OvpnPassword != nil {
+		out.OvpnPassword = *m.OvpnPassword
+	}
+	if m.VpnStatus != nil {
+		out.VpnStatus = *m.VpnStatus
+	}
+	if m.VpnExitIP != nil {
+		out.VpnExitIP = *m.VpnExitIP
+	}
+	if m.HealthStatus != nil {
+		out.HealthStatus = *m.HealthStatus
+	}
+	if m.LatencyMs != nil {
+		out.LatencyMs = m.LatencyMs
+	}
+	if m.LastHealthAt != nil {
+		out.LastHealthAt = m.LastHealthAt
 	}
 	return out
 }
@@ -375,4 +491,45 @@ func applyProxyEntityToService(dst *service.Proxy, src *dbent.Proxy) {
 	dst.ID = src.ID
 	dst.CreatedAt = src.CreatedAt
 	dst.UpdatedAt = src.UpdatedAt
+}
+
+// ListByGroupName returns all active proxies in a given group
+func (r *proxyRepository) ListByGroupName(ctx context.Context, groupName string) ([]service.Proxy, error) {
+	proxies, err := r.client.Proxy.Query().
+		Where(
+			proxy.GroupNameEQ(groupName),
+			proxy.StatusEQ(service.StatusActive),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]service.Proxy, 0, len(proxies))
+	for i := range proxies {
+		out = append(out, *proxyEntityToService(proxies[i]))
+	}
+	return out, nil
+}
+
+// ListGroupNames returns all distinct non-null group names
+func (r *proxyRepository) ListGroupNames(ctx context.Context) ([]string, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT DISTINCT group_name FROM proxies
+		WHERE group_name IS NOT NULL AND group_name != '' AND deleted_at IS NULL
+		ORDER BY group_name
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		names = append(names, name)
+	}
+	return names, rows.Err()
 }

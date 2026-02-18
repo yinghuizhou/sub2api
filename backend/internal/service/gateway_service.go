@@ -416,6 +416,7 @@ type GatewayService struct {
 	sessionLimitCache   SessionLimitCache // 会话数量限制缓存（仅 Anthropic OAuth/SetupToken）
 	vendorRepo          VendorRepository
 	vendorAdapter       *VendorProtocolAdapter //nolint:unused // Phase 3 placeholder
+	proxyGroupService   *ProxyGroupService
 }
 
 // NewGatewayService creates a new GatewayService
@@ -440,6 +441,7 @@ func NewGatewayService(
 	sessionLimitCache SessionLimitCache,
 	digestStore *DigestSessionStore,
 	vendorRepo VendorRepository,
+	proxyGroupService *ProxyGroupService,
 ) *GatewayService {
 	return &GatewayService{
 		accountRepo:         accountRepo,
@@ -463,6 +465,7 @@ func NewGatewayService(
 		sessionLimitCache:   sessionLimitCache,
 		vendorRepo:          vendorRepo,
 		vendorAdapter:       &VendorProtocolAdapter{},
+		proxyGroupService:   proxyGroupService,
 	}
 }
 
@@ -3136,9 +3139,11 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 		return nil, err
 	}
 
-	// 获取代理URL
+	// 获取代理URL（支持专用代理和代理分组）
 	proxyURL := ""
-	if account.ProxyID != nil && account.Proxy != nil {
+	if s.proxyGroupService != nil {
+		proxyURL = s.proxyGroupService.SelectProxyForAccount(ctx, account)
+	} else if account.ProxyID != nil && account.Proxy != nil {
 		proxyURL = account.Proxy.URL()
 	}
 
@@ -5012,9 +5017,11 @@ func (s *GatewayService) ForwardCountTokens(ctx context.Context, c *gin.Context,
 		return err
 	}
 
-	// 获取代理URL
+	// 获取代理URL（支持专用代理和代理分组）
 	proxyURL := ""
-	if account.ProxyID != nil && account.Proxy != nil {
+	if s.proxyGroupService != nil {
+		proxyURL = s.proxyGroupService.SelectProxyForAccount(ctx, account)
+	} else if account.ProxyID != nil && account.Proxy != nil {
 		proxyURL = account.Proxy.URL()
 	}
 

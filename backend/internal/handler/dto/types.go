@@ -107,6 +107,7 @@ type Account struct {
 	Credentials        map[string]any `json:"credentials"`
 	Extra              map[string]any `json:"extra"`
 	ProxyID            *int64         `json:"proxy_id"`
+	ProxyGroup         string         `json:"proxy_group"`
 	Concurrency        int            `json:"concurrency"`
 	Priority           int            `json:"priority"`
 	RateMultiplier     float64        `json:"rate_multiplier"`

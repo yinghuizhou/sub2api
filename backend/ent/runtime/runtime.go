@@ -182,38 +182,42 @@ func init() {
 	accountDescExtra := accountFields[5].Descriptor()
 	// account.DefaultExtra holds the default value on creation for the extra field.
 	account.DefaultExtra = accountDescExtra.Default.(func() map[string]interface{})
+	// accountDescProxyGroup is the schema descriptor for proxy_group field.
+	accountDescProxyGroup := accountFields[7].Descriptor()
+	// account.ProxyGroupValidator is a validator for the "proxy_group" field. It is called by the builders before save.
+	account.ProxyGroupValidator = accountDescProxyGroup.Validators[0].(func(string) error)
 	// accountDescConcurrency is the schema descriptor for concurrency field.
-	accountDescConcurrency := accountFields[7].Descriptor()
+	accountDescConcurrency := accountFields[8].Descriptor()
 	// account.DefaultConcurrency holds the default value on creation for the concurrency field.
 	account.DefaultConcurrency = accountDescConcurrency.Default.(int)
 	// accountDescPriority is the schema descriptor for priority field.
-	accountDescPriority := accountFields[8].Descriptor()
+	accountDescPriority := accountFields[9].Descriptor()
 	// account.DefaultPriority holds the default value on creation for the priority field.
 	account.DefaultPriority = accountDescPriority.Default.(int)
 	// accountDescRateMultiplier is the schema descriptor for rate_multiplier field.
-	accountDescRateMultiplier := accountFields[9].Descriptor()
+	accountDescRateMultiplier := accountFields[10].Descriptor()
 	// account.DefaultRateMultiplier holds the default value on creation for the rate_multiplier field.
 	account.DefaultRateMultiplier = accountDescRateMultiplier.Default.(float64)
 	// accountDescStatus is the schema descriptor for status field.
-	accountDescStatus := accountFields[10].Descriptor()
+	accountDescStatus := accountFields[11].Descriptor()
 	// account.DefaultStatus holds the default value on creation for the status field.
 	account.DefaultStatus = accountDescStatus.Default.(string)
 	// account.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	account.StatusValidator = accountDescStatus.Validators[0].(func(string) error)
 	// accountDescAutoPauseOnExpired is the schema descriptor for auto_pause_on_expired field.
-	accountDescAutoPauseOnExpired := accountFields[14].Descriptor()
+	accountDescAutoPauseOnExpired := accountFields[15].Descriptor()
 	// account.DefaultAutoPauseOnExpired holds the default value on creation for the auto_pause_on_expired field.
 	account.DefaultAutoPauseOnExpired = accountDescAutoPauseOnExpired.Default.(bool)
 	// accountDescSchedulable is the schema descriptor for schedulable field.
-	accountDescSchedulable := accountFields[15].Descriptor()
+	accountDescSchedulable := accountFields[16].Descriptor()
 	// account.DefaultSchedulable holds the default value on creation for the schedulable field.
 	account.DefaultSchedulable = accountDescSchedulable.Default.(bool)
 	// accountDescSessionWindowStatus is the schema descriptor for session_window_status field.
-	accountDescSessionWindowStatus := accountFields[21].Descriptor()
+	accountDescSessionWindowStatus := accountFields[22].Descriptor()
 	// account.SessionWindowStatusValidator is a validator for the "session_window_status" field. It is called by the builders before save.
 	account.SessionWindowStatusValidator = accountDescSessionWindowStatus.Validators[0].(func(string) error)
 	// accountDescSourceType is the schema descriptor for source_type field.
-	accountDescSourceType := accountFields[23].Descriptor()
+	accountDescSourceType := accountFields[24].Descriptor()
 	// account.DefaultSourceType holds the default value on creation for the source_type field.
 	account.DefaultSourceType = accountDescSourceType.Default.(string)
 	// account.SourceTypeValidator is a validator for the "source_type" field. It is called by the builders before save.
@@ -565,6 +569,42 @@ func init() {
 	proxy.DefaultStatus = proxyDescStatus.Default.(string)
 	// proxy.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	proxy.StatusValidator = proxyDescStatus.Validators[0].(func(string) error)
+	// proxyDescRegion is the schema descriptor for region field.
+	proxyDescRegion := proxyFields[7].Descriptor()
+	// proxy.RegionValidator is a validator for the "region" field. It is called by the builders before save.
+	proxy.RegionValidator = proxyDescRegion.Validators[0].(func(string) error)
+	// proxyDescGroupName is the schema descriptor for group_name field.
+	proxyDescGroupName := proxyFields[8].Descriptor()
+	// proxy.GroupNameValidator is a validator for the "group_name" field. It is called by the builders before save.
+	proxy.GroupNameValidator = proxyDescGroupName.Validators[0].(func(string) error)
+	// proxyDescOvpnUsername is the schema descriptor for ovpn_username field.
+	proxyDescOvpnUsername := proxyFields[10].Descriptor()
+	// proxy.OvpnUsernameValidator is a validator for the "ovpn_username" field. It is called by the builders before save.
+	proxy.OvpnUsernameValidator = proxyDescOvpnUsername.Validators[0].(func(string) error)
+	// proxyDescOvpnPassword is the schema descriptor for ovpn_password field.
+	proxyDescOvpnPassword := proxyFields[11].Descriptor()
+	// proxy.OvpnPasswordValidator is a validator for the "ovpn_password" field. It is called by the builders before save.
+	proxy.OvpnPasswordValidator = proxyDescOvpnPassword.Validators[0].(func(string) error)
+	// proxyDescIsDedicated is the schema descriptor for is_dedicated field.
+	proxyDescIsDedicated := proxyFields[12].Descriptor()
+	// proxy.DefaultIsDedicated holds the default value on creation for the is_dedicated field.
+	proxy.DefaultIsDedicated = proxyDescIsDedicated.Default.(bool)
+	// proxyDescVpnStatus is the schema descriptor for vpn_status field.
+	proxyDescVpnStatus := proxyFields[13].Descriptor()
+	// proxy.VpnStatusValidator is a validator for the "vpn_status" field. It is called by the builders before save.
+	proxy.VpnStatusValidator = proxyDescVpnStatus.Validators[0].(func(string) error)
+	// proxyDescVpnExitIP is the schema descriptor for vpn_exit_ip field.
+	proxyDescVpnExitIP := proxyFields[14].Descriptor()
+	// proxy.VpnExitIPValidator is a validator for the "vpn_exit_ip" field. It is called by the builders before save.
+	proxy.VpnExitIPValidator = proxyDescVpnExitIP.Validators[0].(func(string) error)
+	// proxyDescHealthStatus is the schema descriptor for health_status field.
+	proxyDescHealthStatus := proxyFields[15].Descriptor()
+	// proxy.HealthStatusValidator is a validator for the "health_status" field. It is called by the builders before save.
+	proxy.HealthStatusValidator = proxyDescHealthStatus.Validators[0].(func(string) error)
+	// proxyDescHealthCheckFailures is the schema descriptor for health_check_failures field.
+	proxyDescHealthCheckFailures := proxyFields[18].Descriptor()
+	// proxy.DefaultHealthCheckFailures holds the default value on creation for the health_check_failures field.
+	proxy.DefaultHealthCheckFailures = proxyDescHealthCheckFailures.Default.(int)
 	redeemcodeFields := schema.RedeemCode{}.Fields()
 	_ = redeemcodeFields
 	// redeemcodeDescCode is the schema descriptor for code field.

@@ -90,6 +90,7 @@ var (
 		{Name: "type", Type: field.TypeString, Size: 20},
 		{Name: "credentials", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "extra", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "proxy_group", Type: field.TypeString, Nullable: true, Size: 100},
 		{Name: "concurrency", Type: field.TypeInt, Default: 3},
 		{Name: "priority", Type: field.TypeInt, Default: 50},
 		{Name: "rate_multiplier", Type: field.TypeFloat64, Default: 1, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
@@ -117,13 +118,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "accounts_proxies_proxy",
-				Columns:    []*schema.Column{AccountsColumns[26]},
+				Columns:    []*schema.Column{AccountsColumns[27]},
 				RefColumns: []*schema.Column{ProxiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "accounts_vendors_vendor",
-				Columns:    []*schema.Column{AccountsColumns[27]},
+				Columns:    []*schema.Column{AccountsColumns[28]},
 				RefColumns: []*schema.Column{VendorsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -142,42 +143,47 @@ var (
 			{
 				Name:    "account_status",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[13]},
+				Columns: []*schema.Column{AccountsColumns[14]},
 			},
 			{
 				Name:    "account_proxy_id",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[26]},
+				Columns: []*schema.Column{AccountsColumns[27]},
+			},
+			{
+				Name:    "account_proxy_group",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[10]},
 			},
 			{
 				Name:    "account_priority",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[11]},
+				Columns: []*schema.Column{AccountsColumns[12]},
 			},
 			{
 				Name:    "account_last_used_at",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[15]},
+				Columns: []*schema.Column{AccountsColumns[16]},
 			},
 			{
 				Name:    "account_schedulable",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[18]},
+				Columns: []*schema.Column{AccountsColumns[19]},
 			},
 			{
 				Name:    "account_rate_limited_at",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[19]},
+				Columns: []*schema.Column{AccountsColumns[20]},
 			},
 			{
 				Name:    "account_rate_limit_reset_at",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[20]},
+				Columns: []*schema.Column{AccountsColumns[21]},
 			},
 			{
 				Name:    "account_overload_until",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[21]},
+				Columns: []*schema.Column{AccountsColumns[22]},
 			},
 			{
 				Name:    "account_deleted_at",
@@ -187,12 +193,12 @@ var (
 			{
 				Name:    "account_vendor_id",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[27]},
+				Columns: []*schema.Column{AccountsColumns[28]},
 			},
 			{
 				Name:    "account_source_type",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[25]},
+				Columns: []*schema.Column{AccountsColumns[26]},
 			},
 		},
 	}
@@ -520,6 +526,18 @@ var (
 		{Name: "username", Type: field.TypeString, Nullable: true, Size: 100},
 		{Name: "password", Type: field.TypeString, Nullable: true, Size: 100},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "active"},
+		{Name: "region", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "group_name", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "ovpn_config", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "ovpn_username", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "ovpn_password", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "is_dedicated", Type: field.TypeBool, Default: false},
+		{Name: "vpn_status", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "vpn_exit_ip", Type: field.TypeString, Nullable: true, Size: 45},
+		{Name: "health_status", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "latency_ms", Type: field.TypeInt, Nullable: true},
+		{Name: "last_health_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "health_check_failures", Type: field.TypeInt, Default: 0},
 	}
 	// ProxiesTable holds the schema information for the "proxies" table.
 	ProxiesTable = &schema.Table{
@@ -536,6 +554,26 @@ var (
 				Name:    "proxy_deleted_at",
 				Unique:  false,
 				Columns: []*schema.Column{ProxiesColumns[3]},
+			},
+			{
+				Name:    "proxy_group_name",
+				Unique:  false,
+				Columns: []*schema.Column{ProxiesColumns[12]},
+			},
+			{
+				Name:    "proxy_region",
+				Unique:  false,
+				Columns: []*schema.Column{ProxiesColumns[11]},
+			},
+			{
+				Name:    "proxy_health_status",
+				Unique:  false,
+				Columns: []*schema.Column{ProxiesColumns[19]},
+			},
+			{
+				Name:    "proxy_is_dedicated",
+				Unique:  false,
+				Columns: []*schema.Column{ProxiesColumns[16]},
 			},
 		},
 	}

@@ -1442,6 +1442,7 @@ type AccountMutation struct {
 	_type                 *string
 	credentials           *map[string]interface{}
 	extra                 *map[string]interface{}
+	proxy_group           *string
 	concurrency           *int
 	addconcurrency        *int
 	priority              *int
@@ -1972,6 +1973,55 @@ func (m *AccountMutation) ProxyIDCleared() bool {
 func (m *AccountMutation) ResetProxyID() {
 	m.proxy = nil
 	delete(m.clearedFields, account.FieldProxyID)
+}
+
+// SetProxyGroup sets the "proxy_group" field.
+func (m *AccountMutation) SetProxyGroup(s string) {
+	m.proxy_group = &s
+}
+
+// ProxyGroup returns the value of the "proxy_group" field in the mutation.
+func (m *AccountMutation) ProxyGroup() (r string, exists bool) {
+	v := m.proxy_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProxyGroup returns the old "proxy_group" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldProxyGroup(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProxyGroup is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProxyGroup requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProxyGroup: %w", err)
+	}
+	return oldValue.ProxyGroup, nil
+}
+
+// ClearProxyGroup clears the value of the "proxy_group" field.
+func (m *AccountMutation) ClearProxyGroup() {
+	m.proxy_group = nil
+	m.clearedFields[account.FieldProxyGroup] = struct{}{}
+}
+
+// ProxyGroupCleared returns if the "proxy_group" field was cleared in this mutation.
+func (m *AccountMutation) ProxyGroupCleared() bool {
+	_, ok := m.clearedFields[account.FieldProxyGroup]
+	return ok
+}
+
+// ResetProxyGroup resets all changes to the "proxy_group" field.
+func (m *AccountMutation) ResetProxyGroup() {
+	m.proxy_group = nil
+	delete(m.clearedFields, account.FieldProxyGroup)
 }
 
 // SetConcurrency sets the "concurrency" field.
@@ -2972,7 +3022,7 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 27)
+	fields := make([]string, 0, 28)
 	if m.created_at != nil {
 		fields = append(fields, account.FieldCreatedAt)
 	}
@@ -3002,6 +3052,9 @@ func (m *AccountMutation) Fields() []string {
 	}
 	if m.proxy != nil {
 		fields = append(fields, account.FieldProxyID)
+	}
+	if m.proxy_group != nil {
+		fields = append(fields, account.FieldProxyGroup)
 	}
 	if m.concurrency != nil {
 		fields = append(fields, account.FieldConcurrency)
@@ -3082,6 +3135,8 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 		return m.Extra()
 	case account.FieldProxyID:
 		return m.ProxyID()
+	case account.FieldProxyGroup:
+		return m.ProxyGroup()
 	case account.FieldConcurrency:
 		return m.Concurrency()
 	case account.FieldPriority:
@@ -3145,6 +3200,8 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldExtra(ctx)
 	case account.FieldProxyID:
 		return m.OldProxyID(ctx)
+	case account.FieldProxyGroup:
+		return m.OldProxyGroup(ctx)
 	case account.FieldConcurrency:
 		return m.OldConcurrency(ctx)
 	case account.FieldPriority:
@@ -3257,6 +3314,13 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetProxyID(v)
+		return nil
+	case account.FieldProxyGroup:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProxyGroup(v)
 		return nil
 	case account.FieldConcurrency:
 		v, ok := value.(int)
@@ -3455,6 +3519,9 @@ func (m *AccountMutation) ClearedFields() []string {
 	if m.FieldCleared(account.FieldProxyID) {
 		fields = append(fields, account.FieldProxyID)
 	}
+	if m.FieldCleared(account.FieldProxyGroup) {
+		fields = append(fields, account.FieldProxyGroup)
+	}
 	if m.FieldCleared(account.FieldErrorMessage) {
 		fields = append(fields, account.FieldErrorMessage)
 	}
@@ -3507,6 +3574,9 @@ func (m *AccountMutation) ClearField(name string) error {
 		return nil
 	case account.FieldProxyID:
 		m.ClearProxyID()
+		return nil
+	case account.FieldProxyGroup:
+		m.ClearProxyGroup()
 		return nil
 	case account.FieldErrorMessage:
 		m.ClearErrorMessage()
@@ -3575,6 +3645,9 @@ func (m *AccountMutation) ResetField(name string) error {
 		return nil
 	case account.FieldProxyID:
 		m.ResetProxyID()
+		return nil
+	case account.FieldProxyGroup:
+		m.ResetProxyGroup()
 		return nil
 	case account.FieldConcurrency:
 		m.ResetConcurrency()
@@ -11600,27 +11673,41 @@ func (m *PromoCodeUsageMutation) ResetEdge(name string) error {
 // ProxyMutation represents an operation that mutates the Proxy nodes in the graph.
 type ProxyMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int64
-	created_at      *time.Time
-	updated_at      *time.Time
-	deleted_at      *time.Time
-	name            *string
-	protocol        *string
-	host            *string
-	port            *int
-	addport         *int
-	username        *string
-	password        *string
-	status          *string
-	clearedFields   map[string]struct{}
-	accounts        map[int64]struct{}
-	removedaccounts map[int64]struct{}
-	clearedaccounts bool
-	done            bool
-	oldValue        func(context.Context) (*Proxy, error)
-	predicates      []predicate.Proxy
+	op                       Op
+	typ                      string
+	id                       *int64
+	created_at               *time.Time
+	updated_at               *time.Time
+	deleted_at               *time.Time
+	name                     *string
+	protocol                 *string
+	host                     *string
+	port                     *int
+	addport                  *int
+	username                 *string
+	password                 *string
+	status                   *string
+	region                   *string
+	group_name               *string
+	ovpn_config              *string
+	ovpn_username            *string
+	ovpn_password            *string
+	is_dedicated             *bool
+	vpn_status               *string
+	vpn_exit_ip              *string
+	health_status            *string
+	latency_ms               *int
+	addlatency_ms            *int
+	last_health_at           *time.Time
+	health_check_failures    *int
+	addhealth_check_failures *int
+	clearedFields            map[string]struct{}
+	accounts                 map[int64]struct{}
+	removedaccounts          map[int64]struct{}
+	clearedaccounts          bool
+	done                     bool
+	oldValue                 func(context.Context) (*Proxy, error)
+	predicates               []predicate.Proxy
 }
 
 var _ ent.Mutation = (*ProxyMutation)(nil)
@@ -12140,6 +12227,609 @@ func (m *ProxyMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetRegion sets the "region" field.
+func (m *ProxyMutation) SetRegion(s string) {
+	m.region = &s
+}
+
+// Region returns the value of the "region" field in the mutation.
+func (m *ProxyMutation) Region() (r string, exists bool) {
+	v := m.region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegion returns the old "region" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldRegion(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegion: %w", err)
+	}
+	return oldValue.Region, nil
+}
+
+// ClearRegion clears the value of the "region" field.
+func (m *ProxyMutation) ClearRegion() {
+	m.region = nil
+	m.clearedFields[proxy.FieldRegion] = struct{}{}
+}
+
+// RegionCleared returns if the "region" field was cleared in this mutation.
+func (m *ProxyMutation) RegionCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldRegion]
+	return ok
+}
+
+// ResetRegion resets all changes to the "region" field.
+func (m *ProxyMutation) ResetRegion() {
+	m.region = nil
+	delete(m.clearedFields, proxy.FieldRegion)
+}
+
+// SetGroupName sets the "group_name" field.
+func (m *ProxyMutation) SetGroupName(s string) {
+	m.group_name = &s
+}
+
+// GroupName returns the value of the "group_name" field in the mutation.
+func (m *ProxyMutation) GroupName() (r string, exists bool) {
+	v := m.group_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupName returns the old "group_name" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldGroupName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupName: %w", err)
+	}
+	return oldValue.GroupName, nil
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (m *ProxyMutation) ClearGroupName() {
+	m.group_name = nil
+	m.clearedFields[proxy.FieldGroupName] = struct{}{}
+}
+
+// GroupNameCleared returns if the "group_name" field was cleared in this mutation.
+func (m *ProxyMutation) GroupNameCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldGroupName]
+	return ok
+}
+
+// ResetGroupName resets all changes to the "group_name" field.
+func (m *ProxyMutation) ResetGroupName() {
+	m.group_name = nil
+	delete(m.clearedFields, proxy.FieldGroupName)
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (m *ProxyMutation) SetOvpnConfig(s string) {
+	m.ovpn_config = &s
+}
+
+// OvpnConfig returns the value of the "ovpn_config" field in the mutation.
+func (m *ProxyMutation) OvpnConfig() (r string, exists bool) {
+	v := m.ovpn_config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOvpnConfig returns the old "ovpn_config" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldOvpnConfig(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOvpnConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOvpnConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOvpnConfig: %w", err)
+	}
+	return oldValue.OvpnConfig, nil
+}
+
+// ClearOvpnConfig clears the value of the "ovpn_config" field.
+func (m *ProxyMutation) ClearOvpnConfig() {
+	m.ovpn_config = nil
+	m.clearedFields[proxy.FieldOvpnConfig] = struct{}{}
+}
+
+// OvpnConfigCleared returns if the "ovpn_config" field was cleared in this mutation.
+func (m *ProxyMutation) OvpnConfigCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldOvpnConfig]
+	return ok
+}
+
+// ResetOvpnConfig resets all changes to the "ovpn_config" field.
+func (m *ProxyMutation) ResetOvpnConfig() {
+	m.ovpn_config = nil
+	delete(m.clearedFields, proxy.FieldOvpnConfig)
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (m *ProxyMutation) SetOvpnUsername(s string) {
+	m.ovpn_username = &s
+}
+
+// OvpnUsername returns the value of the "ovpn_username" field in the mutation.
+func (m *ProxyMutation) OvpnUsername() (r string, exists bool) {
+	v := m.ovpn_username
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOvpnUsername returns the old "ovpn_username" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldOvpnUsername(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOvpnUsername is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOvpnUsername requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOvpnUsername: %w", err)
+	}
+	return oldValue.OvpnUsername, nil
+}
+
+// ClearOvpnUsername clears the value of the "ovpn_username" field.
+func (m *ProxyMutation) ClearOvpnUsername() {
+	m.ovpn_username = nil
+	m.clearedFields[proxy.FieldOvpnUsername] = struct{}{}
+}
+
+// OvpnUsernameCleared returns if the "ovpn_username" field was cleared in this mutation.
+func (m *ProxyMutation) OvpnUsernameCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldOvpnUsername]
+	return ok
+}
+
+// ResetOvpnUsername resets all changes to the "ovpn_username" field.
+func (m *ProxyMutation) ResetOvpnUsername() {
+	m.ovpn_username = nil
+	delete(m.clearedFields, proxy.FieldOvpnUsername)
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (m *ProxyMutation) SetOvpnPassword(s string) {
+	m.ovpn_password = &s
+}
+
+// OvpnPassword returns the value of the "ovpn_password" field in the mutation.
+func (m *ProxyMutation) OvpnPassword() (r string, exists bool) {
+	v := m.ovpn_password
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOvpnPassword returns the old "ovpn_password" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldOvpnPassword(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOvpnPassword is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOvpnPassword requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOvpnPassword: %w", err)
+	}
+	return oldValue.OvpnPassword, nil
+}
+
+// ClearOvpnPassword clears the value of the "ovpn_password" field.
+func (m *ProxyMutation) ClearOvpnPassword() {
+	m.ovpn_password = nil
+	m.clearedFields[proxy.FieldOvpnPassword] = struct{}{}
+}
+
+// OvpnPasswordCleared returns if the "ovpn_password" field was cleared in this mutation.
+func (m *ProxyMutation) OvpnPasswordCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldOvpnPassword]
+	return ok
+}
+
+// ResetOvpnPassword resets all changes to the "ovpn_password" field.
+func (m *ProxyMutation) ResetOvpnPassword() {
+	m.ovpn_password = nil
+	delete(m.clearedFields, proxy.FieldOvpnPassword)
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (m *ProxyMutation) SetIsDedicated(b bool) {
+	m.is_dedicated = &b
+}
+
+// IsDedicated returns the value of the "is_dedicated" field in the mutation.
+func (m *ProxyMutation) IsDedicated() (r bool, exists bool) {
+	v := m.is_dedicated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsDedicated returns the old "is_dedicated" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldIsDedicated(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsDedicated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsDedicated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsDedicated: %w", err)
+	}
+	return oldValue.IsDedicated, nil
+}
+
+// ResetIsDedicated resets all changes to the "is_dedicated" field.
+func (m *ProxyMutation) ResetIsDedicated() {
+	m.is_dedicated = nil
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (m *ProxyMutation) SetVpnStatus(s string) {
+	m.vpn_status = &s
+}
+
+// VpnStatus returns the value of the "vpn_status" field in the mutation.
+func (m *ProxyMutation) VpnStatus() (r string, exists bool) {
+	v := m.vpn_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVpnStatus returns the old "vpn_status" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldVpnStatus(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVpnStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVpnStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVpnStatus: %w", err)
+	}
+	return oldValue.VpnStatus, nil
+}
+
+// ClearVpnStatus clears the value of the "vpn_status" field.
+func (m *ProxyMutation) ClearVpnStatus() {
+	m.vpn_status = nil
+	m.clearedFields[proxy.FieldVpnStatus] = struct{}{}
+}
+
+// VpnStatusCleared returns if the "vpn_status" field was cleared in this mutation.
+func (m *ProxyMutation) VpnStatusCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldVpnStatus]
+	return ok
+}
+
+// ResetVpnStatus resets all changes to the "vpn_status" field.
+func (m *ProxyMutation) ResetVpnStatus() {
+	m.vpn_status = nil
+	delete(m.clearedFields, proxy.FieldVpnStatus)
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (m *ProxyMutation) SetVpnExitIP(s string) {
+	m.vpn_exit_ip = &s
+}
+
+// VpnExitIP returns the value of the "vpn_exit_ip" field in the mutation.
+func (m *ProxyMutation) VpnExitIP() (r string, exists bool) {
+	v := m.vpn_exit_ip
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVpnExitIP returns the old "vpn_exit_ip" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldVpnExitIP(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVpnExitIP is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVpnExitIP requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVpnExitIP: %w", err)
+	}
+	return oldValue.VpnExitIP, nil
+}
+
+// ClearVpnExitIP clears the value of the "vpn_exit_ip" field.
+func (m *ProxyMutation) ClearVpnExitIP() {
+	m.vpn_exit_ip = nil
+	m.clearedFields[proxy.FieldVpnExitIP] = struct{}{}
+}
+
+// VpnExitIPCleared returns if the "vpn_exit_ip" field was cleared in this mutation.
+func (m *ProxyMutation) VpnExitIPCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldVpnExitIP]
+	return ok
+}
+
+// ResetVpnExitIP resets all changes to the "vpn_exit_ip" field.
+func (m *ProxyMutation) ResetVpnExitIP() {
+	m.vpn_exit_ip = nil
+	delete(m.clearedFields, proxy.FieldVpnExitIP)
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (m *ProxyMutation) SetHealthStatus(s string) {
+	m.health_status = &s
+}
+
+// HealthStatus returns the value of the "health_status" field in the mutation.
+func (m *ProxyMutation) HealthStatus() (r string, exists bool) {
+	v := m.health_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHealthStatus returns the old "health_status" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldHealthStatus(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHealthStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHealthStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHealthStatus: %w", err)
+	}
+	return oldValue.HealthStatus, nil
+}
+
+// ClearHealthStatus clears the value of the "health_status" field.
+func (m *ProxyMutation) ClearHealthStatus() {
+	m.health_status = nil
+	m.clearedFields[proxy.FieldHealthStatus] = struct{}{}
+}
+
+// HealthStatusCleared returns if the "health_status" field was cleared in this mutation.
+func (m *ProxyMutation) HealthStatusCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldHealthStatus]
+	return ok
+}
+
+// ResetHealthStatus resets all changes to the "health_status" field.
+func (m *ProxyMutation) ResetHealthStatus() {
+	m.health_status = nil
+	delete(m.clearedFields, proxy.FieldHealthStatus)
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (m *ProxyMutation) SetLatencyMs(i int) {
+	m.latency_ms = &i
+	m.addlatency_ms = nil
+}
+
+// LatencyMs returns the value of the "latency_ms" field in the mutation.
+func (m *ProxyMutation) LatencyMs() (r int, exists bool) {
+	v := m.latency_ms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLatencyMs returns the old "latency_ms" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldLatencyMs(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLatencyMs is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLatencyMs requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLatencyMs: %w", err)
+	}
+	return oldValue.LatencyMs, nil
+}
+
+// AddLatencyMs adds i to the "latency_ms" field.
+func (m *ProxyMutation) AddLatencyMs(i int) {
+	if m.addlatency_ms != nil {
+		*m.addlatency_ms += i
+	} else {
+		m.addlatency_ms = &i
+	}
+}
+
+// AddedLatencyMs returns the value that was added to the "latency_ms" field in this mutation.
+func (m *ProxyMutation) AddedLatencyMs() (r int, exists bool) {
+	v := m.addlatency_ms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLatencyMs clears the value of the "latency_ms" field.
+func (m *ProxyMutation) ClearLatencyMs() {
+	m.latency_ms = nil
+	m.addlatency_ms = nil
+	m.clearedFields[proxy.FieldLatencyMs] = struct{}{}
+}
+
+// LatencyMsCleared returns if the "latency_ms" field was cleared in this mutation.
+func (m *ProxyMutation) LatencyMsCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldLatencyMs]
+	return ok
+}
+
+// ResetLatencyMs resets all changes to the "latency_ms" field.
+func (m *ProxyMutation) ResetLatencyMs() {
+	m.latency_ms = nil
+	m.addlatency_ms = nil
+	delete(m.clearedFields, proxy.FieldLatencyMs)
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (m *ProxyMutation) SetLastHealthAt(t time.Time) {
+	m.last_health_at = &t
+}
+
+// LastHealthAt returns the value of the "last_health_at" field in the mutation.
+func (m *ProxyMutation) LastHealthAt() (r time.Time, exists bool) {
+	v := m.last_health_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastHealthAt returns the old "last_health_at" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldLastHealthAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastHealthAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastHealthAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastHealthAt: %w", err)
+	}
+	return oldValue.LastHealthAt, nil
+}
+
+// ClearLastHealthAt clears the value of the "last_health_at" field.
+func (m *ProxyMutation) ClearLastHealthAt() {
+	m.last_health_at = nil
+	m.clearedFields[proxy.FieldLastHealthAt] = struct{}{}
+}
+
+// LastHealthAtCleared returns if the "last_health_at" field was cleared in this mutation.
+func (m *ProxyMutation) LastHealthAtCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldLastHealthAt]
+	return ok
+}
+
+// ResetLastHealthAt resets all changes to the "last_health_at" field.
+func (m *ProxyMutation) ResetLastHealthAt() {
+	m.last_health_at = nil
+	delete(m.clearedFields, proxy.FieldLastHealthAt)
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (m *ProxyMutation) SetHealthCheckFailures(i int) {
+	m.health_check_failures = &i
+	m.addhealth_check_failures = nil
+}
+
+// HealthCheckFailures returns the value of the "health_check_failures" field in the mutation.
+func (m *ProxyMutation) HealthCheckFailures() (r int, exists bool) {
+	v := m.health_check_failures
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHealthCheckFailures returns the old "health_check_failures" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldHealthCheckFailures(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHealthCheckFailures is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHealthCheckFailures requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHealthCheckFailures: %w", err)
+	}
+	return oldValue.HealthCheckFailures, nil
+}
+
+// AddHealthCheckFailures adds i to the "health_check_failures" field.
+func (m *ProxyMutation) AddHealthCheckFailures(i int) {
+	if m.addhealth_check_failures != nil {
+		*m.addhealth_check_failures += i
+	} else {
+		m.addhealth_check_failures = &i
+	}
+}
+
+// AddedHealthCheckFailures returns the value that was added to the "health_check_failures" field in this mutation.
+func (m *ProxyMutation) AddedHealthCheckFailures() (r int, exists bool) {
+	v := m.addhealth_check_failures
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetHealthCheckFailures resets all changes to the "health_check_failures" field.
+func (m *ProxyMutation) ResetHealthCheckFailures() {
+	m.health_check_failures = nil
+	m.addhealth_check_failures = nil
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by ids.
 func (m *ProxyMutation) AddAccountIDs(ids ...int64) {
 	if m.accounts == nil {
@@ -12228,7 +12918,7 @@ func (m *ProxyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProxyMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 22)
 	if m.created_at != nil {
 		fields = append(fields, proxy.FieldCreatedAt)
 	}
@@ -12259,6 +12949,42 @@ func (m *ProxyMutation) Fields() []string {
 	if m.status != nil {
 		fields = append(fields, proxy.FieldStatus)
 	}
+	if m.region != nil {
+		fields = append(fields, proxy.FieldRegion)
+	}
+	if m.group_name != nil {
+		fields = append(fields, proxy.FieldGroupName)
+	}
+	if m.ovpn_config != nil {
+		fields = append(fields, proxy.FieldOvpnConfig)
+	}
+	if m.ovpn_username != nil {
+		fields = append(fields, proxy.FieldOvpnUsername)
+	}
+	if m.ovpn_password != nil {
+		fields = append(fields, proxy.FieldOvpnPassword)
+	}
+	if m.is_dedicated != nil {
+		fields = append(fields, proxy.FieldIsDedicated)
+	}
+	if m.vpn_status != nil {
+		fields = append(fields, proxy.FieldVpnStatus)
+	}
+	if m.vpn_exit_ip != nil {
+		fields = append(fields, proxy.FieldVpnExitIP)
+	}
+	if m.health_status != nil {
+		fields = append(fields, proxy.FieldHealthStatus)
+	}
+	if m.latency_ms != nil {
+		fields = append(fields, proxy.FieldLatencyMs)
+	}
+	if m.last_health_at != nil {
+		fields = append(fields, proxy.FieldLastHealthAt)
+	}
+	if m.health_check_failures != nil {
+		fields = append(fields, proxy.FieldHealthCheckFailures)
+	}
 	return fields
 }
 
@@ -12287,6 +13013,30 @@ func (m *ProxyMutation) Field(name string) (ent.Value, bool) {
 		return m.Password()
 	case proxy.FieldStatus:
 		return m.Status()
+	case proxy.FieldRegion:
+		return m.Region()
+	case proxy.FieldGroupName:
+		return m.GroupName()
+	case proxy.FieldOvpnConfig:
+		return m.OvpnConfig()
+	case proxy.FieldOvpnUsername:
+		return m.OvpnUsername()
+	case proxy.FieldOvpnPassword:
+		return m.OvpnPassword()
+	case proxy.FieldIsDedicated:
+		return m.IsDedicated()
+	case proxy.FieldVpnStatus:
+		return m.VpnStatus()
+	case proxy.FieldVpnExitIP:
+		return m.VpnExitIP()
+	case proxy.FieldHealthStatus:
+		return m.HealthStatus()
+	case proxy.FieldLatencyMs:
+		return m.LatencyMs()
+	case proxy.FieldLastHealthAt:
+		return m.LastHealthAt()
+	case proxy.FieldHealthCheckFailures:
+		return m.HealthCheckFailures()
 	}
 	return nil, false
 }
@@ -12316,6 +13066,30 @@ func (m *ProxyMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldPassword(ctx)
 	case proxy.FieldStatus:
 		return m.OldStatus(ctx)
+	case proxy.FieldRegion:
+		return m.OldRegion(ctx)
+	case proxy.FieldGroupName:
+		return m.OldGroupName(ctx)
+	case proxy.FieldOvpnConfig:
+		return m.OldOvpnConfig(ctx)
+	case proxy.FieldOvpnUsername:
+		return m.OldOvpnUsername(ctx)
+	case proxy.FieldOvpnPassword:
+		return m.OldOvpnPassword(ctx)
+	case proxy.FieldIsDedicated:
+		return m.OldIsDedicated(ctx)
+	case proxy.FieldVpnStatus:
+		return m.OldVpnStatus(ctx)
+	case proxy.FieldVpnExitIP:
+		return m.OldVpnExitIP(ctx)
+	case proxy.FieldHealthStatus:
+		return m.OldHealthStatus(ctx)
+	case proxy.FieldLatencyMs:
+		return m.OldLatencyMs(ctx)
+	case proxy.FieldLastHealthAt:
+		return m.OldLastHealthAt(ctx)
+	case proxy.FieldHealthCheckFailures:
+		return m.OldHealthCheckFailures(ctx)
 	}
 	return nil, fmt.Errorf("unknown Proxy field %s", name)
 }
@@ -12395,6 +13169,90 @@ func (m *ProxyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case proxy.FieldRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegion(v)
+		return nil
+	case proxy.FieldGroupName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupName(v)
+		return nil
+	case proxy.FieldOvpnConfig:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOvpnConfig(v)
+		return nil
+	case proxy.FieldOvpnUsername:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOvpnUsername(v)
+		return nil
+	case proxy.FieldOvpnPassword:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOvpnPassword(v)
+		return nil
+	case proxy.FieldIsDedicated:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsDedicated(v)
+		return nil
+	case proxy.FieldVpnStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVpnStatus(v)
+		return nil
+	case proxy.FieldVpnExitIP:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVpnExitIP(v)
+		return nil
+	case proxy.FieldHealthStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHealthStatus(v)
+		return nil
+	case proxy.FieldLatencyMs:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLatencyMs(v)
+		return nil
+	case proxy.FieldLastHealthAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastHealthAt(v)
+		return nil
+	case proxy.FieldHealthCheckFailures:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHealthCheckFailures(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Proxy field %s", name)
 }
@@ -12406,6 +13264,12 @@ func (m *ProxyMutation) AddedFields() []string {
 	if m.addport != nil {
 		fields = append(fields, proxy.FieldPort)
 	}
+	if m.addlatency_ms != nil {
+		fields = append(fields, proxy.FieldLatencyMs)
+	}
+	if m.addhealth_check_failures != nil {
+		fields = append(fields, proxy.FieldHealthCheckFailures)
+	}
 	return fields
 }
 
@@ -12416,6 +13280,10 @@ func (m *ProxyMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case proxy.FieldPort:
 		return m.AddedPort()
+	case proxy.FieldLatencyMs:
+		return m.AddedLatencyMs()
+	case proxy.FieldHealthCheckFailures:
+		return m.AddedHealthCheckFailures()
 	}
 	return nil, false
 }
@@ -12431,6 +13299,20 @@ func (m *ProxyMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPort(v)
+		return nil
+	case proxy.FieldLatencyMs:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLatencyMs(v)
+		return nil
+	case proxy.FieldHealthCheckFailures:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddHealthCheckFailures(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy numeric field %s", name)
@@ -12448,6 +13330,36 @@ func (m *ProxyMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(proxy.FieldPassword) {
 		fields = append(fields, proxy.FieldPassword)
+	}
+	if m.FieldCleared(proxy.FieldRegion) {
+		fields = append(fields, proxy.FieldRegion)
+	}
+	if m.FieldCleared(proxy.FieldGroupName) {
+		fields = append(fields, proxy.FieldGroupName)
+	}
+	if m.FieldCleared(proxy.FieldOvpnConfig) {
+		fields = append(fields, proxy.FieldOvpnConfig)
+	}
+	if m.FieldCleared(proxy.FieldOvpnUsername) {
+		fields = append(fields, proxy.FieldOvpnUsername)
+	}
+	if m.FieldCleared(proxy.FieldOvpnPassword) {
+		fields = append(fields, proxy.FieldOvpnPassword)
+	}
+	if m.FieldCleared(proxy.FieldVpnStatus) {
+		fields = append(fields, proxy.FieldVpnStatus)
+	}
+	if m.FieldCleared(proxy.FieldVpnExitIP) {
+		fields = append(fields, proxy.FieldVpnExitIP)
+	}
+	if m.FieldCleared(proxy.FieldHealthStatus) {
+		fields = append(fields, proxy.FieldHealthStatus)
+	}
+	if m.FieldCleared(proxy.FieldLatencyMs) {
+		fields = append(fields, proxy.FieldLatencyMs)
+	}
+	if m.FieldCleared(proxy.FieldLastHealthAt) {
+		fields = append(fields, proxy.FieldLastHealthAt)
 	}
 	return fields
 }
@@ -12471,6 +13383,36 @@ func (m *ProxyMutation) ClearField(name string) error {
 		return nil
 	case proxy.FieldPassword:
 		m.ClearPassword()
+		return nil
+	case proxy.FieldRegion:
+		m.ClearRegion()
+		return nil
+	case proxy.FieldGroupName:
+		m.ClearGroupName()
+		return nil
+	case proxy.FieldOvpnConfig:
+		m.ClearOvpnConfig()
+		return nil
+	case proxy.FieldOvpnUsername:
+		m.ClearOvpnUsername()
+		return nil
+	case proxy.FieldOvpnPassword:
+		m.ClearOvpnPassword()
+		return nil
+	case proxy.FieldVpnStatus:
+		m.ClearVpnStatus()
+		return nil
+	case proxy.FieldVpnExitIP:
+		m.ClearVpnExitIP()
+		return nil
+	case proxy.FieldHealthStatus:
+		m.ClearHealthStatus()
+		return nil
+	case proxy.FieldLatencyMs:
+		m.ClearLatencyMs()
+		return nil
+	case proxy.FieldLastHealthAt:
+		m.ClearLastHealthAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy nullable field %s", name)
@@ -12509,6 +13451,42 @@ func (m *ProxyMutation) ResetField(name string) error {
 		return nil
 	case proxy.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case proxy.FieldRegion:
+		m.ResetRegion()
+		return nil
+	case proxy.FieldGroupName:
+		m.ResetGroupName()
+		return nil
+	case proxy.FieldOvpnConfig:
+		m.ResetOvpnConfig()
+		return nil
+	case proxy.FieldOvpnUsername:
+		m.ResetOvpnUsername()
+		return nil
+	case proxy.FieldOvpnPassword:
+		m.ResetOvpnPassword()
+		return nil
+	case proxy.FieldIsDedicated:
+		m.ResetIsDedicated()
+		return nil
+	case proxy.FieldVpnStatus:
+		m.ResetVpnStatus()
+		return nil
+	case proxy.FieldVpnExitIP:
+		m.ResetVpnExitIP()
+		return nil
+	case proxy.FieldHealthStatus:
+		m.ResetHealthStatus()
+		return nil
+	case proxy.FieldLatencyMs:
+		m.ResetLatencyMs()
+		return nil
+	case proxy.FieldLastHealthAt:
+		m.ResetLastHealthAt()
+		return nil
+	case proxy.FieldHealthCheckFailures:
+		m.ResetHealthCheckFailures()
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy field %s", name)

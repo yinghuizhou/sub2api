@@ -165,6 +165,7 @@ func AccountFromServiceShallow(a *service.Account) *Account {
 		Credentials:             a.Credentials,
 		Extra:                   a.Extra,
 		ProxyID:                 a.ProxyID,
+		ProxyGroup:              a.ProxyGroup,
 		Concurrency:             a.Concurrency,
 		Priority:                a.Priority,
 		RateMultiplier:          a.BillingRateMultiplier(),

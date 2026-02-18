@@ -87,8 +87,15 @@ func (Account) Fields() []ent.Field {
 			SchemaType(map[string]string{dialect.Postgres: "jsonb"}),
 
 		// proxy_id: 关联的代理配置 ID（可选）
-		// 用于需要通过特定代理访问 API 的场景
+		// 用于需要通过特定代理访问 API 的场景（专用 IP 模式）
 		field.Int64("proxy_id").
+			Optional().
+			Nillable(),
+
+		// proxy_group: 代理分组名（可选）
+		// 当 proxy_id 为空但 proxy_group 不为空时，从该组的健康代理中自动选择
+		field.String("proxy_group").
+			MaxLen(100).
 			Optional().
 			Nillable(),
 
@@ -224,6 +231,7 @@ func (Account) Indexes() []ent.Index {
 		index.Fields("type"),                // 按认证类型筛选
 		index.Fields("status"),              // 按状态筛选
 		index.Fields("proxy_id"),            // 按代理筛选
+		index.Fields("proxy_group"),         // 按代理分组筛选
 		index.Fields("priority"),            // 按优先级排序
 		index.Fields("last_used_at"),        // 按最后使用时间排序
 		index.Fields("schedulable"),         // 筛选可调度账户

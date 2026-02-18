@@ -70,6 +70,7 @@ type AccountRepository interface {
 type AccountBulkUpdate struct {
 	Name           *string
 	ProxyID        *int64
+	ProxyGroup     *string
 	Concurrency    *int
 	Priority       *int
 	RateMultiplier *float64
@@ -88,6 +89,7 @@ type CreateAccountRequest struct {
 	Credentials        map[string]any `json:"credentials"`
 	Extra              map[string]any `json:"extra"`
 	ProxyID            *int64         `json:"proxy_id"`
+	ProxyGroup         string         `json:"proxy_group"`
 	Concurrency        int            `json:"concurrency"`
 	Priority           int            `json:"priority"`
 	GroupIDs           []int64        `json:"group_ids"`
@@ -104,6 +106,7 @@ type UpdateAccountRequest struct {
 	Credentials        *map[string]any `json:"credentials"`
 	Extra              *map[string]any `json:"extra"`
 	ProxyID            *int64          `json:"proxy_id"`
+	ProxyGroup         *string         `json:"proxy_group"`
 	Concurrency        *int            `json:"concurrency"`
 	Priority           *int            `json:"priority"`
 	Status             *string         `json:"status"`
@@ -149,6 +152,7 @@ func (s *AccountService) Create(ctx context.Context, req CreateAccountRequest) (
 		Credentials: req.Credentials,
 		Extra:       req.Extra,
 		ProxyID:     req.ProxyID,
+		ProxyGroup:  req.ProxyGroup,
 		Concurrency: req.Concurrency,
 		Priority:    req.Priority,
 		Status:      StatusActive,
@@ -240,6 +244,10 @@ func (s *AccountService) Update(ctx context.Context, id int64, req UpdateAccount
 
 	if req.ProxyID != nil {
 		account.ProxyID = req.ProxyID
+	}
+
+	if req.ProxyGroup != nil {
+		account.ProxyGroup = *req.ProxyGroup
 	}
 
 	if req.Concurrency != nil {

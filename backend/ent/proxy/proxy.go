@@ -35,6 +35,30 @@ const (
 	FieldPassword = "password"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldRegion holds the string denoting the region field in the database.
+	FieldRegion = "region"
+	// FieldGroupName holds the string denoting the group_name field in the database.
+	FieldGroupName = "group_name"
+	// FieldOvpnConfig holds the string denoting the ovpn_config field in the database.
+	FieldOvpnConfig = "ovpn_config"
+	// FieldOvpnUsername holds the string denoting the ovpn_username field in the database.
+	FieldOvpnUsername = "ovpn_username"
+	// FieldOvpnPassword holds the string denoting the ovpn_password field in the database.
+	FieldOvpnPassword = "ovpn_password"
+	// FieldIsDedicated holds the string denoting the is_dedicated field in the database.
+	FieldIsDedicated = "is_dedicated"
+	// FieldVpnStatus holds the string denoting the vpn_status field in the database.
+	FieldVpnStatus = "vpn_status"
+	// FieldVpnExitIP holds the string denoting the vpn_exit_ip field in the database.
+	FieldVpnExitIP = "vpn_exit_ip"
+	// FieldHealthStatus holds the string denoting the health_status field in the database.
+	FieldHealthStatus = "health_status"
+	// FieldLatencyMs holds the string denoting the latency_ms field in the database.
+	FieldLatencyMs = "latency_ms"
+	// FieldLastHealthAt holds the string denoting the last_health_at field in the database.
+	FieldLastHealthAt = "last_health_at"
+	// FieldHealthCheckFailures holds the string denoting the health_check_failures field in the database.
+	FieldHealthCheckFailures = "health_check_failures"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
 	// Table holds the table name of the proxy in the database.
@@ -61,6 +85,18 @@ var Columns = []string{
 	FieldUsername,
 	FieldPassword,
 	FieldStatus,
+	FieldRegion,
+	FieldGroupName,
+	FieldOvpnConfig,
+	FieldOvpnUsername,
+	FieldOvpnPassword,
+	FieldIsDedicated,
+	FieldVpnStatus,
+	FieldVpnExitIP,
+	FieldHealthStatus,
+	FieldLatencyMs,
+	FieldLastHealthAt,
+	FieldHealthCheckFailures,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -101,6 +137,24 @@ var (
 	DefaultStatus string
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(string) error
+	// RegionValidator is a validator for the "region" field. It is called by the builders before save.
+	RegionValidator func(string) error
+	// GroupNameValidator is a validator for the "group_name" field. It is called by the builders before save.
+	GroupNameValidator func(string) error
+	// OvpnUsernameValidator is a validator for the "ovpn_username" field. It is called by the builders before save.
+	OvpnUsernameValidator func(string) error
+	// OvpnPasswordValidator is a validator for the "ovpn_password" field. It is called by the builders before save.
+	OvpnPasswordValidator func(string) error
+	// DefaultIsDedicated holds the default value on creation for the "is_dedicated" field.
+	DefaultIsDedicated bool
+	// VpnStatusValidator is a validator for the "vpn_status" field. It is called by the builders before save.
+	VpnStatusValidator func(string) error
+	// VpnExitIPValidator is a validator for the "vpn_exit_ip" field. It is called by the builders before save.
+	VpnExitIPValidator func(string) error
+	// HealthStatusValidator is a validator for the "health_status" field. It is called by the builders before save.
+	HealthStatusValidator func(string) error
+	// DefaultHealthCheckFailures holds the default value on creation for the "health_check_failures" field.
+	DefaultHealthCheckFailures int
 )
 
 // OrderOption defines the ordering options for the Proxy queries.
@@ -159,6 +213,66 @@ func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByRegion orders the results by the region field.
+func ByRegion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRegion, opts...).ToFunc()
+}
+
+// ByGroupName orders the results by the group_name field.
+func ByGroupName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGroupName, opts...).ToFunc()
+}
+
+// ByOvpnConfig orders the results by the ovpn_config field.
+func ByOvpnConfig(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOvpnConfig, opts...).ToFunc()
+}
+
+// ByOvpnUsername orders the results by the ovpn_username field.
+func ByOvpnUsername(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOvpnUsername, opts...).ToFunc()
+}
+
+// ByOvpnPassword orders the results by the ovpn_password field.
+func ByOvpnPassword(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOvpnPassword, opts...).ToFunc()
+}
+
+// ByIsDedicated orders the results by the is_dedicated field.
+func ByIsDedicated(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsDedicated, opts...).ToFunc()
+}
+
+// ByVpnStatus orders the results by the vpn_status field.
+func ByVpnStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVpnStatus, opts...).ToFunc()
+}
+
+// ByVpnExitIP orders the results by the vpn_exit_ip field.
+func ByVpnExitIP(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVpnExitIP, opts...).ToFunc()
+}
+
+// ByHealthStatus orders the results by the health_status field.
+func ByHealthStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHealthStatus, opts...).ToFunc()
+}
+
+// ByLatencyMs orders the results by the latency_ms field.
+func ByLatencyMs(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLatencyMs, opts...).ToFunc()
+}
+
+// ByLastHealthAt orders the results by the last_health_at field.
+func ByLastHealthAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastHealthAt, opts...).ToFunc()
+}
+
+// ByHealthCheckFailures orders the results by the health_check_failures field.
+func ByHealthCheckFailures(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHealthCheckFailures, opts...).ToFunc()
 }
 
 // ByAccountsCount orders the results by accounts count.

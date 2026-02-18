@@ -172,6 +172,248 @@ func (_u *ProxyUpdate) SetNillableStatus(v *string) *ProxyUpdate {
 	return _u
 }
 
+// SetRegion sets the "region" field.
+func (_u *ProxyUpdate) SetRegion(v string) *ProxyUpdate {
+	_u.mutation.SetRegion(v)
+	return _u
+}
+
+// SetNillableRegion sets the "region" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableRegion(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetRegion(*v)
+	}
+	return _u
+}
+
+// ClearRegion clears the value of the "region" field.
+func (_u *ProxyUpdate) ClearRegion() *ProxyUpdate {
+	_u.mutation.ClearRegion()
+	return _u
+}
+
+// SetGroupName sets the "group_name" field.
+func (_u *ProxyUpdate) SetGroupName(v string) *ProxyUpdate {
+	_u.mutation.SetGroupName(v)
+	return _u
+}
+
+// SetNillableGroupName sets the "group_name" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableGroupName(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetGroupName(*v)
+	}
+	return _u
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (_u *ProxyUpdate) ClearGroupName() *ProxyUpdate {
+	_u.mutation.ClearGroupName()
+	return _u
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (_u *ProxyUpdate) SetOvpnConfig(v string) *ProxyUpdate {
+	_u.mutation.SetOvpnConfig(v)
+	return _u
+}
+
+// SetNillableOvpnConfig sets the "ovpn_config" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableOvpnConfig(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetOvpnConfig(*v)
+	}
+	return _u
+}
+
+// ClearOvpnConfig clears the value of the "ovpn_config" field.
+func (_u *ProxyUpdate) ClearOvpnConfig() *ProxyUpdate {
+	_u.mutation.ClearOvpnConfig()
+	return _u
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (_u *ProxyUpdate) SetOvpnUsername(v string) *ProxyUpdate {
+	_u.mutation.SetOvpnUsername(v)
+	return _u
+}
+
+// SetNillableOvpnUsername sets the "ovpn_username" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableOvpnUsername(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetOvpnUsername(*v)
+	}
+	return _u
+}
+
+// ClearOvpnUsername clears the value of the "ovpn_username" field.
+func (_u *ProxyUpdate) ClearOvpnUsername() *ProxyUpdate {
+	_u.mutation.ClearOvpnUsername()
+	return _u
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (_u *ProxyUpdate) SetOvpnPassword(v string) *ProxyUpdate {
+	_u.mutation.SetOvpnPassword(v)
+	return _u
+}
+
+// SetNillableOvpnPassword sets the "ovpn_password" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableOvpnPassword(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetOvpnPassword(*v)
+	}
+	return _u
+}
+
+// ClearOvpnPassword clears the value of the "ovpn_password" field.
+func (_u *ProxyUpdate) ClearOvpnPassword() *ProxyUpdate {
+	_u.mutation.ClearOvpnPassword()
+	return _u
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (_u *ProxyUpdate) SetIsDedicated(v bool) *ProxyUpdate {
+	_u.mutation.SetIsDedicated(v)
+	return _u
+}
+
+// SetNillableIsDedicated sets the "is_dedicated" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableIsDedicated(v *bool) *ProxyUpdate {
+	if v != nil {
+		_u.SetIsDedicated(*v)
+	}
+	return _u
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (_u *ProxyUpdate) SetVpnStatus(v string) *ProxyUpdate {
+	_u.mutation.SetVpnStatus(v)
+	return _u
+}
+
+// SetNillableVpnStatus sets the "vpn_status" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableVpnStatus(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetVpnStatus(*v)
+	}
+	return _u
+}
+
+// ClearVpnStatus clears the value of the "vpn_status" field.
+func (_u *ProxyUpdate) ClearVpnStatus() *ProxyUpdate {
+	_u.mutation.ClearVpnStatus()
+	return _u
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (_u *ProxyUpdate) SetVpnExitIP(v string) *ProxyUpdate {
+	_u.mutation.SetVpnExitIP(v)
+	return _u
+}
+
+// SetNillableVpnExitIP sets the "vpn_exit_ip" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableVpnExitIP(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetVpnExitIP(*v)
+	}
+	return _u
+}
+
+// ClearVpnExitIP clears the value of the "vpn_exit_ip" field.
+func (_u *ProxyUpdate) ClearVpnExitIP() *ProxyUpdate {
+	_u.mutation.ClearVpnExitIP()
+	return _u
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (_u *ProxyUpdate) SetHealthStatus(v string) *ProxyUpdate {
+	_u.mutation.SetHealthStatus(v)
+	return _u
+}
+
+// SetNillableHealthStatus sets the "health_status" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableHealthStatus(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetHealthStatus(*v)
+	}
+	return _u
+}
+
+// ClearHealthStatus clears the value of the "health_status" field.
+func (_u *ProxyUpdate) ClearHealthStatus() *ProxyUpdate {
+	_u.mutation.ClearHealthStatus()
+	return _u
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (_u *ProxyUpdate) SetLatencyMs(v int) *ProxyUpdate {
+	_u.mutation.ResetLatencyMs()
+	_u.mutation.SetLatencyMs(v)
+	return _u
+}
+
+// SetNillableLatencyMs sets the "latency_ms" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableLatencyMs(v *int) *ProxyUpdate {
+	if v != nil {
+		_u.SetLatencyMs(*v)
+	}
+	return _u
+}
+
+// AddLatencyMs adds value to the "latency_ms" field.
+func (_u *ProxyUpdate) AddLatencyMs(v int) *ProxyUpdate {
+	_u.mutation.AddLatencyMs(v)
+	return _u
+}
+
+// ClearLatencyMs clears the value of the "latency_ms" field.
+func (_u *ProxyUpdate) ClearLatencyMs() *ProxyUpdate {
+	_u.mutation.ClearLatencyMs()
+	return _u
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (_u *ProxyUpdate) SetLastHealthAt(v time.Time) *ProxyUpdate {
+	_u.mutation.SetLastHealthAt(v)
+	return _u
+}
+
+// SetNillableLastHealthAt sets the "last_health_at" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableLastHealthAt(v *time.Time) *ProxyUpdate {
+	if v != nil {
+		_u.SetLastHealthAt(*v)
+	}
+	return _u
+}
+
+// ClearLastHealthAt clears the value of the "last_health_at" field.
+func (_u *ProxyUpdate) ClearLastHealthAt() *ProxyUpdate {
+	_u.mutation.ClearLastHealthAt()
+	return _u
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (_u *ProxyUpdate) SetHealthCheckFailures(v int) *ProxyUpdate {
+	_u.mutation.ResetHealthCheckFailures()
+	_u.mutation.SetHealthCheckFailures(v)
+	return _u
+}
+
+// SetNillableHealthCheckFailures sets the "health_check_failures" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableHealthCheckFailures(v *int) *ProxyUpdate {
+	if v != nil {
+		_u.SetHealthCheckFailures(*v)
+	}
+	return _u
+}
+
+// AddHealthCheckFailures adds value to the "health_check_failures" field.
+func (_u *ProxyUpdate) AddHealthCheckFailures(v int) *ProxyUpdate {
+	_u.mutation.AddHealthCheckFailures(v)
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *ProxyUpdate) AddAccountIDs(ids ...int64) *ProxyUpdate {
 	_u.mutation.AddAccountIDs(ids...)
@@ -287,6 +529,41 @@ func (_u *ProxyUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Proxy.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Region(); ok {
+		if err := proxy.RegionValidator(v); err != nil {
+			return &ValidationError{Name: "region", err: fmt.Errorf(`ent: validator failed for field "Proxy.region": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.GroupName(); ok {
+		if err := proxy.GroupNameValidator(v); err != nil {
+			return &ValidationError{Name: "group_name", err: fmt.Errorf(`ent: validator failed for field "Proxy.group_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.OvpnUsername(); ok {
+		if err := proxy.OvpnUsernameValidator(v); err != nil {
+			return &ValidationError{Name: "ovpn_username", err: fmt.Errorf(`ent: validator failed for field "Proxy.ovpn_username": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.OvpnPassword(); ok {
+		if err := proxy.OvpnPasswordValidator(v); err != nil {
+			return &ValidationError{Name: "ovpn_password", err: fmt.Errorf(`ent: validator failed for field "Proxy.ovpn_password": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.VpnStatus(); ok {
+		if err := proxy.VpnStatusValidator(v); err != nil {
+			return &ValidationError{Name: "vpn_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.vpn_status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.VpnExitIP(); ok {
+		if err := proxy.VpnExitIPValidator(v); err != nil {
+			return &ValidationError{Name: "vpn_exit_ip", err: fmt.Errorf(`ent: validator failed for field "Proxy.vpn_exit_ip": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.HealthStatus(); ok {
+		if err := proxy.HealthStatusValidator(v); err != nil {
+			return &ValidationError{Name: "health_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.health_status": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -340,6 +617,78 @@ func (_u *ProxyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(proxy.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Region(); ok {
+		_spec.SetField(proxy.FieldRegion, field.TypeString, value)
+	}
+	if _u.mutation.RegionCleared() {
+		_spec.ClearField(proxy.FieldRegion, field.TypeString)
+	}
+	if value, ok := _u.mutation.GroupName(); ok {
+		_spec.SetField(proxy.FieldGroupName, field.TypeString, value)
+	}
+	if _u.mutation.GroupNameCleared() {
+		_spec.ClearField(proxy.FieldGroupName, field.TypeString)
+	}
+	if value, ok := _u.mutation.OvpnConfig(); ok {
+		_spec.SetField(proxy.FieldOvpnConfig, field.TypeString, value)
+	}
+	if _u.mutation.OvpnConfigCleared() {
+		_spec.ClearField(proxy.FieldOvpnConfig, field.TypeString)
+	}
+	if value, ok := _u.mutation.OvpnUsername(); ok {
+		_spec.SetField(proxy.FieldOvpnUsername, field.TypeString, value)
+	}
+	if _u.mutation.OvpnUsernameCleared() {
+		_spec.ClearField(proxy.FieldOvpnUsername, field.TypeString)
+	}
+	if value, ok := _u.mutation.OvpnPassword(); ok {
+		_spec.SetField(proxy.FieldOvpnPassword, field.TypeString, value)
+	}
+	if _u.mutation.OvpnPasswordCleared() {
+		_spec.ClearField(proxy.FieldOvpnPassword, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsDedicated(); ok {
+		_spec.SetField(proxy.FieldIsDedicated, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.VpnStatus(); ok {
+		_spec.SetField(proxy.FieldVpnStatus, field.TypeString, value)
+	}
+	if _u.mutation.VpnStatusCleared() {
+		_spec.ClearField(proxy.FieldVpnStatus, field.TypeString)
+	}
+	if value, ok := _u.mutation.VpnExitIP(); ok {
+		_spec.SetField(proxy.FieldVpnExitIP, field.TypeString, value)
+	}
+	if _u.mutation.VpnExitIPCleared() {
+		_spec.ClearField(proxy.FieldVpnExitIP, field.TypeString)
+	}
+	if value, ok := _u.mutation.HealthStatus(); ok {
+		_spec.SetField(proxy.FieldHealthStatus, field.TypeString, value)
+	}
+	if _u.mutation.HealthStatusCleared() {
+		_spec.ClearField(proxy.FieldHealthStatus, field.TypeString)
+	}
+	if value, ok := _u.mutation.LatencyMs(); ok {
+		_spec.SetField(proxy.FieldLatencyMs, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLatencyMs(); ok {
+		_spec.AddField(proxy.FieldLatencyMs, field.TypeInt, value)
+	}
+	if _u.mutation.LatencyMsCleared() {
+		_spec.ClearField(proxy.FieldLatencyMs, field.TypeInt)
+	}
+	if value, ok := _u.mutation.LastHealthAt(); ok {
+		_spec.SetField(proxy.FieldLastHealthAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastHealthAtCleared() {
+		_spec.ClearField(proxy.FieldLastHealthAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.HealthCheckFailures(); ok {
+		_spec.SetField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedHealthCheckFailures(); ok {
+		_spec.AddField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
 	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -549,6 +898,248 @@ func (_u *ProxyUpdateOne) SetNillableStatus(v *string) *ProxyUpdateOne {
 	return _u
 }
 
+// SetRegion sets the "region" field.
+func (_u *ProxyUpdateOne) SetRegion(v string) *ProxyUpdateOne {
+	_u.mutation.SetRegion(v)
+	return _u
+}
+
+// SetNillableRegion sets the "region" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableRegion(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetRegion(*v)
+	}
+	return _u
+}
+
+// ClearRegion clears the value of the "region" field.
+func (_u *ProxyUpdateOne) ClearRegion() *ProxyUpdateOne {
+	_u.mutation.ClearRegion()
+	return _u
+}
+
+// SetGroupName sets the "group_name" field.
+func (_u *ProxyUpdateOne) SetGroupName(v string) *ProxyUpdateOne {
+	_u.mutation.SetGroupName(v)
+	return _u
+}
+
+// SetNillableGroupName sets the "group_name" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableGroupName(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetGroupName(*v)
+	}
+	return _u
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (_u *ProxyUpdateOne) ClearGroupName() *ProxyUpdateOne {
+	_u.mutation.ClearGroupName()
+	return _u
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (_u *ProxyUpdateOne) SetOvpnConfig(v string) *ProxyUpdateOne {
+	_u.mutation.SetOvpnConfig(v)
+	return _u
+}
+
+// SetNillableOvpnConfig sets the "ovpn_config" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableOvpnConfig(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetOvpnConfig(*v)
+	}
+	return _u
+}
+
+// ClearOvpnConfig clears the value of the "ovpn_config" field.
+func (_u *ProxyUpdateOne) ClearOvpnConfig() *ProxyUpdateOne {
+	_u.mutation.ClearOvpnConfig()
+	return _u
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (_u *ProxyUpdateOne) SetOvpnUsername(v string) *ProxyUpdateOne {
+	_u.mutation.SetOvpnUsername(v)
+	return _u
+}
+
+// SetNillableOvpnUsername sets the "ovpn_username" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableOvpnUsername(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetOvpnUsername(*v)
+	}
+	return _u
+}
+
+// ClearOvpnUsername clears the value of the "ovpn_username" field.
+func (_u *ProxyUpdateOne) ClearOvpnUsername() *ProxyUpdateOne {
+	_u.mutation.ClearOvpnUsername()
+	return _u
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (_u *ProxyUpdateOne) SetOvpnPassword(v string) *ProxyUpdateOne {
+	_u.mutation.SetOvpnPassword(v)
+	return _u
+}
+
+// SetNillableOvpnPassword sets the "ovpn_password" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableOvpnPassword(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetOvpnPassword(*v)
+	}
+	return _u
+}
+
+// ClearOvpnPassword clears the value of the "ovpn_password" field.
+func (_u *ProxyUpdateOne) ClearOvpnPassword() *ProxyUpdateOne {
+	_u.mutation.ClearOvpnPassword()
+	return _u
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (_u *ProxyUpdateOne) SetIsDedicated(v bool) *ProxyUpdateOne {
+	_u.mutation.SetIsDedicated(v)
+	return _u
+}
+
+// SetNillableIsDedicated sets the "is_dedicated" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableIsDedicated(v *bool) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetIsDedicated(*v)
+	}
+	return _u
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (_u *ProxyUpdateOne) SetVpnStatus(v string) *ProxyUpdateOne {
+	_u.mutation.SetVpnStatus(v)
+	return _u
+}
+
+// SetNillableVpnStatus sets the "vpn_status" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableVpnStatus(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetVpnStatus(*v)
+	}
+	return _u
+}
+
+// ClearVpnStatus clears the value of the "vpn_status" field.
+func (_u *ProxyUpdateOne) ClearVpnStatus() *ProxyUpdateOne {
+	_u.mutation.ClearVpnStatus()
+	return _u
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (_u *ProxyUpdateOne) SetVpnExitIP(v string) *ProxyUpdateOne {
+	_u.mutation.SetVpnExitIP(v)
+	return _u
+}
+
+// SetNillableVpnExitIP sets the "vpn_exit_ip" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableVpnExitIP(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetVpnExitIP(*v)
+	}
+	return _u
+}
+
+// ClearVpnExitIP clears the value of the "vpn_exit_ip" field.
+func (_u *ProxyUpdateOne) ClearVpnExitIP() *ProxyUpdateOne {
+	_u.mutation.ClearVpnExitIP()
+	return _u
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (_u *ProxyUpdateOne) SetHealthStatus(v string) *ProxyUpdateOne {
+	_u.mutation.SetHealthStatus(v)
+	return _u
+}
+
+// SetNillableHealthStatus sets the "health_status" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableHealthStatus(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetHealthStatus(*v)
+	}
+	return _u
+}
+
+// ClearHealthStatus clears the value of the "health_status" field.
+func (_u *ProxyUpdateOne) ClearHealthStatus() *ProxyUpdateOne {
+	_u.mutation.ClearHealthStatus()
+	return _u
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (_u *ProxyUpdateOne) SetLatencyMs(v int) *ProxyUpdateOne {
+	_u.mutation.ResetLatencyMs()
+	_u.mutation.SetLatencyMs(v)
+	return _u
+}
+
+// SetNillableLatencyMs sets the "latency_ms" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableLatencyMs(v *int) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetLatencyMs(*v)
+	}
+	return _u
+}
+
+// AddLatencyMs adds value to the "latency_ms" field.
+func (_u *ProxyUpdateOne) AddLatencyMs(v int) *ProxyUpdateOne {
+	_u.mutation.AddLatencyMs(v)
+	return _u
+}
+
+// ClearLatencyMs clears the value of the "latency_ms" field.
+func (_u *ProxyUpdateOne) ClearLatencyMs() *ProxyUpdateOne {
+	_u.mutation.ClearLatencyMs()
+	return _u
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (_u *ProxyUpdateOne) SetLastHealthAt(v time.Time) *ProxyUpdateOne {
+	_u.mutation.SetLastHealthAt(v)
+	return _u
+}
+
+// SetNillableLastHealthAt sets the "last_health_at" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableLastHealthAt(v *time.Time) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetLastHealthAt(*v)
+	}
+	return _u
+}
+
+// ClearLastHealthAt clears the value of the "last_health_at" field.
+func (_u *ProxyUpdateOne) ClearLastHealthAt() *ProxyUpdateOne {
+	_u.mutation.ClearLastHealthAt()
+	return _u
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (_u *ProxyUpdateOne) SetHealthCheckFailures(v int) *ProxyUpdateOne {
+	_u.mutation.ResetHealthCheckFailures()
+	_u.mutation.SetHealthCheckFailures(v)
+	return _u
+}
+
+// SetNillableHealthCheckFailures sets the "health_check_failures" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableHealthCheckFailures(v *int) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetHealthCheckFailures(*v)
+	}
+	return _u
+}
+
+// AddHealthCheckFailures adds value to the "health_check_failures" field.
+func (_u *ProxyUpdateOne) AddHealthCheckFailures(v int) *ProxyUpdateOne {
+	_u.mutation.AddHealthCheckFailures(v)
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *ProxyUpdateOne) AddAccountIDs(ids ...int64) *ProxyUpdateOne {
 	_u.mutation.AddAccountIDs(ids...)
@@ -677,6 +1268,41 @@ func (_u *ProxyUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Proxy.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Region(); ok {
+		if err := proxy.RegionValidator(v); err != nil {
+			return &ValidationError{Name: "region", err: fmt.Errorf(`ent: validator failed for field "Proxy.region": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.GroupName(); ok {
+		if err := proxy.GroupNameValidator(v); err != nil {
+			return &ValidationError{Name: "group_name", err: fmt.Errorf(`ent: validator failed for field "Proxy.group_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.OvpnUsername(); ok {
+		if err := proxy.OvpnUsernameValidator(v); err != nil {
+			return &ValidationError{Name: "ovpn_username", err: fmt.Errorf(`ent: validator failed for field "Proxy.ovpn_username": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.OvpnPassword(); ok {
+		if err := proxy.OvpnPasswordValidator(v); err != nil {
+			return &ValidationError{Name: "ovpn_password", err: fmt.Errorf(`ent: validator failed for field "Proxy.ovpn_password": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.VpnStatus(); ok {
+		if err := proxy.VpnStatusValidator(v); err != nil {
+			return &ValidationError{Name: "vpn_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.vpn_status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.VpnExitIP(); ok {
+		if err := proxy.VpnExitIPValidator(v); err != nil {
+			return &ValidationError{Name: "vpn_exit_ip", err: fmt.Errorf(`ent: validator failed for field "Proxy.vpn_exit_ip": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.HealthStatus(); ok {
+		if err := proxy.HealthStatusValidator(v); err != nil {
+			return &ValidationError{Name: "health_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.health_status": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -747,6 +1373,78 @@ func (_u *ProxyUpdateOne) sqlSave(ctx context.Context) (_node *Proxy, err error)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(proxy.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Region(); ok {
+		_spec.SetField(proxy.FieldRegion, field.TypeString, value)
+	}
+	if _u.mutation.RegionCleared() {
+		_spec.ClearField(proxy.FieldRegion, field.TypeString)
+	}
+	if value, ok := _u.mutation.GroupName(); ok {
+		_spec.SetField(proxy.FieldGroupName, field.TypeString, value)
+	}
+	if _u.mutation.GroupNameCleared() {
+		_spec.ClearField(proxy.FieldGroupName, field.TypeString)
+	}
+	if value, ok := _u.mutation.OvpnConfig(); ok {
+		_spec.SetField(proxy.FieldOvpnConfig, field.TypeString, value)
+	}
+	if _u.mutation.OvpnConfigCleared() {
+		_spec.ClearField(proxy.FieldOvpnConfig, field.TypeString)
+	}
+	if value, ok := _u.mutation.OvpnUsername(); ok {
+		_spec.SetField(proxy.FieldOvpnUsername, field.TypeString, value)
+	}
+	if _u.mutation.OvpnUsernameCleared() {
+		_spec.ClearField(proxy.FieldOvpnUsername, field.TypeString)
+	}
+	if value, ok := _u.mutation.OvpnPassword(); ok {
+		_spec.SetField(proxy.FieldOvpnPassword, field.TypeString, value)
+	}
+	if _u.mutation.OvpnPasswordCleared() {
+		_spec.ClearField(proxy.FieldOvpnPassword, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsDedicated(); ok {
+		_spec.SetField(proxy.FieldIsDedicated, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.VpnStatus(); ok {
+		_spec.SetField(proxy.FieldVpnStatus, field.TypeString, value)
+	}
+	if _u.mutation.VpnStatusCleared() {
+		_spec.ClearField(proxy.FieldVpnStatus, field.TypeString)
+	}
+	if value, ok := _u.mutation.VpnExitIP(); ok {
+		_spec.SetField(proxy.FieldVpnExitIP, field.TypeString, value)
+	}
+	if _u.mutation.VpnExitIPCleared() {
+		_spec.ClearField(proxy.FieldVpnExitIP, field.TypeString)
+	}
+	if value, ok := _u.mutation.HealthStatus(); ok {
+		_spec.SetField(proxy.FieldHealthStatus, field.TypeString, value)
+	}
+	if _u.mutation.HealthStatusCleared() {
+		_spec.ClearField(proxy.FieldHealthStatus, field.TypeString)
+	}
+	if value, ok := _u.mutation.LatencyMs(); ok {
+		_spec.SetField(proxy.FieldLatencyMs, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLatencyMs(); ok {
+		_spec.AddField(proxy.FieldLatencyMs, field.TypeInt, value)
+	}
+	if _u.mutation.LatencyMsCleared() {
+		_spec.ClearField(proxy.FieldLatencyMs, field.TypeInt)
+	}
+	if value, ok := _u.mutation.LastHealthAt(); ok {
+		_spec.SetField(proxy.FieldLastHealthAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastHealthAtCleared() {
+		_spec.ClearField(proxy.FieldLastHealthAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.HealthCheckFailures(); ok {
+		_spec.SetField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedHealthCheckFailures(); ok {
+		_spec.AddField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
 	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{

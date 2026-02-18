@@ -37,6 +37,30 @@ type Proxy struct {
 	Password *string `json:"password,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// Region holds the value of the "region" field.
+	Region *string `json:"region,omitempty"`
+	// GroupName holds the value of the "group_name" field.
+	GroupName *string `json:"group_name,omitempty"`
+	// OvpnConfig holds the value of the "ovpn_config" field.
+	OvpnConfig *string `json:"ovpn_config,omitempty"`
+	// OvpnUsername holds the value of the "ovpn_username" field.
+	OvpnUsername *string `json:"ovpn_username,omitempty"`
+	// OvpnPassword holds the value of the "ovpn_password" field.
+	OvpnPassword *string `json:"ovpn_password,omitempty"`
+	// IsDedicated holds the value of the "is_dedicated" field.
+	IsDedicated bool `json:"is_dedicated,omitempty"`
+	// VpnStatus holds the value of the "vpn_status" field.
+	VpnStatus *string `json:"vpn_status,omitempty"`
+	// VpnExitIP holds the value of the "vpn_exit_ip" field.
+	VpnExitIP *string `json:"vpn_exit_ip,omitempty"`
+	// HealthStatus holds the value of the "health_status" field.
+	HealthStatus *string `json:"health_status,omitempty"`
+	// LatencyMs holds the value of the "latency_ms" field.
+	LatencyMs *int `json:"latency_ms,omitempty"`
+	// LastHealthAt holds the value of the "last_health_at" field.
+	LastHealthAt *time.Time `json:"last_health_at,omitempty"`
+	// HealthCheckFailures holds the value of the "health_check_failures" field.
+	HealthCheckFailures int `json:"health_check_failures,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProxyQuery when eager-loading is set.
 	Edges        ProxyEdges `json:"edges"`
@@ -66,11 +90,13 @@ func (*Proxy) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case proxy.FieldID, proxy.FieldPort:
+		case proxy.FieldIsDedicated:
+			values[i] = new(sql.NullBool)
+		case proxy.FieldID, proxy.FieldPort, proxy.FieldLatencyMs, proxy.FieldHealthCheckFailures:
 			values[i] = new(sql.NullInt64)
-		case proxy.FieldName, proxy.FieldProtocol, proxy.FieldHost, proxy.FieldUsername, proxy.FieldPassword, proxy.FieldStatus:
+		case proxy.FieldName, proxy.FieldProtocol, proxy.FieldHost, proxy.FieldUsername, proxy.FieldPassword, proxy.FieldStatus, proxy.FieldRegion, proxy.FieldGroupName, proxy.FieldOvpnConfig, proxy.FieldOvpnUsername, proxy.FieldOvpnPassword, proxy.FieldVpnStatus, proxy.FieldVpnExitIP, proxy.FieldHealthStatus:
 			values[i] = new(sql.NullString)
-		case proxy.FieldCreatedAt, proxy.FieldUpdatedAt, proxy.FieldDeletedAt:
+		case proxy.FieldCreatedAt, proxy.FieldUpdatedAt, proxy.FieldDeletedAt, proxy.FieldLastHealthAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -156,6 +182,88 @@ func (_m *Proxy) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = value.String
 			}
+		case proxy.FieldRegion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field region", values[i])
+			} else if value.Valid {
+				_m.Region = new(string)
+				*_m.Region = value.String
+			}
+		case proxy.FieldGroupName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field group_name", values[i])
+			} else if value.Valid {
+				_m.GroupName = new(string)
+				*_m.GroupName = value.String
+			}
+		case proxy.FieldOvpnConfig:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ovpn_config", values[i])
+			} else if value.Valid {
+				_m.OvpnConfig = new(string)
+				*_m.OvpnConfig = value.String
+			}
+		case proxy.FieldOvpnUsername:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ovpn_username", values[i])
+			} else if value.Valid {
+				_m.OvpnUsername = new(string)
+				*_m.OvpnUsername = value.String
+			}
+		case proxy.FieldOvpnPassword:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ovpn_password", values[i])
+			} else if value.Valid {
+				_m.OvpnPassword = new(string)
+				*_m.OvpnPassword = value.String
+			}
+		case proxy.FieldIsDedicated:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_dedicated", values[i])
+			} else if value.Valid {
+				_m.IsDedicated = value.Bool
+			}
+		case proxy.FieldVpnStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field vpn_status", values[i])
+			} else if value.Valid {
+				_m.VpnStatus = new(string)
+				*_m.VpnStatus = value.String
+			}
+		case proxy.FieldVpnExitIP:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field vpn_exit_ip", values[i])
+			} else if value.Valid {
+				_m.VpnExitIP = new(string)
+				*_m.VpnExitIP = value.String
+			}
+		case proxy.FieldHealthStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field health_status", values[i])
+			} else if value.Valid {
+				_m.HealthStatus = new(string)
+				*_m.HealthStatus = value.String
+			}
+		case proxy.FieldLatencyMs:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field latency_ms", values[i])
+			} else if value.Valid {
+				_m.LatencyMs = new(int)
+				*_m.LatencyMs = int(value.Int64)
+			}
+		case proxy.FieldLastHealthAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_health_at", values[i])
+			} else if value.Valid {
+				_m.LastHealthAt = new(time.Time)
+				*_m.LastHealthAt = value.Time
+			}
+		case proxy.FieldHealthCheckFailures:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field health_check_failures", values[i])
+			} else if value.Valid {
+				_m.HealthCheckFailures = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -232,6 +340,62 @@ func (_m *Proxy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(_m.Status)
+	builder.WriteString(", ")
+	if v := _m.Region; v != nil {
+		builder.WriteString("region=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.GroupName; v != nil {
+		builder.WriteString("group_name=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.OvpnConfig; v != nil {
+		builder.WriteString("ovpn_config=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.OvpnUsername; v != nil {
+		builder.WriteString("ovpn_username=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.OvpnPassword; v != nil {
+		builder.WriteString("ovpn_password=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("is_dedicated=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsDedicated))
+	builder.WriteString(", ")
+	if v := _m.VpnStatus; v != nil {
+		builder.WriteString("vpn_status=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.VpnExitIP; v != nil {
+		builder.WriteString("vpn_exit_ip=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.HealthStatus; v != nil {
+		builder.WriteString("health_status=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.LatencyMs; v != nil {
+		builder.WriteString("latency_ms=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.LastHealthAt; v != nil {
+		builder.WriteString("last_health_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("health_check_failures=")
+	builder.WriteString(fmt.Sprintf("%v", _m.HealthCheckFailures))
 	builder.WriteByte(')')
 	return builder.String()
 }

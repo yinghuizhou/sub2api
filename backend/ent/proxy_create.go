@@ -131,6 +131,174 @@ func (_c *ProxyCreate) SetNillableStatus(v *string) *ProxyCreate {
 	return _c
 }
 
+// SetRegion sets the "region" field.
+func (_c *ProxyCreate) SetRegion(v string) *ProxyCreate {
+	_c.mutation.SetRegion(v)
+	return _c
+}
+
+// SetNillableRegion sets the "region" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableRegion(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetRegion(*v)
+	}
+	return _c
+}
+
+// SetGroupName sets the "group_name" field.
+func (_c *ProxyCreate) SetGroupName(v string) *ProxyCreate {
+	_c.mutation.SetGroupName(v)
+	return _c
+}
+
+// SetNillableGroupName sets the "group_name" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableGroupName(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetGroupName(*v)
+	}
+	return _c
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (_c *ProxyCreate) SetOvpnConfig(v string) *ProxyCreate {
+	_c.mutation.SetOvpnConfig(v)
+	return _c
+}
+
+// SetNillableOvpnConfig sets the "ovpn_config" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableOvpnConfig(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetOvpnConfig(*v)
+	}
+	return _c
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (_c *ProxyCreate) SetOvpnUsername(v string) *ProxyCreate {
+	_c.mutation.SetOvpnUsername(v)
+	return _c
+}
+
+// SetNillableOvpnUsername sets the "ovpn_username" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableOvpnUsername(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetOvpnUsername(*v)
+	}
+	return _c
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (_c *ProxyCreate) SetOvpnPassword(v string) *ProxyCreate {
+	_c.mutation.SetOvpnPassword(v)
+	return _c
+}
+
+// SetNillableOvpnPassword sets the "ovpn_password" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableOvpnPassword(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetOvpnPassword(*v)
+	}
+	return _c
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (_c *ProxyCreate) SetIsDedicated(v bool) *ProxyCreate {
+	_c.mutation.SetIsDedicated(v)
+	return _c
+}
+
+// SetNillableIsDedicated sets the "is_dedicated" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableIsDedicated(v *bool) *ProxyCreate {
+	if v != nil {
+		_c.SetIsDedicated(*v)
+	}
+	return _c
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (_c *ProxyCreate) SetVpnStatus(v string) *ProxyCreate {
+	_c.mutation.SetVpnStatus(v)
+	return _c
+}
+
+// SetNillableVpnStatus sets the "vpn_status" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableVpnStatus(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetVpnStatus(*v)
+	}
+	return _c
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (_c *ProxyCreate) SetVpnExitIP(v string) *ProxyCreate {
+	_c.mutation.SetVpnExitIP(v)
+	return _c
+}
+
+// SetNillableVpnExitIP sets the "vpn_exit_ip" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableVpnExitIP(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetVpnExitIP(*v)
+	}
+	return _c
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (_c *ProxyCreate) SetHealthStatus(v string) *ProxyCreate {
+	_c.mutation.SetHealthStatus(v)
+	return _c
+}
+
+// SetNillableHealthStatus sets the "health_status" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableHealthStatus(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetHealthStatus(*v)
+	}
+	return _c
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (_c *ProxyCreate) SetLatencyMs(v int) *ProxyCreate {
+	_c.mutation.SetLatencyMs(v)
+	return _c
+}
+
+// SetNillableLatencyMs sets the "latency_ms" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableLatencyMs(v *int) *ProxyCreate {
+	if v != nil {
+		_c.SetLatencyMs(*v)
+	}
+	return _c
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (_c *ProxyCreate) SetLastHealthAt(v time.Time) *ProxyCreate {
+	_c.mutation.SetLastHealthAt(v)
+	return _c
+}
+
+// SetNillableLastHealthAt sets the "last_health_at" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableLastHealthAt(v *time.Time) *ProxyCreate {
+	if v != nil {
+		_c.SetLastHealthAt(*v)
+	}
+	return _c
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (_c *ProxyCreate) SetHealthCheckFailures(v int) *ProxyCreate {
+	_c.mutation.SetHealthCheckFailures(v)
+	return _c
+}
+
+// SetNillableHealthCheckFailures sets the "health_check_failures" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableHealthCheckFailures(v *int) *ProxyCreate {
+	if v != nil {
+		_c.SetHealthCheckFailures(*v)
+	}
+	return _c
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_c *ProxyCreate) AddAccountIDs(ids ...int64) *ProxyCreate {
 	_c.mutation.AddAccountIDs(ids...)
@@ -201,6 +369,14 @@ func (_c *ProxyCreate) defaults() error {
 		v := proxy.DefaultStatus
 		_c.mutation.SetStatus(v)
 	}
+	if _, ok := _c.mutation.IsDedicated(); !ok {
+		v := proxy.DefaultIsDedicated
+		_c.mutation.SetIsDedicated(v)
+	}
+	if _, ok := _c.mutation.HealthCheckFailures(); !ok {
+		v := proxy.DefaultHealthCheckFailures
+		_c.mutation.SetHealthCheckFailures(v)
+	}
 	return nil
 }
 
@@ -256,6 +432,47 @@ func (_c *ProxyCreate) check() error {
 		if err := proxy.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Proxy.status": %w`, err)}
 		}
+	}
+	if v, ok := _c.mutation.Region(); ok {
+		if err := proxy.RegionValidator(v); err != nil {
+			return &ValidationError{Name: "region", err: fmt.Errorf(`ent: validator failed for field "Proxy.region": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.GroupName(); ok {
+		if err := proxy.GroupNameValidator(v); err != nil {
+			return &ValidationError{Name: "group_name", err: fmt.Errorf(`ent: validator failed for field "Proxy.group_name": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.OvpnUsername(); ok {
+		if err := proxy.OvpnUsernameValidator(v); err != nil {
+			return &ValidationError{Name: "ovpn_username", err: fmt.Errorf(`ent: validator failed for field "Proxy.ovpn_username": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.OvpnPassword(); ok {
+		if err := proxy.OvpnPasswordValidator(v); err != nil {
+			return &ValidationError{Name: "ovpn_password", err: fmt.Errorf(`ent: validator failed for field "Proxy.ovpn_password": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.IsDedicated(); !ok {
+		return &ValidationError{Name: "is_dedicated", err: errors.New(`ent: missing required field "Proxy.is_dedicated"`)}
+	}
+	if v, ok := _c.mutation.VpnStatus(); ok {
+		if err := proxy.VpnStatusValidator(v); err != nil {
+			return &ValidationError{Name: "vpn_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.vpn_status": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.VpnExitIP(); ok {
+		if err := proxy.VpnExitIPValidator(v); err != nil {
+			return &ValidationError{Name: "vpn_exit_ip", err: fmt.Errorf(`ent: validator failed for field "Proxy.vpn_exit_ip": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.HealthStatus(); ok {
+		if err := proxy.HealthStatusValidator(v); err != nil {
+			return &ValidationError{Name: "health_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.health_status": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.HealthCheckFailures(); !ok {
+		return &ValidationError{Name: "health_check_failures", err: errors.New(`ent: missing required field "Proxy.health_check_failures"`)}
 	}
 	return nil
 }
@@ -323,6 +540,54 @@ func (_c *ProxyCreate) createSpec() (*Proxy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(proxy.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := _c.mutation.Region(); ok {
+		_spec.SetField(proxy.FieldRegion, field.TypeString, value)
+		_node.Region = &value
+	}
+	if value, ok := _c.mutation.GroupName(); ok {
+		_spec.SetField(proxy.FieldGroupName, field.TypeString, value)
+		_node.GroupName = &value
+	}
+	if value, ok := _c.mutation.OvpnConfig(); ok {
+		_spec.SetField(proxy.FieldOvpnConfig, field.TypeString, value)
+		_node.OvpnConfig = &value
+	}
+	if value, ok := _c.mutation.OvpnUsername(); ok {
+		_spec.SetField(proxy.FieldOvpnUsername, field.TypeString, value)
+		_node.OvpnUsername = &value
+	}
+	if value, ok := _c.mutation.OvpnPassword(); ok {
+		_spec.SetField(proxy.FieldOvpnPassword, field.TypeString, value)
+		_node.OvpnPassword = &value
+	}
+	if value, ok := _c.mutation.IsDedicated(); ok {
+		_spec.SetField(proxy.FieldIsDedicated, field.TypeBool, value)
+		_node.IsDedicated = value
+	}
+	if value, ok := _c.mutation.VpnStatus(); ok {
+		_spec.SetField(proxy.FieldVpnStatus, field.TypeString, value)
+		_node.VpnStatus = &value
+	}
+	if value, ok := _c.mutation.VpnExitIP(); ok {
+		_spec.SetField(proxy.FieldVpnExitIP, field.TypeString, value)
+		_node.VpnExitIP = &value
+	}
+	if value, ok := _c.mutation.HealthStatus(); ok {
+		_spec.SetField(proxy.FieldHealthStatus, field.TypeString, value)
+		_node.HealthStatus = &value
+	}
+	if value, ok := _c.mutation.LatencyMs(); ok {
+		_spec.SetField(proxy.FieldLatencyMs, field.TypeInt, value)
+		_node.LatencyMs = &value
+	}
+	if value, ok := _c.mutation.LastHealthAt(); ok {
+		_spec.SetField(proxy.FieldLastHealthAt, field.TypeTime, value)
+		_node.LastHealthAt = &value
+	}
+	if value, ok := _c.mutation.HealthCheckFailures(); ok {
+		_spec.SetField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
+		_node.HealthCheckFailures = value
 	}
 	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -524,6 +789,222 @@ func (u *ProxyUpsert) UpdateStatus() *ProxyUpsert {
 	return u
 }
 
+// SetRegion sets the "region" field.
+func (u *ProxyUpsert) SetRegion(v string) *ProxyUpsert {
+	u.Set(proxy.FieldRegion, v)
+	return u
+}
+
+// UpdateRegion sets the "region" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateRegion() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldRegion)
+	return u
+}
+
+// ClearRegion clears the value of the "region" field.
+func (u *ProxyUpsert) ClearRegion() *ProxyUpsert {
+	u.SetNull(proxy.FieldRegion)
+	return u
+}
+
+// SetGroupName sets the "group_name" field.
+func (u *ProxyUpsert) SetGroupName(v string) *ProxyUpsert {
+	u.Set(proxy.FieldGroupName, v)
+	return u
+}
+
+// UpdateGroupName sets the "group_name" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateGroupName() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldGroupName)
+	return u
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (u *ProxyUpsert) ClearGroupName() *ProxyUpsert {
+	u.SetNull(proxy.FieldGroupName)
+	return u
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (u *ProxyUpsert) SetOvpnConfig(v string) *ProxyUpsert {
+	u.Set(proxy.FieldOvpnConfig, v)
+	return u
+}
+
+// UpdateOvpnConfig sets the "ovpn_config" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateOvpnConfig() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldOvpnConfig)
+	return u
+}
+
+// ClearOvpnConfig clears the value of the "ovpn_config" field.
+func (u *ProxyUpsert) ClearOvpnConfig() *ProxyUpsert {
+	u.SetNull(proxy.FieldOvpnConfig)
+	return u
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (u *ProxyUpsert) SetOvpnUsername(v string) *ProxyUpsert {
+	u.Set(proxy.FieldOvpnUsername, v)
+	return u
+}
+
+// UpdateOvpnUsername sets the "ovpn_username" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateOvpnUsername() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldOvpnUsername)
+	return u
+}
+
+// ClearOvpnUsername clears the value of the "ovpn_username" field.
+func (u *ProxyUpsert) ClearOvpnUsername() *ProxyUpsert {
+	u.SetNull(proxy.FieldOvpnUsername)
+	return u
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (u *ProxyUpsert) SetOvpnPassword(v string) *ProxyUpsert {
+	u.Set(proxy.FieldOvpnPassword, v)
+	return u
+}
+
+// UpdateOvpnPassword sets the "ovpn_password" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateOvpnPassword() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldOvpnPassword)
+	return u
+}
+
+// ClearOvpnPassword clears the value of the "ovpn_password" field.
+func (u *ProxyUpsert) ClearOvpnPassword() *ProxyUpsert {
+	u.SetNull(proxy.FieldOvpnPassword)
+	return u
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (u *ProxyUpsert) SetIsDedicated(v bool) *ProxyUpsert {
+	u.Set(proxy.FieldIsDedicated, v)
+	return u
+}
+
+// UpdateIsDedicated sets the "is_dedicated" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateIsDedicated() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldIsDedicated)
+	return u
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (u *ProxyUpsert) SetVpnStatus(v string) *ProxyUpsert {
+	u.Set(proxy.FieldVpnStatus, v)
+	return u
+}
+
+// UpdateVpnStatus sets the "vpn_status" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateVpnStatus() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldVpnStatus)
+	return u
+}
+
+// ClearVpnStatus clears the value of the "vpn_status" field.
+func (u *ProxyUpsert) ClearVpnStatus() *ProxyUpsert {
+	u.SetNull(proxy.FieldVpnStatus)
+	return u
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (u *ProxyUpsert) SetVpnExitIP(v string) *ProxyUpsert {
+	u.Set(proxy.FieldVpnExitIP, v)
+	return u
+}
+
+// UpdateVpnExitIP sets the "vpn_exit_ip" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateVpnExitIP() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldVpnExitIP)
+	return u
+}
+
+// ClearVpnExitIP clears the value of the "vpn_exit_ip" field.
+func (u *ProxyUpsert) ClearVpnExitIP() *ProxyUpsert {
+	u.SetNull(proxy.FieldVpnExitIP)
+	return u
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (u *ProxyUpsert) SetHealthStatus(v string) *ProxyUpsert {
+	u.Set(proxy.FieldHealthStatus, v)
+	return u
+}
+
+// UpdateHealthStatus sets the "health_status" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateHealthStatus() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldHealthStatus)
+	return u
+}
+
+// ClearHealthStatus clears the value of the "health_status" field.
+func (u *ProxyUpsert) ClearHealthStatus() *ProxyUpsert {
+	u.SetNull(proxy.FieldHealthStatus)
+	return u
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (u *ProxyUpsert) SetLatencyMs(v int) *ProxyUpsert {
+	u.Set(proxy.FieldLatencyMs, v)
+	return u
+}
+
+// UpdateLatencyMs sets the "latency_ms" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateLatencyMs() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldLatencyMs)
+	return u
+}
+
+// AddLatencyMs adds v to the "latency_ms" field.
+func (u *ProxyUpsert) AddLatencyMs(v int) *ProxyUpsert {
+	u.Add(proxy.FieldLatencyMs, v)
+	return u
+}
+
+// ClearLatencyMs clears the value of the "latency_ms" field.
+func (u *ProxyUpsert) ClearLatencyMs() *ProxyUpsert {
+	u.SetNull(proxy.FieldLatencyMs)
+	return u
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (u *ProxyUpsert) SetLastHealthAt(v time.Time) *ProxyUpsert {
+	u.Set(proxy.FieldLastHealthAt, v)
+	return u
+}
+
+// UpdateLastHealthAt sets the "last_health_at" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateLastHealthAt() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldLastHealthAt)
+	return u
+}
+
+// ClearLastHealthAt clears the value of the "last_health_at" field.
+func (u *ProxyUpsert) ClearLastHealthAt() *ProxyUpsert {
+	u.SetNull(proxy.FieldLastHealthAt)
+	return u
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (u *ProxyUpsert) SetHealthCheckFailures(v int) *ProxyUpsert {
+	u.Set(proxy.FieldHealthCheckFailures, v)
+	return u
+}
+
+// UpdateHealthCheckFailures sets the "health_check_failures" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateHealthCheckFailures() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldHealthCheckFailures)
+	return u
+}
+
+// AddHealthCheckFailures adds v to the "health_check_failures" field.
+func (u *ProxyUpsert) AddHealthCheckFailures(v int) *ProxyUpsert {
+	u.Add(proxy.FieldHealthCheckFailures, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -720,6 +1201,258 @@ func (u *ProxyUpsertOne) SetStatus(v string) *ProxyUpsertOne {
 func (u *ProxyUpsertOne) UpdateStatus() *ProxyUpsertOne {
 	return u.Update(func(s *ProxyUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetRegion sets the "region" field.
+func (u *ProxyUpsertOne) SetRegion(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetRegion(v)
+	})
+}
+
+// UpdateRegion sets the "region" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateRegion() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateRegion()
+	})
+}
+
+// ClearRegion clears the value of the "region" field.
+func (u *ProxyUpsertOne) ClearRegion() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearRegion()
+	})
+}
+
+// SetGroupName sets the "group_name" field.
+func (u *ProxyUpsertOne) SetGroupName(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetGroupName(v)
+	})
+}
+
+// UpdateGroupName sets the "group_name" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateGroupName() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateGroupName()
+	})
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (u *ProxyUpsertOne) ClearGroupName() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearGroupName()
+	})
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (u *ProxyUpsertOne) SetOvpnConfig(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetOvpnConfig(v)
+	})
+}
+
+// UpdateOvpnConfig sets the "ovpn_config" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateOvpnConfig() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateOvpnConfig()
+	})
+}
+
+// ClearOvpnConfig clears the value of the "ovpn_config" field.
+func (u *ProxyUpsertOne) ClearOvpnConfig() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearOvpnConfig()
+	})
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (u *ProxyUpsertOne) SetOvpnUsername(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetOvpnUsername(v)
+	})
+}
+
+// UpdateOvpnUsername sets the "ovpn_username" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateOvpnUsername() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateOvpnUsername()
+	})
+}
+
+// ClearOvpnUsername clears the value of the "ovpn_username" field.
+func (u *ProxyUpsertOne) ClearOvpnUsername() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearOvpnUsername()
+	})
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (u *ProxyUpsertOne) SetOvpnPassword(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetOvpnPassword(v)
+	})
+}
+
+// UpdateOvpnPassword sets the "ovpn_password" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateOvpnPassword() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateOvpnPassword()
+	})
+}
+
+// ClearOvpnPassword clears the value of the "ovpn_password" field.
+func (u *ProxyUpsertOne) ClearOvpnPassword() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearOvpnPassword()
+	})
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (u *ProxyUpsertOne) SetIsDedicated(v bool) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetIsDedicated(v)
+	})
+}
+
+// UpdateIsDedicated sets the "is_dedicated" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateIsDedicated() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateIsDedicated()
+	})
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (u *ProxyUpsertOne) SetVpnStatus(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetVpnStatus(v)
+	})
+}
+
+// UpdateVpnStatus sets the "vpn_status" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateVpnStatus() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateVpnStatus()
+	})
+}
+
+// ClearVpnStatus clears the value of the "vpn_status" field.
+func (u *ProxyUpsertOne) ClearVpnStatus() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearVpnStatus()
+	})
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (u *ProxyUpsertOne) SetVpnExitIP(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetVpnExitIP(v)
+	})
+}
+
+// UpdateVpnExitIP sets the "vpn_exit_ip" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateVpnExitIP() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateVpnExitIP()
+	})
+}
+
+// ClearVpnExitIP clears the value of the "vpn_exit_ip" field.
+func (u *ProxyUpsertOne) ClearVpnExitIP() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearVpnExitIP()
+	})
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (u *ProxyUpsertOne) SetHealthStatus(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetHealthStatus(v)
+	})
+}
+
+// UpdateHealthStatus sets the "health_status" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateHealthStatus() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateHealthStatus()
+	})
+}
+
+// ClearHealthStatus clears the value of the "health_status" field.
+func (u *ProxyUpsertOne) ClearHealthStatus() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearHealthStatus()
+	})
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (u *ProxyUpsertOne) SetLatencyMs(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetLatencyMs(v)
+	})
+}
+
+// AddLatencyMs adds v to the "latency_ms" field.
+func (u *ProxyUpsertOne) AddLatencyMs(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddLatencyMs(v)
+	})
+}
+
+// UpdateLatencyMs sets the "latency_ms" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateLatencyMs() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateLatencyMs()
+	})
+}
+
+// ClearLatencyMs clears the value of the "latency_ms" field.
+func (u *ProxyUpsertOne) ClearLatencyMs() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearLatencyMs()
+	})
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (u *ProxyUpsertOne) SetLastHealthAt(v time.Time) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetLastHealthAt(v)
+	})
+}
+
+// UpdateLastHealthAt sets the "last_health_at" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateLastHealthAt() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateLastHealthAt()
+	})
+}
+
+// ClearLastHealthAt clears the value of the "last_health_at" field.
+func (u *ProxyUpsertOne) ClearLastHealthAt() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearLastHealthAt()
+	})
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (u *ProxyUpsertOne) SetHealthCheckFailures(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetHealthCheckFailures(v)
+	})
+}
+
+// AddHealthCheckFailures adds v to the "health_check_failures" field.
+func (u *ProxyUpsertOne) AddHealthCheckFailures(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddHealthCheckFailures(v)
+	})
+}
+
+// UpdateHealthCheckFailures sets the "health_check_failures" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateHealthCheckFailures() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateHealthCheckFailures()
 	})
 }
 
@@ -1085,6 +1818,258 @@ func (u *ProxyUpsertBulk) SetStatus(v string) *ProxyUpsertBulk {
 func (u *ProxyUpsertBulk) UpdateStatus() *ProxyUpsertBulk {
 	return u.Update(func(s *ProxyUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetRegion sets the "region" field.
+func (u *ProxyUpsertBulk) SetRegion(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetRegion(v)
+	})
+}
+
+// UpdateRegion sets the "region" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateRegion() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateRegion()
+	})
+}
+
+// ClearRegion clears the value of the "region" field.
+func (u *ProxyUpsertBulk) ClearRegion() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearRegion()
+	})
+}
+
+// SetGroupName sets the "group_name" field.
+func (u *ProxyUpsertBulk) SetGroupName(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetGroupName(v)
+	})
+}
+
+// UpdateGroupName sets the "group_name" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateGroupName() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateGroupName()
+	})
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (u *ProxyUpsertBulk) ClearGroupName() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearGroupName()
+	})
+}
+
+// SetOvpnConfig sets the "ovpn_config" field.
+func (u *ProxyUpsertBulk) SetOvpnConfig(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetOvpnConfig(v)
+	})
+}
+
+// UpdateOvpnConfig sets the "ovpn_config" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateOvpnConfig() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateOvpnConfig()
+	})
+}
+
+// ClearOvpnConfig clears the value of the "ovpn_config" field.
+func (u *ProxyUpsertBulk) ClearOvpnConfig() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearOvpnConfig()
+	})
+}
+
+// SetOvpnUsername sets the "ovpn_username" field.
+func (u *ProxyUpsertBulk) SetOvpnUsername(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetOvpnUsername(v)
+	})
+}
+
+// UpdateOvpnUsername sets the "ovpn_username" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateOvpnUsername() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateOvpnUsername()
+	})
+}
+
+// ClearOvpnUsername clears the value of the "ovpn_username" field.
+func (u *ProxyUpsertBulk) ClearOvpnUsername() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearOvpnUsername()
+	})
+}
+
+// SetOvpnPassword sets the "ovpn_password" field.
+func (u *ProxyUpsertBulk) SetOvpnPassword(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetOvpnPassword(v)
+	})
+}
+
+// UpdateOvpnPassword sets the "ovpn_password" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateOvpnPassword() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateOvpnPassword()
+	})
+}
+
+// ClearOvpnPassword clears the value of the "ovpn_password" field.
+func (u *ProxyUpsertBulk) ClearOvpnPassword() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearOvpnPassword()
+	})
+}
+
+// SetIsDedicated sets the "is_dedicated" field.
+func (u *ProxyUpsertBulk) SetIsDedicated(v bool) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetIsDedicated(v)
+	})
+}
+
+// UpdateIsDedicated sets the "is_dedicated" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateIsDedicated() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateIsDedicated()
+	})
+}
+
+// SetVpnStatus sets the "vpn_status" field.
+func (u *ProxyUpsertBulk) SetVpnStatus(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetVpnStatus(v)
+	})
+}
+
+// UpdateVpnStatus sets the "vpn_status" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateVpnStatus() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateVpnStatus()
+	})
+}
+
+// ClearVpnStatus clears the value of the "vpn_status" field.
+func (u *ProxyUpsertBulk) ClearVpnStatus() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearVpnStatus()
+	})
+}
+
+// SetVpnExitIP sets the "vpn_exit_ip" field.
+func (u *ProxyUpsertBulk) SetVpnExitIP(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetVpnExitIP(v)
+	})
+}
+
+// UpdateVpnExitIP sets the "vpn_exit_ip" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateVpnExitIP() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateVpnExitIP()
+	})
+}
+
+// ClearVpnExitIP clears the value of the "vpn_exit_ip" field.
+func (u *ProxyUpsertBulk) ClearVpnExitIP() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearVpnExitIP()
+	})
+}
+
+// SetHealthStatus sets the "health_status" field.
+func (u *ProxyUpsertBulk) SetHealthStatus(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetHealthStatus(v)
+	})
+}
+
+// UpdateHealthStatus sets the "health_status" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateHealthStatus() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateHealthStatus()
+	})
+}
+
+// ClearHealthStatus clears the value of the "health_status" field.
+func (u *ProxyUpsertBulk) ClearHealthStatus() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearHealthStatus()
+	})
+}
+
+// SetLatencyMs sets the "latency_ms" field.
+func (u *ProxyUpsertBulk) SetLatencyMs(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetLatencyMs(v)
+	})
+}
+
+// AddLatencyMs adds v to the "latency_ms" field.
+func (u *ProxyUpsertBulk) AddLatencyMs(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddLatencyMs(v)
+	})
+}
+
+// UpdateLatencyMs sets the "latency_ms" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateLatencyMs() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateLatencyMs()
+	})
+}
+
+// ClearLatencyMs clears the value of the "latency_ms" field.
+func (u *ProxyUpsertBulk) ClearLatencyMs() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearLatencyMs()
+	})
+}
+
+// SetLastHealthAt sets the "last_health_at" field.
+func (u *ProxyUpsertBulk) SetLastHealthAt(v time.Time) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetLastHealthAt(v)
+	})
+}
+
+// UpdateLastHealthAt sets the "last_health_at" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateLastHealthAt() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateLastHealthAt()
+	})
+}
+
+// ClearLastHealthAt clears the value of the "last_health_at" field.
+func (u *ProxyUpsertBulk) ClearLastHealthAt() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearLastHealthAt()
+	})
+}
+
+// SetHealthCheckFailures sets the "health_check_failures" field.
+func (u *ProxyUpsertBulk) SetHealthCheckFailures(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetHealthCheckFailures(v)
+	})
+}
+
+// AddHealthCheckFailures adds v to the "health_check_failures" field.
+func (u *ProxyUpsertBulk) AddHealthCheckFailures(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddHealthCheckFailures(v)
+	})
+}
+
+// UpdateHealthCheckFailures sets the "health_check_failures" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateHealthCheckFailures() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateHealthCheckFailures()
 	})
 }
 

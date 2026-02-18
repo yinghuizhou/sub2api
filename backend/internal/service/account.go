@@ -21,6 +21,7 @@ type Account struct {
 	Credentials map[string]any
 	Extra       map[string]any
 	ProxyID     *int64
+	ProxyGroup  string // 代理分组名，当 ProxyID 为空时从该组选择代理
 	Concurrency int
 	Priority    int
 	// RateMultiplier 账号计费倍率（>=0，允许 0 表示该账号计费为 0）。

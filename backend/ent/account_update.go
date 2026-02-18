@@ -152,6 +152,26 @@ func (_u *AccountUpdate) ClearProxyID() *AccountUpdate {
 	return _u
 }
 
+// SetProxyGroup sets the "proxy_group" field.
+func (_u *AccountUpdate) SetProxyGroup(v string) *AccountUpdate {
+	_u.mutation.SetProxyGroup(v)
+	return _u
+}
+
+// SetNillableProxyGroup sets the "proxy_group" field if the given value is not nil.
+func (_u *AccountUpdate) SetNillableProxyGroup(v *string) *AccountUpdate {
+	if v != nil {
+		_u.SetProxyGroup(*v)
+	}
+	return _u
+}
+
+// ClearProxyGroup clears the value of the "proxy_group" field.
+func (_u *AccountUpdate) ClearProxyGroup() *AccountUpdate {
+	_u.mutation.ClearProxyGroup()
+	return _u
+}
+
 // SetConcurrency sets the "concurrency" field.
 func (_u *AccountUpdate) SetConcurrency(v int) *AccountUpdate {
 	_u.mutation.ResetConcurrency()
@@ -629,6 +649,11 @@ func (_u *AccountUpdate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Account.type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ProxyGroup(); ok {
+		if err := account.ProxyGroupValidator(v); err != nil {
+			return &ValidationError{Name: "proxy_group", err: fmt.Errorf(`ent: validator failed for field "Account.proxy_group": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := account.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Account.status": %w`, err)}
@@ -688,6 +713,12 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Extra(); ok {
 		_spec.SetField(account.FieldExtra, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.ProxyGroup(); ok {
+		_spec.SetField(account.FieldProxyGroup, field.TypeString, value)
+	}
+	if _u.mutation.ProxyGroupCleared() {
+		_spec.ClearField(account.FieldProxyGroup, field.TypeString)
 	}
 	if value, ok := _u.mutation.Concurrency(); ok {
 		_spec.SetField(account.FieldConcurrency, field.TypeInt, value)
@@ -1070,6 +1101,26 @@ func (_u *AccountUpdateOne) SetNillableProxyID(v *int64) *AccountUpdateOne {
 // ClearProxyID clears the value of the "proxy_id" field.
 func (_u *AccountUpdateOne) ClearProxyID() *AccountUpdateOne {
 	_u.mutation.ClearProxyID()
+	return _u
+}
+
+// SetProxyGroup sets the "proxy_group" field.
+func (_u *AccountUpdateOne) SetProxyGroup(v string) *AccountUpdateOne {
+	_u.mutation.SetProxyGroup(v)
+	return _u
+}
+
+// SetNillableProxyGroup sets the "proxy_group" field if the given value is not nil.
+func (_u *AccountUpdateOne) SetNillableProxyGroup(v *string) *AccountUpdateOne {
+	if v != nil {
+		_u.SetProxyGroup(*v)
+	}
+	return _u
+}
+
+// ClearProxyGroup clears the value of the "proxy_group" field.
+func (_u *AccountUpdateOne) ClearProxyGroup() *AccountUpdateOne {
+	_u.mutation.ClearProxyGroup()
 	return _u
 }
 
@@ -1563,6 +1614,11 @@ func (_u *AccountUpdateOne) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Account.type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ProxyGroup(); ok {
+		if err := account.ProxyGroupValidator(v); err != nil {
+			return &ValidationError{Name: "proxy_group", err: fmt.Errorf(`ent: validator failed for field "Account.proxy_group": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := account.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Account.status": %w`, err)}
@@ -1639,6 +1695,12 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 	}
 	if value, ok := _u.mutation.Extra(); ok {
 		_spec.SetField(account.FieldExtra, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.ProxyGroup(); ok {
+		_spec.SetField(account.FieldProxyGroup, field.TypeString, value)
+	}
+	if _u.mutation.ProxyGroupCleared() {
+		_spec.ClearField(account.FieldProxyGroup, field.TypeString)
 	}
 	if value, ok := _u.mutation.Concurrency(); ok {
 		_spec.SetField(account.FieldConcurrency, field.TypeInt, value)

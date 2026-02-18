@@ -25,6 +25,8 @@ type ProxyRepository interface {
 	ListWithFiltersAndAccountCount(ctx context.Context, params pagination.PaginationParams, protocol, status, search string) ([]ProxyWithAccountCount, *pagination.PaginationResult, error)
 	ListActive(ctx context.Context) ([]Proxy, error)
 	ListActiveWithAccountCount(ctx context.Context) ([]ProxyWithAccountCount, error)
+	ListByGroupName(ctx context.Context, groupName string) ([]Proxy, error)
+	ListGroupNames(ctx context.Context) ([]string, error)
 
 	ExistsByHostPortAuth(ctx context.Context, host string, port int, username, password string) (bool, error)
 	CountAccountsByProxyID(ctx context.Context, proxyID int64) (int64, error)
@@ -33,23 +35,35 @@ type ProxyRepository interface {
 
 // CreateProxyRequest 创建代理请求
 type CreateProxyRequest struct {
-	Name     string `json:"name"`
-	Protocol string `json:"protocol"`
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Name         string `json:"name"`
+	Protocol     string `json:"protocol"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Region       string `json:"region"`
+	GroupName    string `json:"group_name"`
+	OvpnConfig   string `json:"ovpn_config"`
+	OvpnUsername string `json:"ovpn_username"`
+	OvpnPassword string `json:"ovpn_password"`
+	IsDedicated  bool   `json:"is_dedicated"`
 }
 
 // UpdateProxyRequest 更新代理请求
 type UpdateProxyRequest struct {
-	Name     *string `json:"name"`
-	Protocol *string `json:"protocol"`
-	Host     *string `json:"host"`
-	Port     *int    `json:"port"`
-	Username *string `json:"username"`
-	Password *string `json:"password"`
-	Status   *string `json:"status"`
+	Name         *string `json:"name"`
+	Protocol     *string `json:"protocol"`
+	Host         *string `json:"host"`
+	Port         *int    `json:"port"`
+	Username     *string `json:"username"`
+	Password     *string `json:"password"`
+	Status       *string `json:"status"`
+	Region       *string `json:"region"`
+	GroupName    *string `json:"group_name"`
+	OvpnConfig   *string `json:"ovpn_config"`
+	OvpnUsername *string `json:"ovpn_username"`
+	OvpnPassword *string `json:"ovpn_password"`
+	IsDedicated  *bool   `json:"is_dedicated"`
 }
 
 // ProxyService 代理管理服务
@@ -66,15 +80,20 @@ func NewProxyService(proxyRepo ProxyRepository) *ProxyService {
 
 // Create 创建代理
 func (s *ProxyService) Create(ctx context.Context, req CreateProxyRequest) (*Proxy, error) {
-	// 创建代理
 	proxy := &Proxy{
-		Name:     req.Name,
-		Protocol: req.Protocol,
-		Host:     req.Host,
-		Port:     req.Port,
-		Username: req.Username,
-		Password: req.Password,
-		Status:   StatusActive,
+		Name:         req.Name,
+		Protocol:     req.Protocol,
+		Host:         req.Host,
+		Port:         req.Port,
+		Username:     req.Username,
+		Password:     req.Password,
+		Status:       StatusActive,
+		Region:       req.Region,
+		GroupName:    req.GroupName,
+		OvpnConfig:   req.OvpnConfig,
+		OvpnUsername: req.OvpnUsername,
+		OvpnPassword: req.OvpnPassword,
+		IsDedicated:  req.IsDedicated,
 	}
 
 	if err := s.proxyRepo.Create(ctx, proxy); err != nil {
@@ -118,33 +137,44 @@ func (s *ProxyService) Update(ctx context.Context, id int64, req UpdateProxyRequ
 		return nil, fmt.Errorf("get proxy: %w", err)
 	}
 
-	// 更新字段
 	if req.Name != nil {
 		proxy.Name = *req.Name
 	}
-
 	if req.Protocol != nil {
 		proxy.Protocol = *req.Protocol
 	}
-
 	if req.Host != nil {
 		proxy.Host = *req.Host
 	}
-
 	if req.Port != nil {
 		proxy.Port = *req.Port
 	}
-
 	if req.Username != nil {
 		proxy.Username = *req.Username
 	}
-
 	if req.Password != nil {
 		proxy.Password = *req.Password
 	}
-
 	if req.Status != nil {
 		proxy.Status = *req.Status
+	}
+	if req.Region != nil {
+		proxy.Region = *req.Region
+	}
+	if req.GroupName != nil {
+		proxy.GroupName = *req.GroupName
+	}
+	if req.OvpnConfig != nil {
+		proxy.OvpnConfig = *req.OvpnConfig
+	}
+	if req.OvpnUsername != nil {
+		proxy.OvpnUsername = *req.OvpnUsername
+	}
+	if req.OvpnPassword != nil {
+		proxy.OvpnPassword = *req.OvpnPassword
+	}
+	if req.IsDedicated != nil {
+		proxy.IsDedicated = *req.IsDedicated
 	}
 
 	if err := s.proxyRepo.Update(ctx, proxy); err != nil {
