@@ -414,6 +414,8 @@ type GatewayService struct {
 	concurrencyService  *ConcurrencyService
 	claudeTokenProvider *ClaudeTokenProvider
 	sessionLimitCache   SessionLimitCache // 会话数量限制缓存（仅 Anthropic OAuth/SetupToken）
+	vendorRepo          VendorRepository
+	vendorAdapter       *VendorProtocolAdapter
 }
 
 // NewGatewayService creates a new GatewayService
@@ -437,6 +439,7 @@ func NewGatewayService(
 	claudeTokenProvider *ClaudeTokenProvider,
 	sessionLimitCache SessionLimitCache,
 	digestStore *DigestSessionStore,
+	vendorRepo VendorRepository,
 ) *GatewayService {
 	return &GatewayService{
 		accountRepo:         accountRepo,
@@ -458,6 +461,8 @@ func NewGatewayService(
 		deferredService:     deferredService,
 		claudeTokenProvider: claudeTokenProvider,
 		sessionLimitCache:   sessionLimitCache,
+		vendorRepo:          vendorRepo,
+		vendorAdapter:       &VendorProtocolAdapter{},
 	}
 }
 
@@ -3510,7 +3515,18 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Context, account *Account, body []byte, token, tokenType, modelID string, reqStream bool, mimicClaudeCode bool) (*http.Request, error) {
 	// 确定目标URL
 	targetURL := claudeAPIURL
-	if account.Type == AccountTypeAPIKey {
+
+	// 供应商账户：加载供应商配置，覆盖 targetURL 和认证方式
+	var vendor *Vendor
+	if account.VendorID != nil && s.vendorRepo != nil {
+		v, err := s.vendorRepo.GetByID(ctx, *account.VendorID)
+		if err == nil {
+			vendor = v
+			targetURL = vendor.BaseURL + vendor.GetAPIPath()
+		}
+	}
+
+	if vendor == nil && account.Type == AccountTypeAPIKey {
 		baseURL := account.GetBaseURL()
 		if baseURL != "" {
 			validatedURL, err := s.validateUpstreamBaseURL(baseURL)
@@ -3554,7 +3570,25 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 	}
 
 	// 设置认证头
-	if tokenType == "oauth" {
+	if vendor != nil {
+		// 供应商账户：根据供应商的 auth_type 设置认证头
+		switch vendor.AuthType {
+		case VendorAuthTypeBearer:
+			req.Header.Set("authorization", "Bearer "+token)
+		case VendorAuthTypeSession:
+			sessionKey := ""
+			if sk, ok := account.Credentials["session_key"].(string); ok {
+				sessionKey = sk
+			}
+			req.Header.Set("Cookie", "session="+sessionKey)
+		default: // api_key
+			req.Header.Set("x-api-key", token)
+		}
+		// 添加供应商额外请求头
+		for k, v := range vendor.ExtraHeaders {
+			req.Header.Set(k, v)
+		}
+	} else if tokenType == "oauth" {
 		req.Header.Set("authorization", "Bearer "+token)
 	} else {
 		req.Header.Set("x-api-key", token)
