@@ -290,6 +290,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/admin/vendors',
+    name: 'AdminVendors',
+    component: () => import('@/views/admin/VendorsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Vendor Management',
+      titleKey: 'admin.vendors.title',
+      descriptionKey: 'admin.vendors.description'
+    }
+  },
+  {
     path: '/admin/redeem',
     name: 'AdminRedeem',
     component: () => import('@/views/admin/RedeemView.vue'),
