@@ -15,6 +15,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
+	"github.com/Wei-Shaw/sub2api/ent/vendor"
 )
 
 // AccountCreate is the builder for creating a Account entity.
@@ -335,6 +336,34 @@ func (_c *AccountCreate) SetNillableSessionWindowStatus(v *string) *AccountCreat
 	return _c
 }
 
+// SetVendorID sets the "vendor_id" field.
+func (_c *AccountCreate) SetVendorID(v int64) *AccountCreate {
+	_c.mutation.SetVendorID(v)
+	return _c
+}
+
+// SetNillableVendorID sets the "vendor_id" field if the given value is not nil.
+func (_c *AccountCreate) SetNillableVendorID(v *int64) *AccountCreate {
+	if v != nil {
+		_c.SetVendorID(*v)
+	}
+	return _c
+}
+
+// SetSourceType sets the "source_type" field.
+func (_c *AccountCreate) SetSourceType(v string) *AccountCreate {
+	_c.mutation.SetSourceType(v)
+	return _c
+}
+
+// SetNillableSourceType sets the "source_type" field if the given value is not nil.
+func (_c *AccountCreate) SetNillableSourceType(v *string) *AccountCreate {
+	if v != nil {
+		_c.SetSourceType(*v)
+	}
+	return _c
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
 func (_c *AccountCreate) AddGroupIDs(ids ...int64) *AccountCreate {
 	_c.mutation.AddGroupIDs(ids...)
@@ -368,6 +397,11 @@ func (_c *AccountCreate) AddUsageLogs(v ...*UsageLog) *AccountCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddUsageLogIDs(ids...)
+}
+
+// SetVendor sets the "vendor" edge to the Vendor entity.
+func (_c *AccountCreate) SetVendor(v *Vendor) *AccountCreate {
+	return _c.SetVendorID(v.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -459,6 +493,10 @@ func (_c *AccountCreate) defaults() error {
 		v := account.DefaultSchedulable
 		_c.mutation.SetSchedulable(v)
 	}
+	if _, ok := _c.mutation.SourceType(); !ok {
+		v := account.DefaultSourceType
+		_c.mutation.SetSourceType(v)
+	}
 	return nil
 }
 
@@ -526,6 +564,14 @@ func (_c *AccountCreate) check() error {
 	if v, ok := _c.mutation.SessionWindowStatus(); ok {
 		if err := account.SessionWindowStatusValidator(v); err != nil {
 			return &ValidationError{Name: "session_window_status", err: fmt.Errorf(`ent: validator failed for field "Account.session_window_status": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.SourceType(); !ok {
+		return &ValidationError{Name: "source_type", err: errors.New(`ent: missing required field "Account.source_type"`)}
+	}
+	if v, ok := _c.mutation.SourceType(); ok {
+		if err := account.SourceTypeValidator(v); err != nil {
+			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "Account.source_type": %w`, err)}
 		}
 	}
 	return nil
@@ -651,6 +697,10 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_spec.SetField(account.FieldSessionWindowStatus, field.TypeString, value)
 		_node.SessionWindowStatus = &value
 	}
+	if value, ok := _c.mutation.SourceType(); ok {
+		_spec.SetField(account.FieldSourceType, field.TypeString, value)
+		_node.SourceType = value
+	}
 	if nodes := _c.mutation.GroupsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -702,6 +752,23 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.VendorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorTable,
+			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.VendorID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -1131,6 +1198,36 @@ func (u *AccountUpsert) UpdateSessionWindowStatus() *AccountUpsert {
 // ClearSessionWindowStatus clears the value of the "session_window_status" field.
 func (u *AccountUpsert) ClearSessionWindowStatus() *AccountUpsert {
 	u.SetNull(account.FieldSessionWindowStatus)
+	return u
+}
+
+// SetVendorID sets the "vendor_id" field.
+func (u *AccountUpsert) SetVendorID(v int64) *AccountUpsert {
+	u.Set(account.FieldVendorID, v)
+	return u
+}
+
+// UpdateVendorID sets the "vendor_id" field to the value that was provided on create.
+func (u *AccountUpsert) UpdateVendorID() *AccountUpsert {
+	u.SetExcluded(account.FieldVendorID)
+	return u
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (u *AccountUpsert) ClearVendorID() *AccountUpsert {
+	u.SetNull(account.FieldVendorID)
+	return u
+}
+
+// SetSourceType sets the "source_type" field.
+func (u *AccountUpsert) SetSourceType(v string) *AccountUpsert {
+	u.Set(account.FieldSourceType, v)
+	return u
+}
+
+// UpdateSourceType sets the "source_type" field to the value that was provided on create.
+func (u *AccountUpsert) UpdateSourceType() *AccountUpsert {
+	u.SetExcluded(account.FieldSourceType)
 	return u
 }
 
@@ -1617,6 +1714,41 @@ func (u *AccountUpsertOne) UpdateSessionWindowStatus() *AccountUpsertOne {
 func (u *AccountUpsertOne) ClearSessionWindowStatus() *AccountUpsertOne {
 	return u.Update(func(s *AccountUpsert) {
 		s.ClearSessionWindowStatus()
+	})
+}
+
+// SetVendorID sets the "vendor_id" field.
+func (u *AccountUpsertOne) SetVendorID(v int64) *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetVendorID(v)
+	})
+}
+
+// UpdateVendorID sets the "vendor_id" field to the value that was provided on create.
+func (u *AccountUpsertOne) UpdateVendorID() *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateVendorID()
+	})
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (u *AccountUpsertOne) ClearVendorID() *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.ClearVendorID()
+	})
+}
+
+// SetSourceType sets the "source_type" field.
+func (u *AccountUpsertOne) SetSourceType(v string) *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetSourceType(v)
+	})
+}
+
+// UpdateSourceType sets the "source_type" field to the value that was provided on create.
+func (u *AccountUpsertOne) UpdateSourceType() *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateSourceType()
 	})
 }
 
@@ -2269,6 +2401,41 @@ func (u *AccountUpsertBulk) UpdateSessionWindowStatus() *AccountUpsertBulk {
 func (u *AccountUpsertBulk) ClearSessionWindowStatus() *AccountUpsertBulk {
 	return u.Update(func(s *AccountUpsert) {
 		s.ClearSessionWindowStatus()
+	})
+}
+
+// SetVendorID sets the "vendor_id" field.
+func (u *AccountUpsertBulk) SetVendorID(v int64) *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetVendorID(v)
+	})
+}
+
+// UpdateVendorID sets the "vendor_id" field to the value that was provided on create.
+func (u *AccountUpsertBulk) UpdateVendorID() *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateVendorID()
+	})
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (u *AccountUpsertBulk) ClearVendorID() *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.ClearVendorID()
+	})
+}
+
+// SetSourceType sets the "source_type" field.
+func (u *AccountUpsertBulk) SetSourceType(v string) *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetSourceType(v)
+	})
+}
+
+// UpdateSourceType sets the "source_type" field to the value that was provided on create.
+func (u *AccountUpsertBulk) UpdateSourceType() *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateSourceType()
 	})
 }
 

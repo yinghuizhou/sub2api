@@ -823,6 +823,11 @@ func (s *SettingService) GetStreamTimeoutSettings(ctx context.Context) (*StreamT
 	return &settings, nil
 }
 
+// GetValue 获取单个设置值
+func (s *SettingService) GetValue(ctx context.Context, key string) (string, error) {
+	return s.settingRepo.GetValue(ctx, key)
+}
+
 // SetStreamTimeoutSettings 设置流超时处理配置
 func (s *SettingService) SetStreamTimeoutSettings(ctx context.Context, settings *StreamTimeoutSettings) error {
 	if settings == nil {

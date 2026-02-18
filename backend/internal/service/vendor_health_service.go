@@ -1,0 +1,157 @@
+package service
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+// VendorHealthService 供应商健康检查服务
+type VendorHealthService struct {
+	vendorRepo VendorRepository
+	httpClient *http.Client
+}
+
+// NewVendorHealthService 创建健康检查服务
+func NewVendorHealthService(vendorRepo VendorRepository) *VendorHealthService {
+	return &VendorHealthService{
+		vendorRepo: vendorRepo,
+		httpClient: &http.Client{Timeout: 30 * time.Second},
+	}
+}
+
+// RunHealthCheck 对单个供应商执行健康检查
+func (s *VendorHealthService) RunHealthCheck(ctx context.Context, vendorID int64) (*VendorHealthResult, error) {
+	vendor, err := s.vendorRepo.GetByID(ctx, vendorID)
+	if err != nil {
+		return nil, err
+	}
+	return s.checkVendor(ctx, vendor)
+}
+
+// VendorHealthResult 健康检查结果
+type VendorHealthResult struct {
+	VendorID int64  `json:"vendor_id"`
+	Status   string `json:"status"`
+	Latency  int    `json:"latency_ms"`
+	Error    string `json:"error,omitempty"`
+}
+
+// checkVendor 执行实际的健康检查
+func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (*VendorHealthResult, error) {
+	result := &VendorHealthResult{VendorID: vendor.ID}
+
+	// 构建测试请求
+	apiPath := vendor.GetAPIPath()
+	targetURL := vendor.BaseURL + apiPath
+
+	var reqBody []byte
+	if vendor.APIFormat == VendorAPIFormatOpenAI {
+		reqBody, _ = json.Marshal(map[string]any{
+			"model":      vendor.HealthCheckModel,
+			"messages":   []map[string]string{{"role": "user", "content": "hi"}},
+			"max_tokens": 1,
+		})
+	} else {
+		reqBody, _ = json.Marshal(map[string]any{
+			"model":      vendor.HealthCheckModel,
+			"messages":   []map[string]any{{"role": "user", "content": []map[string]string{{"type": "text", "text": "hi"}}}},
+			"max_tokens": 1,
+		})
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", targetURL, bytes.NewReader(reqBody))
+	if err != nil {
+		result.Status = VendorHealthError
+		result.Error = fmt.Sprintf("build request: %v", err)
+		return result, nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	start := time.Now()
+	resp, err := s.httpClient.Do(req)
+	latency := int(time.Since(start).Milliseconds())
+	result.Latency = latency
+
+	if err != nil {
+		result.Status = VendorHealthTimeout
+		result.Error = fmt.Sprintf("request failed: %v", err)
+	} else {
+		defer resp.Body.Close()
+		io.Copy(io.Discard, resp.Body)
+
+		if resp.StatusCode >= 200 && resp.StatusCode < 500 {
+			if latency > 10000 {
+				result.Status = VendorHealthSlow
+			} else {
+				result.Status = VendorHealthOK
+			}
+		} else {
+			result.Status = VendorHealthError
+			result.Error = fmt.Sprintf("HTTP %d", resp.StatusCode)
+		}
+	}
+
+	// 更新供应商健康状态
+	consecutiveFailures := 0
+	var errMsg *string
+	if result.Status == VendorHealthError || result.Status == VendorHealthTimeout {
+		consecutiveFailures = vendor.ConsecutiveFailures + 1
+		errMsg = &result.Error
+	}
+
+	if updateErr := s.vendorRepo.UpdateHealthStatus(ctx, vendor.ID, result.Status, &result.Latency, errMsg, consecutiveFailures); updateErr != nil {
+		slog.Error("failed to update vendor health status", "vendor_id", vendor.ID, "error", updateErr)
+	}
+
+	return result, nil
+}
+
+// RunAllDueHealthChecks 执行所有到期的健康检查
+func (s *VendorHealthService) RunAllDueHealthChecks(ctx context.Context) ([]VendorHealthResult, error) {
+	vendors, err := s.vendorRepo.ListHealthCheckDue(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list health check due: %w", err)
+	}
+
+	var results []VendorHealthResult
+	for i := range vendors {
+		result, err := s.checkVendor(ctx, &vendors[i])
+		if err != nil {
+			slog.Error("health check failed", "vendor_id", vendors[i].ID, "error", err)
+			continue
+		}
+		results = append(results, *result)
+	}
+	return results, nil
+}
+
+// AutoSuspendUnhealthy 自动暂停连续失败超过阈值的供应商
+func (s *VendorHealthService) AutoSuspendUnhealthy(ctx context.Context, maxFailures int) (int, error) {
+	if maxFailures <= 0 {
+		maxFailures = 5
+	}
+
+	vendors, err := s.vendorRepo.ListActive(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	suspended := 0
+	for _, v := range vendors {
+		if v.HealthCheckEnabled && v.ConsecutiveFailures >= maxFailures {
+			if err := s.vendorRepo.UpdateStatus(ctx, v.ID, VendorStatusError); err != nil {
+				slog.Error("failed to suspend unhealthy vendor", "vendor_id", v.ID, "error", err)
+				continue
+			}
+			suspended++
+			slog.Warn("auto-suspended unhealthy vendor", "vendor_id", v.ID, "name", v.Name, "consecutive_failures", v.ConsecutiveFailures)
+		}
+	}
+	return suspended, nil
+}

@@ -1,0 +1,380 @@
+<template>
+  <AppLayout>
+    <TablePageLayout>
+      <template #filters>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative w-full sm:w-64">
+            <Icon name="search" size="md" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <input v-model="searchQuery" type="text" placeholder="搜索供应商..." class="input pl-10" @input="handleSearch" />
+          </div>
+          <div class="w-full sm:w-36">
+            <Select v-model="filters.status" :options="statusOptions" placeholder="全部状态" @change="loadVendors" />
+          </div>
+          <div class="w-full sm:w-40">
+            <Select v-model="filters.api_format" :options="apiFormatOptions" placeholder="全部格式" @change="loadVendors" />
+          </div>
+          <div class="flex flex-1 items-center justify-end gap-2">
+            <button @click="loadVendors" :disabled="loading" class="btn btn-secondary" title="刷新">
+              <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+            </button>
+            <button @click="openCreateModal" class="btn btn-primary">
+              <Icon name="plus" size="md" class="mr-2" />添加供应商
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <template #table>
+        <DataTable :columns="columns" :data="vendors" :loading="loading">
+          <template #cell-name="{ value }">
+            <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
+          </template>
+          <template #cell-api_format="{ value }">
+            <span :class="['badge', value === 'anthropic' ? 'badge-primary' : 'badge-gray']">
+              {{ value === 'anthropic' ? 'Anthropic' : 'OpenAI' }}
+            </span>
+          </template>
+          <template #cell-billing_type="{ value }">
+            <span class="badge badge-gray">{{ billingLabel(value) }}</span>
+          </template>
+          <template #cell-balance="{ row }">
+            <span class="text-sm">{{ formatBalance(row) }}</span>
+          </template>
+          <template #cell-status="{ value }">
+            <span :class="['badge', statusBadge(value)]">{{ statusLabel(value) }}</span>
+          </template>
+          <template #cell-health="{ row }">
+            <span :class="['inline-block h-2.5 w-2.5 rounded-full', healthDot(row.last_health_status)]"
+              :title="row.last_health_status || 'unknown'" />
+          </template>
+          <template #cell-latency="{ row }">
+            <span v-if="typeof row.last_health_latency === 'number'" class="text-sm text-gray-700 dark:text-gray-300">
+              {{ row.last_health_latency }}ms
+            </span>
+            <span v-else class="text-sm text-gray-400">-</span>
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="flex items-center gap-1">
+              <button @click="handleTest(row)" :disabled="testingIds.has(row.id)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
+                <Icon :name="testingIds.has(row.id) ? 'refresh' : 'checkCircle'" size="sm"
+                  :class="testingIds.has(row.id) ? 'animate-spin' : ''" />
+                <span class="text-xs">测试</span>
+              </button>
+              <button @click="handleEdit(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400">
+                <Icon name="edit" size="sm" /><span class="text-xs">编辑</span>
+              </button>
+              <button @click="handleDelete(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                <Icon name="trash" size="sm" /><span class="text-xs">删除</span>
+              </button>
+            </div>
+          </template>
+          <template #empty>
+            <EmptyState title="暂无供应商" description="添加第一个供应商以开始使用" action-text="添加供应商" @action="openCreateModal" />
+          </template>
+        </DataTable>
+      </template>
+
+      <template #pagination>
+        <Pagination v-if="pagination.total > 0" :page="pagination.page" :total="pagination.total"
+          :page-size="pagination.page_size" @update:page="p => { pagination.page = p; loadVendors() }"
+          @update:pageSize="s => { pagination.page_size = s; pagination.page = 1; loadVendors() }" />
+      </template>
+    </TablePageLayout>
+
+    <!-- Create/Edit Modal -->
+    <BaseDialog :show="showModal" :title="editingVendor ? '编辑供应商' : '添加供应商'" width="normal" @close="closeModal">
+      <form id="vendor-form" @submit.prevent="handleSubmit" class="space-y-5">
+        <!-- Basic Info -->
+        <fieldset>
+          <legend class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">基本信息</legend>
+          <div class="space-y-4">
+            <div>
+              <label class="input-label">名称</label>
+              <input v-model="form.name" type="text" required class="input" placeholder="供应商名称" />
+            </div>
+            <div>
+              <label class="input-label">描述</label>
+              <input v-model="form.description" type="text" class="input" placeholder="可选描述" />
+            </div>
+          </div>
+        </fieldset>
+        <!-- API Config -->
+        <fieldset>
+          <legend class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">API 配置</legend>
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="input-label">API 格式</label>
+                <Select v-model="form.api_format" :options="apiFormatSelectOptions" />
+              </div>
+              <div>
+                <label class="input-label">认证方式</label>
+                <Select v-model="form.auth_type" :options="authTypeOptions" />
+              </div>
+            </div>
+            <div>
+              <label class="input-label">Base URL</label>
+              <input v-model="form.base_url" type="url" required class="input" placeholder="https://api.example.com" />
+            </div>
+            <div>
+              <label class="input-label">API 路径覆盖</label>
+              <input v-model="form.api_path_override" type="text" class="input" placeholder="/v1/messages (可选)" />
+            </div>
+            <div>
+              <label class="input-label">额外 Headers (JSON)</label>
+              <textarea v-model="extraHeadersJson" rows="2" class="input font-mono text-sm" placeholder='{"X-Custom": "value"}' />
+            </div>
+          </div>
+        </fieldset>
+        <!-- Billing -->
+        <fieldset>
+          <legend class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">计费信息</legend>
+          <div class="space-y-4">
+            <div>
+              <label class="input-label">计费模式</label>
+              <Select v-model="form.billing_type" :options="billingTypeOptions" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="input-label">输入成本 ($/1K tokens)</label>
+                <input v-model.number="form.cost_per_1k_input" type="number" step="0.001" min="0" class="input" />
+              </div>
+              <div>
+                <label class="input-label">输出成本 ($/1K tokens)</label>
+                <input v-model.number="form.cost_per_1k_output" type="number" step="0.001" min="0" class="input" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="input-label">总额度 (USD)</label>
+                <input v-model.number="form.total_quota_usd" type="number" step="0.01" min="0" class="input" />
+              </div>
+              <div>
+                <label class="input-label">余额 (USD)</label>
+                <input v-model.number="form.balance_usd" type="number" step="0.01" min="0" class="input" />
+              </div>
+            </div>
+            <div>
+              <label class="input-label">过期时间</label>
+              <input v-model="form.expires_at" type="datetime-local" class="input" />
+            </div>
+          </div>
+        </fieldset>
+        <!-- Health & Alerts -->
+        <fieldset>
+          <legend class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">健康监控 & 预警</legend>
+          <div class="space-y-4">
+            <label class="flex items-center gap-2">
+              <input v-model="form.health_check_enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">启用健康检查</span>
+            </label>
+            <div v-if="form.health_check_enabled" class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="input-label">检查间隔 (秒)</label>
+                <input v-model.number="form.health_check_interval" type="number" min="30" class="input" />
+              </div>
+              <div>
+                <label class="input-label">检查模型</label>
+                <input v-model="form.health_check_model" type="text" class="input" placeholder="claude-sonnet-4-20250514" />
+              </div>
+            </div>
+            <label class="flex items-center gap-2">
+              <input v-model="form.balance_alert_enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">启用余额预警</span>
+            </label>
+            <div v-if="form.balance_alert_enabled">
+              <label class="input-label">预警阈值 (USD)</label>
+              <input v-model.number="form.balance_alert_threshold" type="number" step="0.01" min="0" class="input" />
+            </div>
+          </div>
+        </fieldset>
+        <!-- Status (edit only) -->
+        <div v-if="editingVendor">
+          <label class="input-label">状态</label>
+          <Select v-model="form.status" :options="editStatusOptions" />
+        </div>
+      </form>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <button @click="closeModal" type="button" class="btn btn-secondary">取消</button>
+          <button type="submit" form="vendor-form" :disabled="submitting" class="btn btn-primary">
+            {{ submitting ? '提交中...' : (editingVendor ? '更新' : '创建') }}
+          </button>
+        </div>
+      </template>
+    </BaseDialog>
+
+    <!-- Delete Confirmation -->
+    <ConfirmDialog :show="showDeleteDialog" title="删除供应商"
+      :message="`确定要删除供应商「${deletingVendor?.name}」吗？此操作不可撤销。`"
+      confirm-text="删除" cancel-text="取消" :danger="true"
+      @confirm="confirmDelete" @cancel="showDeleteDialog = false" />
+  </AppLayout>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useAppStore } from '@/stores/app'
+import { vendorApi, type Vendor, type CreateVendorRequest } from '@/api/vendor'
+import type { Column } from '@/components/common/types'
+import AppLayout from '@/components/layout/AppLayout.vue'
+import TablePageLayout from '@/components/layout/TablePageLayout.vue'
+import DataTable from '@/components/common/DataTable.vue'
+import Pagination from '@/components/common/Pagination.vue'
+import BaseDialog from '@/components/common/BaseDialog.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
+import Select from '@/components/common/Select.vue'
+import Icon from '@/components/icons/Icon.vue'
+
+const appStore = useAppStore()
+
+const columns = computed<Column[]>(() => [
+  { key: 'name', label: '名称', sortable: true },
+  { key: 'api_format', label: 'API 格式', sortable: true },
+  { key: 'billing_type', label: '计费模式', sortable: false },
+  { key: 'balance', label: '余额/额度', sortable: false },
+  { key: 'status', label: '状态', sortable: true },
+  { key: 'health', label: '健康', sortable: false },
+  { key: 'latency', label: '延迟', sortable: false },
+  { key: 'actions', label: '操作', sortable: false },
+])
+
+const statusOptions = [
+  { value: '', label: '全部状态' },
+  { value: 'active', label: '正常' },
+  { value: 'suspended', label: '暂停' },
+  { value: 'depleted', label: '耗尽' },
+  { value: 'error', label: '错误' },
+]
+const apiFormatOptions = [
+  { value: '', label: '全部格式' },
+  { value: 'anthropic', label: 'Anthropic' },
+  { value: 'openai', label: 'OpenAI' },
+]
+const apiFormatSelectOptions = [
+  { value: 'anthropic', label: 'Anthropic' },
+  { value: 'openai', label: 'OpenAI' },
+]
+const authTypeOptions = [
+  { value: 'api_key', label: 'API Key' },
+  { value: 'session', label: 'Session' },
+  { value: 'bearer', label: 'Bearer Token' },
+]
+const billingTypeOptions = [
+  { value: 'token', label: 'Token 计费' },
+  { value: 'quota', label: '额度计费' },
+  { value: 'subscription', label: '订阅制' },
+]
+const editStatusOptions = [
+  { value: 'active', label: '正常' },
+  { value: 'suspended', label: '暂停' },
+  { value: 'depleted', label: '耗尽' },
+  { value: 'error', label: '错误' },
+]
+
+const vendors = ref<Vendor[]>([])
+const loading = ref(false)
+const searchQuery = ref('')
+const filters = reactive({ status: '', api_format: '' })
+const pagination = reactive({ page: 1, page_size: 20, total: 0 })
+const showModal = ref(false)
+const showDeleteDialog = ref(false)
+const submitting = ref(false)
+const editingVendor = ref<Vendor | null>(null)
+const deletingVendor = ref<Vendor | null>(null)
+const testingIds = ref<Set<number>>(new Set())
+const extraHeadersJson = ref('{}')
+
+const defaultForm = (): CreateVendorRequest & { status?: string; health_check_enabled: boolean; health_check_interval: number; health_check_model: string; balance_alert_enabled: boolean; balance_alert_threshold?: number } => ({
+  name: '', description: '', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
+  api_path_override: '', billing_type: 'token', cost_per_1k_input: 0, cost_per_1k_output: 0,
+  total_quota_usd: 0, balance_usd: 0, expires_at: '', health_check_enabled: false,
+  health_check_interval: 300, health_check_model: 'claude-sonnet-4-20250514',
+  balance_alert_enabled: false, balance_alert_threshold: 10, status: 'active',
+})
+const form = reactive(defaultForm())
+
+const billingLabel = (v: string) => ({ token: 'Token', quota: '额度', subscription: '订阅' }[v] || v)
+const statusLabel = (v: string) => ({ active: '正常', suspended: '暂停', depleted: '耗尽', error: '错误' }[v] || v)
+const statusBadge = (v: string) => ({ active: 'badge-success', suspended: 'badge-warning', depleted: 'badge-danger', error: 'badge-danger' }[v] || 'badge-gray')
+const healthDot = (v?: string) => ({ ok: 'bg-green-500', slow: 'bg-yellow-500', error: 'bg-red-500', timeout: 'bg-red-500' }[v || ''] || 'bg-gray-300')
+const formatBalance = (row: Vendor) => {
+  if (row.billing_type === 'token' && row.balance_usd != null) return `$${row.balance_usd.toFixed(2)}`
+  if (row.billing_type === 'quota' && row.total_quota_usd != null) return `$${((row.total_quota_usd || 0) - row.used_quota_usd).toFixed(2)} / $${row.total_quota_usd.toFixed(2)}`
+  return '-'
+}
+
+let searchTimeout: ReturnType<typeof setTimeout>
+const handleSearch = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { pagination.page = 1; loadVendors() }, 300) }
+
+const loadVendors = async () => {
+  loading.value = true
+  try {
+    const params: Record<string, any> = { page: pagination.page, page_size: pagination.page_size }
+    if (filters.status) params.status = filters.status
+    if (filters.api_format) params.api_format = filters.api_format
+    if (searchQuery.value) params.search = searchQuery.value
+    const res = await vendorApi.list(params)
+    const data = res.data ?? res
+    vendors.value = data.items || []
+    pagination.total = data.total || 0
+  } catch (e: any) {
+    appStore.showError(e?.response?.data?.detail || '加载供应商列表失败')
+  } finally { loading.value = false }
+}
+
+const openCreateModal = () => { editingVendor.value = null; Object.assign(form, defaultForm()); extraHeadersJson.value = '{}'; showModal.value = true }
+const handleEdit = (v: Vendor) => {
+  editingVendor.value = v
+  Object.assign(form, { name: v.name, description: v.description || '', api_format: v.api_format, base_url: v.base_url, auth_type: v.auth_type, api_path_override: v.api_path_override || '', billing_type: v.billing_type, cost_per_1k_input: v.cost_per_1k_input || 0, cost_per_1k_output: v.cost_per_1k_output || 0, total_quota_usd: v.total_quota_usd || 0, balance_usd: v.balance_usd || 0, expires_at: v.expires_at ? v.expires_at.slice(0, 16) : '', health_check_enabled: v.health_check_enabled, health_check_interval: v.health_check_interval, health_check_model: v.health_check_model, balance_alert_enabled: v.balance_alert_enabled, balance_alert_threshold: v.balance_alert_threshold || 10, status: v.status })
+  extraHeadersJson.value = JSON.stringify(v.extra_headers || {}, null, 2)
+  showModal.value = true
+}
+const closeModal = () => { showModal.value = false; editingVendor.value = null }
+
+const handleSubmit = async () => {
+  if (!form.name.trim() || !form.base_url.trim()) { appStore.showError('名称和 Base URL 为必填项'); return }
+  let parsedHeaders: Record<string, string> = {}
+  try { parsedHeaders = JSON.parse(extraHeadersJson.value || '{}') } catch { appStore.showError('额外 Headers JSON 格式错误'); return }
+  submitting.value = true
+  try {
+    const payload: any = { ...form, extra_headers: parsedHeaders }
+    if (!payload.expires_at) delete payload.expires_at
+    if (editingVendor.value) {
+      await vendorApi.update(editingVendor.value.id, payload)
+      appStore.showSuccess('供应商已更新')
+    } else {
+      delete payload.status
+      await vendorApi.create(payload)
+      appStore.showSuccess('供应商已创建')
+    }
+    closeModal(); loadVendors()
+  } catch (e: any) { appStore.showError(e?.response?.data?.detail || '操作失败') }
+  finally { submitting.value = false }
+}
+
+const handleDelete = (v: Vendor) => { deletingVendor.value = v; showDeleteDialog.value = true }
+const confirmDelete = async () => {
+  if (!deletingVendor.value) return
+  try {
+    await vendorApi.delete(deletingVendor.value.id)
+    appStore.showSuccess('供应商已删除'); showDeleteDialog.value = false; deletingVendor.value = null; loadVendors()
+  } catch (e: any) { appStore.showError(e?.response?.data?.detail || '删除失败') }
+}
+
+const handleTest = async (v: Vendor) => {
+  testingIds.value = new Set([...testingIds.value, v.id])
+  try {
+    const res = await vendorApi.test(v.id)
+    const data = res.data ?? res
+    appStore.showSuccess(data?.latency_ms ? `连通成功 (${data.latency_ms}ms)` : '连通成功')
+  } catch (e: any) { appStore.showError(e?.response?.data?.detail || '连通测试失败') }
+  finally { const s = new Set(testingIds.value); s.delete(v.id); testingIds.value = s }
+}
+
+onMounted(loadVendors)
+</script>

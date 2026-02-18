@@ -16,6 +16,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
+	"github.com/Wei-Shaw/sub2api/ent/vendor"
 )
 
 // AccountUpdate is the builder for updating Account entities.
@@ -436,6 +437,40 @@ func (_u *AccountUpdate) ClearSessionWindowStatus() *AccountUpdate {
 	return _u
 }
 
+// SetVendorID sets the "vendor_id" field.
+func (_u *AccountUpdate) SetVendorID(v int64) *AccountUpdate {
+	_u.mutation.SetVendorID(v)
+	return _u
+}
+
+// SetNillableVendorID sets the "vendor_id" field if the given value is not nil.
+func (_u *AccountUpdate) SetNillableVendorID(v *int64) *AccountUpdate {
+	if v != nil {
+		_u.SetVendorID(*v)
+	}
+	return _u
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (_u *AccountUpdate) ClearVendorID() *AccountUpdate {
+	_u.mutation.ClearVendorID()
+	return _u
+}
+
+// SetSourceType sets the "source_type" field.
+func (_u *AccountUpdate) SetSourceType(v string) *AccountUpdate {
+	_u.mutation.SetSourceType(v)
+	return _u
+}
+
+// SetNillableSourceType sets the "source_type" field if the given value is not nil.
+func (_u *AccountUpdate) SetNillableSourceType(v *string) *AccountUpdate {
+	if v != nil {
+		_u.SetSourceType(*v)
+	}
+	return _u
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
 func (_u *AccountUpdate) AddGroupIDs(ids ...int64) *AccountUpdate {
 	_u.mutation.AddGroupIDs(ids...)
@@ -469,6 +504,11 @@ func (_u *AccountUpdate) AddUsageLogs(v ...*UsageLog) *AccountUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddUsageLogIDs(ids...)
+}
+
+// SetVendor sets the "vendor" edge to the Vendor entity.
+func (_u *AccountUpdate) SetVendor(v *Vendor) *AccountUpdate {
+	return _u.SetVendorID(v.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -522,6 +562,12 @@ func (_u *AccountUpdate) RemoveUsageLogs(v ...*UsageLog) *AccountUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUsageLogIDs(ids...)
+}
+
+// ClearVendor clears the "vendor" edge to the Vendor entity.
+func (_u *AccountUpdate) ClearVendor() *AccountUpdate {
+	_u.mutation.ClearVendor()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -591,6 +637,11 @@ func (_u *AccountUpdate) check() error {
 	if v, ok := _u.mutation.SessionWindowStatus(); ok {
 		if err := account.SessionWindowStatusValidator(v); err != nil {
 			return &ValidationError{Name: "session_window_status", err: fmt.Errorf(`ent: validator failed for field "Account.session_window_status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SourceType(); ok {
+		if err := account.SourceTypeValidator(v); err != nil {
+			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "Account.source_type": %w`, err)}
 		}
 	}
 	return nil
@@ -719,6 +770,9 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.SessionWindowStatusCleared() {
 		_spec.ClearField(account.FieldSessionWindowStatus, field.TypeString)
 	}
+	if value, ok := _u.mutation.SourceType(); ok {
+		_spec.SetField(account.FieldSourceType, field.TypeString, value)
+	}
 	if _u.mutation.GroupsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -843,6 +897,35 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usagelog.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.VendorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorTable,
+			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.VendorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorTable,
+			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1275,6 +1358,40 @@ func (_u *AccountUpdateOne) ClearSessionWindowStatus() *AccountUpdateOne {
 	return _u
 }
 
+// SetVendorID sets the "vendor_id" field.
+func (_u *AccountUpdateOne) SetVendorID(v int64) *AccountUpdateOne {
+	_u.mutation.SetVendorID(v)
+	return _u
+}
+
+// SetNillableVendorID sets the "vendor_id" field if the given value is not nil.
+func (_u *AccountUpdateOne) SetNillableVendorID(v *int64) *AccountUpdateOne {
+	if v != nil {
+		_u.SetVendorID(*v)
+	}
+	return _u
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (_u *AccountUpdateOne) ClearVendorID() *AccountUpdateOne {
+	_u.mutation.ClearVendorID()
+	return _u
+}
+
+// SetSourceType sets the "source_type" field.
+func (_u *AccountUpdateOne) SetSourceType(v string) *AccountUpdateOne {
+	_u.mutation.SetSourceType(v)
+	return _u
+}
+
+// SetNillableSourceType sets the "source_type" field if the given value is not nil.
+func (_u *AccountUpdateOne) SetNillableSourceType(v *string) *AccountUpdateOne {
+	if v != nil {
+		_u.SetSourceType(*v)
+	}
+	return _u
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
 func (_u *AccountUpdateOne) AddGroupIDs(ids ...int64) *AccountUpdateOne {
 	_u.mutation.AddGroupIDs(ids...)
@@ -1308,6 +1425,11 @@ func (_u *AccountUpdateOne) AddUsageLogs(v ...*UsageLog) *AccountUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.AddUsageLogIDs(ids...)
+}
+
+// SetVendor sets the "vendor" edge to the Vendor entity.
+func (_u *AccountUpdateOne) SetVendor(v *Vendor) *AccountUpdateOne {
+	return _u.SetVendorID(v.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -1361,6 +1483,12 @@ func (_u *AccountUpdateOne) RemoveUsageLogs(v ...*UsageLog) *AccountUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUsageLogIDs(ids...)
+}
+
+// ClearVendor clears the "vendor" edge to the Vendor entity.
+func (_u *AccountUpdateOne) ClearVendor() *AccountUpdateOne {
+	_u.mutation.ClearVendor()
+	return _u
 }
 
 // Where appends a list predicates to the AccountUpdate builder.
@@ -1443,6 +1571,11 @@ func (_u *AccountUpdateOne) check() error {
 	if v, ok := _u.mutation.SessionWindowStatus(); ok {
 		if err := account.SessionWindowStatusValidator(v); err != nil {
 			return &ValidationError{Name: "session_window_status", err: fmt.Errorf(`ent: validator failed for field "Account.session_window_status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SourceType(); ok {
+		if err := account.SourceTypeValidator(v); err != nil {
+			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "Account.source_type": %w`, err)}
 		}
 	}
 	return nil
@@ -1588,6 +1721,9 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 	if _u.mutation.SessionWindowStatusCleared() {
 		_spec.ClearField(account.FieldSessionWindowStatus, field.TypeString)
 	}
+	if value, ok := _u.mutation.SourceType(); ok {
+		_spec.SetField(account.FieldSourceType, field.TypeString, value)
+	}
 	if _u.mutation.GroupsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -1712,6 +1848,35 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usagelog.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.VendorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorTable,
+			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.VendorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorTable,
+			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

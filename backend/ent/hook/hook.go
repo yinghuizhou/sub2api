@@ -237,6 +237,18 @@ func (f UserSubscriptionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.V
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserSubscriptionMutation", m)
 }
 
+// The VendorFunc type is an adapter to allow the use of ordinary
+// function as Vendor mutator.
+type VendorFunc func(context.Context, *ent.VendorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VendorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.VendorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VendorMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

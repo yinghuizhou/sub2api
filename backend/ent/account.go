@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/Wei-Shaw/sub2api/ent/account"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/vendor"
 )
 
 // Account is the model entity for the Account schema.
@@ -69,6 +70,10 @@ type Account struct {
 	SessionWindowEnd *time.Time `json:"session_window_end,omitempty"`
 	// SessionWindowStatus holds the value of the "session_window_status" field.
 	SessionWindowStatus *string `json:"session_window_status,omitempty"`
+	// VendorID holds the value of the "vendor_id" field.
+	VendorID *int64 `json:"vendor_id,omitempty"`
+	// SourceType holds the value of the "source_type" field.
+	SourceType string `json:"source_type,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AccountQuery when eager-loading is set.
 	Edges        AccountEdges `json:"edges"`
@@ -83,11 +88,13 @@ type AccountEdges struct {
 	Proxy *Proxy `json:"proxy,omitempty"`
 	// UsageLogs holds the value of the usage_logs edge.
 	UsageLogs []*UsageLog `json:"usage_logs,omitempty"`
+	// Vendor holds the value of the vendor edge.
+	Vendor *Vendor `json:"vendor,omitempty"`
 	// AccountGroups holds the value of the account_groups edge.
 	AccountGroups []*AccountGroup `json:"account_groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // GroupsOrErr returns the Groups value or an error if the edge
@@ -119,10 +126,21 @@ func (e AccountEdges) UsageLogsOrErr() ([]*UsageLog, error) {
 	return nil, &NotLoadedError{edge: "usage_logs"}
 }
 
+// VendorOrErr returns the Vendor value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AccountEdges) VendorOrErr() (*Vendor, error) {
+	if e.Vendor != nil {
+		return e.Vendor, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: vendor.Label}
+	}
+	return nil, &NotLoadedError{edge: "vendor"}
+}
+
 // AccountGroupsOrErr returns the AccountGroups value or an error if the edge
 // was not loaded in eager-loading.
 func (e AccountEdges) AccountGroupsOrErr() ([]*AccountGroup, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.AccountGroups, nil
 	}
 	return nil, &NotLoadedError{edge: "account_groups"}
@@ -139,9 +157,9 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case account.FieldRateMultiplier:
 			values[i] = new(sql.NullFloat64)
-		case account.FieldID, account.FieldProxyID, account.FieldConcurrency, account.FieldPriority:
+		case account.FieldID, account.FieldProxyID, account.FieldConcurrency, account.FieldPriority, account.FieldVendorID:
 			values[i] = new(sql.NullInt64)
-		case account.FieldName, account.FieldNotes, account.FieldPlatform, account.FieldType, account.FieldStatus, account.FieldErrorMessage, account.FieldSessionWindowStatus:
+		case account.FieldName, account.FieldNotes, account.FieldPlatform, account.FieldType, account.FieldStatus, account.FieldErrorMessage, account.FieldSessionWindowStatus, account.FieldSourceType:
 			values[i] = new(sql.NullString)
 		case account.FieldCreatedAt, account.FieldUpdatedAt, account.FieldDeletedAt, account.FieldLastUsedAt, account.FieldExpiresAt, account.FieldRateLimitedAt, account.FieldRateLimitResetAt, account.FieldOverloadUntil, account.FieldSessionWindowStart, account.FieldSessionWindowEnd:
 			values[i] = new(sql.NullTime)
@@ -332,6 +350,19 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 				_m.SessionWindowStatus = new(string)
 				*_m.SessionWindowStatus = value.String
 			}
+		case account.FieldVendorID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field vendor_id", values[i])
+			} else if value.Valid {
+				_m.VendorID = new(int64)
+				*_m.VendorID = value.Int64
+			}
+		case account.FieldSourceType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_type", values[i])
+			} else if value.Valid {
+				_m.SourceType = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -358,6 +389,11 @@ func (_m *Account) QueryProxy() *ProxyQuery {
 // QueryUsageLogs queries the "usage_logs" edge of the Account entity.
 func (_m *Account) QueryUsageLogs() *UsageLogQuery {
 	return NewAccountClient(_m.config).QueryUsageLogs(_m)
+}
+
+// QueryVendor queries the "vendor" edge of the Account entity.
+func (_m *Account) QueryVendor() *VendorQuery {
+	return NewAccountClient(_m.config).QueryVendor(_m)
 }
 
 // QueryAccountGroups queries the "account_groups" edge of the Account entity.
@@ -486,6 +522,14 @@ func (_m *Account) String() string {
 		builder.WriteString("session_window_status=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	if v := _m.VendorID; v != nil {
+		builder.WriteString("vendor_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("source_type=")
+	builder.WriteString(_m.SourceType)
 	builder.WriteByte(')')
 	return builder.String()
 }

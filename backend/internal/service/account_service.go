@@ -93,6 +93,8 @@ type CreateAccountRequest struct {
 	GroupIDs           []int64        `json:"group_ids"`
 	ExpiresAt          *time.Time     `json:"expires_at"`
 	AutoPauseOnExpired *bool          `json:"auto_pause_on_expired"`
+	VendorID           *int64         `json:"vendor_id"`
+	SourceType         string         `json:"source_type"`
 }
 
 // UpdateAccountRequest 更新账号请求
@@ -108,6 +110,8 @@ type UpdateAccountRequest struct {
 	GroupIDs           *[]int64        `json:"group_ids"`
 	ExpiresAt          *time.Time      `json:"expires_at"`
 	AutoPauseOnExpired *bool           `json:"auto_pause_on_expired"`
+	VendorID           *int64          `json:"vendor_id"`
+	SourceType         *string         `json:"source_type"`
 }
 
 // AccountService 账号管理服务
@@ -149,6 +153,11 @@ func (s *AccountService) Create(ctx context.Context, req CreateAccountRequest) (
 		Priority:    req.Priority,
 		Status:      StatusActive,
 		ExpiresAt:   req.ExpiresAt,
+		VendorID:    req.VendorID,
+		SourceType:  req.SourceType,
+	}
+	if account.SourceType == "" {
+		account.SourceType = "owned"
 	}
 	if req.AutoPauseOnExpired != nil {
 		account.AutoPauseOnExpired = *req.AutoPauseOnExpired

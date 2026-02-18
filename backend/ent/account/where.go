@@ -170,6 +170,16 @@ func SessionWindowStatus(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldSessionWindowStatus, v))
 }
 
+// VendorID applies equality check predicate on the "vendor_id" field. It's identical to VendorIDEQ.
+func VendorID(v int64) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldVendorID, v))
+}
+
+// SourceType applies equality check predicate on the "source_type" field. It's identical to SourceTypeEQ.
+func SourceType(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldSourceType, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldCreatedAt, v))
@@ -1305,6 +1315,101 @@ func SessionWindowStatusContainsFold(v string) predicate.Account {
 	return predicate.Account(sql.FieldContainsFold(FieldSessionWindowStatus, v))
 }
 
+// VendorIDEQ applies the EQ predicate on the "vendor_id" field.
+func VendorIDEQ(v int64) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldVendorID, v))
+}
+
+// VendorIDNEQ applies the NEQ predicate on the "vendor_id" field.
+func VendorIDNEQ(v int64) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldVendorID, v))
+}
+
+// VendorIDIn applies the In predicate on the "vendor_id" field.
+func VendorIDIn(vs ...int64) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldVendorID, vs...))
+}
+
+// VendorIDNotIn applies the NotIn predicate on the "vendor_id" field.
+func VendorIDNotIn(vs ...int64) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldVendorID, vs...))
+}
+
+// VendorIDIsNil applies the IsNil predicate on the "vendor_id" field.
+func VendorIDIsNil() predicate.Account {
+	return predicate.Account(sql.FieldIsNull(FieldVendorID))
+}
+
+// VendorIDNotNil applies the NotNil predicate on the "vendor_id" field.
+func VendorIDNotNil() predicate.Account {
+	return predicate.Account(sql.FieldNotNull(FieldVendorID))
+}
+
+// SourceTypeEQ applies the EQ predicate on the "source_type" field.
+func SourceTypeEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldSourceType, v))
+}
+
+// SourceTypeNEQ applies the NEQ predicate on the "source_type" field.
+func SourceTypeNEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldSourceType, v))
+}
+
+// SourceTypeIn applies the In predicate on the "source_type" field.
+func SourceTypeIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldSourceType, vs...))
+}
+
+// SourceTypeNotIn applies the NotIn predicate on the "source_type" field.
+func SourceTypeNotIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldSourceType, vs...))
+}
+
+// SourceTypeGT applies the GT predicate on the "source_type" field.
+func SourceTypeGT(v string) predicate.Account {
+	return predicate.Account(sql.FieldGT(FieldSourceType, v))
+}
+
+// SourceTypeGTE applies the GTE predicate on the "source_type" field.
+func SourceTypeGTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldGTE(FieldSourceType, v))
+}
+
+// SourceTypeLT applies the LT predicate on the "source_type" field.
+func SourceTypeLT(v string) predicate.Account {
+	return predicate.Account(sql.FieldLT(FieldSourceType, v))
+}
+
+// SourceTypeLTE applies the LTE predicate on the "source_type" field.
+func SourceTypeLTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldLTE(FieldSourceType, v))
+}
+
+// SourceTypeContains applies the Contains predicate on the "source_type" field.
+func SourceTypeContains(v string) predicate.Account {
+	return predicate.Account(sql.FieldContains(FieldSourceType, v))
+}
+
+// SourceTypeHasPrefix applies the HasPrefix predicate on the "source_type" field.
+func SourceTypeHasPrefix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasPrefix(FieldSourceType, v))
+}
+
+// SourceTypeHasSuffix applies the HasSuffix predicate on the "source_type" field.
+func SourceTypeHasSuffix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasSuffix(FieldSourceType, v))
+}
+
+// SourceTypeEqualFold applies the EqualFold predicate on the "source_type" field.
+func SourceTypeEqualFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldEqualFold(FieldSourceType, v))
+}
+
+// SourceTypeContainsFold applies the ContainsFold predicate on the "source_type" field.
+func SourceTypeContainsFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldContainsFold(FieldSourceType, v))
+}
+
 // HasGroups applies the HasEdge predicate on the "groups" edge.
 func HasGroups() predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
@@ -1366,6 +1471,29 @@ func HasUsageLogs() predicate.Account {
 func HasUsageLogsWith(preds ...predicate.UsageLog) predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
 		step := newUsageLogsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasVendor applies the HasEdge predicate on the "vendor" edge.
+func HasVendor() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, VendorTable, VendorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasVendorWith applies the HasEdge predicate on the "vendor" edge with a given conditions (other predicates).
+func HasVendorWith(preds ...predicate.Vendor) predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := newVendorStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

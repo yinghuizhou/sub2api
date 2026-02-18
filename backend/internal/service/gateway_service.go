@@ -414,6 +414,8 @@ type GatewayService struct {
 	concurrencyService  *ConcurrencyService
 	claudeTokenProvider *ClaudeTokenProvider
 	sessionLimitCache   SessionLimitCache // 会话数量限制缓存（仅 Anthropic OAuth/SetupToken）
+	vendorRepo          VendorRepository
+	vendorAdapter       *VendorProtocolAdapter
 }
 
 // NewGatewayService creates a new GatewayService
@@ -437,6 +439,7 @@ func NewGatewayService(
 	claudeTokenProvider *ClaudeTokenProvider,
 	sessionLimitCache SessionLimitCache,
 	digestStore *DigestSessionStore,
+	vendorRepo VendorRepository,
 ) *GatewayService {
 	return &GatewayService{
 		accountRepo:         accountRepo,
@@ -458,6 +461,8 @@ func NewGatewayService(
 		deferredService:     deferredService,
 		claudeTokenProvider: claudeTokenProvider,
 		sessionLimitCache:   sessionLimitCache,
+		vendorRepo:          vendorRepo,
+		vendorAdapter:       &VendorProtocolAdapter{},
 	}
 }
 
@@ -1323,34 +1328,86 @@ func (s *GatewayService) SelectAccountWithLoadAwareness(ctx context.Context, gro
 
 	// ============ Layer 2: 负载感知选择 ============
 	candidates := make([]*Account, 0, len(accounts))
+	var l2Excluded, l2Unsched, l2Platform, l2ModelMapping, l2ModelScope, l2WindowCost int
+	var l2ModelScopeIDs []int64
+	var l2UnschedReasons []string // 记录不可调度的具体原因
+	// 记录因模型限流被跳过但其他条件满足的账号（用于兜底选择）
+	var modelRateLimitedCandidates []*Account
 	for i := range accounts {
 		acc := &accounts[i]
 		if isExcluded(acc.ID) {
+			l2Excluded++
 			continue
 		}
 		// Scheduler snapshots can be temporarily stale (bucket rebuild is throttled);
 		// re-check schedulability here so recently rate-limited/overloaded accounts
 		// are not selected again before the bucket is rebuilt.
 		if !acc.IsSchedulable() {
+			l2Unsched++
+			l2UnschedReasons = append(l2UnschedReasons, acc.unschedulableReason())
 			continue
 		}
 		if !s.isAccountAllowedForPlatform(acc, platform, useMixed) {
+			l2Platform++
 			continue
 		}
 		if requestedModel != "" && !s.isModelSupportedByAccountWithContext(ctx, acc, requestedModel) {
+			l2ModelMapping++
 			continue
 		}
 		if !acc.IsSchedulableForModelWithContext(ctx, requestedModel) {
+			l2ModelScope++
+			l2ModelScopeIDs = append(l2ModelScopeIDs, acc.ID)
+			modelRateLimitedCandidates = append(modelRateLimitedCandidates, acc)
 			continue
 		}
 		// 窗口费用检查（非粘性会话路径）
 		if !s.isAccountSchedulableForWindowCost(ctx, acc, false) {
+			l2WindowCost++
 			continue
 		}
 		candidates = append(candidates, acc)
 	}
 
 	if len(candidates) == 0 {
+		// 兜底：如果所有账号都因模型限流被跳过，选择剩余限流时间最短的账号
+		// 避免因短暂的模型限流（通常 < 30s）导致请求直接失败
+		if len(modelRateLimitedCandidates) > 0 {
+			best := modelRateLimitedCandidates[0]
+			bestRemaining := best.GetRateLimitRemainingTimeWithContext(ctx, requestedModel)
+			for _, acc := range modelRateLimitedCandidates[1:] {
+				remaining := acc.GetRateLimitRemainingTimeWithContext(ctx, requestedModel)
+				if remaining < bestRemaining {
+					best = acc
+					bestRemaining = remaining
+				}
+			}
+			slog.Info("model_rate_limit_fallback",
+				"group_id", derefGroupID(groupID),
+				"model", requestedModel,
+				"account_id", best.ID,
+				"remaining", bestRemaining.Round(time.Second),
+				"total_model_limited", len(modelRateLimitedCandidates),
+			)
+			candidates = append(candidates, best)
+		}
+	}
+
+	if len(candidates) == 0 {
+		slog.Warn("no_available_accounts_diagnostic",
+			"group_id", derefGroupID(groupID),
+			"model", requestedModel,
+			"platform", platform,
+			"total_accounts", len(accounts),
+			"excluded", l2Excluded,
+			"unschedulable", l2Unsched,
+			"unsched_reasons", l2UnschedReasons,
+			"platform_mismatch", l2Platform,
+			"model_mapping_miss", l2ModelMapping,
+			"model_rate_limited", l2ModelScope,
+			"model_rate_limited_ids", l2ModelScopeIDs,
+			"window_cost_exceeded", l2WindowCost,
+		)
 		return nil, errors.New("no available accounts")
 	}
 
@@ -3458,7 +3515,18 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Context, account *Account, body []byte, token, tokenType, modelID string, reqStream bool, mimicClaudeCode bool) (*http.Request, error) {
 	// 确定目标URL
 	targetURL := claudeAPIURL
-	if account.Type == AccountTypeAPIKey {
+
+	// 供应商账户：加载供应商配置，覆盖 targetURL 和认证方式
+	var vendor *Vendor
+	if account.VendorID != nil && s.vendorRepo != nil {
+		v, err := s.vendorRepo.GetByID(ctx, *account.VendorID)
+		if err == nil {
+			vendor = v
+			targetURL = vendor.BaseURL + vendor.GetAPIPath()
+		}
+	}
+
+	if vendor == nil && account.Type == AccountTypeAPIKey {
 		baseURL := account.GetBaseURL()
 		if baseURL != "" {
 			validatedURL, err := s.validateUpstreamBaseURL(baseURL)
@@ -3502,7 +3570,25 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 	}
 
 	// 设置认证头
-	if tokenType == "oauth" {
+	if vendor != nil {
+		// 供应商账户：根据供应商的 auth_type 设置认证头
+		switch vendor.AuthType {
+		case VendorAuthTypeBearer:
+			req.Header.Set("authorization", "Bearer "+token)
+		case VendorAuthTypeSession:
+			sessionKey := ""
+			if sk, ok := account.Credentials["session_key"].(string); ok {
+				sessionKey = sk
+			}
+			req.Header.Set("Cookie", "session="+sessionKey)
+		default: // api_key
+			req.Header.Set("x-api-key", token)
+		}
+		// 添加供应商额外请求头
+		for k, v := range vendor.ExtraHeaders {
+			req.Header.Set(k, v)
+		}
+	} else if tokenType == "oauth" {
 		req.Header.Set("authorization", "Bearer "+token)
 	} else {
 		req.Header.Set("x-api-key", token)
