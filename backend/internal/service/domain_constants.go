@@ -166,6 +166,21 @@ const (
 
 	// SettingKeyStreamTimeoutSettings stores JSON config for stream timeout handling.
 	SettingKeyStreamTimeoutSettings = "stream_timeout_settings"
+
+	// =========================
+	// Vendor Resale System
+	// =========================
+
+	// SettingKeyVendorSystemEnabled 供应商系统总开关（默认关闭）
+	SettingKeyVendorSystemEnabled = "vendor_system_enabled"
+	// SettingKeyVendorHealthCheckEnabled 全局健康检查开关
+	SettingKeyVendorHealthCheckEnabled = "vendor_health_check_enabled"
+	// SettingKeyVendorBalanceAlertEnabled 余额预警开关
+	SettingKeyVendorBalanceAlertEnabled = "vendor_balance_alert_enabled"
+	// SettingKeyVendorAutoPurchaseEnabled 自动采购开关（Phase 3）
+	SettingKeyVendorAutoPurchaseEnabled = "vendor_auto_purchase_enabled"
+	// SettingKeyVendorAutoPricingEnabled 自动定价开关
+	SettingKeyVendorAutoPricingEnabled = "vendor_auto_pricing_enabled"
 )
 
 // AdminAPIKeyPrefix is the prefix for admin API keys (distinct from user "sk-" keys).
