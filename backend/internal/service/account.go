@@ -51,6 +51,10 @@ type Account struct {
 	AccountGroups []AccountGroup
 	GroupIDs      []int64
 	Groups        []*Group
+
+	// 供应商关联
+	VendorID   *int64
+	SourceType string
 }
 
 type TempUnschedulableRule struct {

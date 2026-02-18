@@ -117,6 +117,12 @@ func (r *accountRepository) Create(ctx context.Context, account *service.Account
 	if account.SessionWindowStatus != "" {
 		builder.SetSessionWindowStatus(account.SessionWindowStatus)
 	}
+	if account.VendorID != nil {
+		builder.SetVendorID(*account.VendorID)
+	}
+	if account.SourceType != "" {
+		builder.SetSourceType(account.SourceType)
+	}
 
 	created, err := builder.Save(ctx)
 	if err != nil {
@@ -1525,6 +1531,8 @@ func accountEntityToService(m *dbent.Account) *service.Account {
 		SessionWindowStart:  m.SessionWindowStart,
 		SessionWindowEnd:    m.SessionWindowEnd,
 		SessionWindowStatus: derefString(m.SessionWindowStatus),
+		VendorID:            m.VendorID,
+		SourceType:          m.SourceType,
 	}
 }
 
