@@ -70,6 +70,9 @@ func RegisterAdminRoutes(
 
 		// 错误透传规则管理
 		registerErrorPassthroughRoutes(admin, h)
+
+		// 供应商管理
+		registerVendorRoutes(admin, h)
 	}
 }
 
@@ -410,5 +413,23 @@ func registerErrorPassthroughRoutes(admin *gin.RouterGroup, h *handler.Handlers)
 		rules.POST("", h.Admin.ErrorPassthrough.Create)
 		rules.PUT("/:id", h.Admin.ErrorPassthrough.Update)
 		rules.DELETE("/:id", h.Admin.ErrorPassthrough.Delete)
+	}
+}
+
+func registerVendorRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	vendors := admin.Group("/vendors")
+	{
+		vendors.GET("", h.Admin.Vendor.List)
+		vendors.GET("/dashboard", h.Admin.Vendor.Dashboard)
+		vendors.GET("/:id", h.Admin.Vendor.GetByID)
+		vendors.POST("", h.Admin.Vendor.Create)
+		vendors.PUT("/:id", h.Admin.Vendor.Update)
+		vendors.DELETE("/:id", h.Admin.Vendor.Delete)
+		vendors.POST("/:id/test", h.Admin.Vendor.Test)
+		vendors.POST("/:id/refresh-balance", h.Admin.Vendor.RefreshBalance)
+		vendors.GET("/:id/stats", h.Admin.Vendor.GetStats)
+		vendors.POST("/:id/health-check", h.Admin.Vendor.TriggerHealthCheck)
+		vendors.GET("/:id/accounts", h.Admin.Vendor.GetVendorAccounts)
+		vendors.POST("/:id/accounts", h.Admin.Vendor.BatchCreateAccounts)
 	}
 }
