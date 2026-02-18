@@ -210,6 +210,17 @@ func ProvideAPIKeyAuthCacheInvalidator(apiKeyService *APIKeyService) APIKeyAuthC
 	return apiKeyService
 }
 
+// ProvideVendorBackgroundService 创建并启动供应商后台服务
+func ProvideVendorBackgroundService(
+	healthService *VendorHealthService,
+	balanceService *VendorBalanceService,
+	settingService *SettingService,
+) *VendorBackgroundService {
+	svc := NewVendorBackgroundService(healthService, balanceService, settingService)
+	svc.Start()
+	return svc
+}
+
 // ProviderSet is the Wire provider set for all services
 var ProviderSet = wire.NewSet(
 	// Core services
@@ -277,4 +288,7 @@ var ProviderSet = wire.NewSet(
 	NewErrorPassthroughService,
 	NewDigestSessionStore,
 	NewVendorService,
+	NewVendorHealthService,
+	NewVendorBalanceService,
+	ProvideVendorBackgroundService,
 )
