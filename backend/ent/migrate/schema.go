@@ -105,7 +105,9 @@ var (
 		{Name: "session_window_start", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "session_window_end", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "session_window_status", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "source_type", Type: field.TypeString, Size: 20, Default: "owned"},
 		{Name: "proxy_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "vendor_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// AccountsTable holds the schema information for the "accounts" table.
 	AccountsTable = &schema.Table{
@@ -115,8 +117,14 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "accounts_proxies_proxy",
-				Columns:    []*schema.Column{AccountsColumns[25]},
+				Columns:    []*schema.Column{AccountsColumns[26]},
 				RefColumns: []*schema.Column{ProxiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "accounts_vendors_vendor",
+				Columns:    []*schema.Column{AccountsColumns[27]},
+				RefColumns: []*schema.Column{VendorsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -139,7 +147,7 @@ var (
 			{
 				Name:    "account_proxy_id",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[25]},
+				Columns: []*schema.Column{AccountsColumns[26]},
 			},
 			{
 				Name:    "account_priority",
@@ -175,6 +183,16 @@ var (
 				Name:    "account_deleted_at",
 				Unique:  false,
 				Columns: []*schema.Column{AccountsColumns[3]},
+			},
+			{
+				Name:    "account_vendor_id",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[27]},
+			},
+			{
+				Name:    "account_source_type",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[25]},
 			},
 		},
 	}
@@ -986,6 +1004,68 @@ var (
 			},
 		},
 	}
+	// VendorsColumns holds the columns for the "vendors" table.
+	VendorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "description", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "api_format", Type: field.TypeString, Size: 20},
+		{Name: "base_url", Type: field.TypeString, Size: 500},
+		{Name: "auth_type", Type: field.TypeString, Size: 20, Default: "api_key"},
+		{Name: "api_path_override", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "extra_headers", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "billing_type", Type: field.TypeString, Size: 20, Default: "token"},
+		{Name: "cost_per_1k_input", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "cost_per_1k_output", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "total_quota_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "used_quota_usd", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "balance_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "status", Type: field.TypeString, Size: 20, Default: "active"},
+		{Name: "health_check_enabled", Type: field.TypeBool, Default: false},
+		{Name: "health_check_interval", Type: field.TypeInt, Default: 300},
+		{Name: "health_check_model", Type: field.TypeString, Size: 50, Default: "claude-sonnet-4-20250514"},
+		{Name: "last_health_check_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "last_health_status", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "last_health_latency", Type: field.TypeInt, Nullable: true},
+		{Name: "error_message", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "consecutive_failures", Type: field.TypeInt, Default: 0},
+		{Name: "auto_purchase_enabled", Type: field.TypeBool, Default: false},
+		{Name: "auto_purchase_config", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "balance_alert_enabled", Type: field.TypeBool, Default: false},
+		{Name: "balance_alert_threshold", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+	}
+	// VendorsTable holds the schema information for the "vendors" table.
+	VendorsTable = &schema.Table{
+		Name:       "vendors",
+		Columns:    VendorsColumns,
+		PrimaryKey: []*schema.Column{VendorsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "vendor_status",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[18]},
+			},
+			{
+				Name:    "vendor_api_format",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[6]},
+			},
+			{
+				Name:    "vendor_billing_type",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[11]},
+			},
+			{
+				Name:    "vendor_deleted_at",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[3]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APIKeysTable,
@@ -1007,6 +1087,7 @@ var (
 		UserAttributeDefinitionsTable,
 		UserAttributeValuesTable,
 		UserSubscriptionsTable,
+		VendorsTable,
 	}
 )
 
@@ -1017,6 +1098,7 @@ func init() {
 		Table: "api_keys",
 	}
 	AccountsTable.ForeignKeys[0].RefTable = ProxiesTable
+	AccountsTable.ForeignKeys[1].RefTable = VendorsTable
 	AccountsTable.Annotation = &entsql.Annotation{
 		Table: "accounts",
 	}
@@ -1090,5 +1172,8 @@ func init() {
 	UserSubscriptionsTable.ForeignKeys[2].RefTable = UsersTable
 	UserSubscriptionsTable.Annotation = &entsql.Annotation{
 		Table: "user_subscriptions",
+	}
+	VendorsTable.Annotation = &entsql.Annotation{
+		Table: "vendors",
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/userattributedefinition"
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
+	"github.com/Wei-Shaw/sub2api/ent/vendor"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -211,6 +212,12 @@ func init() {
 	accountDescSessionWindowStatus := accountFields[21].Descriptor()
 	// account.SessionWindowStatusValidator is a validator for the "session_window_status" field. It is called by the builders before save.
 	account.SessionWindowStatusValidator = accountDescSessionWindowStatus.Validators[0].(func(string) error)
+	// accountDescSourceType is the schema descriptor for source_type field.
+	accountDescSourceType := accountFields[23].Descriptor()
+	// account.DefaultSourceType holds the default value on creation for the source_type field.
+	account.DefaultSourceType = accountDescSourceType.Default.(string)
+	// account.SourceTypeValidator is a validator for the "source_type" field. It is called by the builders before save.
+	account.SourceTypeValidator = accountDescSourceType.Validators[0].(func(string) error)
 	accountgroupFields := schema.AccountGroup{}.Fields()
 	_ = accountgroupFields
 	// accountgroupDescPriority is the schema descriptor for priority field.
@@ -1041,6 +1048,171 @@ func init() {
 	usersubscriptionDescAssignedAt := usersubscriptionFields[12].Descriptor()
 	// usersubscription.DefaultAssignedAt holds the default value on creation for the assigned_at field.
 	usersubscription.DefaultAssignedAt = usersubscriptionDescAssignedAt.Default.(func() time.Time)
+	vendorMixin := schema.Vendor{}.Mixin()
+	vendorMixinHooks1 := vendorMixin[1].Hooks()
+	vendor.Hooks[0] = vendorMixinHooks1[0]
+	vendorMixinInters1 := vendorMixin[1].Interceptors()
+	vendor.Interceptors[0] = vendorMixinInters1[0]
+	vendorMixinFields0 := vendorMixin[0].Fields()
+	_ = vendorMixinFields0
+	vendorFields := schema.Vendor{}.Fields()
+	_ = vendorFields
+	// vendorDescCreatedAt is the schema descriptor for created_at field.
+	vendorDescCreatedAt := vendorMixinFields0[0].Descriptor()
+	// vendor.DefaultCreatedAt holds the default value on creation for the created_at field.
+	vendor.DefaultCreatedAt = vendorDescCreatedAt.Default.(func() time.Time)
+	// vendorDescUpdatedAt is the schema descriptor for updated_at field.
+	vendorDescUpdatedAt := vendorMixinFields0[1].Descriptor()
+	// vendor.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	vendor.DefaultUpdatedAt = vendorDescUpdatedAt.Default.(func() time.Time)
+	// vendor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	vendor.UpdateDefaultUpdatedAt = vendorDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// vendorDescName is the schema descriptor for name field.
+	vendorDescName := vendorFields[0].Descriptor()
+	// vendor.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	vendor.NameValidator = func() func(string) error {
+		validators := vendorDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vendorDescAPIFormat is the schema descriptor for api_format field.
+	vendorDescAPIFormat := vendorFields[2].Descriptor()
+	// vendor.APIFormatValidator is a validator for the "api_format" field. It is called by the builders before save.
+	vendor.APIFormatValidator = func() func(string) error {
+		validators := vendorDescAPIFormat.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(api_format string) error {
+			for _, fn := range fns {
+				if err := fn(api_format); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vendorDescBaseURL is the schema descriptor for base_url field.
+	vendorDescBaseURL := vendorFields[3].Descriptor()
+	// vendor.BaseURLValidator is a validator for the "base_url" field. It is called by the builders before save.
+	vendor.BaseURLValidator = func() func(string) error {
+		validators := vendorDescBaseURL.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(base_url string) error {
+			for _, fn := range fns {
+				if err := fn(base_url); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vendorDescAuthType is the schema descriptor for auth_type field.
+	vendorDescAuthType := vendorFields[4].Descriptor()
+	// vendor.DefaultAuthType holds the default value on creation for the auth_type field.
+	vendor.DefaultAuthType = vendorDescAuthType.Default.(string)
+	// vendor.AuthTypeValidator is a validator for the "auth_type" field. It is called by the builders before save.
+	vendor.AuthTypeValidator = func() func(string) error {
+		validators := vendorDescAuthType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(auth_type string) error {
+			for _, fn := range fns {
+				if err := fn(auth_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vendorDescAPIPathOverride is the schema descriptor for api_path_override field.
+	vendorDescAPIPathOverride := vendorFields[5].Descriptor()
+	// vendor.APIPathOverrideValidator is a validator for the "api_path_override" field. It is called by the builders before save.
+	vendor.APIPathOverrideValidator = vendorDescAPIPathOverride.Validators[0].(func(string) error)
+	// vendorDescExtraHeaders is the schema descriptor for extra_headers field.
+	vendorDescExtraHeaders := vendorFields[6].Descriptor()
+	// vendor.DefaultExtraHeaders holds the default value on creation for the extra_headers field.
+	vendor.DefaultExtraHeaders = vendorDescExtraHeaders.Default.(map[string]string)
+	// vendorDescBillingType is the schema descriptor for billing_type field.
+	vendorDescBillingType := vendorFields[7].Descriptor()
+	// vendor.DefaultBillingType holds the default value on creation for the billing_type field.
+	vendor.DefaultBillingType = vendorDescBillingType.Default.(string)
+	// vendor.BillingTypeValidator is a validator for the "billing_type" field. It is called by the builders before save.
+	vendor.BillingTypeValidator = func() func(string) error {
+		validators := vendorDescBillingType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(billing_type string) error {
+			for _, fn := range fns {
+				if err := fn(billing_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vendorDescUsedQuotaUsd is the schema descriptor for used_quota_usd field.
+	vendorDescUsedQuotaUsd := vendorFields[11].Descriptor()
+	// vendor.DefaultUsedQuotaUsd holds the default value on creation for the used_quota_usd field.
+	vendor.DefaultUsedQuotaUsd = vendorDescUsedQuotaUsd.Default.(float64)
+	// vendorDescStatus is the schema descriptor for status field.
+	vendorDescStatus := vendorFields[14].Descriptor()
+	// vendor.DefaultStatus holds the default value on creation for the status field.
+	vendor.DefaultStatus = vendorDescStatus.Default.(string)
+	// vendor.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	vendor.StatusValidator = vendorDescStatus.Validators[0].(func(string) error)
+	// vendorDescHealthCheckEnabled is the schema descriptor for health_check_enabled field.
+	vendorDescHealthCheckEnabled := vendorFields[15].Descriptor()
+	// vendor.DefaultHealthCheckEnabled holds the default value on creation for the health_check_enabled field.
+	vendor.DefaultHealthCheckEnabled = vendorDescHealthCheckEnabled.Default.(bool)
+	// vendorDescHealthCheckInterval is the schema descriptor for health_check_interval field.
+	vendorDescHealthCheckInterval := vendorFields[16].Descriptor()
+	// vendor.DefaultHealthCheckInterval holds the default value on creation for the health_check_interval field.
+	vendor.DefaultHealthCheckInterval = vendorDescHealthCheckInterval.Default.(int)
+	// vendorDescHealthCheckModel is the schema descriptor for health_check_model field.
+	vendorDescHealthCheckModel := vendorFields[17].Descriptor()
+	// vendor.DefaultHealthCheckModel holds the default value on creation for the health_check_model field.
+	vendor.DefaultHealthCheckModel = vendorDescHealthCheckModel.Default.(string)
+	// vendor.HealthCheckModelValidator is a validator for the "health_check_model" field. It is called by the builders before save.
+	vendor.HealthCheckModelValidator = vendorDescHealthCheckModel.Validators[0].(func(string) error)
+	// vendorDescLastHealthStatus is the schema descriptor for last_health_status field.
+	vendorDescLastHealthStatus := vendorFields[19].Descriptor()
+	// vendor.LastHealthStatusValidator is a validator for the "last_health_status" field. It is called by the builders before save.
+	vendor.LastHealthStatusValidator = vendorDescLastHealthStatus.Validators[0].(func(string) error)
+	// vendorDescConsecutiveFailures is the schema descriptor for consecutive_failures field.
+	vendorDescConsecutiveFailures := vendorFields[22].Descriptor()
+	// vendor.DefaultConsecutiveFailures holds the default value on creation for the consecutive_failures field.
+	vendor.DefaultConsecutiveFailures = vendorDescConsecutiveFailures.Default.(int)
+	// vendorDescAutoPurchaseEnabled is the schema descriptor for auto_purchase_enabled field.
+	vendorDescAutoPurchaseEnabled := vendorFields[23].Descriptor()
+	// vendor.DefaultAutoPurchaseEnabled holds the default value on creation for the auto_purchase_enabled field.
+	vendor.DefaultAutoPurchaseEnabled = vendorDescAutoPurchaseEnabled.Default.(bool)
+	// vendorDescAutoPurchaseConfig is the schema descriptor for auto_purchase_config field.
+	vendorDescAutoPurchaseConfig := vendorFields[24].Descriptor()
+	// vendor.DefaultAutoPurchaseConfig holds the default value on creation for the auto_purchase_config field.
+	vendor.DefaultAutoPurchaseConfig = vendorDescAutoPurchaseConfig.Default.(map[string]interface{})
+	// vendorDescBalanceAlertEnabled is the schema descriptor for balance_alert_enabled field.
+	vendorDescBalanceAlertEnabled := vendorFields[25].Descriptor()
+	// vendor.DefaultBalanceAlertEnabled holds the default value on creation for the balance_alert_enabled field.
+	vendor.DefaultBalanceAlertEnabled = vendorDescBalanceAlertEnabled.Default.(bool)
 }
 
 const (

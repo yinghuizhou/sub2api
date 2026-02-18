@@ -178,6 +178,18 @@ func (Account) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			MaxLen(20),
+
+		// ========== 供应商关联字段 ==========
+		// vendor_id: 关联的供应商 ID（可选）
+		// NULL 表示自有账户，非 NULL 表示从供应商采购的账户
+		field.Int64("vendor_id").
+			Optional().
+			Nillable(),
+		// source_type: 账户来源类型
+		// "owned" = 自有账户，"vendor" = 供应商采购账户
+		field.String("source_type").
+			MaxLen(20).
+			Default("owned"),
 	}
 }
 
@@ -196,6 +208,11 @@ func (Account) Edges() []ent.Edge {
 			Unique(),
 		// usage_logs: 该账户的使用日志
 		edge.To("usage_logs", UsageLog.Type),
+		// vendor: 账户关联的供应商（可选的多对一关系）
+		// 使用已有的 vendor_id 外键字段
+		edge.To("vendor", Vendor.Type).
+			Field("vendor_id").
+			Unique(),
 	}
 }
 
@@ -214,5 +231,7 @@ func (Account) Indexes() []ent.Index {
 		index.Fields("rate_limit_reset_at"), // 筛选速率限制解除时间
 		index.Fields("overload_until"),      // 筛选过载账户
 		index.Fields("deleted_at"),          // 软删除查询优化
+		index.Fields("vendor_id"),           // 按供应商筛选
+		index.Fields("source_type"),         // 按来源类型筛选
 	}
 }

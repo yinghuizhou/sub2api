@@ -65,12 +65,18 @@ const (
 	FieldSessionWindowEnd = "session_window_end"
 	// FieldSessionWindowStatus holds the string denoting the session_window_status field in the database.
 	FieldSessionWindowStatus = "session_window_status"
+	// FieldVendorID holds the string denoting the vendor_id field in the database.
+	FieldVendorID = "vendor_id"
+	// FieldSourceType holds the string denoting the source_type field in the database.
+	FieldSourceType = "source_type"
 	// EdgeGroups holds the string denoting the groups edge name in mutations.
 	EdgeGroups = "groups"
 	// EdgeProxy holds the string denoting the proxy edge name in mutations.
 	EdgeProxy = "proxy"
 	// EdgeUsageLogs holds the string denoting the usage_logs edge name in mutations.
 	EdgeUsageLogs = "usage_logs"
+	// EdgeVendor holds the string denoting the vendor edge name in mutations.
+	EdgeVendor = "vendor"
 	// EdgeAccountGroups holds the string denoting the account_groups edge name in mutations.
 	EdgeAccountGroups = "account_groups"
 	// Table holds the table name of the account in the database.
@@ -94,6 +100,13 @@ const (
 	UsageLogsInverseTable = "usage_logs"
 	// UsageLogsColumn is the table column denoting the usage_logs relation/edge.
 	UsageLogsColumn = "account_id"
+	// VendorTable is the table that holds the vendor relation/edge.
+	VendorTable = "accounts"
+	// VendorInverseTable is the table name for the Vendor entity.
+	// It exists in this package in order to avoid circular dependency with the "vendor" package.
+	VendorInverseTable = "vendors"
+	// VendorColumn is the table column denoting the vendor relation/edge.
+	VendorColumn = "vendor_id"
 	// AccountGroupsTable is the table that holds the account_groups relation/edge.
 	AccountGroupsTable = "account_groups"
 	// AccountGroupsInverseTable is the table name for the AccountGroup entity.
@@ -131,6 +144,8 @@ var Columns = []string{
 	FieldSessionWindowStart,
 	FieldSessionWindowEnd,
 	FieldSessionWindowStatus,
+	FieldVendorID,
+	FieldSourceType,
 }
 
 var (
@@ -189,6 +204,10 @@ var (
 	DefaultSchedulable bool
 	// SessionWindowStatusValidator is a validator for the "session_window_status" field. It is called by the builders before save.
 	SessionWindowStatusValidator func(string) error
+	// DefaultSourceType holds the default value on creation for the "source_type" field.
+	DefaultSourceType string
+	// SourceTypeValidator is a validator for the "source_type" field. It is called by the builders before save.
+	SourceTypeValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the Account queries.
@@ -314,6 +333,16 @@ func BySessionWindowStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSessionWindowStatus, opts...).ToFunc()
 }
 
+// ByVendorID orders the results by the vendor_id field.
+func ByVendorID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVendorID, opts...).ToFunc()
+}
+
+// BySourceType orders the results by the source_type field.
+func BySourceType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceType, opts...).ToFunc()
+}
+
 // ByGroupsCount orders the results by groups count.
 func ByGroupsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -349,6 +378,13 @@ func ByUsageLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByVendorField orders the results by vendor field.
+func ByVendorField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newVendorStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByAccountGroupsCount orders the results by account_groups count.
 func ByAccountGroupsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -381,6 +417,13 @@ func newUsageLogsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UsageLogsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UsageLogsTable, UsageLogsColumn),
+	)
+}
+func newVendorStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(VendorInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, VendorTable, VendorColumn),
 	)
 }
 func newAccountGroupsStep() *sqlgraph.Step {
