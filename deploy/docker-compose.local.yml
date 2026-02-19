@@ -177,8 +177,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    # 注意：不暴露端口到宿主机，应用通过内部网络连接
-    # 如需调试，可临时添加：ports: ["127.0.0.1:5433:5432"]
+    ports:
+      - "127.0.0.1:5432:5432"
+    # 注意：本地开发需暴露端口到宿主机
+    # 生产环境建议移除端口映射，应用通过内部网络连接
 
   # ===========================================================================
   # Redis Cache
@@ -207,6 +209,8 @@ services:
       - REDISCLI_AUTH=${REDIS_PASSWORD:-}
     networks:
       - sub2api-network
+    ports:
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
