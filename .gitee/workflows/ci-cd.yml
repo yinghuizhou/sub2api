@@ -1,0 +1,173 @@
+name: CI/CD Pipeline
+
+# 触发条件
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+
+# 环境变量
+env:
+  GO_VERSION: '1.25.7'
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
+
+jobs:
+  # ============================================================
+  # 测试阶段
+  # ============================================================
+  test:
+    name: 运行测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Go 环境
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 安装 pnpm
+        run: npm install -g pnpm@${{ env.PNPM_VERSION }}
+
+      - name: 安装依赖
+        run: |
+          cd backend && go mod download
+          pnpm --dir frontend install --frozen-lockfile
+
+      - name: 运行后端测试
+        run: |
+          cd backend
+          go test -tags=unit -v ./... | tee test-output.txt
+          echo "BACKEND_TEST_STATUS=$?" >> $GITHUB_ENV
+
+      - name: 运行前端测试
+        run: |
+          pnpm --dir frontend run test:run
+          echo "FRONTEND_TEST_STATUS=$?" >> $GITHUB_ENV
+
+      - name: 代码格式检查
+        run: |
+          cd backend && go fmt ./...
+          git diff --exit-code || (echo "代码格式不正确，请运行 make fmt" && exit 1)
+
+      - name: 前端 Lint 检查
+        run: pnpm --dir frontend run lint:check
+
+      - name: 前端类型检查
+        run: pnpm --dir frontend run typecheck
+
+      - name: 测试结果汇总
+        if: always()
+        run: |
+          echo "=== 测试结果汇总 ==="
+          echo "后端测试: ${{ env.BACKEND_TEST_STATUS == '0' && '✅ 通过' || '❌ 失败' }}"
+          echo "前端测试: ${{ env.D_TEST_STATUS == '0' && '✅ 通过' || '❌ 失败' }}"
+
+  # ============================================================
+  # 构建阶段
+  # ============================================================
+  build:
+    name: 构建应用
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Go 环境
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 安装 pnpm
+        run: npm install -g pnpm@${{ env.PNPM_VERSION }}
+
+      - name: 构建前端
+        run: |
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend run build
+
+      - name: 构建后端
+        run: |
+          cd backend
+          go mod download
+          go build -tags embed -ldflags="-s -w" -o bin/server ./cmd/server
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: sub2api-binary
+          path: backend/bin/server
+          retention-days: 7
+
+  # ============================================================
+  # 部署阶段（仅 main/master 分支）
+  # ============================================================
+  deploy:
+    name: 部署到成都服务器
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 触发 Webhook 部署
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Gitee-Token: ${{ secrets.WEBHOOK_SECRET }}" \
+            -d '{
+              "ref": "${{ github.ref }}",
+              "commit": "${{ github.sha }}",
+              "message": "${{ github.event.head_commit.message }}",
+              "author": "${{ github.event.head_commit.author.name }}"
+            }' \
+            http://47.108.158.227:9000/webhook
+
+      - name: 等待部署完成
+        run: |
+          echo "等待服务器部署..."
+          sleep 30
+
+      - name: 健康检查
+        run: |
+          for i in {1..10}; do
+            if curl -sf http://47.108.158.227:8080/health > /dev/null; then
+              echo "✅ 部署成功，服务健康"
+              exit 0
+            fi
+            echo "等待服务启动... ($i/10)"
+            sleep 5
+          done
+          echo "❌ 健康检查失败"
+          exit 1
+
+      - name: 部署成功通知
+        if: success()
+        run: |
+          echo "🎉 部署成功！"
+          echo "访问地址: http://47.108.158.227:8080"
+          echo "提交信息: ${{ github.event.head_commit.message }}"
