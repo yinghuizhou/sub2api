@@ -458,6 +458,36 @@
         </div>
       </div>
 
+      <!-- Proxy Group -->
+      <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
+        <div class="mb-3 flex items-center justify-between">
+          <label
+            id="bulk-edit-proxy-group-label"
+            class="input-label mb-0"
+            for="bulk-edit-proxy-group-enabled"
+          >
+            {{ t('admin.accounts.proxyGroup') }}
+          </label>
+          <input
+            v-model="enableProxyGroup"
+            id="bulk-edit-proxy-group-enabled"
+            type="checkbox"
+            aria-controls="bulk-edit-proxy-group-body"
+            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+        </div>
+        <div id="bulk-edit-proxy-group-body" :class="!enableProxyGroup && 'pointer-events-none opacity-50'">
+          <input
+            v-model="proxyGroup"
+            type="text"
+            class="input"
+            :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
+            aria-labelledby="bulk-edit-proxy-group-label"
+          />
+          <p class="input-hint">{{ t('admin.accounts.proxyGroupHint') }}</p>
+        </div>
+      </div>
+
       <!-- Concurrency & Priority -->
       <div class="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4 dark:border-dark-600 lg:grid-cols-3">
         <div>
@@ -683,6 +713,7 @@ const enableModelRestriction = ref(false)
 const enableCustomErrorCodes = ref(false)
 const enableInterceptWarmup = ref(false)
 const enableProxy = ref(false)
+const enableProxyGroup = ref(false)
 const enableConcurrency = ref(false)
 const enablePriority = ref(false)
 const enableRateMultiplier = ref(false)
@@ -699,6 +730,7 @@ const selectedErrorCodes = ref<number[]>([])
 const customErrorCodeInput = ref<number | null>(null)
 const interceptWarmupRequests = ref(false)
 const proxyId = ref<number | null>(null)
+const proxyGroup = ref('')
 const concurrency = ref(1)
 const priority = ref(1)
 const rateMultiplier = ref(1)
@@ -895,6 +927,10 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
     updates.proxy_id = proxyId.value === null ? 0 : proxyId.value
   }
 
+  if (enableProxyGroup.value) {
+    updates.proxy_group = proxyGroup.value.trim() || null
+  }
+
   if (enableConcurrency.value) {
     updates.concurrency = concurrency.value
   }
@@ -1049,6 +1085,8 @@ watch(
       customErrorCodeInput.value = null
       interceptWarmupRequests.value = false
       proxyId.value = null
+      proxyGroup.value = ''
+      enableProxyGroup.value = false
       concurrency.value = 1
       priority.value = 1
       rateMultiplier.value = 1

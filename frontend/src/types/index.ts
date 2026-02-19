@@ -702,6 +702,7 @@ export interface CreateAccountRequest {
   credentials: Record<string, unknown>
   extra?: Record<string, unknown>
   proxy_id?: number | null
+  proxy_group?: string
   concurrency?: number
   priority?: number
   rate_multiplier?: number // Account billing multiplier (>=0, 0 means free)
@@ -718,6 +719,7 @@ export interface UpdateAccountRequest {
   credentials?: Record<string, unknown>
   extra?: Record<string, unknown>
   proxy_id?: number | null
+  proxy_group?: string | null
   concurrency?: number
   priority?: number
   rate_multiplier?: number // Account billing multiplier (>=0, 0 means free)

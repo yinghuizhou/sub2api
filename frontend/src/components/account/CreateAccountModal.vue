@@ -1534,6 +1534,17 @@
         <ProxySelector v-model="form.proxy_id" :proxies="proxies" />
       </div>
 
+      <div>
+        <label class="input-label">{{ t('admin.accounts.proxyGroup') }}</label>
+        <input
+          v-model="form.proxy_group"
+          type="text"
+          class="input"
+          :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
+        />
+        <p class="input-hint">{{ t('admin.accounts.proxyGroupHint') }}</p>
+      </div>
+
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <div>
           <label class="input-label">{{ t('admin.accounts.concurrency') }}</label>
@@ -2219,6 +2230,7 @@ const form = reactive({
   type: 'oauth' as AccountType, // Will be 'oauth', 'setup-token', or 'apikey'
   credentials: {} as Record<string, unknown>,
   proxy_id: null as number | null,
+  proxy_group: '',
   concurrency: 10,
   priority: 1,
   rate_multiplier: 1,
@@ -2565,6 +2577,7 @@ const resetForm = () => {
   form.type = 'oauth'
   form.credentials = {}
   form.proxy_id = null
+  form.proxy_group = ''
   form.concurrency = 10
   form.priority = 1
   form.rate_multiplier = 1
@@ -2831,6 +2844,7 @@ const createAccountAndFinish = async (
     credentials,
     extra,
     proxy_id: form.proxy_id,
+    proxy_group: form.proxy_group.trim() || undefined,
     concurrency: form.concurrency,
     priority: form.priority,
     rate_multiplier: form.rate_multiplier,
@@ -2919,6 +2933,7 @@ const handleOpenAIValidateRT = async (refreshTokenInput: string) => {
           credentials,
           extra,
           proxy_id: form.proxy_id,
+          proxy_group: form.proxy_group.trim() || undefined,
           concurrency: form.concurrency,
           priority: form.priority,
           rate_multiplier: form.rate_multiplier,
@@ -3008,6 +3023,7 @@ const handleAntigravityValidateRT = async (refreshTokenInput: string) => {
           credentials,
           extra: {},
           proxy_id: form.proxy_id,
+          proxy_group: form.proxy_group.trim() || undefined,
           concurrency: form.concurrency,
           priority: form.priority,
           rate_multiplier: form.rate_multiplier,
@@ -3287,6 +3303,7 @@ const handleCookieAuth = async (sessionKey: string) => {
           credentials,
           extra,
           proxy_id: form.proxy_id,
+          proxy_group: form.proxy_group.trim() || undefined,
           concurrency: form.concurrency,
           priority: form.priority,
           rate_multiplier: form.rate_multiplier,

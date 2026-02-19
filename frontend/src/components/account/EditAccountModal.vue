@@ -667,6 +667,17 @@
         <ProxySelector v-model="form.proxy_id" :proxies="proxies" />
       </div>
 
+      <div>
+        <label class="input-label">{{ t('admin.accounts.proxyGroup') }}</label>
+        <input
+          v-model="form.proxy_group"
+          type="text"
+          class="input"
+          :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
+        />
+        <p class="input-hint">{{ t('admin.accounts.proxyGroupHint') }}</p>
+      </div>
+
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <div>
           <label class="input-label">{{ t('admin.accounts.concurrency') }}</label>
@@ -1146,6 +1157,7 @@ const form = reactive({
   name: '',
   notes: '',
   proxy_id: null as number | null,
+  proxy_group: '',
   concurrency: 1,
   priority: 1,
   rate_multiplier: 1,
@@ -1174,6 +1186,7 @@ watch(
       form.name = newAccount.name
       form.notes = newAccount.notes || ''
       form.proxy_id = newAccount.proxy_id
+      form.proxy_group = newAccount.proxy_group || ''
       form.concurrency = newAccount.concurrency
       form.priority = newAccount.priority
       form.rate_multiplier = newAccount.rate_multiplier ?? 1
@@ -1566,6 +1579,8 @@ const handleSubmit = async () => {
     if (updatePayload.proxy_id === null) {
       updatePayload.proxy_id = 0
     }
+    // 空字符串表示清除分组
+    updatePayload.proxy_group = form.proxy_group.trim() || null
     if (form.expires_at === null) {
       updatePayload.expires_at = 0
     }
