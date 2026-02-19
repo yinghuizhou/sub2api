@@ -26,10 +26,15 @@ type mockVendorRepo struct {
 	updateStatusErr      error
 	listHealthCheckDue   []Vendor
 	listBalanceAlertDue  []Vendor
+	accountCountByVendor map[int64]int
 }
 
 func newMockVendorRepo() *mockVendorRepo {
-	return &mockVendorRepo{vendors: make(map[int64]*Vendor), nextID: 1}
+	return &mockVendorRepo{
+		vendors:              make(map[int64]*Vendor),
+		nextID:               1,
+		accountCountByVendor: make(map[int64]int),
+	}
 }
 
 func (m *mockVendorRepo) Create(_ context.Context, v *Vendor) error {
@@ -73,6 +78,10 @@ func (m *mockVendorRepo) Delete(_ context.Context, id int64) error {
 	}
 	delete(m.vendors, id)
 	return nil
+}
+
+func (m *mockVendorRepo) CountAccountsByVendorID(_ context.Context, vendorID int64) (int, error) {
+	return m.accountCountByVendor[vendorID], nil
 }
 
 func (m *mockVendorRepo) List(_ context.Context, params pagination.PaginationParams) ([]Vendor, *pagination.PaginationResult, error) {
@@ -271,16 +280,36 @@ func TestVendorService_Delete(t *testing.T) {
 	svc := NewVendorService(repo)
 	ctx := context.Background()
 
-	v, _ := svc.Create(ctx, &CreateVendorInput{Name: "to-delete", APIFormat: VendorAPIFormatOpenAI, BaseURL: "https://x.com", AuthType: VendorAuthTypeAPIKey})
+	t.Run("success when no accounts", func(t *testing.T) {
+		v, _ := svc.Create(ctx, &CreateVendorInput{Name: "to-delete", APIFormat: VendorAPIFormatOpenAI, BaseURL: "https://x.com", AuthType: VendorAuthTypeAPIKey})
 
-	if err := svc.Delete(ctx, v.ID); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+		if err := svc.Delete(ctx, v.ID); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
-	_, err := svc.GetByID(ctx, v.ID)
-	if !errors.Is(err, ErrVendorNotFound) {
-		t.Errorf("expected not found after delete, got %v", err)
-	}
+		_, err := svc.GetByID(ctx, v.ID)
+		if !errors.Is(err, ErrVendorNotFound) {
+			t.Errorf("expected not found after delete, got %v", err)
+		}
+	})
+
+	t.Run("fails when vendor has accounts", func(t *testing.T) {
+		v, _ := svc.Create(ctx, &CreateVendorInput{Name: "with-accounts", APIFormat: VendorAPIFormatOpenAI, BaseURL: "https://y.com", AuthType: VendorAuthTypeAPIKey})
+
+		// Simulate vendor having 2 asciated accounts
+		repo.accountCountByVendor[v.ID] = 2
+
+		err := svc.Delete(ctx, v.ID)
+		if !errors.Is(err, ErrVendorHasAccounts) {
+			t.Errorf("expected ErrVendorHasAccounts, got %v", err)
+		}
+
+		// Vendor should still exist
+		_, err = svc.GetByID(ctx, v.ID)
+		if err != nil {
+			t.Errorf("vendor should still exist after failed delete, got error: %v", err)
+		}
+	})
 }
 
 func TestVendorService_ListActive(t *testing.T) {

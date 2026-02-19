@@ -14,17 +14,17 @@ import (
 )
 
 const (
-	healthCheckInterval     = 60 * time.Second
-	healthCheckTimeout      = 15 * time.Second
-	healthCheckURL          = "https://api.anthropic.com"
-	exitIPCheckURL          = "https://api.ipify.org"
-	unhealthyThreshold      = 3 // consecutive failures before marking unhealthy
-	HealthStatusHealthy     = "healthy"
-	HealthStatusDegraded    = "degraded"
-	HealthStatusUnhealthy   = "unhealthy"
-	VpnStatusConnected      = "connected"
-	VpnStatusDisconnected   = "disconnected"
-	VpnStatusError          = "error"
+	healthCheckInterval   = 60 * time.Second
+	healthCheckTimeout    = 15 * time.Second
+	healthCheckURL        = "https://api.anthropic.com"
+	exitIPCheckURL        = "https://api.ipify.org"
+	unhealthyThreshold    = 3 // consecutive failures before marking unhealthy
+	HealthStatusHealthy   = "healthy"
+	HealthStatusDegraded  = "degraded"
+	HealthStatusUnhealthy = "unhealthy"
+	VpnStatusConnected    = "connected"
+	VpnStatusDisconnected = "disconnected"
+	VpnStatusError        = "error"
 )
 
 // ProxyHealthService periodically checks proxy health and updates status.

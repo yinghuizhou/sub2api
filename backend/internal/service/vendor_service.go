@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	ErrVendorNotFound = infraerrors.NotFound("VENDOR_NOT_FOUND", "vendor not found")
-	ErrVendorNilInput = infraerrors.BadRequest("VENDOR_NIL_INPUT", "vendor input cannot be nil")
+	ErrVendorNotFound    = infraerrors.NotFound("VENDOR_NOT_FOUND", "vendor not found")
+	ErrVendorNilInput    = infraerrors.BadRequest("VENDOR_NIL_INPUT", "vendor input cannot be nil")
+	ErrVendorHasAccounts = infraerrors.BadRequest("VENDOR_HAS_ACCOUNTS", "cannot delete vendor with associated accounts")
 )
 
 // VendorRepository 供应商数据访问接口
@@ -20,6 +21,7 @@ type VendorRepository interface {
 	GetByID(ctx context.Context, id int64) (*Vendor, error)
 	Update(ctx context.Context, vendor *Vendor) error
 	Delete(ctx context.Context, id int64) error
+	CountAccountsByVendorID(ctx context.Context, vendorID int64) (int, error)
 	List(ctx context.Context, params pagination.PaginationParams) ([]Vendor, *pagination.PaginationResult, error)
 	ListWithFilters(ctx context.Context, params pagination.PaginationParams, status, apiFormat, billingType, search string) ([]Vendor, *pagination.PaginationResult, error)
 	ListActive(ctx context.Context) ([]Vendor, error)
@@ -235,6 +237,14 @@ func (s *VendorService) Update(ctx context.Context, id int64, input *UpdateVendo
 
 // Delete 删除供应商（软删除）
 func (s *VendorService) Delete(ctx context.Context, id int64) error {
+	// 检查是否有关联的账户
+	count, err := s.vendorRepo.CountAccountsByVendorID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return ErrVendorHasAccounts
+	}
 	return s.vendorRepo.Delete(ctx, id)
 }
 

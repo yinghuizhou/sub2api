@@ -179,6 +179,15 @@ func (r *vendorRepository) Update(ctx context.Context, v *service.Vendor) error 
 	return nil
 }
 
+func (r *vendorRepository) CountAccountsByVendorID(ctx context.Context, vendorID int64) (int, error) {
+	count, err := r.client.Account.Query().
+		Where(func(s *sql.Selector) {
+			s.Where(sql.EQ("vendor_id", vendorID))
+		}).
+		Count(ctx)
+	return count, err
+}
+
 func (r *vendorRepository) Delete(ctx context.Context, id int64) error {
 	_, err := r.client.Vendor.Delete().Where(vendor.IDEQ(id)).Exec(ctx)
 	return err
