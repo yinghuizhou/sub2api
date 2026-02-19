@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -72,6 +73,10 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 		return result, nil
 	}
 	req.Header.Set("Content-Type", "application/json")
+	// 应用供应商配置的认证头（管理员在 extra_headers 中设置，如 x-api-key 或 Authorization）
+	for k, v := range vendor.ExtraHeaders {
+		req.Header.Set(k, v)
+	}
 
 	start := time.Now()
 	resp, err := s.httpClient.Do(req)
@@ -112,22 +117,39 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 	return result, nil
 }
 
-// RunAllDueHealthChecks 执行所有到期的健康检查
+// RunAllDueHealthChecks 并行执行所有到期的健康检查（最多 5 个并发）
 func (s *VendorHealthService) RunAllDueHealthChecks(ctx context.Context) ([]VendorHealthResult, error) {
 	vendors, err := s.vendorRepo.ListHealthCheckDue(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list health check due: %w", err)
 	}
 
+	const maxConcurrent = 5
+	sem := make(chan struct{}, maxConcurrent)
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 	var results []VendorHealthResult
+
 	for i := range vendors {
-		result, err := s.checkVendor(ctx, &vendors[i])
-		if err != nil {
-			slog.Error("health check failed", "vendor_id", vendors[i].ID, "error", err)
-			continue
-		}
-		results = append(results, *result)
+		wg.Add(1)
+		go func(v *Vendor) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			result, err := s.checkVendor(ctx, v)
+			if err != nil {
+				slog.Error("health check failed", "vendor_id", v.ID, "error", err)
+				return
+			}
+			mu.Lock()
+			results = append(results, *result)
+			mu.Unlock()
+		}(&vendors[i])
 	}
+
+	wg.Wait()
 	return results, nil
 }
 

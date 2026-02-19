@@ -371,7 +371,11 @@ const handleTest = async (v: Vendor) => {
   try {
     const res = await vendorApi.test(v.id)
     const data = res.data ?? res
-    appStore.showSuccess(data?.latency_ms ? `连通成功 (${data.latency_ms}ms)` : '连通成功')
+    if (data?.status === 'not_implemented') {
+      appStore.showError('连通测试功能尚未实现')
+    } else {
+      appStore.showSuccess(data?.latency_ms ? `连通成功 (${data.latency_ms}ms)` : '连通成功')
+    }
   } catch (e: any) { appStore.showError(e?.response?.data?.detail || '连通测试失败') }
   finally { const s = new Set(testingIds.value); s.delete(v.id); testingIds.value = s }
 }

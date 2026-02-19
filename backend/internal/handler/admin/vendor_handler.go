@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,9 @@ func NewVendorHandler(vendorService *service.VendorService) *VendorHandler {
 // List GET /api/v1/admin/vendors
 func (h *VendorHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 	status := strings.TrimSpace(c.Query("status"))
 	apiFormat := strings.TrimSpace(c.Query("api_format"))
@@ -116,7 +120,7 @@ func (h *VendorHandler) Test(c *gin.Context) {
 	}
 	// TODO: implement vendor connectivity test
 	_ = id
-	response.Success(c, map[string]string{"status": "not_implemented"})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }
 
 // RefreshBalance POST /api/v1/admin/vendors/:id/refresh-balance
@@ -128,7 +132,7 @@ func (h *VendorHandler) RefreshBalance(c *gin.Context) {
 	}
 	// TODO: implement balance refresh
 	_ = id
-	response.Success(c, map[string]string{"status": "not_implemented"})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }
 
 // GetStats GET /api/v1/admin/vendors/:id/stats
@@ -140,13 +144,13 @@ func (h *VendorHandler) GetStats(c *gin.Context) {
 	}
 	// TODO: implement vendor stats
 	_ = id
-	response.Success(c, map[string]string{"status": "not_implemented"})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }
 
 // Dashboard GET /api/v1/admin/vendors/dashboard
 func (h *VendorHandler) Dashboard(c *gin.Context) {
 	// TODO: implement vendor dashboard
-	response.Success(c, map[string]string{"status": "not_implemented"})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }
 
 // TriggerHealthCheck POST /api/v1/admin/vendors/:id/health-check
@@ -158,7 +162,7 @@ func (h *VendorHandler) TriggerHealthCheck(c *gin.Context) {
 	}
 	// TODO: implement health check trigger
 	_ = id
-	response.Success(c, map[string]string{"status": "not_implemented"})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }
 
 // GetVendorAccounts GET /api/v1/admin/vendors/:id/accounts
@@ -170,7 +174,7 @@ func (h *VendorHandler) GetVendorAccounts(c *gin.Context) {
 	}
 	// TODO: implement get vendor accounts
 	_ = id
-	response.Success(c, []any{})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }
 
 // BatchCreateAccounts POST /api/v1/admin/vendors/:id/accounts
@@ -182,5 +186,5 @@ func (h *VendorHandler) BatchCreateAccounts(c *gin.Context) {
 	}
 	// TODO: implement batch create accounts for vendor
 	_ = id
-	response.Success(c, map[string]string{"status": "not_implemented"})
+	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
 }

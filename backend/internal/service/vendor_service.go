@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
@@ -93,6 +94,21 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 		return nil, ErrVendorNilInput
 	}
 
+	if strings.TrimSpace(input.Name) == "" {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor name is required")
+	}
+	if strings.TrimSpace(input.BaseURL) == "" {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor base_url is required")
+	}
+	validAPIFormats := map[string]bool{VendorAPIFormatAnthropic: true, VendorAPIFormatOpenAI: true}
+	if !validAPIFormats[input.APIFormat] {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor api_format must be 'anthropic' or 'openai'")
+	}
+	validAuthTypes := map[string]bool{VendorAuthTypeAPIKey: true, VendorAuthTypeSession: true, VendorAuthTypeBearer: true}
+	if !validAuthTypes[input.AuthType] {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor auth_type must be 'api_key', 'session', or 'bearer'")
+	}
+
 	vendor := &Vendor{
 		Name:                  input.Name,
 		Description:           input.Description,
@@ -122,7 +138,7 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 		vendor.HealthCheckInterval = 300
 	}
 	if vendor.HealthCheckModel == "" {
-		vendor.HealthCheckModel = "claude-sonnet-4-20250514"
+		vendor.HealthCheckModel = VendorDefaultHealthCheckModel
 	}
 
 	if err := s.vendorRepo.Create(ctx, vendor); err != nil {

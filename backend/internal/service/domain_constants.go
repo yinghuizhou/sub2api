@@ -185,3 +185,6 @@ const (
 
 // AdminAPIKeyPrefix is the prefix for admin API keys (distinct from user "sk-" keys).
 const AdminAPIKeyPrefix = "admin-"
+
+// VendorDefaultHealthCheckModel 供应商健康检查默认使用的模型（前后端共用此默认值）
+const VendorDefaultHealthCheckModel = "claude-sonnet-4-20250514"

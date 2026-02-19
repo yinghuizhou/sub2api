@@ -184,7 +184,7 @@ func TestVendorService_Create(t *testing.T) {
 		if v.HealthCheckInterval != 300 {
 			t.Errorf("expected default interval 300, got %d", v.HealthCheckInterval)
 		}
-		if v.HealthCheckModel != "claude-sonnet-4-20250514" {
+		if v.HealthCheckModel != VendorDefaultHealthCheckModel {
 			t.Errorf("expected default model, got %q", v.HealthCheckModel)
 		}
 		if v.ExtraHeaders == nil {
@@ -203,7 +203,12 @@ func TestVendorService_Create(t *testing.T) {
 		repoErr := newMockVendorRepo()
 		repoErr.createErr = errors.New("db down")
 		svcErr := NewVendorService(repoErr)
-		_, err := svcErr.Create(ctx, &CreateVendorInput{Name: "fail"})
+		_, err := svcErr.Create(ctx, &CreateVendorInput{
+			Name:      "fail",
+			BaseURL:   "https://example.com",
+			APIFormat: VendorAPIFormatAnthropic,
+			AuthType:  VendorAuthTypeAPIKey,
+		})
 		if err == nil || err.Error() != "db down" {
 			t.Errorf("expected db error, got %v", err)
 		}
