@@ -240,6 +240,7 @@ export async function importData(payload: {
 
 /**
  * Get all distinct proxy group names
+ * Used to populate autocomplete/datalist in proxy and account forms
  * @returns List of group names
  */
 export async function getGroupNames(): Promise<string[]> {

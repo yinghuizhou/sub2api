@@ -928,6 +928,8 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
   }
 
   if (enableProxyGroup.value) {
+    // 注意：proxy_group 用 null 表示清除分组（与 proxy_id 用 0 表示清除代理的语义不同）
+    // 后端接受 null 作为清空 proxy_group 字段的哨兵值
     updates.proxy_group = proxyGroup.value.trim() || null
   }
 

@@ -1481,7 +1481,7 @@ func (s *adminServiceImpl) UpdateProxy(ctx context.Context, id int64, input *Upd
 	if input.OvpnUsername != nil {
 		proxy.OvpnUsername = *input.OvpnUsername
 	}
-	if input.OvpnPassword != nil && *input.OvpnPassword != "" {
+	if input.OvpnPassword != nil {
 		proxy.OvpnPassword = *input.OvpnPassword
 	}
 	if input.IsDedicated != nil {

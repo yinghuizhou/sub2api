@@ -754,10 +754,10 @@ export interface UpdateProxyRequest {
   username?: string | null
   password?: string | null
   status?: 'active' | 'inactive'
-  region?: string
-  group_name?: string
-  ovpn_config?: string
-  ovpn_username?: string
+  region?: string | null
+  group_name?: string | null
+  ovpn_config?: string | null
+  ovpn_username?: string | null
   ovpn_password?: string
   is_dedicated?: boolean
 }

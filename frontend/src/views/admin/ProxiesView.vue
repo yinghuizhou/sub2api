@@ -822,7 +822,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
-import type { Proxy, ProxyAccountSummary, ProxyProtocol } from '@/types'
+import type { Proxy, ProxyAccountSummary, ProxyProtocol, UpdateProxyRequest } from '@/types'
 import type { Column } from '@/components/common/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TablePageLayout from '@/components/layout/TablePageLayout.vue'
@@ -1249,7 +1249,7 @@ const handleUpdateProxy = async () => {
 
   submitting.value = true
   try {
-    const updateData: any = {
+    const updateData: UpdateProxyRequest = {
       name: editForm.name.trim(),
       protocol: editForm.protocol,
       host: editForm.host.trim(),
@@ -1263,7 +1263,7 @@ const handleUpdateProxy = async () => {
       ovpn_username: editForm.ovpn_username.trim() || null
     }
 
-    // Only include password if it was changed
+    // Only include password if it was changed (empty string means "keep existing")
     const trimmedPassword = editForm.password.trim()
     if (trimmedPassword) {
       updateData.password = trimmedPassword
