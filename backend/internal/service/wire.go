@@ -381,4 +381,5 @@ var ProviderSet = wire.NewSet(
 	ProvideSystemOperationLockService,
 	ProvideIdempotencyCleanupService,
 	NewPaymentService,
+	NewReferralService,
 )

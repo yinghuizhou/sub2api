@@ -72,6 +72,13 @@ func (User) Fields() []ent.Field {
 		field.Time("totp_enabled_at").
 			Optional().
 			Nillable(),
+
+		// 邀请码（8位大写十六进制，唯一）
+		field.String("invite_code").
+			MaxLen(16).
+			Optional().
+			Nillable().
+			Unique(),
 	}
 }
 

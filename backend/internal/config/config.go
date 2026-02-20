@@ -75,6 +75,7 @@ type Config struct {
 	Gemini                  GeminiConfig                  `mapstructure:"gemini"`
 	Update                  UpdateConfig                  `mapstructure:"update"`
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
+	Referral                ReferralConfig                `mapstructure:"referral"`
 }
 
 type LogConfig struct {
@@ -155,6 +156,11 @@ type IdempotencyConfig struct {
 	CleanupIntervalSeconds int `mapstructure:"cleanup_interval_seconds"`
 	// CleanupBatchSize 每次清理的最大记录数。
 	CleanupBatchSize int `mapstructure:"cleanup_batch_size"`
+}
+
+// ReferralConfig 邀请返佣配置
+type ReferralConfig struct {
+	CommissionRate float64 `mapstructure:"commission_rate"` // 返佣比例，默认 0.10 (10%)
 }
 
 type LinuxDoConnectConfig struct {

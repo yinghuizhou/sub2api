@@ -43,6 +43,8 @@ const (
 	FieldTotpEnabled = "totp_enabled"
 	// FieldTotpEnabledAt holds the string denoting the totp_enabled_at field in the database.
 	FieldTotpEnabledAt = "totp_enabled_at"
+	// FieldInviteCode holds the string denoting the invite_code field in the database.
+	FieldInviteCode = "invite_code"
 	// EdgeAPIKeys holds the string denoting the api_keys edge name in mutations.
 	EdgeAPIKeys = "api_keys"
 	// EdgeRedeemCodes holds the string denoting the redeem_codes edge name in mutations.
@@ -152,6 +154,7 @@ var Columns = []string{
 	FieldTotpSecretEncrypted,
 	FieldTotpEnabled,
 	FieldTotpEnabledAt,
+	FieldInviteCode,
 }
 
 var (
@@ -208,6 +211,8 @@ var (
 	DefaultNotes string
 	// DefaultTotpEnabled holds the default value on creation for the "totp_enabled" field.
 	DefaultTotpEnabled bool
+	// InviteCodeValidator is a validator for the "invite_code" field. It is called by the builders before save.
+	InviteCodeValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -286,6 +291,11 @@ func ByTotpEnabled(opts ...sql.OrderTermOption) OrderOption {
 // ByTotpEnabledAt orders the results by the totp_enabled_at field.
 func ByTotpEnabledAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTotpEnabledAt, opts...).ToFunc()
+}
+
+// ByInviteCode orders the results by the invite_code field.
+func ByInviteCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInviteCode, opts...).ToFunc()
 }
 
 // ByAPIKeysCount orders the results by api_keys count.

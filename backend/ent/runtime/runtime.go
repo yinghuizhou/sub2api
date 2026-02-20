@@ -18,6 +18,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
 	"github.com/Wei-Shaw/sub2api/ent/rechargepackage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referral"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
 	"github.com/Wei-Shaw/sub2api/ent/schema"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/usagecleanuptask"
@@ -731,6 +733,24 @@ func init() {
 	redeemcodeDescValidityDays := redeemcodeFields[9].Descriptor()
 	// redeemcode.DefaultValidityDays holds the default value on creation for the validity_days field.
 	redeemcode.DefaultValidityDays = redeemcodeDescValidityDays.Default.(int)
+	referralFields := schema.Referral{}.Fields()
+	_ = referralFields
+	// referralDescCreatedAt is the schema descriptor for created_at field.
+	referralDescCreatedAt := referralFields[2].Descriptor()
+	// referral.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referral.DefaultCreatedAt = referralDescCreatedAt.Default.(func() time.Time)
+	referralcommissionFields := schema.ReferralCommission{}.Fields()
+	_ = referralcommissionFields
+	// referralcommissionDescStatus is the schema descriptor for status field.
+	referralcommissionDescStatus := referralcommissionFields[6].Descriptor()
+	// referralcommission.DefaultStatus holds the default value on creation for the status field.
+	referralcommission.DefaultStatus = referralcommissionDescStatus.Default.(string)
+	// referralcommission.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	referralcommission.StatusValidator = referralcommissionDescStatus.Validators[0].(func(string) error)
+	// referralcommissionDescCreatedAt is the schema descriptor for created_at field.
+	referralcommissionDescCreatedAt := referralcommissionFields[8].Descriptor()
+	// referralcommission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referralcommission.DefaultCreatedAt = referralcommissionDescCreatedAt.Default.(func() time.Time)
 	settingFields := schema.Setting{}.Fields()
 	_ = settingFields
 	// settingDescKey is the schema descriptor for key field.
@@ -1005,6 +1025,10 @@ func init() {
 	userDescTotpEnabled := userFields[9].Descriptor()
 	// user.DefaultTotpEnabled holds the default value on creation for the totp_enabled field.
 	user.DefaultTotpEnabled = userDescTotpEnabled.Default.(bool)
+	// userDescInviteCode is the schema descriptor for invite_code field.
+	userDescInviteCode := userFields[11].Descriptor()
+	// user.InviteCodeValidator is a validator for the "invite_code" field. It is called by the builders before save.
+	user.InviteCodeValidator = userDescInviteCode.Validators[0].(func(string) error)
 	userallowedgroupFields := schema.UserAllowedGroup{}.Fields()
 	_ = userallowedgroupFields
 	// userallowedgroupDescCreatedAt is the schema descriptor for created_at field.

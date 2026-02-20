@@ -40,6 +40,10 @@ type Tx struct {
 	RechargePackage *RechargePackageClient
 	// RedeemCode is the client for interacting with the RedeemCode builders.
 	RedeemCode *RedeemCodeClient
+	// Referral is the client for interacting with the Referral builders.
+	Referral *ReferralClient
+	// ReferralCommission is the client for interacting with the ReferralCommission builders.
+	ReferralCommission *ReferralCommissionClient
 	// Setting is the client for interacting with the Setting builders.
 	Setting *SettingClient
 	// UsageCleanupTask is the client for interacting with the UsageCleanupTask builders.
@@ -202,6 +206,8 @@ func (tx *Tx) init() {
 	tx.Proxy = NewProxyClient(tx.config)
 	tx.RechargePackage = NewRechargePackageClient(tx.config)
 	tx.RedeemCode = NewRedeemCodeClient(tx.config)
+	tx.Referral = NewReferralClient(tx.config)
+	tx.ReferralCommission = NewReferralCommissionClient(tx.config)
 	tx.Setting = NewSettingClient(tx.config)
 	tx.UsageCleanupTask = NewUsageCleanupTaskClient(tx.config)
 	tx.UsageLog = NewUsageLogClient(tx.config)

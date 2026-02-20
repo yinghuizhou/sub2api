@@ -25,6 +25,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
 	"github.com/Wei-Shaw/sub2api/ent/rechargepackage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referral"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/usagecleanuptask"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
@@ -107,6 +109,8 @@ func checkColumn(t, c string) error {
 			proxy.Table:                   proxy.ValidColumn,
 			rechargepackage.Table:         rechargepackage.ValidColumn,
 			redeemcode.Table:              redeemcode.ValidColumn,
+			referral.Table:                referral.ValidColumn,
+			referralcommission.Table:      referralcommission.ValidColumn,
 			setting.Table:                 setting.ValidColumn,
 			usagecleanuptask.Table:        usagecleanuptask.ValidColumn,
 			usagelog.Table:                usagelog.ValidColumn,

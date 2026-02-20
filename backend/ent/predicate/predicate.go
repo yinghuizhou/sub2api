@@ -45,6 +45,12 @@ type RechargePackage func(*sql.Selector)
 // RedeemCode is the predicate function for redeemcode builders.
 type RedeemCode func(*sql.Selector)
 
+// Referral is the predicate function for referral builders.
+type Referral func(*sql.Selector)
+
+// ReferralCommission is the predicate function for referralcommission builders.
+type ReferralCommission func(*sql.Selector)
+
 // Setting is the predicate function for setting builders.
 type Setting func(*sql.Selector)
 
