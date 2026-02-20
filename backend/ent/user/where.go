@@ -130,6 +130,11 @@ func InviteCode(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldInviteCode, v))
 }
 
+// ResellerLevel applies equality check predicate on the "reseller_level" field. It's identical to ResellerLevelEQ.
+func ResellerLevel(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldResellerLevel, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -938,6 +943,46 @@ func InviteCodeEqualFold(v string) predicate.User {
 // InviteCodeContainsFold applies the ContainsFold predicate on the "invite_code" field.
 func InviteCodeContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldInviteCode, v))
+}
+
+// ResellerLevelEQ applies the EQ predicate on the "reseller_level" field.
+func ResellerLevelEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldResellerLevel, v))
+}
+
+// ResellerLevelNEQ applies the NEQ predicate on the "reseller_level" field.
+func ResellerLevelNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldResellerLevel, v))
+}
+
+// ResellerLevelIn applies the In predicate on the "reseller_level" field.
+func ResellerLevelIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldResellerLevel, vs...))
+}
+
+// ResellerLevelNotIn applies the NotIn predicate on the "reseller_level" field.
+func ResellerLevelNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldResellerLevel, vs...))
+}
+
+// ResellerLevelGT applies the GT predicate on the "reseller_level" field.
+func ResellerLevelGT(v int) predicate.User {
+	return predicate.User(sql.FieldGT(FieldResellerLevel, v))
+}
+
+// ResellerLevelGTE applies the GTE predicate on the "reseller_level" field.
+func ResellerLevelGTE(v int) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldResellerLevel, v))
+}
+
+// ResellerLevelLT applies the LT predicate on the "reseller_level" field.
+func ResellerLevelLT(v int) predicate.User {
+	return predicate.User(sql.FieldLT(FieldResellerLevel, v))
+}
+
+// ResellerLevelLTE applies the LTE predicate on the "reseller_level" field.
+func ResellerLevelLTE(v int) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldResellerLevel, v))
 }
 
 // HasAPIKeys applies the HasEdge predicate on the "api_keys" edge.

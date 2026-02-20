@@ -1029,6 +1029,10 @@ func init() {
 	userDescInviteCode := userFields[11].Descriptor()
 	// user.InviteCodeValidator is a validator for the "invite_code" field. It is called by the builders before save.
 	user.InviteCodeValidator = userDescInviteCode.Validators[0].(func(string) error)
+	// userDescResellerLevel is the schema descriptor for reseller_level field.
+	userDescResellerLevel := userFields[12].Descriptor()
+	// user.DefaultResellerLevel holds the default value on creation for the reseller_level field.
+	user.DefaultResellerLevel = userDescResellerLevel.Default.(int)
 	userallowedgroupFields := schema.UserAllowedGroup{}.Fields()
 	_ = userallowedgroupFields
 	// userallowedgroupDescCreatedAt is the schema descriptor for created_at field.

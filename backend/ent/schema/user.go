@@ -79,6 +79,10 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Unique(),
+
+		// 代理商等级：0=普通用户, 1=基础代理, 2=高级代理
+		field.Int("reseller_level").
+			Default(0),
 	}
 }
 

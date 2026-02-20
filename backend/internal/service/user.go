@@ -30,6 +30,10 @@ type User struct {
 	TotpEnabled         bool       // 是否启用 TOTP
 	TotpEnabledAt       *time.Time // TOTP 启用时间
 
+	// 商业化字段
+	InviteCode    *string // 邀请码
+	ResellerLevel int     // 代理等级: 0=普通, 1=基础, 2=高级
+
 	APIKeys       []APIKey
 	Subscriptions []UserSubscription
 }

@@ -22523,6 +22523,8 @@ type UserMutation struct {
 	totp_enabled                  *bool
 	totp_enabled_at               *time.Time
 	invite_code                   *string
+	reseller_level                *int
+	addreseller_level             *int
 	clearedFields                 map[string]struct{}
 	api_keys                      map[int64]struct{}
 	removedapi_keys               map[int64]struct{}
@@ -23286,6 +23288,62 @@ func (m *UserMutation) ResetInviteCode() {
 	delete(m.clearedFields, user.FieldInviteCode)
 }
 
+// SetResellerLevel sets the "reseller_level" field.
+func (m *UserMutation) SetResellerLevel(i int) {
+	m.reseller_level = &i
+	m.addreseller_level = nil
+}
+
+// ResellerLevel returns the value of the "reseller_level" field in the mutation.
+func (m *UserMutation) ResellerLevel() (r int, exists bool) {
+	v := m.reseller_level
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResellerLevel returns the old "reseller_level" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldResellerLevel(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResellerLevel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResellerLevel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResellerLevel: %w", err)
+	}
+	return oldValue.ResellerLevel, nil
+}
+
+// AddResellerLevel adds i to the "reseller_level" field.
+func (m *UserMutation) AddResellerLevel(i int) {
+	if m.addreseller_level != nil {
+		*m.addreseller_level += i
+	} else {
+		m.addreseller_level = &i
+	}
+}
+
+// AddedResellerLevel returns the value that was added to the "reseller_level" field in this mutation.
+func (m *UserMutation) AddedResellerLevel() (r int, exists bool) {
+	v := m.addreseller_level
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResellerLevel resets all changes to the "reseller_level" field.
+func (m *UserMutation) ResetResellerLevel() {
+	m.reseller_level = nil
+	m.addreseller_level = nil
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by ids.
 func (m *UserMutation) AddAPIKeyIDs(ids ...int64) {
 	if m.api_keys == nil {
@@ -23806,7 +23864,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -23852,6 +23910,9 @@ func (m *UserMutation) Fields() []string {
 	if m.invite_code != nil {
 		fields = append(fields, user.FieldInviteCode)
 	}
+	if m.reseller_level != nil {
+		fields = append(fields, user.FieldResellerLevel)
+	}
 	return fields
 }
 
@@ -23890,6 +23951,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.TotpEnabledAt()
 	case user.FieldInviteCode:
 		return m.InviteCode()
+	case user.FieldResellerLevel:
+		return m.ResellerLevel()
 	}
 	return nil, false
 }
@@ -23929,6 +23992,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldTotpEnabledAt(ctx)
 	case user.FieldInviteCode:
 		return m.OldInviteCode(ctx)
+	case user.FieldResellerLevel:
+		return m.OldResellerLevel(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -24043,6 +24108,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetInviteCode(v)
 		return nil
+	case user.FieldResellerLevel:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResellerLevel(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -24057,6 +24129,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addconcurrency != nil {
 		fields = append(fields, user.FieldConcurrency)
 	}
+	if m.addreseller_level != nil {
+		fields = append(fields, user.FieldResellerLevel)
+	}
 	return fields
 }
 
@@ -24069,6 +24144,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedBalance()
 	case user.FieldConcurrency:
 		return m.AddedConcurrency()
+	case user.FieldResellerLevel:
+		return m.AddedResellerLevel()
 	}
 	return nil, false
 }
@@ -24091,6 +24168,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddConcurrency(v)
+		return nil
+	case user.FieldResellerLevel:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResellerLevel(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
@@ -24190,6 +24274,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldInviteCode:
 		m.ResetInviteCode()
+		return nil
+	case user.FieldResellerLevel:
+		m.ResetResellerLevel()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

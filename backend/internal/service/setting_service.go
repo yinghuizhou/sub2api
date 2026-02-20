@@ -362,6 +362,27 @@ func (s *SettingService) GetDefaultBalance(ctx context.Context) float64 {
 	return s.cfg.Default.UserBalance
 }
 
+// IsFreeTrialEnabled returns whether new user free trial credit is enabled.
+func (s *SettingService) IsFreeTrialEnabled(ctx context.Context) bool {
+	value, err := s.settingRepo.GetValue(ctx, "free_trial.enabled")
+	if err != nil {
+		return true // default enabled
+	}
+	return value == "true" || value == "1"
+}
+
+// GetFreeTrialAmount returns the free trial credit amount in USD.
+func (s *SettingService) GetFreeTrialAmount(ctx context.Context) float64 {
+	value, err := s.settingRepo.GetValue(ctx, "free_trial.amount")
+	if err != nil {
+		return 0.5 // default $0.50
+	}
+	if v, err := strconv.ParseFloat(value, 64); err == nil && v > 0 {
+		return v
+	}
+	return 0.5
+}
+
 // InitializeDefaultSettings 初始化默认设置
 func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 	// 检查是否已有设置

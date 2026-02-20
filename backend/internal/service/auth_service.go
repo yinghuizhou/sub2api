@@ -224,6 +224,23 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 		}
 	}
 
+	// 发放新用户免费试用额度
+	if s.settingService != nil && s.settingService.IsFreeTrialEnabled(ctx) {
+		amount := s.settingService.GetFreeTrialAmount(ctx)
+		if amount > 0 {
+			if err := s.userRepo.UpdateBalance(ctx, user.ID, amount); err != nil {
+				log.Printf("[Auth] Failed to grant free trial credit to user %d: %v", user.ID, err)
+			} else {
+				log.Printf("[Auth] Free trial credit %.4f USD granted to user %d", amount, user.ID)
+			}
+		}
+	}
+
+	// 重新获取最新余额
+	if updatedUser, err := s.userRepo.GetByID(ctx, user.ID); err == nil {
+		user = updatedUser
+	}
+
 	// 生成token
 	token, err := s.GenerateToken(user)
 	if err != nil {

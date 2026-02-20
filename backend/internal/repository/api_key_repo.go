@@ -457,6 +457,8 @@ func userEntityToService(u *dbent.User) *service.User {
 		TotpSecretEncrypted: u.TotpSecretEncrypted,
 		TotpEnabled:         u.TotpEnabled,
 		TotpEnabledAt:       u.TotpEnabledAt,
+		InviteCode:          u.InviteCode,
+		ResellerLevel:       u.ResellerLevel,
 		CreatedAt:           u.CreatedAt,
 		UpdatedAt:           u.UpdatedAt,
 	}

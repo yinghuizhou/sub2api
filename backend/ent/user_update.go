@@ -262,6 +262,27 @@ func (_u *UserUpdate) ClearInviteCode() *UserUpdate {
 	return _u
 }
 
+// SetResellerLevel sets the "reseller_level" field.
+func (_u *UserUpdate) SetResellerLevel(v int) *UserUpdate {
+	_u.mutation.ResetResellerLevel()
+	_u.mutation.SetResellerLevel(v)
+	return _u
+}
+
+// SetNillableResellerLevel sets the "reseller_level" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableResellerLevel(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetResellerLevel(*v)
+	}
+	return _u
+}
+
+// AddResellerLevel adds value to the "reseller_level" field.
+func (_u *UserUpdate) AddResellerLevel(v int) *UserUpdate {
+	_u.mutation.AddResellerLevel(v)
+	return _u
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_u *UserUpdate) AddAPIKeyIDs(ids ...int64) *UserUpdate {
 	_u.mutation.AddAPIKeyIDs(ids...)
@@ -739,6 +760,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.InviteCodeCleared() {
 		_spec.ClearField(user.FieldInviteCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.ResellerLevel(); ok {
+		_spec.SetField(user.FieldResellerLevel, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedResellerLevel(); ok {
+		_spec.AddField(user.FieldResellerLevel, field.TypeInt, value)
 	}
 	if _u.mutation.APIKeysCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1403,6 +1430,27 @@ func (_u *UserUpdateOne) ClearInviteCode() *UserUpdateOne {
 	return _u
 }
 
+// SetResellerLevel sets the "reseller_level" field.
+func (_u *UserUpdateOne) SetResellerLevel(v int) *UserUpdateOne {
+	_u.mutation.ResetResellerLevel()
+	_u.mutation.SetResellerLevel(v)
+	return _u
+}
+
+// SetNillableResellerLevel sets the "reseller_level" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableResellerLevel(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetResellerLevel(*v)
+	}
+	return _u
+}
+
+// AddResellerLevel adds value to the "reseller_level" field.
+func (_u *UserUpdateOne) AddResellerLevel(v int) *UserUpdateOne {
+	_u.mutation.AddResellerLevel(v)
+	return _u
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_u *UserUpdateOne) AddAPIKeyIDs(ids ...int64) *UserUpdateOne {
 	_u.mutation.AddAPIKeyIDs(ids...)
@@ -1910,6 +1958,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.InviteCodeCleared() {
 		_spec.ClearField(user.FieldInviteCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.ResellerLevel(); ok {
+		_spec.SetField(user.FieldResellerLevel, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedResellerLevel(); ok {
+		_spec.AddField(user.FieldResellerLevel, field.TypeInt, value)
 	}
 	if _u.mutation.APIKeysCleared() {
 		edge := &sqlgraph.EdgeSpec{
