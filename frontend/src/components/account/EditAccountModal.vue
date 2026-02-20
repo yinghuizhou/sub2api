@@ -528,17 +528,33 @@
             </button>
           </div>
 
-          <div v-if="tempUnschedRules.length > 0" class="space-y-3">
+          <div v-if="tempUnschedRules.length > 0" class="space-y-2">
             <div
               v-for="(rule, index) in tempUnschedRules"
               :key="index"
-              class="rounded-lg border border-gray-200 p-3 dark:border-dark-600"
+              class="rounded-lg border border-gray-200 dark:border-dark-600"
             >
-              <div class="mb-2 flex items-center justify-between">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {{ t('admin.accounts.tempUnschedulable.ruleIndex', { index: index + 1 }) }}
-                </span>
-                <div class="flex items-center gap-2">
+              <!-- 折叠头部 -->
+              <div
+                class="flex cursor-pointer items-center justify-between px-3 py-2 select-none"
+                @click="toggleRuleExpanded(index)"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg
+                    class="h-3.5 w-3.5 flex-shrink-0 text-gray-400 transition-transform duration-150"
+                    :class="expandedRuleIndexes.has(index) ? 'rotate-90' : ''"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {{ t('admin.accounts.tempUnschedulable.ruleIndex', { index: index + 1 }) }}
+                  </span>
+                  <span v-if="!expandedRuleIndexes.has(index)" class="truncate text-xs text-gray-400 dark:text-gray-500">
+                    {{ rule.error_code ? `HTTP ${rule.error_code}` : '' }}{{ rule.error_code && rule.duration_minutes ? ' · ' : '' }}{{ rule.duration_minutes ? `${rule.duration_minutes}min` : '' }}{{ rule.description ? ` · ${rule.description}` : '' }}
+                  </span>
+                </div>
+                <div class="flex flex-shrink-0 items-center gap-1 ml-2" @click.stop>
                   <button
                     type="button"
                     :disabled="index === 0"
@@ -567,46 +583,49 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.errorCode') }}</label>
-                  <input
-                    v-model.number="rule.error_code"
-                    type="number"
-                    min="100"
-                    max="599"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.errorCodePlaceholder')"
-                  />
-                </div>
-                <div>
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.durationMinutes') }}</label>
-                  <input
-                    v-model.number="rule.duration_minutes"
-                    type="number"
-                    min="1"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.durationPlaceholder')"
-                  />
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.keywords') }}</label>
-                  <input
-                    v-model="rule.keywords"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.keywordsPlaceholder')"
-                  />
-                  <p class="input-hint">{{ t('admin.accounts.tempUnschedulable.keywordsHint') }}</p>
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.description') }}</label>
-                  <input
-                    v-model="rule.description"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.descriptionPlaceholder')"
-                  />
+              <!-- 展开内容 -->
+              <div v-if="expandedRuleIndexes.has(index)" class="border-t border-gray-200 p-3 dark:border-dark-600">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.errorCode') }}</label>
+                    <input
+                      v-model.number="rule.error_code"
+                      type="number"
+                      min="100"
+                      max="599"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.errorCodePlaceholder')"
+                    />
+                  </div>
+                  <div>
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.durationMinutes') }}</label>
+                    <input
+                      v-model.number="rule.duration_minutes"
+                      type="number"
+                      min="1"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.durationPlaceholder')"
+                    />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.keywords') }}</label>
+                    <input
+                      v-model="rule.keywords"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.keywordsPlaceholder')"
+                    />
+                    <p class="input-hint">{{ t('admin.accounts.tempUnschedulable.keywordsHint') }}</p>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.description') }}</label>
+                    <input
+                      v-model="rule.description"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.descriptionPlaceholder')"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1138,6 +1157,7 @@ const antigravityWhitelistModels = ref<string[]>([])
 const antigravityModelMappings = ref<ModelMapping[]>([])
 const tempUnschedEnabled = ref(false)
 const tempUnschedRules = ref<TempUnschedRuleForm[]>([])
+const expandedRuleIndexes = ref<Set<number>>(new Set())
 
 // Mixed channel warning dialog state
 const showMixedChannelWarning = ref(false)
@@ -1439,20 +1459,25 @@ const removeErrorCode = (code: number) => {
 }
 
 const addTempUnschedRule = (preset?: TempUnschedRuleForm) => {
+  const newIndex = tempUnschedRules.value.length
   if (preset) {
     tempUnschedRules.value.push({ ...preset })
-    return
+  } else {
+    tempUnschedRules.value.push({
+      error_code: null,
+      keywords: '',
+      duration_minutes: 30,
+      description: ''
+    })
   }
-  tempUnschedRules.value.push({
-    error_code: null,
-    keywords: '',
-    duration_minutes: 30,
-    description: ''
-  })
+  expandedRuleIndexes.value.add(newIndex)
 }
 
 const removeTempUnschedRule = (index: number) => {
   tempUnschedRules.value.splice(index, 1)
+  const next = new Set<number>()
+  expandedRuleIndexes.value.forEach(i => { if (i < index) next.add(i); else if (i > index) next.add(i - 1) })
+  expandedRuleIndexes.value = next
 }
 
 const moveTempUnschedRule = (index: number, direction: number) => {
@@ -1462,6 +1487,18 @@ const moveTempUnschedRule = (index: number, direction: number) => {
   const current = rules[index]
   rules[index] = rules[target]
   rules[target] = current
+  const wasIndexExpanded = expandedRuleIndexes.value.has(index)
+  const wasTargetExpanded = expandedRuleIndexes.value.has(target)
+  if (wasIndexExpanded) expandedRuleIndexes.value.add(target); else expandedRuleIndexes.value.delete(target)
+  if (wasTargetExpanded) expandedRuleIndexes.value.add(index); else expandedRuleIndexes.value.delete(index)
+}
+
+const toggleRuleExpanded = (index: number) => {
+  if (expandedRuleIndexes.value.has(index)) {
+    expandedRuleIndexes.value.delete(index)
+  } else {
+    expandedRuleIndexes.value.add(index)
+  }
 }
 
 const buildTempUnschedRules = (rules: TempUnschedRuleForm[]) => {
