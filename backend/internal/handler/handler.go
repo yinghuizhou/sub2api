@@ -43,6 +43,7 @@ type Handlers struct {
 	SoraGateway   *SoraGatewayHandler
 	Setting       *SettingHandler
 	Totp          *TotpHandler
+	Payment       *PaymentHandler
 }
 
 // BuildInfo contains build-time information

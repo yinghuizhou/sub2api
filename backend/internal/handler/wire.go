@@ -81,6 +81,7 @@ func ProvideHandlers(
 	totpHandler *TotpHandler,
 	_ *service.IdempotencyCoordinator,
 	_ *service.IdempotencyCleanupService,
+	paymentHandler *PaymentHandler,
 ) *Handlers {
 	return &Handlers{
 		Auth:          authHandler,
@@ -96,6 +97,7 @@ func ProvideHandlers(
 		SoraGateway:   soraGatewayHandler,
 		Setting:       settingHandler,
 		Totp:          totpHandler,
+		Payment:       paymentHandler,
 	}
 }
 
@@ -136,6 +138,8 @@ var ProviderSet = wire.NewSet(
 	admin.NewUserAttributeHandler,
 	admin.NewErrorPassthroughHandler,
 	admin.NewVendorHandler,
+
+	NewPaymentHandler,
 
 	// AdminHandlers and Handlers constructors
 	ProvideAdminHandlers,
