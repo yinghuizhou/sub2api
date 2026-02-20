@@ -239,9 +239,16 @@ func (s *AntigravityGatewayService) handleSmartRetry(p antigravityRetryLoopParam
 
 			// 全局去重：如果其他 goroutine 已在重试同一模型且尚在 cooldown 中，直接返回 503
 			if modelName != "" {
-				modelCapacityExhaustedMu.RLock()
+				modelCapacityExhaustedMu.Lock()
+				// GC: 清理过期条目
+				now := time.Now()
+				for k, v := range modelCapacityExhaustedUntil {
+					if now.After(v) {
+						delete(modelCapacityExhaustedUntil, k)
+					}
+				}
 				cooldownUntil, exists := modelCapacityExhaustedUntil[modelName]
-				modelCapacityExhaustedMu.RUnlock()
+				modelCapacityExhaustedMu.Unlock()
 				if exists && time.Now().Before(cooldownUntil) {
 					log.Printf("%s status=%d model_capacity_exhausted_dedup model=%s account=%d cooldown_until=%v (skip retry)",
 						p.prefix, resp.StatusCode, modelName, p.account.ID, cooldownUntil.Format("15:04:05"))

@@ -183,6 +183,7 @@ func (r *vendorRepository) CountAccountsByVendorID(ctx context.Context, vendorID
 	count, err := r.client.Account.Query().
 		Where(func(s *sql.Selector) {
 			s.Where(sql.EQ("vendor_id", vendorID))
+			s.Where(sql.IsNull("deleted_at"))
 		}).
 		Count(ctx)
 	return count, err

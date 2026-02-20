@@ -96,7 +96,7 @@ install_go() {
     # 配置环境变量
     if ! grep -q "/usr/local/go/bin" /etc/profile; then
         echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
-        echo 'export GOPo' >> /etc/profile
+        echo 'export GOPATH=$HOME/go' >> /etc/profile
     fi
 
     export PATH=$PATH:/usr/local/go/bin

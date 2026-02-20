@@ -1803,7 +1803,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		return nil
 	}
 
-	shouldBill := inserted || err != nil
+	shouldBill := inserted
 
 	// Deduct based on billing type
 	if isSubscriptionBilling {

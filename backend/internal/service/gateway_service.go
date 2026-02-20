@@ -4565,8 +4565,12 @@ func (s *GatewayService) parseSSEUsage(data string, usage *ClaudeUsage) {
 		cc5m := gjson.Get(data, "usage.cache_creation.ephemeral_5m_input_tokens")
 		cc1h := gjson.Get(data, "usage.cache_creation.ephemeral_1h_input_tokens")
 		if cc5m.Exists() || cc1h.Exists() {
-			usage.CacheCreation5mTokens = int(cc5m.Int())
-			usage.CacheCreation1hTokens = int(cc1h.Int())
+			if cc5mVal := int(cc5m.Int()); cc5mVal > 0 {
+				usage.CacheCreation5mTokens = cc5mVal
+			}
+			if cc1hVal := int(cc1h.Int()); cc1hVal > 0 {
+				usage.CacheCreation1hTokens = cc1hVal
+			}
 		}
 	}
 }
@@ -4597,6 +4601,8 @@ func applyCacheTTLOverride(usage *ClaudeUsage, target string) bool {
 		usage.CacheCreation5mTokens = total
 		usage.CacheCreation1hTokens = 0
 	}
+	// 同步更新聚合字段
+	usage.CacheCreationInputTokens = usage.CacheCreation5mTokens + usage.CacheCreation1hTokens
 	return true
 }
 
@@ -4874,7 +4880,7 @@ func (s *GatewayService) RecordUsage(ctx context.Context, input *RecordUsageInpu
 		return nil
 	}
 
-	shouldBill := inserted || err != nil
+	shouldBill := inserted
 
 	// 根据计费类型执行扣费
 	if isSubscriptionBilling {
@@ -5067,7 +5073,7 @@ func (s *GatewayService) RecordUsageWithLongContext(ctx context.Context, input *
 		return nil
 	}
 
-	shouldBill := inserted || err != nil
+	shouldBill := inserted
 
 	// 根据计费类型执行扣费
 	if isSubscriptionBilling {

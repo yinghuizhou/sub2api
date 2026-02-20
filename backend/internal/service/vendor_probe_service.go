@@ -245,9 +245,8 @@ func (s *VendorProbeService) probeNewAPIUserSelf(ctx context.Context, baseURL, a
 	if err != nil {
 		return nil, ""
 	}
-	// 同时设置两种认证头，兼容不同实现
+	// New API / One API 通常使用 Bearer token 认证
 	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("x-api-key", apiKey)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -332,6 +331,7 @@ func (s *VendorProbeService) probeNewAPITokenSearch(ctx context.Context, baseURL
 	defer cancel()
 
 	// 用 API Key 本身搜索 token 信息（某些部署允许通过 key 值查询）
+	// NOTE: key 通过 query param 传递是该 API 端点的要求，同时也通过 Authorization 头传递
 	url := fmt.Sprintf("%s/api/token/search?key=%s", baseURL, apiKey)
 	req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, url, nil)
 	if err != nil {

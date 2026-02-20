@@ -8,7 +8,7 @@
 set -euo pipefail
 
 WEBHOOK_PORT=9000
-WEBHOOK_SECRET="${WEBHOOK_SECRET:-changeme}"
+WEBHOOK_SECRET="${WEBHOOK_SECRET:?ERROR: WEBHOOK_SECRET environment variable is required}"
 DEPLOY_SCRIPT="/opt/sub2api/deploy.sh"
 LOG_FILE="/var/log/sub2api-webhook.log"
 

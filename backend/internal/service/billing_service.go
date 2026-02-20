@@ -133,6 +133,24 @@ func (s *BillingService) initFallbackPricing() {
 		CacheReadPricePerToken:     0.03e-6, // $0.03 per MTok
 		SupportsCacheBreakdown:     false,
 	}
+
+	// Claude Opus 4.6
+	s.fallbackPrices["claude-opus-4.6"] = &ModelPricing{
+		InputPricePerToken:         15e-6,    // $15 per MTok
+		OutputPricePerToken:        75e-6,    // $75 per MTok
+		CacheCreationPricePerToken: 18.75e-6, // $18.75 per MTok
+		CacheReadPricePerToken:     1.5e-6,   // $1.50 per MTok
+		SupportsCacheBreakdown:     false,
+	}
+
+	// Claude Sonnet 4.6
+	s.fallbackPrices["claude-sonnet-4.6"] = &ModelPricing{
+		InputPricePerToken:         3e-6,    // $3 per MTok
+		OutputPricePerToken:        15e-6,   // $15 per MTok
+		CacheCreationPricePerToken: 3.75e-6, // $3.75 per MTok
+		CacheReadPricePerToken:     0.3e-6,  // $0.30 per MTok
+		SupportsCacheBreakdown:     false,
+	}
 }
 
 // getFallbackPricing 根据模型系列获取回退价格
@@ -141,12 +159,18 @@ func (s *BillingService) getFallbackPricing(model string) *ModelPricing {
 
 	// 按模型系列匹配
 	if strings.Contains(modelLower, "opus") {
+		if strings.Contains(modelLower, "4.6") || strings.Contains(modelLower, "4-6") {
+			return s.fallbackPrices["claude-opus-4.6"]
+		}
 		if strings.Contains(modelLower, "4.5") || strings.Contains(modelLower, "4-5") {
 			return s.fallbackPrices["claude-opus-4.5"]
 		}
 		return s.fallbackPrices["claude-3-opus"]
 	}
 	if strings.Contains(modelLower, "sonnet") {
+		if strings.Contains(modelLower, "4.6") || strings.Contains(modelLower, "4-6") {
+			return s.fallbackPrices["claude-sonnet-4.6"]
+		}
 		if strings.Contains(modelLower, "4") && !strings.Contains(modelLower, "3") {
 			return s.fallbackPrices["claude-sonnet-4"]
 		}
@@ -287,8 +311,14 @@ func (s *BillingService) CalculateCostWithLongContext(model string, tokens Usage
 		// 缓存未超过阈值：范围内是全部缓存+部分输入，范围外是剩余输入
 		inRangeCacheTokens = tokens.CacheReadTokens
 		inRangeInputTokens = threshold - tokens.CacheReadTokens
+		if inRangeInputTokens > tokens.InputTokens {
+			inRangeInputTokens = tokens.InputTokens
+		}
 		outRangeCacheTokens = 0
 		outRangeInputTokens = tokens.InputTokens - inRangeInputTokens
+		if outRangeInputTokens < 0 {
+			outRangeInputTokens = 0
+		}
 	}
 
 	// 范围内部分：正常计费

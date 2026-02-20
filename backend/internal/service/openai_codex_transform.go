@@ -244,6 +244,8 @@ func getOpenCodeCachedPrompt(url, cacheFileName, metaFileName string) string {
 
 	content, etag, status, err := fetchWithETag(url, meta.ETag)
 	if err == nil && status == http.StatusNotModified && cachedContent != "" {
+		meta.LastChecked = time.Now().UnixMilli()
+		_ = writeJSON(metaFile, meta)
 		return cachedContent
 	}
 	if err == nil && status >= 200 && status < 300 && content != "" {
@@ -563,7 +565,8 @@ func fetchWithETag(url, etag string) (string, string, int, error) {
 	if etag != "" {
 		req.Header.Set("If-None-Match", etag)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -571,7 +574,8 @@ func fetchWithETag(url, etag string) (string, string, int, error) {
 		_ = resp.Body.Close()
 	}()
 
-	body, err := io.ReadAll(resp.Body)
+	const maxResponseSize = 10 * 1024 * 1024 // 10MB
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
 		return "", "", resp.StatusCode, err
 	}
