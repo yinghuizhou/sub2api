@@ -386,15 +386,6 @@ func createAdminUser(cfg *SetupConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if admin already exists
-	var count int64
-	if err := db.QueryRowContext(ctx, "SELECT COUNT(1) FROM users WHERE role = $1", service.RoleAdmin).Scan(&count); err != nil {
-		return err
-	}
-	if count > 0 {
-		return nil // Admin already exists
-	}
-
 	admin := &service.User{
 		Email:       cfg.Admin.Email,
 		Role:        service.RoleAdmin,
@@ -407,6 +398,29 @@ func createAdminUser(cfg *SetupConfig) error {
 
 	if err := admin.SetPassword(cfg.Admin.Password); err != nil {
 		return err
+	}
+
+	// Check if admin already exists — update credentials if so
+	var count int64
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(1) FROM users WHERE role = $1", service.RoleAdmin).Scan(&count); err != nil {
+		return err
+	}
+
+	if count > 0 {
+		// Update existing admin's email and password
+		_, err = db.ExecContext(
+			ctx,
+			`UPDATE users SET email = $1, password_hash = $2, updated_at = $3 WHERE role = $4`,
+			admin.Email,
+			admin.PasswordHash,
+			time.Now(),
+			service.RoleAdmin,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update admin user: %w", err)
+		}
+		log.Printf("Admin user updated: %s", admin.Email)
+		return nil
 	}
 
 	_, err = db.ExecContext(
