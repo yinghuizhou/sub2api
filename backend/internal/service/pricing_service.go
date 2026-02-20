@@ -584,15 +584,17 @@ func (s *PricingService) extractBaseName(model string) string {
 func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	// Claude模型系列匹配规则
 	familyPatterns := map[string][]string{
-		"opus-4.6":   {"claude-opus-4.6", "claude-opus-4-6"},
-		"opus-4.5":   {"claude-opus-4.5", "claude-opus-4-5"},
-		"opus-4":     {"claude-opus-4", "claude-3-opus"},
-		"sonnet-4.5": {"claude-sonnet-4.5", "claude-sonnet-4-5"},
-		"sonnet-4":   {"claude-sonnet-4", "claude-3-5-sonnet"},
-		"sonnet-3.5": {"claude-3-5-sonnet", "claude-3.5-sonnet"},
-		"sonnet-3":   {"claude-3-sonnet"},
-		"haiku-3.5":  {"claude-3-5-haiku", "claude-3.5-haiku"},
-		"haiku-3":    {"claude-3-haiku"},
+		"opus-4.6":    {"claude-opus-4.6", "claude-opus-4-6"},
+		"opus-4.5":    {"claude-opus-4.5", "claude-opus-4-5"},
+		"opus-4":      {"claude-opus-4", "claude-3-opus"},
+		"sonnet-4.6":  {"claude-sonnet-4.6", "claude-sonnet-4-6"},
+		"sonnet-4.5":  {"claude-sonnet-4.5", "claude-sonnet-4-5"},
+		"sonnet-4":    {"claude-sonnet-4", "claude-3-5-sonnet"},
+		"sonnet-3.5":  {"claude-3-5-sonnet", "claude-3.5-sonnet"},
+		"sonnet-3":    {"claude-3-sonnet"},
+		"haiku-4.5":   {"claude-haiku-4.5", "claude-haiku-4-5"},
+		"haiku-3.5":   {"claude-3-5-haiku", "claude-3.5-haiku"},
+		"haiku-3":     {"claude-3-haiku"},
 	}
 
 	// 确定模型属于哪个系列
@@ -612,13 +614,17 @@ func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	if matchedFamily == "" {
 		// 简单的系列匹配
 		if strings.Contains(model, "opus") {
-			if strings.Contains(model, "4.5") || strings.Contains(model, "4-5") {
+			if strings.Contains(model, "4.6") || strings.Contains(model, "4-6") {
+				matchedFamily = "opus-4.6"
+			} else if strings.Contains(model, "4.5") || strings.Contains(model, "4-5") {
 				matchedFamily = "opus-4.5"
 			} else {
 				matchedFamily = "opus-4"
 			}
 		} else if strings.Contains(model, "sonnet") {
-			if strings.Contains(model, "4.5") || strings.Contains(model, "4-5") {
+			if strings.Contains(model, "4.6") || strings.Contains(model, "4-6") {
+				matchedFamily = "sonnet-4.6"
+			} else if strings.Contains(model, "4.5") || strings.Contains(model, "4-5") {
 				matchedFamily = "sonnet-4.5"
 			} else if strings.Contains(model, "3-5") || strings.Contains(model, "3.5") {
 				matchedFamily = "sonnet-3.5"
@@ -626,7 +632,9 @@ func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 				matchedFamily = "sonnet-4"
 			}
 		} else if strings.Contains(model, "haiku") {
-			if strings.Contains(model, "3-5") || strings.Contains(model, "3.5") {
+			if strings.Contains(model, "4.5") || strings.Contains(model, "4-5") {
+				matchedFamily = "haiku-4.5"
+			} else if strings.Contains(model, "3-5") || strings.Contains(model, "3.5") {
 				matchedFamily = "haiku-3.5"
 			} else {
 				matchedFamily = "haiku-3"
