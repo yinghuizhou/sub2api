@@ -87,6 +87,55 @@
     <!-- Create/Edit Modal -->
     <BaseDialog :show="showModal" :title="editingVendor ? '编辑供应商' : '添加供应商'" width="normal" @close="closeModal">
       <form id="vendor-form" @submit.prevent="handleSubmit" class="space-y-5">
+        <!-- Auto Detect Section -->
+        <div v-if="!editingVendor" class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <div class="mb-3 flex items-center gap-2">
+            <Icon name="bolt" size="md" class="text-blue-600 dark:text-blue-400" />
+            <span class="text-sm font-semibold text-blue-700 dark:text-blue-300">快速检测（可选）</span>
+            <span class="text-xs text-blue-500 dark:text-blue-400">填写后自动识别供应商配置和余额</span>
+          </div>
+          <div class="space-y-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="input-label">供应商 URL</label>
+                <input v-model="detectForm.url" type="url" class="input" placeholder="https://ai.example.com" />
+              </div>
+              <div>
+                <label class="input-label">API Key</label>
+                <input v-model="detectForm.api_key" type="password" autocomplete="off" class="input" placeholder="sk-..." />
+              </div>
+            </div>
+            <button type="button" @click="detectVendor"
+              :disabled="detecting || !detectForm.url || !detectForm.api_key"
+              class="btn btn-secondary w-full">
+              <Icon :name="detecting ? 'refresh' : 'search'" size="sm"
+                :class="['mr-2', detecting ? 'animate-spin' : '']" />
+              {{ detecting ? '检测中...' : '自动检测并填充表单' }}
+            </button>
+            <div v-if="detectResult"
+              :class="['rounded-lg p-3 text-sm', detectResult.success
+                ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300']">
+              <div class="font-medium">{{ detectResult.success ? '✓' : '✗' }} {{ detectResult.message }}</div>
+              <template v-if="detectResult.success">
+                <div v-if="detectResult.models.length > 0" class="mt-1.5">
+                  <span class="text-xs opacity-75">检测到 {{ detectResult.models.length }} 个模型：</span>
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    <span v-for="m in detectResult.models.slice(0, 8)" :key="m"
+                      class="rounded bg-green-100 px-1.5 py-0.5 text-xs dark:bg-green-800/40">{{ m }}</span>
+                    <span v-if="detectResult.models.length > 8"
+                      class="rounded bg-green-100 px-1.5 py-0.5 text-xs dark:bg-green-800/40">
+                      +{{ detectResult.models.length - 8 }} 更多
+                    </span>
+                  </div>
+                </div>
+                <div class="mt-1 text-xs opacity-75">
+                  延迟 {{ detectResult.latency_ms }}ms · 平台: {{ detectResult.platform_type }}
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
         <!-- Basic Info -->
         <fieldset>
           <legend class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">基本信息</legend>
@@ -218,7 +267,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { vendorApi, type Vendor, type CreateVendorRequest } from '@/api/vendor'
+import { vendorApi, type Vendor, type CreateVendorRequest, type VendorProbeResult } from '@/api/vendor'
 import type { Column } from '@/components/common/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TablePageLayout from '@/components/layout/TablePageLayout.vue'
@@ -289,6 +338,11 @@ const deletingVendor = ref<Vendor | null>(null)
 const testingIds = ref<Set<number>>(new Set())
 const extraHeadersJson = ref('{}')
 
+// Auto-detect state
+const detecting = ref(false)
+const detectForm = reactive({ url: '', api_key: '' })
+const detectResult = ref<VendorProbeResult | null>(null)
+
 const defaultForm = (): CreateVendorRequest & { status?: string; health_check_enabled: boolean; health_check_interval: number; health_check_model: string; balance_alert_enabled: boolean; balance_alert_threshold?: number } => ({
   name: '', description: '', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
   api_path_override: '', billing_type: 'token', cost_per_1k_input: 0, cost_per_1k_output: 0,
@@ -327,14 +381,46 @@ const loadVendors = async () => {
   } finally { loading.value = false }
 }
 
-const openCreateModal = () => { editingVendor.value = null; Object.assign(form, defaultForm()); extraHeadersJson.value = '{}'; showModal.value = true }
+const detectVendor = async () => {
+  if (!detectForm.url || !detectForm.api_key) return
+  detecting.value = true
+  detectResult.value = null
+  try {
+    const res = await vendorApi.detect({ url: detectForm.url, api_key: detectForm.api_key })
+    const data: VendorProbeResult = (res as any).data ?? res
+    detectResult.value = data
+    if (data.success) {
+      form.base_url = data.base_url
+      form.api_format = (data.api_format as 'openai' | 'anthropic') || 'openai'
+      form.auth_type = 'api_key'
+      if (data.balance_usd != null) form.balance_usd = data.balance_usd
+      if (!form.name) {
+        try { form.name = new URL(data.base_url).hostname } catch {}
+      }
+    }
+  } catch (e: any) {
+    detectResult.value = { success: false, message: e?.response?.data?.detail || '检测请求失败', api_format: '', base_url: '', platform_type: '', models: [], latency_ms: 0, detected_at: '' }
+  } finally {
+    detecting.value = false
+  }
+}
+
+const openCreateModal = () => {
+  editingVendor.value = null
+  Object.assign(form, defaultForm())
+  extraHeadersJson.value = '{}'
+  detectForm.url = ''
+  detectForm.api_key = ''
+  detectResult.value = null
+  showModal.value = true
+}
 const handleEdit = (v: Vendor) => {
   editingVendor.value = v
   Object.assign(form, { name: v.name, description: v.description || '', api_format: v.api_format, base_url: v.base_url, auth_type: v.auth_type, api_path_override: v.api_path_override || '', billing_type: v.billing_type, cost_per_1k_input: v.cost_per_1k_input || 0, cost_per_1k_output: v.cost_per_1k_output || 0, total_quota_usd: v.total_quota_usd || 0, balance_usd: v.balance_usd || 0, expires_at: v.expires_at ? v.expires_at.slice(0, 16) : '', health_check_enabled: v.health_check_enabled, health_check_interval: v.health_check_interval, health_check_model: v.health_check_model, balance_alert_enabled: v.balance_alert_enabled, balance_alert_threshold: v.balance_alert_threshold || 10, status: v.status })
   extraHeadersJson.value = JSON.stringify(v.extra_headers || {}, null, 2)
   showModal.value = true
 }
-const closeModal = () => { showModal.value = false; editingVendor.value = null }
+const closeModal = () => { showModal.value = false; editingVendor.value = null; detectResult.value = null }
 
 const handleSubmit = async () => {
   if (!form.name.trim() || !form.base_url.trim()) { appStore.showError('名称和 Base URL 为必填项'); return }

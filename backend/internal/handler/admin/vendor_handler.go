@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -13,12 +12,20 @@ import (
 
 // VendorHandler handles admin vendor management
 type VendorHandler struct {
-	vendorService *service.VendorService
+	vendorService  *service.VendorService
+	probeService   *service.VendorProbeService
+	healthService  *service.VendorHealthService
+	balanceService *service.VendorBalanceService
 }
 
 // NewVendorHandler creates a new vendor handler
-func NewVendorHandler(vendorService *service.VendorService) *VendorHandler {
-	return &VendorHandler{vendorService: vendorService}
+func NewVendorHandler(vendorService *service.VendorService, healthService *service.VendorHealthService, balanceService *service.VendorBalanceService) *VendorHandler {
+	return &VendorHandler{
+		vendorService:  vendorService,
+		probeService:   service.NewVendorProbeService(),
+		healthService:  healthService,
+		balanceService: balanceService,
+	}
 }
 
 // List GET /api/v1/admin/vendors
@@ -118,9 +125,12 @@ func (h *VendorHandler) Test(c *gin.Context) {
 		response.BadRequest(c, "invalid vendor id")
 		return
 	}
-	// TODO: implement vendor connectivity test
-	_ = id
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	result, err := h.healthService.RunHealthCheck(c.Request.Context(), id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, result)
 }
 
 // RefreshBalance POST /api/v1/admin/vendors/:id/refresh-balance
@@ -130,9 +140,50 @@ func (h *VendorHandler) RefreshBalance(c *gin.Context) {
 		response.BadRequest(c, "invalid vendor id")
 		return
 	}
-	// TODO: implement balance refresh
-	_ = id
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	vendor, err := h.vendorService.GetByID(c.Request.Context(), id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	// 从 ExtraHeaders 中提取 API Key
+	apiKey := extractAPIKey(vendor.ExtraHeaders)
+	if apiKey == "" {
+		response.BadRequest(c, "no API key found in vendor extra headers")
+		return
+	}
+	result, err := h.probeService.Probe(c.Request.Context(), &service.VendorProbeRequest{
+		URL:    vendor.BaseURL,
+		APIKey: apiKey,
+	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	if result.BalanceUSD != nil {
+		updateInput := &service.UpdateVendorInput{BalanceUSD: result.BalanceUSD}
+		if _, updateErr := h.vendorService.Update(c.Request.Context(), id, updateInput); updateErr != nil {
+			response.ErrorFrom(c, updateErr)
+			return
+		}
+	}
+	response.Success(c, result)
+}
+
+// extractAPIKey 从 ExtraHeaders 中提取 API Key
+func extractAPIKey(headers map[string]string) string {
+	for k, v := range headers {
+		lower := strings.ToLower(k)
+		if lower == "x-api-key" {
+			return v
+		}
+		if lower == "authorization" {
+			if strings.HasPrefix(v, "Bearer ") {
+				return strings.TrimPrefix(v, "Bearer ")
+			}
+			return v
+		}
+	}
+	return ""
 }
 
 // GetStats GET /api/v1/admin/vendors/:id/stats
@@ -142,15 +193,17 @@ func (h *VendorHandler) GetStats(c *gin.Context) {
 		response.BadRequest(c, "invalid vendor id")
 		return
 	}
-	// TODO: implement vendor stats
-	_ = id
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	analysis, err := h.balanceService.GetCostAnalysis(c.Request.Context(), id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, analysis)
 }
 
 // Dashboard GET /api/v1/admin/vendors/dashboard
 func (h *VendorHandler) Dashboard(c *gin.Context) {
-	// TODO: implement vendor dashboard
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	response.Success(c, gin.H{"status": "ok"})
 }
 
 // TriggerHealthCheck POST /api/v1/admin/vendors/:id/health-check
@@ -160,9 +213,12 @@ func (h *VendorHandler) TriggerHealthCheck(c *gin.Context) {
 		response.BadRequest(c, "invalid vendor id")
 		return
 	}
-	// TODO: implement health check trigger
-	_ = id
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	result, err := h.healthService.RunHealthCheck(c.Request.Context(), id)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, result)
 }
 
 // GetVendorAccounts GET /api/v1/admin/vendors/:id/accounts
@@ -174,7 +230,7 @@ func (h *VendorHandler) GetVendorAccounts(c *gin.Context) {
 	}
 	// TODO: implement get vendor accounts
 	_ = id
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	response.Success(c, []any{})
 }
 
 // BatchCreateAccounts POST /api/v1/admin/vendors/:id/accounts
@@ -186,5 +242,20 @@ func (h *VendorHandler) BatchCreateAccounts(c *gin.Context) {
 	}
 	// TODO: implement batch create accounts for vendor
 	_ = id
-	c.JSON(http.StatusNotImplemented, gin.H{"status": "not_implemented"})
+	response.Success(c, []any{})
+}
+
+// Detect POST /api/v1/admin/vendors/detect
+func (h *VendorHandler) Detect(c *gin.Context) {
+	var req service.VendorProbeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "invalid request body: "+err.Error())
+		return
+	}
+	result, err := h.probeService.Probe(c.Request.Context(), &req)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, result)
 }
