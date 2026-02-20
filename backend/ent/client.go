@@ -22,12 +22,12 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/errorpassthroughrule"
 	"github.com/Wei-Shaw/sub2api/ent/group"
-	"github.com/Wei-Shaw/sub2api/ent/idempotencyrecord"
+	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/rechargepackage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
-	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/usagecleanuptask"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
@@ -60,18 +60,18 @@ type Client struct {
 	ErrorPassthroughRule *ErrorPassthroughRuleClient
 	// Group is the client for interacting with the Group builders.
 	Group *GroupClient
-	// IdempotencyRecord is the client for interacting with the IdempotencyRecord builders.
-	IdempotencyRecord *IdempotencyRecordClient
+	// PaymentOrder is the client for interacting with the PaymentOrder builders.
+	PaymentOrder *PaymentOrderClient
 	// PromoCode is the client for interacting with the PromoCode builders.
 	PromoCode *PromoCodeClient
 	// PromoCodeUsage is the client for interacting with the PromoCodeUsage builders.
 	PromoCodeUsage *PromoCodeUsageClient
 	// Proxy is the client for interacting with the Proxy builders.
 	Proxy *ProxyClient
+	// RechargePackage is the client for interacting with the RechargePackage builders.
+	RechargePackage *RechargePackageClient
 	// RedeemCode is the client for interacting with the RedeemCode builders.
 	RedeemCode *RedeemCodeClient
-	// SecuritySecret is the client for interacting with the SecuritySecret builders.
-	SecuritySecret *SecuritySecretClient
 	// Setting is the client for interacting with the Setting builders.
 	Setting *SettingClient
 	// UsageCleanupTask is the client for interacting with the UsageCleanupTask builders.
@@ -108,12 +108,12 @@ func (c *Client) init() {
 	c.AnnouncementRead = NewAnnouncementReadClient(c.config)
 	c.ErrorPassthroughRule = NewErrorPassthroughRuleClient(c.config)
 	c.Group = NewGroupClient(c.config)
-	c.IdempotencyRecord = NewIdempotencyRecordClient(c.config)
+	c.PaymentOrder = NewPaymentOrderClient(c.config)
 	c.PromoCode = NewPromoCodeClient(c.config)
 	c.PromoCodeUsage = NewPromoCodeUsageClient(c.config)
 	c.Proxy = NewProxyClient(c.config)
+	c.RechargePackage = NewRechargePackageClient(c.config)
 	c.RedeemCode = NewRedeemCodeClient(c.config)
-	c.SecuritySecret = NewSecuritySecretClient(c.config)
 	c.Setting = NewSettingClient(c.config)
 	c.UsageCleanupTask = NewUsageCleanupTaskClient(c.config)
 	c.UsageLog = NewUsageLogClient(c.config)
@@ -222,12 +222,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AnnouncementRead:        NewAnnouncementReadClient(cfg),
 		ErrorPassthroughRule:    NewErrorPassthroughRuleClient(cfg),
 		Group:                   NewGroupClient(cfg),
-		IdempotencyRecord:       NewIdempotencyRecordClient(cfg),
+		PaymentOrder:            NewPaymentOrderClient(cfg),
 		PromoCode:               NewPromoCodeClient(cfg),
 		PromoCodeUsage:          NewPromoCodeUsageClient(cfg),
 		Proxy:                   NewProxyClient(cfg),
+		RechargePackage:         NewRechargePackageClient(cfg),
 		RedeemCode:              NewRedeemCodeClient(cfg),
-		SecuritySecret:          NewSecuritySecretClient(cfg),
 		Setting:                 NewSettingClient(cfg),
 		UsageCleanupTask:        NewUsageCleanupTaskClient(cfg),
 		UsageLog:                NewUsageLogClient(cfg),
@@ -263,12 +263,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AnnouncementRead:        NewAnnouncementReadClient(cfg),
 		ErrorPassthroughRule:    NewErrorPassthroughRuleClient(cfg),
 		Group:                   NewGroupClient(cfg),
-		IdempotencyRecord:       NewIdempotencyRecordClient(cfg),
+		PaymentOrder:            NewPaymentOrderClient(cfg),
 		PromoCode:               NewPromoCodeClient(cfg),
 		PromoCodeUsage:          NewPromoCodeUsageClient(cfg),
 		Proxy:                   NewProxyClient(cfg),
+		RechargePackage:         NewRechargePackageClient(cfg),
 		RedeemCode:              NewRedeemCodeClient(cfg),
-		SecuritySecret:          NewSecuritySecretClient(cfg),
 		Setting:                 NewSettingClient(cfg),
 		UsageCleanupTask:        NewUsageCleanupTaskClient(cfg),
 		UsageLog:                NewUsageLogClient(cfg),
@@ -308,10 +308,10 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
-		c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord, c.PromoCode,
-		c.PromoCodeUsage, c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting,
-		c.UsageCleanupTask, c.UsageLog, c.User, c.UserAllowedGroup,
-		c.UserAttributeDefinition, c.UserAttributeValue, c.UserSubscription, c.Vendor,
+		c.ErrorPassthroughRule, c.Group, c.PaymentOrder, c.PromoCode, c.PromoCodeUsage,
+		c.Proxy, c.RechargePackage, c.RedeemCode, c.Setting, c.UsageCleanupTask,
+		c.UsageLog, c.User, c.UserAllowedGroup, c.UserAttributeDefinition,
+		c.UserAttributeValue, c.UserSubscription, c.Vendor,
 	} {
 		n.Use(hooks...)
 	}
@@ -322,10 +322,10 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
-		c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord, c.PromoCode,
-		c.PromoCodeUsage, c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting,
-		c.UsageCleanupTask, c.UsageLog, c.User, c.UserAllowedGroup,
-		c.UserAttributeDefinition, c.UserAttributeValue, c.UserSubscription, c.Vendor,
+		c.ErrorPassthroughRule, c.Group, c.PaymentOrder, c.PromoCode, c.PromoCodeUsage,
+		c.Proxy, c.RechargePackage, c.RedeemCode, c.Setting, c.UsageCleanupTask,
+		c.UsageLog, c.User, c.UserAllowedGroup, c.UserAttributeDefinition,
+		c.UserAttributeValue, c.UserSubscription, c.Vendor,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -348,18 +348,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ErrorPassthroughRule.mutate(ctx, m)
 	case *GroupMutation:
 		return c.Group.mutate(ctx, m)
-	case *IdempotencyRecordMutation:
-		return c.IdempotencyRecord.mutate(ctx, m)
+	case *PaymentOrderMutation:
+		return c.PaymentOrder.mutate(ctx, m)
 	case *PromoCodeMutation:
 		return c.PromoCode.mutate(ctx, m)
 	case *PromoCodeUsageMutation:
 		return c.PromoCodeUsage.mutate(ctx, m)
 	case *ProxyMutation:
 		return c.Proxy.mutate(ctx, m)
+	case *RechargePackageMutation:
+		return c.RechargePackage.mutate(ctx, m)
 	case *RedeemCodeMutation:
 		return c.RedeemCode.mutate(ctx, m)
-	case *SecuritySecretMutation:
-		return c.SecuritySecret.mutate(ctx, m)
 	case *SettingMutation:
 		return c.Setting.mutate(ctx, m)
 	case *UsageCleanupTaskMutation:
@@ -1607,107 +1607,107 @@ func (c *GroupClient) mutate(ctx context.Context, m *GroupMutation) (Value, erro
 	}
 }
 
-// IdempotencyRecordClient is a client for the IdempotencyRecord schema.
-type IdempotencyRecordClient struct {
+// PaymentOrderClient is a client for the PaymentOrder schema.
+type PaymentOrderClient struct {
 	config
 }
 
-// NewIdempotencyRecordClient returns a client for the IdempotencyRecord from the given config.
-func NewIdempotencyRecordClient(c config) *IdempotencyRecordClient {
-	return &IdempotencyRecordClient{config: c}
+// NewPaymentOrderClient returns a client for the PaymentOrder from the given config.
+func NewPaymentOrderClient(c config) *PaymentOrderClient {
+	return &PaymentOrderClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `idempotencyrecord.Hooks(f(g(h())))`.
-func (c *IdempotencyRecordClient) Use(hooks ...Hook) {
-	c.hooks.IdempotencyRecord = append(c.hooks.IdempotencyRecord, hooks...)
+// A call to `Use(f, g, h)` equals to `paymentorder.Hooks(f(g(h())))`.
+func (c *PaymentOrderClient) Use(hooks ...Hook) {
+	c.hooks.PaymentOrder = append(c.hooks.PaymentOrder, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `idempotencyrecord.Intercept(f(g(h())))`.
-func (c *IdempotencyRecordClient) Intercept(interceptors ...Interceptor) {
-	c.inters.IdempotencyRecord = append(c.inters.IdempotencyRecord, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `paymentorder.Intercept(f(g(h())))`.
+func (c *PaymentOrderClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PaymentOrder = append(c.inters.PaymentOrder, interceptors...)
 }
 
-// Create returns a builder for creating a IdempotencyRecord entity.
-func (c *IdempotencyRecordClient) Create() *IdempotencyRecordCreate {
-	mutation := newIdempotencyRecordMutation(c.config, OpCreate)
-	return &IdempotencyRecordCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a PaymentOrder entity.
+func (c *PaymentOrderClient) Create() *PaymentOrderCreate {
+	mutation := newPaymentOrderMutation(c.config, OpCreate)
+	return &PaymentOrderCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of IdempotencyRecord entities.
-func (c *IdempotencyRecordClient) CreateBulk(builders ...*IdempotencyRecordCreate) *IdempotencyRecordCreateBulk {
-	return &IdempotencyRecordCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of PaymentOrder entities.
+func (c *PaymentOrderClient) CreateBulk(builders ...*PaymentOrderCreate) *PaymentOrderCreateBulk {
+	return &PaymentOrderCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *IdempotencyRecordClient) MapCreateBulk(slice any, setFunc func(*IdempotencyRecordCreate, int)) *IdempotencyRecordCreateBulk {
+func (c *PaymentOrderClient) MapCreateBulk(slice any, setFunc func(*PaymentOrderCreate, int)) *PaymentOrderCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &IdempotencyRecordCreateBulk{err: fmt.Errorf("calling to IdempotencyRecordClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &PaymentOrderCreateBulk{err: fmt.Errorf("calling to PaymentOrderClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*IdempotencyRecordCreate, rv.Len())
+	builders := make([]*PaymentOrderCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &IdempotencyRecordCreateBulk{config: c.config, builders: builders}
+	return &PaymentOrderCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for IdempotencyRecord.
-func (c *IdempotencyRecordClient) Update() *IdempotencyRecordUpdate {
-	mutation := newIdempotencyRecordMutation(c.config, OpUpdate)
-	return &IdempotencyRecordUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for PaymentOrder.
+func (c *PaymentOrderClient) Update() *PaymentOrderUpdate {
+	mutation := newPaymentOrderMutation(c.config, OpUpdate)
+	return &PaymentOrderUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *IdempotencyRecordClient) UpdateOne(_m *IdempotencyRecord) *IdempotencyRecordUpdateOne {
-	mutation := newIdempotencyRecordMutation(c.config, OpUpdateOne, withIdempotencyRecord(_m))
-	return &IdempotencyRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *PaymentOrderClient) UpdateOne(_m *PaymentOrder) *PaymentOrderUpdateOne {
+	mutation := newPaymentOrderMutation(c.config, OpUpdateOne, withPaymentOrder(_m))
+	return &PaymentOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *IdempotencyRecordClient) UpdateOneID(id int64) *IdempotencyRecordUpdateOne {
-	mutation := newIdempotencyRecordMutation(c.config, OpUpdateOne, withIdempotencyRecordID(id))
-	return &IdempotencyRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *PaymentOrderClient) UpdateOneID(id int64) *PaymentOrderUpdateOne {
+	mutation := newPaymentOrderMutation(c.config, OpUpdateOne, withPaymentOrderID(id))
+	return &PaymentOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for IdempotencyRecord.
-func (c *IdempotencyRecordClient) Delete() *IdempotencyRecordDelete {
-	mutation := newIdempotencyRecordMutation(c.config, OpDelete)
-	return &IdempotencyRecordDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for PaymentOrder.
+func (c *PaymentOrderClient) Delete() *PaymentOrderDelete {
+	mutation := newPaymentOrderMutation(c.config, OpDelete)
+	return &PaymentOrderDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *IdempotencyRecordClient) DeleteOne(_m *IdempotencyRecord) *IdempotencyRecordDeleteOne {
+func (c *PaymentOrderClient) DeleteOne(_m *PaymentOrder) *PaymentOrderDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *IdempotencyRecordClient) DeleteOneID(id int64) *IdempotencyRecordDeleteOne {
-	builder := c.Delete().Where(idempotencyrecord.ID(id))
+func (c *PaymentOrderClient) DeleteOneID(id int64) *PaymentOrderDeleteOne {
+	builder := c.Delete().Where(paymentorder.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &IdempotencyRecordDeleteOne{builder}
+	return &PaymentOrderDeleteOne{builder}
 }
 
-// Query returns a query builder for IdempotencyRecord.
-func (c *IdempotencyRecordClient) Query() *IdempotencyRecordQuery {
-	return &IdempotencyRecordQuery{
+// Query returns a query builder for PaymentOrder.
+func (c *PaymentOrderClient) Query() *PaymentOrderQuery {
+	return &PaymentOrderQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeIdempotencyRecord},
+		ctx:    &QueryContext{Type: TypePaymentOrder},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a IdempotencyRecord entity by its id.
-func (c *IdempotencyRecordClient) Get(ctx context.Context, id int64) (*IdempotencyRecord, error) {
-	return c.Query().Where(idempotencyrecord.ID(id)).Only(ctx)
+// Get returns a PaymentOrder entity by its id.
+func (c *PaymentOrderClient) Get(ctx context.Context, id int64) (*PaymentOrder, error) {
+	return c.Query().Where(paymentorder.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *IdempotencyRecordClient) GetX(ctx context.Context, id int64) *IdempotencyRecord {
+func (c *PaymentOrderClient) GetX(ctx context.Context, id int64) *PaymentOrder {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1716,27 +1716,27 @@ func (c *IdempotencyRecordClient) GetX(ctx context.Context, id int64) *Idempoten
 }
 
 // Hooks returns the client hooks.
-func (c *IdempotencyRecordClient) Hooks() []Hook {
-	return c.hooks.IdempotencyRecord
+func (c *PaymentOrderClient) Hooks() []Hook {
+	return c.hooks.PaymentOrder
 }
 
 // Interceptors returns the client interceptors.
-func (c *IdempotencyRecordClient) Interceptors() []Interceptor {
-	return c.inters.IdempotencyRecord
+func (c *PaymentOrderClient) Interceptors() []Interceptor {
+	return c.inters.PaymentOrder
 }
 
-func (c *IdempotencyRecordClient) mutate(ctx context.Context, m *IdempotencyRecordMutation) (Value, error) {
+func (c *PaymentOrderClient) mutate(ctx context.Context, m *PaymentOrderMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&IdempotencyRecordCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&PaymentOrderCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&IdempotencyRecordUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&PaymentOrderUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&IdempotencyRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&PaymentOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&IdempotencyRecordDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&PaymentOrderDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown IdempotencyRecord mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown PaymentOrder mutation op: %q", m.Op())
 	}
 }
 
@@ -2205,6 +2205,139 @@ func (c *ProxyClient) mutate(ctx context.Context, m *ProxyMutation) (Value, erro
 	}
 }
 
+// RechargePackageClient is a client for the RechargePackage schema.
+type RechargePackageClient struct {
+	config
+}
+
+// NewRechargePackageClient returns a client for the RechargePackage from the given config.
+func NewRechargePackageClient(c config) *RechargePackageClient {
+	return &RechargePackageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rechargepackage.Hooks(f(g(h())))`.
+func (c *RechargePackageClient) Use(hooks ...Hook) {
+	c.hooks.RechargePackage = append(c.hooks.RechargePackage, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rechargepackage.Intercept(f(g(h())))`.
+func (c *RechargePackageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RechargePackage = append(c.inters.RechargePackage, interceptors...)
+}
+
+// Create returns a builder for creating a RechargePackage entity.
+func (c *RechargePackageClient) Create() *RechargePackageCreate {
+	mutation := newRechargePackageMutation(c.config, OpCreate)
+	return &RechargePackageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RechargePackage entities.
+func (c *RechargePackageClient) CreateBulk(builders ...*RechargePackageCreate) *RechargePackageCreateBulk {
+	return &RechargePackageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RechargePackageClient) MapCreateBulk(slice any, setFunc func(*RechargePackageCreate, int)) *RechargePackageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RechargePackageCreateBulk{err: fmt.Errorf("calling to RechargePackageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RechargePackageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RechargePackageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RechargePackage.
+func (c *RechargePackageClient) Update() *RechargePackageUpdate {
+	mutation := newRechargePackageMutation(c.config, OpUpdate)
+	return &RechargePackageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RechargePackageClient) UpdateOne(_m *RechargePackage) *RechargePackageUpdateOne {
+	mutation := newRechargePackageMutation(c.config, OpUpdateOne, withRechargePackage(_m))
+	return &RechargePackageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RechargePackageClient) UpdateOneID(id int64) *RechargePackageUpdateOne {
+	mutation := newRechargePackageMutation(c.config, OpUpdateOne, withRechargePackageID(id))
+	return &RechargePackageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RechargePackage.
+func (c *RechargePackageClient) Delete() *RechargePackageDelete {
+	mutation := newRechargePackageMutation(c.config, OpDelete)
+	return &RechargePackageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RechargePackageClient) DeleteOne(_m *RechargePackage) *RechargePackageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RechargePackageClient) DeleteOneID(id int64) *RechargePackageDeleteOne {
+	builder := c.Delete().Where(rechargepackage.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RechargePackageDeleteOne{builder}
+}
+
+// Query returns a query builder for RechargePackage.
+func (c *RechargePackageClient) Query() *RechargePackageQuery {
+	return &RechargePackageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRechargePackage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RechargePackage entity by its id.
+func (c *RechargePackageClient) Get(ctx context.Context, id int64) (*RechargePackage, error) {
+	return c.Query().Where(rechargepackage.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RechargePackageClient) GetX(ctx context.Context, id int64) *RechargePackage {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RechargePackageClient) Hooks() []Hook {
+	return c.hooks.RechargePackage
+}
+
+// Interceptors returns the client interceptors.
+func (c *RechargePackageClient) Interceptors() []Interceptor {
+	return c.inters.RechargePackage
+}
+
+func (c *RechargePackageClient) mutate(ctx context.Context, m *RechargePackageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RechargePackageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RechargePackageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RechargePackageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RechargePackageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RechargePackage mutation op: %q", m.Op())
+	}
+}
+
 // RedeemCodeClient is a client for the RedeemCode schema.
 type RedeemCodeClient struct {
 	config
@@ -2367,139 +2500,6 @@ func (c *RedeemCodeClient) mutate(ctx context.Context, m *RedeemCodeMutation) (V
 		return (&RedeemCodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown RedeemCode mutation op: %q", m.Op())
-	}
-}
-
-// SecuritySecretClient is a client for the SecuritySecret schema.
-type SecuritySecretClient struct {
-	config
-}
-
-// NewSecuritySecretClient returns a client for the SecuritySecret from the given config.
-func NewSecuritySecretClient(c config) *SecuritySecretClient {
-	return &SecuritySecretClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `securitysecret.Hooks(f(g(h())))`.
-func (c *SecuritySecretClient) Use(hooks ...Hook) {
-	c.hooks.SecuritySecret = append(c.hooks.SecuritySecret, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `securitysecret.Intercept(f(g(h())))`.
-func (c *SecuritySecretClient) Intercept(interceptors ...Interceptor) {
-	c.inters.SecuritySecret = append(c.inters.SecuritySecret, interceptors...)
-}
-
-// Create returns a builder for creating a SecuritySecret entity.
-func (c *SecuritySecretClient) Create() *SecuritySecretCreate {
-	mutation := newSecuritySecretMutation(c.config, OpCreate)
-	return &SecuritySecretCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of SecuritySecret entities.
-func (c *SecuritySecretClient) CreateBulk(builders ...*SecuritySecretCreate) *SecuritySecretCreateBulk {
-	return &SecuritySecretCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *SecuritySecretClient) MapCreateBulk(slice any, setFunc func(*SecuritySecretCreate, int)) *SecuritySecretCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &SecuritySecretCreateBulk{err: fmt.Errorf("calling to SecuritySecretClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*SecuritySecretCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &SecuritySecretCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for SecuritySecret.
-func (c *SecuritySecretClient) Update() *SecuritySecretUpdate {
-	mutation := newSecuritySecretMutation(c.config, OpUpdate)
-	return &SecuritySecretUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *SecuritySecretClient) UpdateOne(_m *SecuritySecret) *SecuritySecretUpdateOne {
-	mutation := newSecuritySecretMutation(c.config, OpUpdateOne, withSecuritySecret(_m))
-	return &SecuritySecretUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *SecuritySecretClient) UpdateOneID(id int64) *SecuritySecretUpdateOne {
-	mutation := newSecuritySecretMutation(c.config, OpUpdateOne, withSecuritySecretID(id))
-	return &SecuritySecretUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for SecuritySecret.
-func (c *SecuritySecretClient) Delete() *SecuritySecretDelete {
-	mutation := newSecuritySecretMutation(c.config, OpDelete)
-	return &SecuritySecretDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *SecuritySecretClient) DeleteOne(_m *SecuritySecret) *SecuritySecretDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *SecuritySecretClient) DeleteOneID(id int64) *SecuritySecretDeleteOne {
-	builder := c.Delete().Where(securitysecret.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &SecuritySecretDeleteOne{builder}
-}
-
-// Query returns a query builder for SecuritySecret.
-func (c *SecuritySecretClient) Query() *SecuritySecretQuery {
-	return &SecuritySecretQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeSecuritySecret},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a SecuritySecret entity by its id.
-func (c *SecuritySecretClient) Get(ctx context.Context, id int64) (*SecuritySecret, error) {
-	return c.Query().Where(securitysecret.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *SecuritySecretClient) GetX(ctx context.Context, id int64) *SecuritySecret {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *SecuritySecretClient) Hooks() []Hook {
-	return c.hooks.SecuritySecret
-}
-
-// Interceptors returns the client interceptors.
-func (c *SecuritySecretClient) Interceptors() []Interceptor {
-	return c.inters.SecuritySecret
-}
-
-func (c *SecuritySecretClient) mutate(ctx context.Context, m *SecuritySecretMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&SecuritySecretCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&SecuritySecretUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&SecuritySecretUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&SecuritySecretDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown SecuritySecret mutation op: %q", m.Op())
 	}
 }
 
@@ -4063,15 +4063,15 @@ func (c *VendorClient) mutate(ctx context.Context, m *VendorMutation) (Value, er
 type (
 	hooks struct {
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
-		ErrorPassthroughRule, Group, IdempotencyRecord, PromoCode, PromoCodeUsage,
-		Proxy, RedeemCode, SecuritySecret, Setting, UsageCleanupTask, UsageLog, User,
+		ErrorPassthroughRule, Group, PaymentOrder, PromoCode, PromoCodeUsage, Proxy,
+		RechargePackage, RedeemCode, Setting, UsageCleanupTask, UsageLog, User,
 		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
 		UserSubscription, Vendor []ent.Hook
 	}
 	inters struct {
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
-		ErrorPassthroughRule, Group, IdempotencyRecord, PromoCode, PromoCodeUsage,
-		Proxy, RedeemCode, SecuritySecret, Setting, UsageCleanupTask, UsageLog, User,
+		ErrorPassthroughRule, Group, PaymentOrder, PromoCode, PromoCodeUsage, Proxy,
+		RechargePackage, RedeemCode, Setting, UsageCleanupTask, UsageLog, User,
 		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
 		UserSubscription, Vendor []ent.Interceptor
 	}
