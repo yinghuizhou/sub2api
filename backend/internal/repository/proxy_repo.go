@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
@@ -326,6 +327,33 @@ func (r *proxyRepository) CountAccountsByProxyID(ctx context.Context, proxyID in
 		return 0, err
 	}
 	return count, nil
+}
+
+// CountAccountsByGroupName returns a map of proxy_group to account count.
+func (r *proxyRepository) CountAccountsByGroupName(ctx context.Context) (map[string]int64, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT proxy_group, COUNT(*) as cnt
+		FROM accounts
+		WHERE proxy_group IS NOT NULL
+		  AND proxy_group != ''
+		  AND deleted_at IS NULL
+		GROUP BY proxy_group
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("count accounts by group: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	result := make(map[string]int64)
+	for rows.Next() {
+		var group string
+		var count int64
+		if err := rows.Scan(&group, &count); err != nil {
+			return nil, fmt.Errorf("scan group count: %w", err)
+		}
+		result[group] = count
+	}
+	return result, rows.Err()
 }
 
 func (r *proxyRepository) ListAccountSummariesByProxyID(ctx context.Context, proxyID int64) ([]service.ProxyAccountSummary, error) {
