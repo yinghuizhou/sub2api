@@ -10,27 +10,31 @@
         >
           <Icon name="cog" size="xl" class="text-white" />
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('setup.title') }}</h1>
-        <p class="mt-2 text-gray-500 dark:text-dark-400">{{ t('setup.description') }}</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+          {{ isAdminOnly ? t('setup.welcome.title') : t('setup.title') }}
+        </h1>
+        <p class="mt-2 text-gray-500 dark:text-dark-400">
+          {{ isAdminOnly ? t('setup.welcome.description') : t('setup.description') }}
+        </p>
       </div>
 
-      <!-- Progress Steps -->
-      <div class="mb-8">
+      <!-- Progress Steps (hidden in admin-only mode with single visible step) -->
+      <div v-if="visibleSteps.length > 1" class="mb-8">
         <div class="flex items-center justify-center">
-          <template v-for="(step, index) in steps" :key="step.id">
+          <template v-for="(step, index) in visibleSteps" :key="step.id">
             <div class="flex items-center">
               <div
                 :class="[
                   'flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all',
-                  currentStep > index
+                  currentVisibleStep > index
                     ? 'bg-primary-500 text-white'
-                    : currentStep === index
+                    : currentVisibleStep === index
                       ? 'bg-primary-500 text-white ring-4 ring-primary-100 dark:ring-primary-900'
                       : 'bg-gray-200 text-gray-500 dark:bg-dark-700 dark:text-dark-400'
                 ]"
               >
                 <Icon
-                  v-if="currentStep > index"
+                  v-if="currentVisibleStep > index"
                   name="check"
                   size="md"
                   :stroke-width="2"
@@ -40,7 +44,7 @@
               <span
                 class="ml-2 text-sm font-medium"
                 :class="
-                  currentStep >= index
+                  currentVisibleStep >= index
                     ? 'text-gray-900 dark:text-white'
                     : 'text-gray-400 dark:text-dark-500'
                 "
@@ -49,9 +53,9 @@
               </span>
             </div>
             <div
-              v-if="index < steps.length - 1"
+              v-if="index < visibleSteps.length - 1"
               class="mx-3 h-0.5 w-12"
-              :class="currentStep > index ? 'bg-primary-500' : 'bg-gray-200 dark:bg-dark-700'"
+              :class="currentVisibleStep > index ? 'bg-primary-500' : 'bg-gray-200 dark:bg-dark-700'"
             ></div>
           </template>
         </div>
@@ -59,8 +63,8 @@
 
       <!-- Step Content -->
       <div class="rounded-2xl bg-white p-8 shadow-xl dark:bg-dark-800">
-        <!-- Step 1: Database -->
-        <div v-if="currentStep === 0" class="space-y-6">
+        <!-- Database Step -->
+        <div v-if="activeStepId === 'database'" class="space-y-6">
           <div class="mb-6 text-center">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
               {{ t('setup.database.title') }}
@@ -73,50 +77,23 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.database.host') }}</label>
-              <input
-                v-model="formData.database.host"
-                type="text"
-                class="input"
-                placeholder="localhost"
-              />
+              <input v-model="dbForm.host" type="text" class="input" placeholder="localhost" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.database.port') }}</label>
-              <input
-                v-model.number="formData.database.port"
-                type="number"
-                class="input"
-                placeholder="5432"
-              />
+              <input v-model.number="dbForm.port" type="number" class="input" placeholder="5432" />
             </div>
-          </div>
-
-          <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
-            <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ t("setup.redis.enableTls") }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">
-                {{ t("setup.redis.enableTlsHint") }}
-              </p>
-            </div>
-            <Toggle v-model="formData.redis.enable_tls" />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.database.username') }}</label>
-              <input
-                v-model="formData.database.user"
-                type="text"
-                class="input"
-                placeholder="postgres"
-              />
+              <input v-model="dbForm.user" type="text" class="input" placeholder="postgres" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.database.password') }}</label>
               <input
-                v-model="formData.database.password"
+                v-model="dbForm.password"
                 type="password"
                 class="input"
                 :placeholder="t('setup.database.passwordPlaceholder')"
@@ -127,17 +104,12 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.database.databaseName') }}</label>
-              <input
-                v-model="formData.database.dbname"
-                type="text"
-                class="input"
-                placeholder="sub2api"
-              />
+              <input v-model="dbForm.dbname" type="text" class="input" placeholder="sub2api" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.database.sslMode') }}</label>
               <Select
-                v-model="formData.database.sslmode"
+                v-model="dbForm.sslmode"
                 :options="[
                   { value: 'disable', label: t('setup.database.ssl.disable') },
                   { value: 'require', label: t('setup.database.ssl.require') },
@@ -148,44 +120,18 @@
             </div>
           </div>
 
-          <button
-            @click="testDatabaseConnection"
-            :disabled="testingDb"
-            class="btn btn-secondary w-full"
-          >
-            <svg
-              v-if="testingDb"
-              class="-ml-1 mr-2 h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+          <button @click="testDatabaseConnection" :disabled="testingDb" class="btn btn-secondary w-full">
+            <svg v-if="testingDb" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <Icon v-else-if="dbConnected" name="check" size="md" class="mr-2 text-green-500" :stroke-width="2" />
-            {{
-              testingDb
-                ? t('setup.status.testing')
-                : dbConnected
-                  ? t('setup.status.success')
-                  : t('setup.status.testConnection')
-            }}
+            {{ testingDb ? t('setup.status.testing') : dbConnected ? t('setup.status.success') : t('setup.status.testConnection') }}
           </button>
         </div>
 
-        <!-- Step 2: Redis -->
-        <div v-if="currentStep === 1" class="space-y-6">
+        <!-- Redis Step -->
+        <div v-if="activeStepId === 'redis'" class="space-y-6">
           <div class="mb-6 text-center">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
               {{ t('setup.redis.title') }}
@@ -198,21 +144,11 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.redis.host') }}</label>
-              <input
-                v-model="formData.redis.host"
-                type="text"
-                class="input"
-                placeholder="localhost"
-              />
+              <input v-model="redisForm.host" type="text" class="input" placeholder="localhost" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.redis.port') }}</label>
-              <input
-                v-model.number="formData.redis.port"
-                type="number"
-                class="input"
-                placeholder="6379"
-              />
+              <input v-model.number="redisForm.port" type="number" class="input" placeholder="6379" />
             </div>
           </div>
 
@@ -220,7 +156,7 @@
             <div>
               <label class="input-label">{{ t('setup.redis.password') }}</label>
               <input
-                v-model="formData.redis.password"
+                v-model="redisForm.password"
                 type="password"
                 class="input"
                 :placeholder="t('setup.redis.passwordPlaceholder')"
@@ -228,71 +164,30 @@
             </div>
             <div>
               <label class="input-label">{{ t('setup.redis.database') }}</label>
-              <input
-                v-model.number="formData.redis.db"
-                type="number"
-                class="input"
-                placeholder="0"
-              />
+              <input v-model.number="redisForm.db" type="number" class="input" placeholder="0" />
             </div>
           </div>
 
           <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
             <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ t("setup.redis.enableTls") }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">
-                {{ t("setup.redis.enableTlsHint") }}
-              </p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('setup.redis.enableTls') }}</p>
+              <p class="text-xs text-gray-500 dark:text-dark-400">{{ t('setup.redis.enableTlsHint') }}</p>
             </div>
-            <Toggle v-model="formData.redis.enable_tls" />
+            <Toggle v-model="redisForm.enable_tls" />
           </div>
 
-          <button
-            @click="testRedisConnection"
-            :disabled="testingRedis"
-            class="btn btn-secondary w-full"
-          >
-            <svg
-              v-if="testingRedis"
-              class="-ml-1 mr-2 h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+          <button @click="testRedisConnection" :disabled="testingRedis" class="btn btn-secondary w-full">
+            <svg v-if="testingRedis" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <Icon
-              v-else-if="redisConnected"
-              name="check"
-              size="md"
-              class="mr-2 text-green-500"
-              :stroke-width="2"
-            />
-            {{
-              testingRedis
-                ? t('setup.status.testing')
-                : redisConnected
-                  ? t('setup.status.success')
-                  : t('setup.status.testConnection')
-            }}
+            <Icon v-else-if="redisConnected" name="check" size="md" class="mr-2 text-green-500" :stroke-width="2" />
+            {{ testingRedis ? t('setup.status.testing') : redisConnected ? t('setup.status.success') : t('setup.status.testConnection') }}
           </button>
         </div>
 
-        <!-- Step 3: Admin -->
-        <div v-if="currentStep === 2" class="space-y-6">
+        <!-- Admin Step -->
+        <div v-if="activeStepId === 'admin'" class="space-y-6">
           <div class="mb-6 text-center">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
               {{ t('setup.admin.title') }}
@@ -304,18 +199,13 @@
 
           <div>
             <label class="input-label">{{ t('setup.admin.email') }}</label>
-            <input
-              v-model="formData.admin.email"
-              type="email"
-              class="input"
-              placeholder="admin@example.com"
-            />
+            <input v-model="adminForm.email" type="email" class="input" placeholder="admin@example.com" />
           </div>
 
           <div>
             <label class="input-label">{{ t('setup.admin.password') }}</label>
             <input
-              v-model="formData.admin.password"
+              v-model="adminForm.password"
               type="password"
               class="input"
               :placeholder="t('setup.admin.passwordPlaceholder')"
@@ -331,7 +221,7 @@
               :placeholder="t('setup.admin.confirmPasswordPlaceholder')"
             />
             <p
-              v-if="confirmPassword && formData.admin.password !== confirmPassword"
+              v-if="confirmPassword && adminForm.password !== confirmPassword"
               class="input-error-text"
             >
               {{ t('setup.admin.passwordMismatch') }}
@@ -339,8 +229,8 @@
           </div>
         </div>
 
-        <!-- Step 4: Complete -->
-        <div v-if="currentStep === 3" class="space-y-6">
+        <!-- Complete/Review Step -->
+        <div v-if="activeStepId === 'complete'" class="space-y-6">
           <div class="mb-6 text-center">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
               {{ t('setup.ready.title') }}
@@ -351,23 +241,21 @@
           </div>
 
           <div class="space-y-4">
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
+            <div v-if="!isStepConfigured('database')" class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
               <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.database') }}
               </h3>
               <p class="text-gray-900 dark:text-white">
-                {{ formData.database.user }}@{{ formData.database.host }}:{{
-                  formData.database.port
-                }}/{{ formData.database.dbname }}
+                {{ dbForm.user }}@{{ dbForm.host }}:{{ dbForm.port }}/{{ dbForm.dbname }}
               </p>
             </div>
 
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
+            <div v-if="!isStepConfigured('redis')" class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
               <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.redis') }}
               </h3>
               <p class="text-gray-900 dark:text-white">
-                {{ formData.redis.host }}:{{ formData.redis.port }}
+                {{ redisForm.host }}:{{ redisForm.port }}
               </p>
             </div>
 
@@ -375,7 +263,7 @@
               <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.adminEmail') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">{{ formData.admin.email }}</p>
+              <p class="text-gray-900 dark:text-white">{{ adminForm.email }}</p>
             </div>
           </div>
         </div>
@@ -403,19 +291,8 @@
               fill="none"
               viewBox="0 0 24 24"
             >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <Icon v-else name="checkCircle" size="md" class="flex-shrink-0 text-green-500" />
             <div>
@@ -423,11 +300,7 @@
                 {{ t('setup.status.completed') }}
               </p>
               <p class="mt-1 text-sm text-green-600 dark:text-green-500">
-                {{
-                  serviceReady
-                    ? t('setup.status.redirecting')
-                    : t('setup.status.restarting')
-                }}
+                {{ serviceReady ? t('setup.status.redirecting') : t('setup.status.restarting') }}
               </p>
             </div>
           </div>
@@ -436,8 +309,8 @@
         <!-- Navigation Buttons -->
         <div class="mt-8 flex justify-between">
           <button
-            v-if="currentStep > 0 && !installSuccess"
-            @click="currentStep--"
+            v-if="currentVisibleStep > 0 && !installSuccess"
+            @click="currentVisibleStep--"
             class="btn btn-secondary"
           >
             <Icon name="chevronLeft" size="sm" class="mr-2" :stroke-width="2" />
@@ -445,41 +318,30 @@
           </button>
           <div v-else></div>
 
+          <!-- Next button (not on last step) -->
           <button
-            v-if="currentStep < 3"
+            v-if="!isLastVisibleStep"
             @click="nextStep"
             :disabled="!canProceed"
             class="btn btn-primary"
           >
-            {{ t('common.next') }}
-            <Icon name="chevronRight" size="sm" class="ml-2" :stroke-width="2" />
+            <!-- In admin-only mode, admin step directly leads to install -->
+            {{ isAdminOnly && activeStepId === 'admin'
+              ? (installing ? t('setup.status.installing') : t('setup.status.completeInstallation'))
+              : t('common.next') }}
+            <Icon v-if="!(isAdminOnly && activeStepId === 'admin')" name="chevronRight" size="sm" class="ml-2" :stroke-width="2" />
           </button>
 
+          <!-- Install button (last step = complete/review) -->
           <button
             v-else-if="!installSuccess"
             @click="performInstall"
             :disabled="installing"
             class="btn btn-primary"
           >
-            <svg
-              v-if="installing"
-              class="-ml-1 mr-2 h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+            <svg v-if="installing" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             {{ installing ? t('setup.status.installing') : t('setup.status.completeInstallation') }}
           </button>
@@ -490,86 +352,118 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { testDatabase, testRedis, install, type InstallRequest } from '@/api/setup'
+import {
+  getSetupStatus,
+  testDatabase,
+  testRedis,
+  install,
+  type DatabaseConfig,
+  type RedisConfig,
+  type InstallRequest,
+} from '@/api/setup'
 import Select from '@/components/common/Select.vue'
 import Toggle from '@/components/common/Toggle.vue'
 import Icon from '@/components/icons/Icon.vue'
 
 const { t } = useI18n()
 
-const steps = computed(() => [
+// Pre-configured steps from backend (e.g. ["database", "redis"])
+const configuredSteps = ref<string[]>([])
+const loading = ref(true)
+
+// All possible steps
+const allSteps = computed(() => [
   { id: 'database', title: t('setup.database.title') },
   { id: 'redis', title: t('setup.redis.title') },
   { id: 'admin', title: t('setup.admin.title') },
-  { id: 'complete', title: t('setup.ready.title') }
+  { id: 'complete', title: t('setup.ready.title') },
 ])
 
-const currentStep = ref(0)
+// Steps visible to the user (skip pre-configured infra steps)
+const visibleSteps = computed(() =>
+  allSteps.value.filter(
+    (step) => !configuredSteps.value.includes(step.id),
+  ),
+)
+
+// True when only admin + complete steps are visible (Docker with env vars)
+const isAdminOnly = computed(() => {
+  const ids = visibleSteps.value.map((s) => s.id)
+  return ids.length <= 2 && ids.includes('admin')
+})
+
+const currentVisibleStep = ref(0)
+const activeStepId = computed(() => visibleSteps.value[currentVisibleStep.value]?.id ?? 'admin')
+const isLastVisibleStep = computed(() => currentVisibleStep.value === visibleSteps.value.length - 1)
+
 const errorMessage = ref('')
 const installSuccess = ref(false)
+const installing = ref(false)
+const confirmPassword = ref('')
+const serviceReady = ref(false)
 
 // Connection test states
 const testingDb = ref(false)
 const testingRedis = ref(false)
 const dbConnected = ref(false)
 const redisConnected = ref(false)
-const installing = ref(false)
-const confirmPassword = ref('')
-const serviceReady = ref(false)
 
-// Default server port
-const getCurrentPort = (): number => {
-  const port = window.location.port
-  if (port) {
-    return parseInt(port, 10)
-  }
-
-  return window.location.protocol === 'https:' ? 443 : 80
+function isStepConfigured(stepId: string): boolean {
+  return configuredSteps.value.includes(stepId)
 }
 
-const formData = reactive<InstallRequest>({
-  database: {
-    host: 'localhost',
-    port: 5432,
-    user: 'postgres',
-    password: '',
-    dbname: 'sub2api',
-    sslmode: 'disable'
-  },
-  redis: {
-    host: 'localhost',
-    port: 6379,
-    password: '',
-    db: 0,
-    enable_tls: false
-  },
-  admin: {
-    email: '',
-    password: ''
-  },
-  server: {
-    host: '0.0.0.0',
-    port: getCurrentPort(), // Use current port from browser
-    mode: 'release'
-  }
+// Form data (separate reactive objects for each section)
+const dbForm = reactive<DatabaseConfig>({
+  host: 'localhost',
+  port: 5432,
+  user: 'postgres',
+  password: '',
+  dbname: 'sub2api',
+  sslmode: 'disable',
+})
+
+const redisForm = reactive<RedisConfig>({
+  host: 'localhost',
+  port: 6379,
+  password: '',
+  db: 0,
+  enable_tls: false,
+})
+
+const adminForm = reactive({
+  email: '',
+  password: '',
 })
 
 const canProceed = computed(() => {
-  switch (currentStep.value) {
-    case 0:
+  switch (activeStepId.value) {
+    case 'database':
       return dbConnected.value
-    case 1:
+    case 'redis':
       return redisConnected.value
-    case 2:
+    case 'admin':
       return (
-        formData.admin.email &&
-        formData.admin.password.length >= 6 &&
-        formData.admin.password === confirmPassword.value
+        adminForm.email.length > 0 &&
+        adminForm.password.length >= 6 &&
+        adminForm.password === confirmPassword.value
       )
     default:
       return true
+  }
+})
+
+// Fetch setup status on mount
+onMounted(async () => {
+  try {
+    const status = await getSetupStatus()
+    configuredSteps.value = status.configured_steps || []
+  } catch {
+    // If fetch fails, show all steps
+    configuredSteps.value = []
+  } finally {
+    loading.value = false
   }
 })
 
@@ -579,7 +473,7 @@ async function testDatabaseConnection() {
   dbConnected.value = false
 
   try {
-    await testDatabase(formData.database)
+    await testDatabase(dbForm)
     dbConnected.value = true
   } catch (error: unknown) {
     const err = error as { response?: { data?: { detail?: string } }; message?: string }
@@ -595,7 +489,7 @@ async function testRedisConnection() {
   redisConnected.value = false
 
   try {
-    await testRedis(formData.redis)
+    await testRedis(redisForm)
     redisConnected.value = true
   } catch (error: unknown) {
     const err = error as { response?: { data?: { detail?: string } }; message?: string }
@@ -606,10 +500,32 @@ async function testRedisConnection() {
 }
 
 function nextStep() {
-  if (canProceed.value) {
-    errorMessage.value = ''
-    currentStep.value++
+  if (!canProceed.value) return
+  errorMessage.value = ''
+
+  // In admin-only mode, skip the review step and install directly from admin step
+  if (isAdminOnly.value && activeStepId.value === 'admin') {
+    performInstall()
+    return
   }
+
+  currentVisibleStep.value++
+}
+
+function buildInstallPayload(): InstallRequest {
+  const payload: InstallRequest = {
+    admin: { ...adminForm },
+  }
+
+  // Only include DB/Redis config if they were NOT pre-configured via env
+  if (!isStepConfigured('database')) {
+    payload.database = { ...dbForm }
+  }
+  if (!isStepConfigured('redis')) {
+    payload.redis = { ...redisForm }
+  }
+
+  return payload
 }
 
 async function performInstall() {
@@ -617,9 +533,8 @@ async function performInstall() {
   errorMessage.value = ''
 
   try {
-    await install(formData)
+    await install(buildInstallPayload())
     installSuccess.value = true
-    // Start polling for service restart
     waitForServiceRestart()
   } catch (error: unknown) {
     const err = error as { response?: { data?: { detail?: string } }; message?: string }
@@ -629,29 +544,19 @@ async function performInstall() {
   }
 }
 
-// Wait for service to restart and become available
 async function waitForServiceRestart() {
-  const maxAttempts = 60 // Increase to 60 attempts, ~60 seconds max
-  const interval = 1000 // 1 second between attempts
+  const maxAttempts = 60
+  const interval = 1000
 
-  // Wait a moment for the service to start restarting
   await new Promise((resolve) => setTimeout(resolve, 3000))
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      // Use setup status endpoint as it tells us the real mode
-      // Service might return 404 or connection refused while restarting
-      const response = await fetch('/setup/status', {
-        method: 'GET',
-        cache: 'no-store'
-      })
-
+      const response = await fetch('/setup/status', { method: 'GET', cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
-        // If needs_setup is false, service has restarted in normal mode
         if (data.data && !data.data.needs_setup) {
           serviceReady.value = true
-          // Redirect to login page after a short delay
           setTimeout(() => {
             window.location.href = '/login'
           }, 1500)
@@ -659,14 +564,11 @@ async function waitForServiceRestart() {
         }
       }
     } catch {
-      // Service not ready or network error during restart, continue polling
+      // Service not ready, continue polling
     }
-
     await new Promise((resolve) => setTimeout(resolve, interval))
   }
 
-  // If we reach here, service didn't restart in time
-  // Show a message to refresh manually
   errorMessage.value = t('setup.status.timeout')
 }
 </script>

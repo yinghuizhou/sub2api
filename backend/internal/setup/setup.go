@@ -119,6 +119,61 @@ func NeedsSetup() bool {
 	return true
 }
 
+// GetConfiguredSteps returns which setup steps are already configured via environment variables.
+// This allows the frontend to skip these steps in the setup wizard.
+func GetConfiguredSteps() []string {
+	var steps []string
+
+	// Database is configured if all required env vars are set
+	if os.Getenv("DATABASE_HOST") != "" && os.Getenv("DATABASE_USER") != "" && os.Getenv("DATABASE_PASSWORD") != "" {
+		steps = append(steps, "database")
+	}
+
+	// Redis is configured if host is set (password is optional)
+	if os.Getenv("REDIS_HOST") != "" {
+		steps = append(steps, "redis")
+	}
+
+	return steps
+}
+
+// BuildConfigFromEnv creates a SetupConfig from environment variables for pre-configured steps.
+// Admin config is NOT included - it must always come from user input.
+func BuildConfigFromEnv() *SetupConfig {
+	tz := getEnvOrDefault("TZ", "")
+	if tz == "" {
+		tz = getEnvOrDefault("TIMEZONE", "Asia/Shanghai")
+	}
+
+	return &SetupConfig{
+		Database: DatabaseConfig{
+			Host:     getEnvOrDefault("DATABASE_HOST", "localhost"),
+			Port:     getEnvIntOrDefault("DATABASE_PORT", 5432),
+			User:     getEnvOrDefault("DATABASE_USER", "postgres"),
+			Password: getEnvOrDefault("DATABASE_PASSWORD", ""),
+			DBName:   getEnvOrDefault("DATABASE_DBNAME", "sub2api"),
+			SSLMode:  getEnvOrDefault("DATABASE_SSLMODE", "disable"),
+		},
+		Redis: RedisConfig{
+			Host:      getEnvOrDefault("REDIS_HOST", "localhost"),
+			Port:      getEnvIntOrDefault("REDIS_PORT", 6379),
+			Password:  getEnvOrDefault("REDIS_PASSWORD", ""),
+			DB:        getEnvIntOrDefault("REDIS_DB", 0),
+			EnableTLS: getEnvOrDefault("REDIS_ENABLE_TLS", "false") == "true",
+		},
+		Server: ServerConfig{
+			Host: getEnvOrDefault("SERVER_HOST", "0.0.0.0"),
+			Port: getEnvIntOrDefault("SERVER_PORT", 8080),
+			Mode: getEnvOrDefault("SERVER_MODE", "release"),
+		},
+		JWT: JWTConfig{
+			Secret:     getEnvOrDefault("JWT_SECRET", ""),
+			ExpireHour: getEnvIntOrDefault("JWT_EXPIRE_HOUR", 24),
+		},
+		Timezone: tz,
+	}
+}
+
 // TestDatabaseConnection tests the database connection and creates database if not exists
 func TestDatabaseConnection(cfg *DatabaseConfig) error {
 	// First, connect to the default 'postgres' database to check/create target database

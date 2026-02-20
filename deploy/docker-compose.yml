@@ -8,7 +8,8 @@
 #   4. Access: http://localhost:8080
 #
 # All configuration is done via environment variables.
-# No Setup Wizard needed - the system auto-initializes on first run.
+# On first run with ADMIN_PASSWORD set: fully automated setup (no wizard)
+# On first run without ADMIN_PASSWORD: opens web wizard for admin account creation
 # =============================================================================
 
 services:

@@ -114,6 +114,10 @@ export default {
   setup: {
     title: 'Sub2API 安装向导',
     description: '配置您的 Sub2API 实例',
+    welcome: {
+      title: '欢迎使用 Sub2API',
+      description: '系统基础设施已配置完成，请设置您的管理员账户以开始使用。',
+    },
     database: {
       title: '数据库配置',
       description: '连接到您的 PostgreSQL 数据库',

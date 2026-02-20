@@ -86,11 +86,20 @@ func main() {
 	if setup.NeedsSetup() {
 		// Check if auto-setup is enabled (for Docker deployment)
 		if setup.AutoSetupEnabled() {
-			log.Println("Auto setup mode enabled...")
-			if err := setup.AutoSetupFromEnv(); err != nil {
-				log.Fatalf("Auto setup failed: %v", err)
+			// If admin credentials are fully provided, do full auto-setup (headless/CI)
+			if os.Getenv("ADMIN_EMAIL") != "" && os.Getenv("ADMIN_PASSWORD") != "" {
+				log.Println("Auto setup mode with admin credentials...")
+				if err := setup.AutoSetupFromEnv(); err != nil {
+					log.Fatalf("Auto setup failed: %v", err)
+				}
+				// Continue to main server after auto-setup
+			} else {
+				// DB/Redis are configured via env, but admin needs to be set via wizard
+				log.Println("First run detected. DB/Redis configured via environment.")
+				log.Println("Starting setup wizard for admin account creation...")
+				runSetupServer()
+				return
 			}
-			// Continue to main server after auto-setup
 		} else {
 			log.Println("First run detected, starting setup wizard...")
 			runSetupServer()

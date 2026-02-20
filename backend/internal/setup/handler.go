@@ -38,15 +38,17 @@ func RegisterRoutes(r *gin.Engine) {
 
 // SetupStatus represents the current setup state
 type SetupStatus struct {
-	NeedsSetup bool   `json:"needs_setup"`
-	Step       string `json:"step"`
+	NeedsSetup      bool     `json:"needs_setup"`
+	Step            string   `json:"step"`
+	ConfiguredSteps []string `json:"configured_steps"`
 }
 
 // getStatus returns the current setup status
 func getStatus(c *gin.Context) {
 	response.Success(c, SetupStatus{
-		NeedsSetup: NeedsSetup(),
-		Step:       "welcome",
+		NeedsSetup:      NeedsSetup(),
+		Step:            "welcome",
+		ConfiguredSteps: GetConfiguredSteps(),
 	})
 }
 
@@ -221,12 +223,13 @@ func testRedis(c *gin.Context) {
 	response.Success(c, gin.H{"message": "Connection successful"})
 }
 
-// InstallRequest represents installation request
+// InstallRequest represents installation request.
+// Database and Redis are optional when pre-configured via environment variables.
 type InstallRequest struct {
-	Database DatabaseConfig `json:"database" binding:"required"`
-	Redis    RedisConfig    `json:"redis" binding:"required"`
-	Admin    AdminConfig    `json:"admin" binding:"required"`
-	Server   ServerConfig   `json:"server"`
+	Database *DatabaseConfig `json:"database"`
+	Redis    *RedisConfig    `json:"redis"`
+	Admin    AdminConfig     `json:"admin" binding:"required"`
+	Server   ServerConfig    `json:"server"`
 }
 
 // install performs the installation
@@ -247,40 +250,68 @@ func install(c *gin.Context) {
 		return
 	}
 
-	// ========== COMPREHENSIVE INPUT VALIDATION ==========
-	// Database validation
-	if !validateHostname(req.Database.Host) {
-		response.Error(c, http.StatusBadRequest, "Invalid database hostname")
-		return
-	}
-	if !validatePort(req.Database.Port) {
-		response.Error(c, http.StatusBadRequest, "Invalid database port")
-		return
-	}
-	if !validateUsername(req.Database.User) {
-		response.Error(c, http.StatusBadRequest, "Invalid database username")
-		return
-	}
-	if !validateDBName(req.Database.DBName) {
-		response.Error(c, http.StatusBadRequest, "Invalid database name")
+	// Build config from env for pre-configured steps
+	configuredSteps := GetConfiguredSteps()
+	envCfg := BuildConfigFromEnv()
+
+	// ========== RESOLVE DATABASE CONFIG ==========
+	var dbCfg DatabaseConfig
+	if req.Database != nil {
+		dbCfg = *req.Database
+		if !validateHostname(dbCfg.Host) {
+			response.Error(c, http.StatusBadRequest, "Invalid database hostname")
+			return
+		}
+		if !validatePort(dbCfg.Port) {
+			response.Error(c, http.StatusBadRequest, "Invalid database port")
+			return
+		}
+		if !validateUsername(dbCfg.User) {
+			response.Error(c, http.StatusBadRequest, "Invalid database username")
+			return
+		}
+		if !validateDBName(dbCfg.DBName) {
+			response.Error(c, http.StatusBadRequest, "Invalid database name")
+			return
+		}
+		if dbCfg.SSLMode == "" {
+			dbCfg.SSLMode = "disable"
+		}
+		if !validateSSLMode(dbCfg.SSLMode) {
+			response.Error(c, http.StatusBadRequest, "Invalid SSL mode")
+			return
+		}
+	} else if containsStr(configuredSteps, "database") {
+		dbCfg = envCfg.Database
+	} else {
+		response.Error(c, http.StatusBadRequest, "Database configuration is required")
 		return
 	}
 
-	// Redis validation
-	if !validateHostname(req.Redis.Host) {
-		response.Error(c, http.StatusBadRequest, "Invalid Redis hostname")
-		return
-	}
-	if !validatePort(req.Redis.Port) {
-		response.Error(c, http.StatusBadRequest, "Invalid Redis port")
-		return
-	}
-	if req.Redis.DB < 0 || req.Redis.DB > 15 {
-		response.Error(c, http.StatusBadRequest, "Invalid Redis database number")
+	// ========== RESOLVE REDIS CONFIG ==========
+	var redisCfg RedisConfig
+	if req.Redis != nil {
+		redisCfg = *req.Redis
+		if !validateHostname(redisCfg.Host) {
+			response.Error(c, http.StatusBadRequest, "Invalid Redis hostname")
+			return
+		}
+		if !validatePort(redisCfg.Port) {
+			response.Error(c, http.StatusBadRequest, "Invalid Redis port")
+			return
+		}
+		if redisCfg.DB < 0 || redisCfg.DB > 15 {
+			response.Error(c, http.StatusBadRequest, "Invalid Redis database number")
+			return
+		}
+	} else if containsStr(configuredSteps, "redis") {
+		redisCfg = envCfg.Redis
+	} else {
+		response.Error(c, http.StatusBadRequest, "Redis configuration is required")
 		return
 	}
 
-	// Admin validation
+	// ========== ADMIN VALIDATION (always required) ==========
 	if !validateEmail(req.Admin.Email) {
 		response.Error(c, http.StatusBadRequest, "Invalid admin email format")
 		return
@@ -290,50 +321,39 @@ func install(c *gin.Context) {
 		return
 	}
 
-	// Server validation
-	if req.Server.Port != 0 && !validatePort(req.Server.Port) {
+	// ========== SERVER CONFIG ==========
+	serverCfg := req.Server
+	if serverCfg.Host == "" {
+		serverCfg.Host = envCfg.Server.Host
+	}
+	if serverCfg.Port == 0 {
+		serverCfg.Port = envCfg.Server.Port
+	}
+	if serverCfg.Mode == "" {
+		serverCfg.Mode = envCfg.Server.Mode
+	}
+	if serverCfg.Port != 0 && !validatePort(serverCfg.Port) {
 		response.Error(c, http.StatusBadRequest, "Invalid server port")
 		return
 	}
-
-	// ========== SET DEFAULTS ==========
-	if req.Database.SSLMode == "" {
-		req.Database.SSLMode = "disable"
-	}
-	if !validateSSLMode(req.Database.SSLMode) {
-		response.Error(c, http.StatusBadRequest, "Invalid SSL mode")
-		return
-	}
-	if req.Server.Host == "" {
-		req.Server.Host = "0.0.0.0"
-	}
-	if req.Server.Port == 0 {
-		req.Server.Port = 8080
-	}
-	if req.Server.Mode == "" {
-		req.Server.Mode = "release"
-	}
-	// Validate server mode
-	if req.Server.Mode != "release" && req.Server.Mode != "debug" {
+	if serverCfg.Mode != "release" && serverCfg.Mode != "debug" {
 		response.Error(c, http.StatusBadRequest, "Invalid server mode (must be 'release' or 'debug')")
 		return
 	}
 
 	// Trim whitespace from string inputs
 	req.Admin.Email = strings.TrimSpace(req.Admin.Email)
-	req.Database.Host = strings.TrimSpace(req.Database.Host)
-	req.Database.User = strings.TrimSpace(req.Database.User)
-	req.Database.DBName = strings.TrimSpace(req.Database.DBName)
-	req.Redis.Host = strings.TrimSpace(req.Redis.Host)
+	dbCfg.Host = strings.TrimSpace(dbCfg.Host)
+	dbCfg.User = strings.TrimSpace(dbCfg.User)
+	dbCfg.DBName = strings.TrimSpace(dbCfg.DBName)
+	redisCfg.Host = strings.TrimSpace(redisCfg.Host)
 
 	cfg := &SetupConfig{
-		Database: req.Database,
-		Redis:    req.Redis,
+		Database: dbCfg,
+		Redis:    redisCfg,
 		Admin:    req.Admin,
-		Server:   req.Server,
-		JWT: JWTConfig{
-			ExpireHour: 24,
-		},
+		Server:   serverCfg,
+		JWT:      envCfg.JWT,
 	}
 
 	if err := Install(cfg); err != nil {
@@ -342,9 +362,7 @@ func install(c *gin.Context) {
 	}
 
 	// Schedule service restart in background after sending response
-	// This ensures the client receives the success response before the service restarts
 	go func() {
-		// Wait a moment to ensure the response is sent
 		time.Sleep(500 * time.Millisecond)
 		sysutil.RestartServiceAsync()
 	}()
@@ -353,4 +371,14 @@ func install(c *gin.Context) {
 		"message": "Installation completed successfully. Service will restart automatically.",
 		"restart": true,
 	})
+}
+
+// containsStr checks if a string slice contains a value
+func containsStr(slice []string, val string) bool {
+	for _, s := range slice {
+		if s == val {
+			return true
+		}
+	}
+	return false
 }

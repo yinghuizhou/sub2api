@@ -15,6 +15,7 @@ const setupClient = axios.create({
 export interface SetupStatus {
   needs_setup: boolean
   step: string
+  configured_steps: string[]
 }
 
 export interface DatabaseConfig {
@@ -46,10 +47,10 @@ export interface ServerConfig {
 }
 
 export interface InstallRequest {
-  database: DatabaseConfig
-  redis: RedisConfig
+  database?: DatabaseConfig
+  redis?: RedisConfig
   admin: AdminConfig
-  server: ServerConfig
+  server?: ServerConfig
 }
 
 export interface InstallResponse {

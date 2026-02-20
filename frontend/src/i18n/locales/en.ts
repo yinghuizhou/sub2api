@@ -114,6 +114,10 @@ export default {
   setup: {
     title: 'Sub2API Setup',
     description: 'Configure your Sub2API instance',
+    welcome: {
+      title: 'Welcome to Sub2API',
+      description: 'Infrastructure is pre-configured. Set up your admin account to get started.',
+    },
     database: {
       title: 'Database Configuration',
       description: 'Connect to your PostgreSQL database',
