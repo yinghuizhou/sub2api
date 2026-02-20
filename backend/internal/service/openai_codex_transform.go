@@ -20,6 +20,9 @@ const (
 //go:embed prompts/codex_cli_instructions.md
 var codexCLIInstructions string
 
+// codexHTTPClient is reused across fetchWithETag calls for connection pooling
+var codexHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
 var codexModelMap = map[string]string{
 	"gpt-5.3":                   "gpt-5.3",
 	"gpt-5.3-none":              "gpt-5.3",
@@ -565,8 +568,7 @@ func fetchWithETag(url, etag string) (string, string, int, error) {
 	if etag != "" {
 		req.Header.Set("If-None-Match", etag)
 	}
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := codexHTTPClient.Do(req)
 	if err != nil {
 		return "", "", 0, err
 	}

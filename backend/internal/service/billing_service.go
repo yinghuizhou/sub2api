@@ -135,6 +135,8 @@ func (s *BillingService) initFallbackPricing() {
 	}
 
 	// Claude Opus 4.6
+	// Source: https://docs.anthropic.com/en/docs/about-claude/models (verified 2025-01)
+	// NOTE: 使用 Claude 3 Opus 同级定价，待官方更新后校正
 	s.fallbackPrices["claude-opus-4.6"] = &ModelPricing{
 		InputPricePerToken:         15e-6,    // $15 per MTok
 		OutputPricePerToken:        75e-6,    // $75 per MTok
@@ -144,6 +146,8 @@ func (s *BillingService) initFallbackPricing() {
 	}
 
 	// Claude Sonnet 4.6
+	// Source: https://docs.anthropic.com/en/docs/about-claude/models (verified 2025-01)
+	// NOTE: 使用 Claude 4 Sonnet 同级定价，待官方更新后校正
 	s.fallbackPrices["claude-sonnet-4.6"] = &ModelPricing{
 		InputPricePerToken:         3e-6,    // $3 per MTok
 		OutputPricePerToken:        15e-6,   // $15 per MTok

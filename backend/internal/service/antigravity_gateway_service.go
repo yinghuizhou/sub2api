@@ -80,8 +80,9 @@ var antigravityPassthroughErrorMessages = []string{
 
 // MODEL_CAPACITY_EXHAUSTED 全局去重：避免多个并发请求同时对同一模型进行容量耗尽重试
 var (
-	modelCapacityExhaustedMu    sync.RWMutex
-	modelCapacityExhaustedUntil = make(map[string]time.Time) // modelName -> cooldown until
+	modelCapacityExhaustedMu     sync.RWMutex
+	modelCapacityExhaustedUntil  = make(map[string]time.Time) // modelName -> cooldown until
+	modelCapacityExhaustedLastGC time.Time                    // last GC timestamp
 )
 
 const (
@@ -240,12 +241,15 @@ func (s *AntigravityGatewayService) handleSmartRetry(p antigravityRetryLoopParam
 			// 全局去重：如果其他 goroutine 已在重试同一模型且尚在 cooldown 中，直接返回 503
 			if modelName != "" {
 				modelCapacityExhaustedMu.Lock()
-				// GC: 清理过期条目
 				now := time.Now()
-				for k, v := range modelCapacityExhaustedUntil {
-					if now.After(v) {
-						delete(modelCapacityExhaustedUntil, k)
+				// Throttled GC: 每 30 秒清理一次过期条目，避免热路径全表扫描
+				if now.Sub(modelCapacityExhaustedLastGC) > 30*time.Second {
+					for k, v := range modelCapacityExhaustedUntil {
+						if now.After(v) {
+							delete(modelCapacityExhaustedUntil, k)
+						}
 					}
+					modelCapacityExhaustedLastGC = now
 				}
 				cooldownUntil, exists := modelCapacityExhaustedUntil[modelName]
 				modelCapacityExhaustedMu.Unlock()

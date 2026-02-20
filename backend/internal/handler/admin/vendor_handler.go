@@ -19,10 +19,10 @@ type VendorHandler struct {
 }
 
 // NewVendorHandler creates a new vendor handler
-func NewVendorHandler(vendorService *service.VendorService, healthService *service.VendorHealthService, balanceService *service.VendorBalanceService) *VendorHandler {
+func NewVendorHandler(vendorService *service.VendorService, probeService *service.VendorProbeService, healthService *service.VendorHealthService, balanceService *service.VendorBalanceService) *VendorHandler {
 	return &VendorHandler{
 		vendorService:  vendorService,
-		probeService:   service.NewVendorProbeService(),
+		probeService:   probeService,
 		healthService:  healthService,
 		balanceService: balanceService,
 	}

@@ -292,5 +292,6 @@ var ProviderSet = wire.NewSet(
 	NewVendorService,
 	NewVendorHealthService,
 	NewVendorBalanceService,
+	NewVendorProbeService,
 	ProvideVendorBackgroundService,
 )

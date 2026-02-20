@@ -69,6 +69,13 @@ pull_code() {
 
     # 拉取最新代码
     git fetch origin
+
+    # 检查是否有未提交的修改
+    if ! git diff --quiet HEAD 2>/dev/null; then
+        log_warn "⚠️  检测到未提交的修改，已自动 stash"
+        git stash --include-untracked -m "auto-stash before deploy $(date +%Y%m%d-%H%M%S)"
+    fi
+
     git reset --hard origin/$BRANCH
 
     local commit=$(git rev-parse --short HEAD)
@@ -125,7 +132,7 @@ start_service() {
 
     # 拉取最新镜像（如果使用 Docker）
     if [ -f "docker-compose.yml" ]; then
-        docker compose pull
+        docker compose pull --quiet 2>/dev/null || log_warn "⚠️  镜像拉取跳过（可能无法访问 Docker Hub，请本地构建后传输）"
         docker compose up -d
     else
         # 直接运行二进制文件
@@ -196,6 +203,13 @@ main() {
     log "Sub2API 自动部署"
     log "服务器: $SERVER_IP"
     log "=========================================="
+
+    # 防止并发部署
+    exec 200>/var/lock/sub2api-deploy.lock
+    if ! flock -n 200; then
+        log_warn "⚠️  另一个部署正在进行中，退出"
+        exit 0
+    fi
 
     # 备份当前版本
     backup_current

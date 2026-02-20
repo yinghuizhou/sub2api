@@ -147,7 +147,7 @@ jobs:
                 '{ref: $ref, commit: $commit, message: $msg, author: $author}' | \
           curl -X POST -H "Content-Type: application/json" \
                -H "X-Gitee-Token: ${{ secrets.WEBHOOK_SECRET }}" \
-               -d @- http://47.108.158.227:9000/webhook
+               -d @- http://${{ secrets.DEPLOY_SERVER_IP }}:9000/webhook
 
       - name: 等待部署完成
         run: |
@@ -157,7 +157,7 @@ jobs:
       - name: 健康检查
         run: |
           for i in {1..10}; do
-            if curl -sf http://47.108.158.227:8080/health > /dev/null; then
+            if curl -sf http://${{ secrets.DEPLOY_SERVER_IP }}:8080/health > /dev/null; then
               echo "✅ 部署成功，服务健康"
               exit 0
             fi
@@ -171,5 +171,5 @@ jobs:
         if: success()
         run: |
           echo "🎉 部署成功！"
-          echo "访问地址: http://47.108.158.227:8080"
+          echo "访问地址: http://${{ secrets.DEPLOY_SERVER_IP }}:8080"
           echo "提交信息: ${{ github.event.head_commit.message }}"
