@@ -250,10 +250,13 @@ func (s *VendorProbeService) probeNewAPIUserSelf(ctx context.Context, baseURL, a
 	req.Header.Set("x-api-key", apiKey)
 
 	resp, err := s.httpClient.Do(req)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil {
 		return nil, ""
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, ""
+	}
 
 	var result struct {
 		Success bool `json:"success"`
@@ -296,15 +299,18 @@ func (s *VendorProbeService) probeOpenAIBilling(ctx context.Context, baseURL, ap
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	resp, err := s.httpClient.Do(req)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil {
 		return nil, ""
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, ""
+	}
 
 	var result struct {
-		HardLimitUSD     float64 `json:"hard_limit_usd"`
-		SoftLimitUSD     float64 `json:"soft_limit_usd"`
-		SystemHardLimit  float64 `json:"system_hard_limit_usd"`
+		HardLimitUSD    float64 `json:"hard_limit_usd"`
+		SoftLimitUSD    float64 `json:"soft_limit_usd"`
+		SystemHardLimit float64 `json:"system_hard_limit_usd"`
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
 	if err != nil {
@@ -334,16 +340,19 @@ func (s *VendorProbeService) probeNewAPITokenSearch(ctx context.Context, baseURL
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	resp, err := s.httpClient.Do(req)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil {
 		return nil, ""
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, ""
+	}
 
 	var result struct {
 		Success bool `json:"success"`
 		Data    struct {
-			RemainQuota int64 `json:"remain_quota"`
-			UnlimitedQuota bool `json:"unlimited_quota"`
+			RemainQuota    int64 `json:"remain_quota"`
+			UnlimitedQuota bool  `json:"unlimited_quota"`
 		} `json:"data"`
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
