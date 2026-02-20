@@ -47,6 +47,7 @@ type AccountHandler struct {
 	crsSyncService          *service.CRSSyncService
 	sessionLimitCache       service.SessionLimitCache
 	tokenCacheInvalidator   service.TokenCacheInvalidator
+	proxyAssignmentService  *service.ProxyAssignmentService
 }
 
 // NewAccountHandler creates a new admin account handler
@@ -63,6 +64,7 @@ func NewAccountHandler(
 	crsSyncService *service.CRSSyncService,
 	sessionLimitCache service.SessionLimitCache,
 	tokenCacheInvalidator service.TokenCacheInvalidator,
+	proxyAssignmentService *service.ProxyAssignmentService,
 ) *AccountHandler {
 	return &AccountHandler{
 		adminService:            adminService,
@@ -77,6 +79,7 @@ func NewAccountHandler(
 		crsSyncService:          crsSyncService,
 		sessionLimitCache:       sessionLimitCache,
 		tokenCacheInvalidator:   tokenCacheInvalidator,
+		proxyAssignmentService:  proxyAssignmentService,
 	}
 }
 
@@ -1537,4 +1540,46 @@ func (h *AccountHandler) BatchRefreshTier(c *gin.Context) {
 // GET /api/v1/admin/accounts/antigravity/default-model-mapping
 func (h *AccountHandler) GetAntigravityDefaultModelMapping(c *gin.Context) {
 	response.Success(c, domain.DefaultAntigravityModelMapping)
+}
+
+// AutoAssignProxy auto-assigns the best proxy group to an account based on platform rules
+// POST /api/v1/admin/accounts/:id/auto-assign-proxy
+func (h *AccountHandler) AutoAssignProxy(c *gin.Context) {
+	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid account ID")
+		return
+	}
+
+	ctx := c.Request.Context()
+	account, err := h.adminService.GetAccount(ctx, accountID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	groupName, err := h.proxyAssignmentService.AutoAssign(ctx, account.Platform)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	if groupName == "" {
+		response.Success(c, gin.H{
+			"message":     "No suitable proxy group found for platform",
+			"platform":    account.Platform,
+			"proxy_group": "",
+		})
+		return
+	}
+
+	updated, err := h.adminService.UpdateAccount(ctx, accountID, &service.UpdateAccountInput{
+		ProxyGroup: &groupName,
+	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, dto.AccountFromService(updated))
 }

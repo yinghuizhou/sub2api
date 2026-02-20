@@ -249,22 +249,19 @@ TOTP_ENCRYPTION_KEY=$TOTP_KEY
 EOF
         chmod 600 .env
 
-        # 保存凭证
-        cat > /root/sub2api-credentials.txt << EOF
-========================================
-Sub2API 部署凭证
-========================================
-服务器IP: $SERVER_IP
-访问地址: http://$SERVER_IP:8080
-管理员邮箱: admin@sub2api.local
-管理员密码: $ADMIN_PASSWORD
-JWT_SECRET: $JWT_SECRET
-TOTP_KEY: $TOTP_KEY
-PostgreSQL密码: $PG_PASS
-Webhook Secret: $WEBHOOK_SECRET
-========================================
-EOF
-        chmod 600 /root/sub2api-credentials.txt
+        # 仅在控制台输出凭证（不持久化到文件）
+        echo ""
+        echo "=========================================="
+        echo "⚠️  请立即记录以下凭证（仅显示一次）"
+        echo "=========================================="
+        echo "管理员邮箱: admin@sub2api.local"
+        echo "管理员密码: $ADMIN_PASSWORD"
+        echo "JWT_SECRET: $JWT_SECRET"
+        echo "TOTP_KEY: $TOTP_KEY"
+        echo "PostgreSQL密码: $PG_PASS"
+        echo "Webhook Secret: $WEBHOOK_SECRET"
+        echo "=========================================="
+        echo ""
     fi
 
     log_success "✅ 配置文件生成完成"
@@ -278,7 +275,7 @@ show_completion() {
     echo "=========================================="
     echo ""
     echo "📋 重要信息："
-    echo "  - 凭证文件: /root/sub2api-credentials.txt"
+    echo "  - 凭证已在上方输出，请妥善保存"
     echo "  - Webhook Secret: $WEBHOOK_SECRET"
     echo "  - Webhook 端口: $WEBHOOK_PORT"
     echo ""

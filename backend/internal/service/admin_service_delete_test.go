@@ -235,6 +235,10 @@ func (s *proxyRepoStub) CountAccountsByProxyID(ctx context.Context, proxyID int6
 	return s.accountCount, nil
 }
 
+func (s *proxyRepoStub) CountAccountsByGroupName(ctx context.Context) (map[string]int64, error) {
+	return nil, nil
+}
+
 func (s *proxyRepoStub) ListAccountSummariesByProxyID(ctx context.Context, proxyID int64) ([]ProxyAccountSummary, error) {
 	panic("unexpected ListAccountSummariesByProxyID call")
 }

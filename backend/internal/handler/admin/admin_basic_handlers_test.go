@@ -18,7 +18,7 @@ func setupAdminRouter() (*gin.Engine, *stubAdminService) {
 
 	userHandler := NewUserHandler(adminSvc, nil)
 	groupHandler := NewGroupHandler(adminSvc)
-	proxyHandler := NewProxyHandler(adminSvc)
+	proxyHandler := NewProxyHandler(adminSvc, nil)
 	redeemHandler := NewRedeemHandler(adminSvc)
 
 	router.GET("/api/v1/admin/users", userHandler.List)

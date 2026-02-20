@@ -13,13 +13,15 @@ import (
 
 // ProxyHandler handles admin proxy management
 type ProxyHandler struct {
-	adminService service.AdminService
+	adminService       service.AdminService
+	proxyHealthService *service.ProxyHealthService
 }
 
 // NewProxyHandler creates a new admin proxy handler
-func NewProxyHandler(adminService service.AdminService) *ProxyHandler {
+func NewProxyHandler(adminService service.AdminService, proxyHealthService *service.ProxyHealthService) *ProxyHandler {
 	return &ProxyHandler{
-		adminService: adminService,
+		adminService:       adminService,
+		proxyHealthService: proxyHealthService,
 	}
 }
 
@@ -381,4 +383,29 @@ func (h *ProxyHandler) BatchCreate(c *gin.Context) {
 		"created": created,
 		"skipped": skipped,
 	})
+}
+
+// HealthCheck triggers an immediate health check for a single proxy
+// POST /api/v1/admin/proxies/:id/health-check
+func (h *ProxyHandler) HealthCheck(c *gin.Context) {
+	proxyID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid proxy ID")
+		return
+	}
+
+	proxy, err := h.proxyHealthService.CheckOne(c.Request.Context(), proxyID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, dto.ProxyFromService(proxy))
+}
+
+// HealthCheckAll triggers a full health check cycle for all active proxies
+// POST /api/v1/admin/proxies/health-check-all
+func (h *ProxyHandler) HealthCheckAll(c *gin.Context) {
+	h.proxyHealthService.CheckAll(c.Request.Context())
+	response.Success(c, gin.H{"message": "Health check completed for all active proxies"})
 }

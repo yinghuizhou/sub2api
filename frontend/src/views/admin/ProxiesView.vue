@@ -47,6 +47,15 @@
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
             </button>
             <button
+              @click="handleHealthCheckAll"
+              :disabled="healthChecking || loading"
+              class="btn btn-secondary"
+              :title="t('admin.proxies.healthCheckAll')"
+            >
+              <Icon name="checkCircle" size="md" :class="['mr-2', healthChecking ? 'animate-spin' : '']" />
+              {{ t('admin.proxies.healthCheckAll') }}
+            </button>
+            <button
               @click="handleBatchTest"
               :disabled="batchTesting || loading"
               class="btn btn-secondary"
@@ -64,9 +73,19 @@
               <Icon name="trash" size="md" class="mr-2" />
               {{ t('admin.proxies.batchDeleteAction') }}
             </button>
+            <button @click="handleImportManifest" class="btn btn-secondary">
+              {{ t('admin.proxies.importManifest') }}
+            </button>
             <button @click="showImportData = true" class="btn btn-secondary">
               {{ t('admin.proxies.dataImport') }}
             </button>
+            <input
+              ref="manifestFileInput"
+              type="file"
+              accept=".json"
+              class="hidden"
+              @change="handleManifestFileSelected"
+            />
             <button @click="showExportDataDialog = true" class="btn btn-secondary">
               {{ selectedCount > 0 ? t('admin.proxies.dataExportSelected') : t('admin.proxies.dataExport') }}
             </button>
@@ -126,22 +145,43 @@
           </template>
 
           <template #cell-health="{ row }">
-            <div class="flex items-center gap-1.5">
-              <span
-                v-if="row.health_status"
-                :class="[
-                  'inline-block h-2.5 w-2.5 rounded-full',
-                  row.health_status === 'healthy' ? 'bg-emerald-500' :
-                  row.health_status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'
-                ]"
-              ></span>
-              <span v-if="row.vpn_exit_ip" class="text-xs text-gray-500 dark:text-gray-400">
+            <div class="flex flex-col gap-0.5">
+              <div class="flex items-center gap-1.5">
+                <!-- VPN status badge -->
+                <template v-if="row.vpn_status">
+                  <span
+                    :class="[
+                      'inline-block h-2.5 w-2.5 rounded-full',
+                      row.vpn_status === 'connected' ? 'bg-emerald-500' :
+                      row.vpn_status === 'error' ? 'bg-red-500' : 'bg-gray-400'
+                    ]"
+                  ></span>
+                  <span
+                    :class="[
+                      'text-xs',
+                      row.vpn_status === 'connected' ? 'text-emerald-600 dark:text-emerald-400' :
+                      row.vpn_status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+                    ]"
+                  >
+                    {{ t('admin.proxies.vpnStatus.' + row.vpn_status) }}
+                  </span>
+                </template>
+                <!-- Health status (no VPN) -->
+                <template v-else-if="row.health_status">
+                  <span
+                    :class="[
+                      'inline-block h-2.5 w-2.5 rounded-full',
+                      row.health_status === 'healthy' ? 'bg-emerald-500' :
+                      row.health_status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'
+                    ]"
+                  ></span>
+                  <span class="text-xs text-gray-500">{{ row.health_status }}</span>
+                </template>
+                <span v-else class="text-sm text-gray-400">-</span>
+              </div>
+              <span v-if="row.vpn_exit_ip" class="text-xs text-gray-400 dark:text-gray-500">
                 {{ row.vpn_exit_ip }}
               </span>
-              <span v-else-if="row.health_status" class="text-xs text-gray-500">
-                {{ row.health_status }}
-              </span>
-              <span v-else class="text-sm text-gray-400">-</span>
             </div>
           </template>
 
@@ -187,11 +227,16 @@
             </span>
             <span
               v-else-if="typeof row.latency_ms === 'number'"
-              :class="['badge', row.latency_ms < 200 ? 'badge-success' : 'badge-warning']"
+              :class="[
+                'badge',
+                row.latency_ms < 100 ? 'badge-success' :
+                row.latency_ms <= 500 ? 'badge-warning' : 'badge-danger'
+              ]"
+              :title="row.last_health_at ? t('admin.proxies.lastHealthAt', { time: formatLastHealthAt(row.last_health_at) }) : undefined"
             >
               {{ row.latency_ms }}ms
             </span>
-            <span v-else class="text-sm text-gray-400">-</span>
+            <span v-else class="badge badge-gray" :title="row.last_health_at ? t('admin.proxies.lastHealthAt', { time: formatLastHealthAt(row.last_health_at) }) : undefined">N/A</span>
           </template>
 
           <template #cell-status="{ value }">
@@ -907,6 +952,8 @@ const exportingData = ref(false)
 const testingProxyIds = ref<Set<number>>(new Set())
 const batchTesting = ref(false)
 const selectedProxyIds = ref<Set<number>>(new Set())
+const healthChecking = ref(false)
+const manifestFileInput = ref<HTMLInputElement | null>(null)
 const accountsProxy = ref<Proxy | null>(null)
 const proxyAccounts = ref<ProxyAccountSummary[]>([])
 const accountsLoading = ref(false)
@@ -1410,6 +1457,100 @@ const runBatchProxyTests = async (ids: number[]) => {
 
   const workers = Array.from({ length: Math.min(concurrency, ids.length) }, () => worker())
   await Promise.all(workers)
+}
+
+const formatLastHealthAt = (value: string | null | undefined) => {
+  if (!value) return '-'
+  try {
+    const date = new Date(value)
+    return date.toLocaleString()
+  } catch {
+    return value
+  }
+}
+
+const handleHealthCheckAll = async () => {
+  if (healthChecking.value) return
+  healthChecking.value = true
+  try {
+    const result = await adminAPI.proxies.healthCheckAll()
+    appStore.showSuccess(
+      t('admin.proxies.healthCheckAllDone', {
+        healthy: result.healthy,
+        unhealthy: result.unhealthy,
+        errors: result.errors
+      })
+    )
+    loadProxies()
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('admin.proxies.healthCheckAllFailed'))
+    console.error('Error running health check:', error)
+  } finally {
+    healthChecking.value = false
+  }
+}
+
+const handleImportManifest = () => {
+  manifestFileInput.value?.click()
+}
+
+const handleManifestFileSelected = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const manifest = JSON.parse(text)
+
+    // Transform manifest into batch create format
+    // Expected manifest format: array of server objects with name, host, port, etc.
+    let servers: Array<{ name?: string; host?: string; ip?: string; port?: number; protocol?: string }>
+    if (Array.isArray(manifest)) {
+      servers = manifest
+    } else if (manifest.servers && Array.isArray(manifest.servers)) {
+      servers = manifest.servers
+    } else {
+      appStore.showError(t('admin.proxies.importManifestInvalid'))
+      return
+    }
+
+    const proxiesToCreate = servers
+      .filter((s) => (s.host || s.ip) && s.port)
+      .map((s) => ({
+        protocol: (s.protocol || 'socks5') as string,
+        host: (s.host || s.ip || '') as string,
+        port: s.port || 1080,
+        username: '',
+        password: ''
+      }))
+
+    if (proxiesToCreate.length === 0) {
+      appStore.showError(t('admin.proxies.importManifestInvalid'))
+      return
+    }
+
+    const result = await adminAPI.proxies.batchCreate(proxiesToCreate)
+    const created = result.created || 0
+    const skipped = result.skipped || 0
+
+    if (created > 0) {
+      appStore.showSuccess(t('admin.proxies.batchImportSuccess', { created, skipped }))
+    } else {
+      appStore.showInfo(t('admin.proxies.batchImportAllSkipped', { skipped }))
+    }
+    loadProxies()
+  } catch (error: any) {
+    if (error instanceof SyntaxError) {
+      appStore.showError(t('admin.proxies.importManifestInvalid'))
+    } else {
+      appStore.showError(error.response?.data?.detail || t('admin.proxies.importManifestFailed'))
+    }
+    console.error('Error importing manifest:', error)
+  } finally {
+    // Reset file input
+    input.value = ''
+  }
 }
 
 const handleBatchTest = async () => {

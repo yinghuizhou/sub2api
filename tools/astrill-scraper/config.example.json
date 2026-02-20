@@ -1,0 +1,9 @@
+{
+  "astrill_username": "",
+  "astrill_password": "",
+  "output_dir": "/etc/openvpn/configs",
+  "sub2api_url": "http://127.0.0.1:8080",
+  "sub2api_api_key": "",
+  "auto_register": false,
+  "socks_port_start": 10801
+}

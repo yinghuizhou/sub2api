@@ -248,6 +248,63 @@ export async function getGroupNames(): Promise<string[]> {
   return data
 }
 
+/**
+ * Trigger health check for all proxies
+ * @returns Health check result summary
+ */
+export async function healthCheckAll(): Promise<{
+  total: number
+  healthy: number
+  unhealthy: number
+  errors: number
+}> {
+  const { data } = await apiClient.post<{
+    total: number
+    healthy: number
+    unhealthy: number
+    errors: number
+  }>('/admin/proxies/health-check-all')
+  return data
+}
+
+/**
+ * Auto assign a proxy to an account
+ * @param accountId - Account ID
+ * @returns Assignment result
+ */
+export async function autoAssignProxy(accountId: number): Promise<{
+  proxy_group: string
+  proxy_id?: number
+  message: string
+}> {
+  const { data } = await apiClient.post<{
+    proxy_group: string
+    proxy_id?: number
+    message: string
+  }>(`/admin/accounts/${accountId}/auto-assign-proxy`)
+  return data
+}
+
+/**
+ * Test proxy connectivity for an account
+ * @param accountId - Account ID
+ * @returns Test result
+ */
+export async function testAccountProxy(accountId: number): Promise<{
+  success: boolean
+  message: string
+  latency_ms?: number
+  exit_ip?: string
+}> {
+  const { data } = await apiClient.post<{
+    success: boolean
+    message: string
+    latency_ms?: number
+    exit_ip?: string
+  }>(`/admin/accounts/${accountId}/test-proxy`)
+  return data
+}
+
 export const proxiesAPI = {
   list,
   getAll,
@@ -264,7 +321,10 @@ export const proxiesAPI = {
   batchDelete,
   exportData,
   importData,
-  getGroupNames
+  getGroupNames,
+  healthCheckAll,
+  autoAssignProxy,
+  testAccountProxy
 }
 
 export default proxiesAPI

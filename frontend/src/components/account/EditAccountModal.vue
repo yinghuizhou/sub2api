@@ -528,17 +528,33 @@
             </button>
           </div>
 
-          <div v-if="tempUnschedRules.length > 0" class="space-y-3">
+          <div v-if="tempUnschedRules.length > 0" class="space-y-2">
             <div
               v-for="(rule, index) in tempUnschedRules"
               :key="index"
-              class="rounded-lg border border-gray-200 p-3 dark:border-dark-600"
+              class="rounded-lg border border-gray-200 dark:border-dark-600"
             >
-              <div class="mb-2 flex items-center justify-between">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {{ t('admin.accounts.tempUnschedulable.ruleIndex', { index: index + 1 }) }}
-                </span>
-                <div class="flex items-center gap-2">
+              <!-- 折叠头部 -->
+              <div
+                class="flex cursor-pointer items-center justify-between px-3 py-2 select-none"
+                @click="toggleRuleExpanded(index)"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg
+                    class="h-3.5 w-3.5 flex-shrink-0 text-gray-400 transition-transform duration-150"
+                    :class="expandedRuleIndexes.has(index) ? 'rotate-90' : ''"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {{ t('admin.accounts.tempUnschedulable.ruleIndex', { index: index + 1 }) }}
+                  </span>
+                  <span v-if="!expandedRuleIndexes.has(index)" class="truncate text-xs text-gray-400 dark:text-gray-500">
+                    {{ rule.error_code ? `HTTP ${rule.error_code}` : '' }}{{ rule.error_code && rule.duration_minutes ? ' · ' : '' }}{{ rule.duration_minutes ? `${rule.duration_minutes}min` : '' }}{{ rule.description ? ` · ${rule.description}` : '' }}
+                  </span>
+                </div>
+                <div class="flex flex-shrink-0 items-center gap-1 ml-2" @click.stop>
                   <button
                     type="button"
                     :disabled="index === 0"
@@ -567,46 +583,49 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.errorCode') }}</label>
-                  <input
-                    v-model.number="rule.error_code"
-                    type="number"
-                    min="100"
-                    max="599"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.errorCodePlaceholder')"
-                  />
-                </div>
-                <div>
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.durationMinutes') }}</label>
-                  <input
-                    v-model.number="rule.duration_minutes"
-                    type="number"
-                    min="1"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.durationPlaceholder')"
-                  />
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.keywords') }}</label>
-                  <input
-                    v-model="rule.keywords"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.keywordsPlaceholder')"
-                  />
-                  <p class="input-hint">{{ t('admin.accounts.tempUnschedulable.keywordsHint') }}</p>
-                </div>
-                <div class="sm:col-span-2">
-                  <label class="input-label">{{ t('admin.accounts.tempUnschedulable.description') }}</label>
-                  <input
-                    v-model="rule.description"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.accounts.tempUnschedulable.descriptionPlaceholder')"
-                  />
+              <!-- 展开内容 -->
+              <div v-if="expandedRuleIndexes.has(index)" class="border-t border-gray-200 p-3 dark:border-dark-600">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.errorCode') }}</label>
+                    <input
+                      v-model.number="rule.error_code"
+                      type="number"
+                      min="100"
+                      max="599"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.errorCodePlaceholder')"
+                    />
+                  </div>
+                  <div>
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.durationMinutes') }}</label>
+                    <input
+                      v-model.number="rule.duration_minutes"
+                      type="number"
+                      min="1"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.durationPlaceholder')"
+                    />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.keywords') }}</label>
+                    <input
+                      v-model="rule.keywords"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.keywordsPlaceholder')"
+                    />
+                    <p class="input-hint">{{ t('admin.accounts.tempUnschedulable.keywordsHint') }}</p>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="input-label">{{ t('admin.accounts.tempUnschedulable.description') }}</label>
+                    <input
+                      v-model="rule.description"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.accounts.tempUnschedulable.descriptionPlaceholder')"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -669,13 +688,61 @@
 
       <div>
         <label class="input-label">{{ t('admin.accounts.proxyGroup') }}</label>
-        <input
-          v-model="form.proxy_group"
-          type="text"
-          class="input"
-          :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
-        />
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <input
+              v-model="form.proxy_group"
+              type="text"
+              class="input"
+              list="proxy-group-names"
+              :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
+            />
+            <datalist id="proxy-group-names">
+              <option v-for="name in proxyGroupNames" :key="name" :value="name" />
+            </datalist>
+          </div>
+          <button
+            v-if="account?.id"
+            type="button"
+            @click="handleAutoAssign"
+            :disabled="autoAssigning"
+            class="btn btn-secondary whitespace-nowrap px-3 py-2 text-sm"
+            :title="t('admin.accounts.autoAssignProxy')"
+          >
+            <Icon v-if="autoAssigning" name="refresh" size="sm" class="mr-1 animate-spin" />
+            {{ t('admin.accounts.autoAssignProxy') }}
+          </button>
+        </div>
         <p class="input-hint">{{ t('admin.accounts.proxyGroupHint') }}</p>
+        <!-- Test Connectivity -->
+        <div v-if="form.proxy_group && account?.id" class="mt-2">
+          <button
+            type="button"
+            @click="handleTestProxyConnectivity"
+            :disabled="testingProxy"
+            class="btn btn-secondary px-3 py-1.5 text-xs"
+          >
+            <Icon v-if="testingProxy" name="refresh" size="sm" class="mr-1 animate-spin" />
+            <Icon v-else name="checkCircle" size="sm" class="mr-1" />
+            {{ t('admin.accounts.testProxyConnectivity') }}
+          </button>
+          <div v-if="proxyTestResult" class="mt-1.5">
+            <span
+              v-if="proxyTestResult.success"
+              class="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+            >
+              <Icon name="checkCircle" size="sm" />
+              {{ t('admin.accounts.testProxySuccess', { latency: proxyTestResult.latency_ms || '?', ip: proxyTestResult.exit_ip || '?' }) }}
+            </span>
+            <span
+              v-else
+              class="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400"
+            >
+              <Icon name="x" size="sm" />
+              {{ proxyTestResult.message || t('admin.accounts.testProxyFailed') }}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -1138,6 +1205,13 @@ const antigravityWhitelistModels = ref<string[]>([])
 const antigravityModelMappings = ref<ModelMapping[]>([])
 const tempUnschedEnabled = ref(false)
 const tempUnschedRules = ref<TempUnschedRuleForm[]>([])
+const expandedRuleIndexes = ref<Set<number>>(new Set())
+
+// Proxy group dropdown and auto-assign state
+const proxyGroupNames = ref<string[]>([])
+const autoAssigning = ref(false)
+const testingProxy = ref(false)
+const proxyTestResult = ref<{ success: boolean; latency_ms?: number; exit_ip?: string; message?: string } | null>(null)
 
 // Mixed channel warning dialog state
 const showMixedChannelWarning = ref(false)
@@ -1225,6 +1299,8 @@ watch(
   () => props.account,
   (newAccount) => {
     if (newAccount) {
+      loadProxyGroupNames()
+      proxyTestResult.value = null
       form.name = newAccount.name
       form.notes = newAccount.notes || ''
       form.proxy_id = newAccount.proxy_id
@@ -1439,20 +1515,25 @@ const removeErrorCode = (code: number) => {
 }
 
 const addTempUnschedRule = (preset?: TempUnschedRuleForm) => {
+  const newIndex = tempUnschedRules.value.length
   if (preset) {
     tempUnschedRules.value.push({ ...preset })
-    return
+  } else {
+    tempUnschedRules.value.push({
+      error_code: null,
+      keywords: '',
+      duration_minutes: 30,
+      description: ''
+    })
   }
-  tempUnschedRules.value.push({
-    error_code: null,
-    keywords: '',
-    duration_minutes: 30,
-    description: ''
-  })
+  expandedRuleIndexes.value.add(newIndex)
 }
 
 const removeTempUnschedRule = (index: number) => {
   tempUnschedRules.value.splice(index, 1)
+  const next = new Set<number>()
+  expandedRuleIndexes.value.forEach(i => { if (i < index) next.add(i); else if (i > index) next.add(i - 1) })
+  expandedRuleIndexes.value = next
 }
 
 const moveTempUnschedRule = (index: number, direction: number) => {
@@ -1462,6 +1543,18 @@ const moveTempUnschedRule = (index: number, direction: number) => {
   const current = rules[index]
   rules[index] = rules[target]
   rules[target] = current
+  const wasIndexExpanded = expandedRuleIndexes.value.has(index)
+  const wasTargetExpanded = expandedRuleIndexes.value.has(target)
+  if (wasIndexExpanded) expandedRuleIndexes.value.add(target); else expandedRuleIndexes.value.delete(target)
+  if (wasTargetExpanded) expandedRuleIndexes.value.add(index); else expandedRuleIndexes.value.delete(index)
+}
+
+const toggleRuleExpanded = (index: number) => {
+  if (expandedRuleIndexes.value.has(index)) {
+    expandedRuleIndexes.value.delete(index)
+  } else {
+    expandedRuleIndexes.value.add(index)
+  }
 }
 
 const buildTempUnschedRules = (rules: TempUnschedRuleForm[]) => {
@@ -1614,8 +1707,52 @@ function toPositiveNumber(value: unknown) {
 const formatDateTimeLocal = formatDateTimeLocalInput
 const parseDateTimeLocal = parseDateTimeLocalInput
 
+// Load proxy group names when dialog opens
+const loadProxyGroupNames = async () => {
+  try {
+    proxyGroupNames.value = await adminAPI.proxies.getGroupNames()
+  } catch (error) {
+    console.error('Failed to load proxy group names:', error)
+  }
+}
+
+const handleAutoAssign = async () => {
+  if (!props.account?.id || autoAssigning.value) return
+  autoAssigning.value = true
+  proxyTestResult.value = null
+  try {
+    const result = await adminAPI.proxies.autoAssignProxy(props.account.id)
+    form.proxy_group = result.proxy_group
+    appStore.showSuccess(t('admin.accounts.autoAssignProxySuccess', { group: result.proxy_group }))
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('admin.accounts.autoAssignProxyFailed'))
+    console.error('Error auto-assigning proxy:', error)
+  } finally {
+    autoAssigning.value = false
+  }
+}
+
+const handleTestProxyConnectivity = async () => {
+  if (!props.account?.id || testingProxy.value) return
+  testingProxy.value = true
+  proxyTestResult.value = null
+  try {
+    const result = await adminAPI.proxies.testAccountProxy(props.account.id)
+    proxyTestResult.value = result
+  } catch (error: any) {
+    proxyTestResult.value = {
+      success: false,
+      message: error.response?.data?.detail || t('admin.accounts.testProxyFailed')
+    }
+    console.error('Error testing proxy connectivity:', error)
+  } finally {
+    testingProxy.value = false
+  }
+}
+
 // Methods
 const handleClose = () => {
+  proxyTestResult.value = null
   emit('close')
 }
 

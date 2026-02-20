@@ -387,7 +387,7 @@ const detectVendor = async () => {
   detectResult.value = null
   try {
     const res = await vendorApi.detect({ url: detectForm.url, api_key: detectForm.api_key })
-    const data: VendorProbeResult = (res as any).data ?? res
+    const data = (res as { data?: VendorProbeResult }).data ?? (res as unknown as VendorProbeResult)
     detectResult.value = data
     if (data.success) {
       form.base_url = data.base_url
@@ -396,6 +396,15 @@ const detectVendor = async () => {
       if (data.balance_usd != null) form.balance_usd = data.balance_usd
       if (!form.name) {
         try { form.name = new URL(data.base_url).hostname } catch {}
+      }
+      // 自动填充 API Key 到 extra_headers
+      if (detectForm.api_key) {
+        const headerKey = data.api_format === 'anthropic' ? 'x-api-key' : 'Authorization'
+        const headerVal = data.api_format === 'anthropic' ? detectForm.api_key : `Bearer ${detectForm.api_key}`
+        let headers: Record<string, string> = {}
+        try { headers = JSON.parse(extraHeadersJson.value || '{}') } catch {}
+        headers[headerKey] = headerVal
+        extraHeadersJson.value = JSON.stringify(headers, null, 2)
       }
     }
   } catch (e: any) {

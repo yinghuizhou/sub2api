@@ -1,0 +1,39 @@
+# 3proxy SOCKS5 Template Unit for Sub2API VPN Proxy System
+# Usage: systemctl start 3proxy@<instance-name>
+# Config file: /etc/3proxy/instances/<instance-name>.cfg
+#
+# Each 3proxy instance binds to the corresponding OpenVPN tunnel's
+# local IP address, providing a SOCKS5 proxy that routes traffic
+# exclusively through that VPN tunnel.
+
+[Unit]
+Description=3proxy SOCKS5 - %i
+After=openvpn-client@%i.service
+BindsTo=openvpn-client@%i.service
+Requires=openvpn-client@%i.service
+Documentation=https://3proxy.ru/doc/
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/3proxy /etc/3proxy/instances/%i.cfg
+
+Restart=on-failure
+RestartSec=5
+
+# Run as dedicated user for security
+User=proxy3
+Group=proxy3
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/sub2api-vpn
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=3proxy-%i
+
+[Install]
+WantedBy=multi-user.target

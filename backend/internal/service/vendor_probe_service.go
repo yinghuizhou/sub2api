@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // VendorProbeRequest 探测请求
@@ -43,6 +45,7 @@ type VendorProbeResult struct {
 // VendorProbeService 供应商探测服务
 type VendorProbeService struct {
 	httpClient *http.Client
+	sfGroup    singleflight.Group
 }
 
 // NewVendorProbeService 创建探测服务
@@ -57,6 +60,18 @@ func NewVendorProbeService() *VendorProbeService {
 // Probe 探测供应商 URL，返回平台信息和余额
 func (s *VendorProbeService) Probe(ctx context.Context, req *VendorProbeRequest) (*VendorProbeResult, error) {
 	baseURL := strings.TrimRight(req.URL, "/")
+	// singleflight: 对同一 URL 的并发探测请求合并为一次
+	sfKey := baseURL
+	v, err, _ := s.sfGroup.Do(sfKey, func() (any, error) {
+		return s.doProbe(ctx, baseURL, req.APIKey)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return v.(*VendorProbeResult), nil
+}
+
+func (s *VendorProbeService) doProbe(ctx context.Context, baseURL, apiKey string) (*VendorProbeResult, error) {
 	result := &VendorProbeResult{
 		BaseURL:    baseURL,
 		DetectedAt: time.Now(),
@@ -65,7 +80,7 @@ func (s *VendorProbeService) Probe(ctx context.Context, req *VendorProbeRequest)
 	start := time.Now()
 
 	// Step 1: 探测平台类型并获取模型列表（始终使用 OpenAI 格式的 /v1/models）
-	models, platformType, err := s.probeModels(ctx, baseURL, req.APIKey)
+	models, platformType, err := s.probeModels(ctx, baseURL, apiKey)
 	result.LatencyMS = int(time.Since(start).Milliseconds())
 
 	if err != nil {
@@ -85,7 +100,7 @@ func (s *VendorProbeService) Probe(ctx context.Context, req *VendorProbeRequest)
 	}
 
 	// Step 2: 尝试获取余额（多种策略，取第一个成功的）
-	balance, balanceRaw := s.probeBalance(ctx, baseURL, req.APIKey, platformType)
+	balance, balanceRaw := s.probeBalance(ctx, baseURL, apiKey, platformType)
 	result.BalanceUSD = balance
 	result.BalanceRaw = balanceRaw
 
@@ -331,7 +346,8 @@ func (s *VendorProbeService) probeNewAPITokenSearch(ctx context.Context, baseURL
 	defer cancel()
 
 	// 用 API Key 本身搜索 token 信息（某些部署允许通过 key 值查询）
-	// NOTE: key 通过 query param 传递是该 API 端点的要求，同时也通过 Authorization 头传递
+	// SECURITY: key 通过 query param 传递是该 upstream API 端点的强制要求，
+	// 无法使用 header-based 替代。确保不在 debug 日志中打印完整 URL。
 	url := fmt.Sprintf("%s/api/token/search?key=%s", baseURL, apiKey)
 	req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, url, nil)
 	if err != nil {

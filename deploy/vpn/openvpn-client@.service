@@ -1,0 +1,42 @@
+# OpenVPN Client Template Unit for Sub2API VPN Proxy System
+# Usage: systemctl start openvpn-client@<instance-name>
+# Config file: /etc/openvpn/clients/<instance-name>.conf
+# Each instance gets its own tun device (tun-<instance-name>)
+# and isolated routing table for policy-based routing.
+
+[Unit]
+Description=OpenVPN Client - %i
+After=network-online.target
+Wants=network-online.target
+Documentation=https://openvpn.net/community-resources/reference-manual-for-openvpn-2-6/
+
+# Restart on failure but not too aggressively
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=notify
+PrivateTmp=true
+WorkingDirectory=/etc/openvpn/clients
+
+# Run OpenVPN with the instance-specific config
+ExecStart=/usr/sbin/openvpn --config /etc/openvpn/clients/%i.conf
+
+# Graceful shutdown
+ExecStop=/bin/kill -SIGTERM $MAINPID
+
+# Restart policy: always restart on failure with increasing delay
+Restart=on-failure
+RestartSec=10
+
+# Security hardening
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE CAP_SETUID CAP_SETGID
+LimitNPROC=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openvpn-%i
+
+[Install]
+WantedBy=multi-user.target

@@ -234,6 +234,9 @@ func registerAccountRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		accounts.POST("/batch-refresh-tier", h.Admin.Account.BatchRefreshTier)
 		accounts.POST("/bulk-update", h.Admin.Account.BulkUpdate)
 
+		// Auto-assign proxy group
+		accounts.POST("/:id/auto-assign-proxy", h.Admin.Account.AutoAssignProxy)
+
 		// Antigravity 默认模型映射
 		accounts.GET("/antigravity/default-model-mapping", h.Admin.Account.GetAntigravityDefaultModelMapping)
 
@@ -305,6 +308,8 @@ func registerProxyRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		proxies.GET("/:id/accounts", h.Admin.Proxy.GetProxyAccounts)
 		proxies.POST("/batch-delete", h.Admin.Proxy.BatchDelete)
 		proxies.POST("/batch", h.Admin.Proxy.BatchCreate)
+		proxies.POST("/health-check-all", h.Admin.Proxy.HealthCheckAll)
+		proxies.POST("/:id/health-check", h.Admin.Proxy.HealthCheck)
 	}
 }
 

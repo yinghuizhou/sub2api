@@ -233,6 +233,8 @@ var ProviderSet = wire.NewSet(
 	NewProxyService,
 	NewProxyGroupService,
 	NewProxyHealthService,
+	NewPlatformProxyRules,
+	NewProxyAssignmentService,
 	NewRedeemService,
 	NewPromoService,
 	NewUsageService,
@@ -292,5 +294,6 @@ var ProviderSet = wire.NewSet(
 	NewVendorService,
 	NewVendorHealthService,
 	NewVendorBalanceService,
+	NewVendorProbeService,
 	ProvideVendorBackgroundService,
 )
