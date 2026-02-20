@@ -55,6 +55,24 @@ export interface CreateVendorRequest {
 
 export type UpdateVendorRequest = Partial<CreateVendorRequest> & { status?: string }
 
+export interface VendorProbeRequest {
+  url: string
+  api_key: string
+}
+
+export interface VendorProbeResult {
+  success: boolean
+  message?: string
+  api_format: string
+  base_url: string
+  platform_type: string
+  models: string[]
+  balance_usd?: number
+  balance_raw?: string
+  latency_ms: number
+  detected_at: string
+}
+
 export const vendorApi = {
   list: (params?: Record<string, any>) => apiClient.get('/admin/vendors', { params }),
   getById: (id: number) => apiClient.get(`/admin/vendors/${id}`),
@@ -69,4 +87,6 @@ export const vendorApi = {
   getAccounts: (id: number) => apiClient.get(`/admin/vendors/${id}/accounts`),
   batchCreateAccounts: (id: number, data: any) =>
     apiClient.post(`/admin/vendors/${id}/accounts`, data),
+  detect: (data: VendorProbeRequest) =>
+    apiClient.post<VendorProbeResult>('/admin/vendors/detect', data),
 }

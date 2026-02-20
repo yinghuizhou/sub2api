@@ -422,6 +422,7 @@ func registerVendorRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	{
 		vendors.GET("", h.Admin.Vendor.List)
 		vendors.GET("/dashboard", h.Admin.Vendor.Dashboard)
+		vendors.POST("/detect", h.Admin.Vendor.Detect)
 		vendors.GET("/:id", h.Admin.Vendor.GetByID)
 		vendors.POST("", h.Admin.Vendor.Create)
 		vendors.PUT("/:id", h.Admin.Vendor.Update)
