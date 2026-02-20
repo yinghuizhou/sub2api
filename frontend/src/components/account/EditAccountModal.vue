@@ -688,13 +688,61 @@
 
       <div>
         <label class="input-label">{{ t('admin.accounts.proxyGroup') }}</label>
-        <input
-          v-model="form.proxy_group"
-          type="text"
-          class="input"
-          :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
-        />
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <input
+              v-model="form.proxy_group"
+              type="text"
+              class="input"
+              list="proxy-group-names"
+              :placeholder="t('admin.accounts.proxyGroupPlaceholder')"
+            />
+            <datalist id="proxy-group-names">
+              <option v-for="name in proxyGroupNames" :key="name" :value="name" />
+            </datalist>
+          </div>
+          <button
+            v-if="account?.id"
+            type="button"
+            @click="handleAutoAssign"
+            :disabled="autoAssigning"
+            class="btn btn-secondary whitespace-nowrap px-3 py-2 text-sm"
+            :title="t('admin.accounts.autoAssignProxy')"
+          >
+            <Icon v-if="autoAssigning" name="refresh" size="sm" class="mr-1 animate-spin" />
+            {{ t('admin.accounts.autoAssignProxy') }}
+          </button>
+        </div>
         <p class="input-hint">{{ t('admin.accounts.proxyGroupHint') }}</p>
+        <!-- Test Connectivity -->
+        <div v-if="form.proxy_group && account?.id" class="mt-2">
+          <button
+            type="button"
+            @click="handleTestProxyConnectivity"
+            :disabled="testingProxy"
+            class="btn btn-secondary px-3 py-1.5 text-xs"
+          >
+            <Icon v-if="testingProxy" name="refresh" size="sm" class="mr-1 animate-spin" />
+            <Icon v-else name="checkCircle" size="sm" class="mr-1" />
+            {{ t('admin.accounts.testProxyConnectivity') }}
+          </button>
+          <div v-if="proxyTestResult" class="mt-1.5">
+            <span
+              v-if="proxyTestResult.success"
+              class="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+            >
+              <Icon name="checkCircle" size="sm" />
+              {{ t('admin.accounts.testProxySuccess', { latency: proxyTestResult.latency_ms || '?', ip: proxyTestResult.exit_ip || '?' }) }}
+            </span>
+            <span
+              v-else
+              class="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400"
+            >
+              <Icon name="x" size="sm" />
+              {{ proxyTestResult.message || t('admin.accounts.testProxyFailed') }}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -1159,6 +1207,12 @@ const tempUnschedEnabled = ref(false)
 const tempUnschedRules = ref<TempUnschedRuleForm[]>([])
 const expandedRuleIndexes = ref<Set<number>>(new Set())
 
+// Proxy group dropdown and auto-assign state
+const proxyGroupNames = ref<string[]>([])
+const autoAssigning = ref(false)
+const testingProxy = ref(false)
+const proxyTestResult = ref<{ success: boolean; latency_ms?: number; exit_ip?: string; message?: string } | null>(null)
+
 // Mixed channel warning dialog state
 const showMixedChannelWarning = ref(false)
 const mixedChannelWarningDetails = ref<{ groupName: string; currentPlatform: string; otherPlatform: string } | null>(null)
@@ -1245,6 +1299,8 @@ watch(
   () => props.account,
   (newAccount) => {
     if (newAccount) {
+      loadProxyGroupNames()
+      proxyTestResult.value = null
       form.name = newAccount.name
       form.notes = newAccount.notes || ''
       form.proxy_id = newAccount.proxy_id
@@ -1651,8 +1707,52 @@ function toPositiveNumber(value: unknown) {
 const formatDateTimeLocal = formatDateTimeLocalInput
 const parseDateTimeLocal = parseDateTimeLocalInput
 
+// Load proxy group names when dialog opens
+const loadProxyGroupNames = async () => {
+  try {
+    proxyGroupNames.value = await adminAPI.proxies.getGroupNames()
+  } catch (error) {
+    console.error('Failed to load proxy group names:', error)
+  }
+}
+
+const handleAutoAssign = async () => {
+  if (!props.account?.id || autoAssigning.value) return
+  autoAssigning.value = true
+  proxyTestResult.value = null
+  try {
+    const result = await adminAPI.proxies.autoAssignProxy(props.account.id)
+    form.proxy_group = result.proxy_group
+    appStore.showSuccess(t('admin.accounts.autoAssignProxySuccess', { group: result.proxy_group }))
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('admin.accounts.autoAssignProxyFailed'))
+    console.error('Error auto-assigning proxy:', error)
+  } finally {
+    autoAssigning.value = false
+  }
+}
+
+const handleTestProxyConnectivity = async () => {
+  if (!props.account?.id || testingProxy.value) return
+  testingProxy.value = true
+  proxyTestResult.value = null
+  try {
+    const result = await adminAPI.proxies.testAccountProxy(props.account.id)
+    proxyTestResult.value = result
+  } catch (error: any) {
+    proxyTestResult.value = {
+      success: false,
+      message: error.response?.data?.detail || t('admin.accounts.testProxyFailed')
+    }
+    console.error('Error testing proxy connectivity:', error)
+  } finally {
+    testingProxy.value = false
+  }
+}
+
 // Methods
 const handleClose = () => {
+  proxyTestResult.value = null
   emit('close')
 }
 
