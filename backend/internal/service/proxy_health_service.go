@@ -255,6 +255,21 @@ func (s *ProxyHealthService) buildTransport(proxyURL string) (*http.Transport, e
 	return transport, nil
 }
 
+// CheckOne triggers a health check for a single proxy by ID.
+func (s *ProxyHealthService) CheckOne(ctx context.Context, proxyID int64) (*Proxy, error) {
+	p, err := s.proxyRepo.GetByID(ctx, proxyID)
+	if err != nil {
+		return nil, fmt.Errorf("get proxy: %w", err)
+	}
+	s.checkOne(ctx, p)
+	return p, nil
+}
+
+// CheckAll triggers health checks for all active proxies.
+func (s *ProxyHealthService) CheckAll(ctx context.Context) {
+	s.checkAll()
+}
+
 // CheckGroupHealth checks if an entire proxy group is healthy.
 // Returns true if at least one proxy in the group is healthy.
 func (s *ProxyHealthService) CheckGroupHealth(ctx context.Context, groupName string) (bool, error) {
