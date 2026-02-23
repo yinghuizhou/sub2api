@@ -14,7 +14,7 @@
 #   trusted_ip           - VPN server IP
 #   trusted_port         - VPN server port
 
-set -euo pipefail
+set -eo pipefail
 
 LOG_TAG="sub2api-vpn-up"
 LOG_DIR="/var/log/sub2api-vpn"
@@ -24,6 +24,10 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') [UP] $*" | tee -a "$LOG_DIR/${dev}.log"
     logger -t "$LOG_TAG" "$*"
 }
+
+# Default unset OpenVPN env vars for subnet topology
+ifconfig_remote="${ifconfig_remote:-}"
+route_vpn_gateway="${route_vpn_gateway:-}"
 
 log "Route-up for dev=$dev local=$ifconfig_local remote=${ifconfig_remote:-N/A} gw=${route_vpn_gateway:-N/A}"
 
@@ -47,23 +51,23 @@ fi
 # 2. This routing table has a default route through the VPN gateway
 
 # Flush any existing rules and routes for this table
-ip rule del from "$ifconfig_local" table "$TABLE_ID" 2>/dev/null || true
-ip route flush table "$TABLE_ID" 2>/dev/null || true
+/sbin/ip rule del from "$ifconfig_local" table "$TABLE_ID" 2>/dev/null || true
+/sbin/ip route flush table "$TABLE_ID" 2>/dev/null || true
 
 # Add the default route through VPN for this table
 VPN_GW="${route_vpn_gateway:-$ifconfig_remote}"
 if [ -n "$VPN_GW" ]; then
-    ip route add default via "$VPN_GW" dev "$dev" table "$TABLE_ID"
+    /sbin/ip route add default via "$VPN_GW" dev "$dev" table "$TABLE_ID"
     log "Added default route via $VPN_GW dev $dev table $TABLE_ID"
 else
     # Point-to-point: route through device directly
-    ip route add default dev "$dev" table "$TABLE_ID"
+    /sbin/ip route add default dev "$dev" table "$TABLE_ID"
     log "Added default route dev $dev table $TABLE_ID (p2p)"
 fi
 
 # Add routing rule: traffic from VPN IP uses VPN routing table
-ip rule add from "$ifconfig_local" table "$TABLE_ID" priority 100
-log "Added ip rule: from $ifconfig_local table $TABLE_ID priority 100"
+/sbin/ip rule add from "$ifconfig_local" table "$TABLE_ID" priority 100
+log "Added /sbin/ip rule: from $ifconfig_local table $TABLE_ID priority 100"
 
 # Store state for down.sh and health checks
 STATE_DIR="/run/sub2api-vpn"

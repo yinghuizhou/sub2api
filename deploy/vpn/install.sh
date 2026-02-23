@@ -52,7 +52,7 @@ detect_os() {
         ubuntu|debian)
             PKG_MANAGER="apt"
             ;;
-        centos|rhel|rocky|almalinux|fedora)
+        centos|rhel|rocky|almalinux|alinux|fedora)
             PKG_MANAGER="yum"
             if command -v dnf &>/dev/null; then
                 PKG_MANAGER="dnf"

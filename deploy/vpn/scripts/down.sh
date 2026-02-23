@@ -42,13 +42,13 @@ fi
 
 # Remove routing rule
 if [ -n "$LOCAL_IP" ]; then
-    ip rule del from "$LOCAL_IP" table "$TABLE_ID" 2>/dev/null && \
-        log "Removed ip rule: from $LOCAL_IP table $TABLE_ID" || \
-        log "No ip rule to remove for $LOCAL_IP table $TABLE_ID"
+    /sbin/ip rule del from "$LOCAL_IP" table "$TABLE_ID" 2>/dev/null && \
+        log "Removed /sbin/ip rule: from $LOCAL_IP table $TABLE_ID" || \
+        log "No /sbin/ip rule to remove for $LOCAL_IP table $TABLE_ID"
 fi
 
 # Flush routing table
-ip route flush table "$TABLE_ID" 2>/dev/null && \
+/sbin/ip route flush table "$TABLE_ID" 2>/dev/null && \
     log "Flushed routing table $TABLE_ID" || \
     log "No routes to flush in table $TABLE_ID"
 

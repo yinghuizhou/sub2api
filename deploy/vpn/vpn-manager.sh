@@ -75,8 +75,8 @@ cmd_list() {
     echo "-------------------------------------------------------------------"
 
     local found=false
-    for conf in "$CLIENTS_DIR"/*.conf 2>/dev/null; do
-        [ -f "$conf" ] || continue
+    shopt -s nullglob
+    for conf in "$CLIENTS_DIR"/*.conf; do
         found=true
         local name
         name=$(basename "$conf" .conf)
@@ -108,6 +108,7 @@ cmd_list() {
         printf "%-20s %-23s %-23s %-16s %-8s\n" \
             "$name" "$vpn_status" "$proxy_status" "$tun_ip" "$port"
     done
+    shopt -u nullglob
 
     if [ "$found" = false ]; then
         echo "  No instances found."
@@ -386,8 +387,8 @@ cmd_health() {
 
     local total=0 healthy=0 unhealthy=0
 
-    for conf in "$CLIENTS_DIR"/*.conf 2>/dev/null; do
-        [ -f "$conf" ] || continue
+    shopt -s nullglob
+    for conf in "$CLIENTS_DIR"/*.conf; do
         total=$((total + 1))
         local name
         name=$(basename "$conf" .conf)
@@ -435,6 +436,7 @@ cmd_health() {
         printf "${status_color}%-20s %-10s %-10s %-16s %-10s${NC}\n" \
             "$name" "$vpn_ok" "$proxy_ok" "$exit_ip" "$latency"
     done
+    shopt -u nullglob
 
     if [ "$total" -eq 0 ]; then
         echo "  No instances found."
