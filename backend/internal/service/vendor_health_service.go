@@ -73,6 +73,14 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 		return result, nil
 	}
 	req.Header.Set("Content-Type", "application/json")
+
+	// Anthropic 格式必须携带 anthropic-version 头
+	if vendor.APIFormat == VendorAPIFormatAnthropic {
+		if _, hasVersion := vendor.ExtraHeaders["anthropic-version"]; !hasVersion {
+			req.Header.Set("anthropic-version", "2023-06-01")
+		}
+	}
+
 	// 应用供应商配置的认证头（管理员在 extra_headers 中设置，如 x-api-key 或 Authorization）
 	for k, v := range vendor.ExtraHeaders {
 		req.Header.Set(k, v)
@@ -88,9 +96,9 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 		result.Error = fmt.Sprintf("request failed: %v", err)
 	} else {
 		defer resp.Body.Close() //nolint:errcheck
-		_, _ = io.Copy(io.Discard, resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 
-		if resp.StatusCode >= 200 && resp.StatusCode < 500 {
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			if latency > 10000 {
 				result.Status = VendorHealthSlow
 			} else {
@@ -98,7 +106,25 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 			}
 		} else {
 			result.Status = VendorHealthError
-			result.Error = fmt.Sprintf("HTTP %d", resp.StatusCode)
+			errMsg := fmt.Sprintf("HTTP %d", resp.StatusCode)
+			// 尝试从响应体提取错误详情
+			if len(body) > 0 {
+				var errResp struct {
+					Error struct {
+						Message string `json:"message"`
+						Type    string `json:"type"`
+					} `json:"error"`
+					Message string `json:"message"`
+				}
+				if json.Unmarshal(body, &errResp) == nil {
+					if errResp.Error.Message != "" {
+						errMsg = fmt.Sprintf("HTTP %d: %s", resp.StatusCode, errResp.Error.Message)
+					} else if errResp.Message != "" {
+						errMsg = fmt.Sprintf("HTTP %d: %s", resp.StatusCode, errResp.Message)
+					}
+				}
+			}
+			result.Error = errMsg
 		}
 	}
 

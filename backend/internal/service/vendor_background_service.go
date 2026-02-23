@@ -115,7 +115,6 @@ func (s *VendorBackgroundService) runAutoSuspendLoop() {
 				continue
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-			defer cancel()
 			suspended, err := s.healthService.AutoSuspendUnhealthy(ctx, 5)
 			if err != nil {
 				slog.Error("[VendorBackground] auto-suspend unhealthy failed", "error", err)
@@ -128,6 +127,7 @@ func (s *VendorBackgroundService) runAutoSuspendLoop() {
 			} else if depleted > 0 {
 				slog.Warn("[VendorBackground] auto-suspended depleted vendors", "count", depleted)
 			}
+			cancel()
 		}
 	}
 }

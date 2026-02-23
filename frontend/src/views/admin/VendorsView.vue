@@ -465,13 +465,24 @@ const handleTest = async (v: Vendor) => {
   testingIds.value = new Set([...testingIds.value, v.id])
   try {
     const res = await vendorApi.test(v.id)
-    const data = res.data ?? res
-    if (data?.status === 'not_implemented') {
-      appStore.showError('连通测试功能尚未实现')
+    const data = (res as any).data ?? res
+    const status = data?.status as string
+    const latency = data?.latency_ms as number | undefined
+    const errorMsg = data?.error as string | undefined
+
+    if (status === 'ok' || status === 'slow') {
+      if (status === 'slow') {
+        appStore.showWarning(`连通成功但响应较慢 (${latency}ms)`)
+      } else {
+        appStore.showSuccess(latency ? `连通成功 (${latency}ms)` : '连通成功')
+      }
+    } else if (status === 'timeout') {
+      appStore.showError('连通超时，供应商无响应')
     } else {
-      appStore.showSuccess(data?.latency_ms ? `连通成功 (${data.latency_ms}ms)` : '连通成功')
+      appStore.showError(errorMsg ? `连通失败: ${errorMsg}` : '连通测试失败')
     }
-  } catch (e: any) { appStore.showError(e?.response?.data?.detail || '连通测试失败') }
+    loadVendors()
+  } catch (e: any) { appStore.showError(e?.message || e?.response?.data?.detail || '连通测试失败') }
   finally { const s = new Set(testingIds.value); s.delete(v.id); testingIds.value = s }
 }
 
