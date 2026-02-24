@@ -48,6 +48,9 @@ type Group struct {
 	// 分组排序
 	SortOrder int
 
+	// 供应商关联：设置后该分组所有请求通过供应商转发
+	VendorID *int64
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 

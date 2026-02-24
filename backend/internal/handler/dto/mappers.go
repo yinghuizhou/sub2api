@@ -147,6 +147,7 @@ func groupFromServiceBase(g *service.Group) Group {
 		FallbackGroupID:  g.FallbackGroupID,
 		// 无效请求兜底分组
 		FallbackGroupIDOnInvalidRequest: g.FallbackGroupIDOnInvalidRequest,
+		VendorID:                        g.VendorID,
 		CreatedAt:                       g.CreatedAt,
 		UpdatedAt:                       g.UpdatedAt,
 	}

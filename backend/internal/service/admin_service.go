@@ -125,6 +125,8 @@ type CreateGroupInput struct {
 	MCPXMLInject        *bool
 	// 支持的模型系列（仅 antigravity 平台使用）
 	SupportedModelScopes []string
+	// 供应商关联：设置后该分组所有请求通过供应商转发
+	VendorID *int64
 	// 从指定分组复制账号（创建分组后在同一事务内绑定）
 	CopyAccountsFromGroupIDs []int64
 }
@@ -154,6 +156,8 @@ type UpdateGroupInput struct {
 	MCPXMLInject        *bool
 	// 支持的模型系列（仅 antigravity 平台使用）
 	SupportedModelScopes *[]string
+	// 供应商关联：设置后该分组所有请求通过供应商转发（0 表示清除）
+	VendorID *int64
 	// 从指定分组复制账号（同步操作：先清空当前分组的账号绑定，再绑定源分组的账号）
 	CopyAccountsFromGroupIDs []int64
 }
@@ -731,6 +735,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		ModelRouting:                    input.ModelRouting,
 		MCPXMLInject:                    mcpXMLInject,
 		SupportedModelScopes:            input.SupportedModelScopes,
+		VendorID:                        input.VendorID,
 	}
 	if err := s.groupRepo.Create(ctx, group); err != nil {
 		return nil, err
@@ -927,6 +932,15 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	// 支持的模型系列（仅 antigravity 平台使用）
 	if input.SupportedModelScopes != nil {
 		group.SupportedModelScopes = *input.SupportedModelScopes
+	}
+
+	// 供应商关联：0 表示清除，正数表示设置
+	if input.VendorID != nil {
+		if *input.VendorID <= 0 {
+			group.VendorID = nil
+		} else {
+			group.VendorID = input.VendorID
+		}
 	}
 
 	if err := s.groupRepo.Update(ctx, group); err != nil {

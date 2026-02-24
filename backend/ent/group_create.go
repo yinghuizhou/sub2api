@@ -354,6 +354,20 @@ func (_c *GroupCreate) SetNillableSortOrder(v *int) *GroupCreate {
 	return _c
 }
 
+// SetVendorID sets the "vendor_id" field.
+func (_c *GroupCreate) SetVendorID(v int64) *GroupCreate {
+	_c.mutation.SetVendorID(v)
+	return _c
+}
+
+// SetNillableVendorID sets the "vendor_id" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableVendorID(v *int64) *GroupCreate {
+	if v != nil {
+		_c.SetVendorID(*v)
+	}
+	return _c
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_c *GroupCreate) AddAPIKeyIDs(ids ...int64) *GroupCreate {
 	_c.mutation.AddAPIKeyIDs(ids...)
@@ -732,6 +746,10 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SortOrder(); ok {
 		_spec.SetField(group.FieldSortOrder, field.TypeInt, value)
 		_node.SortOrder = value
+	}
+	if value, ok := _c.mutation.VendorID(); ok {
+		_spec.SetField(group.FieldVendorID, field.TypeInt64, value)
+		_node.VendorID = &value
 	}
 	if nodes := _c.mutation.APIKeysIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1309,6 +1327,30 @@ func (u *GroupUpsert) AddSortOrder(v int) *GroupUpsert {
 	return u
 }
 
+// SetVendorID sets the "vendor_id" field.
+func (u *GroupUpsert) SetVendorID(v int64) *GroupUpsert {
+	u.Set(group.FieldVendorID, v)
+	return u
+}
+
+// UpdateVendorID sets the "vendor_id" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateVendorID() *GroupUpsert {
+	u.SetExcluded(group.FieldVendorID)
+	return u
+}
+
+// AddVendorID adds v to the "vendor_id" field.
+func (u *GroupUpsert) AddVendorID(v int64) *GroupUpsert {
+	u.Add(group.FieldVendorID, v)
+	return u
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (u *GroupUpsert) ClearVendorID() *GroupUpsert {
+	u.SetNull(group.FieldVendorID)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -1841,6 +1883,34 @@ func (u *GroupUpsertOne) AddSortOrder(v int) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateSortOrder() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateSortOrder()
+	})
+}
+
+// SetVendorID sets the "vendor_id" field.
+func (u *GroupUpsertOne) SetVendorID(v int64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetVendorID(v)
+	})
+}
+
+// AddVendorID adds v to the "vendor_id" field.
+func (u *GroupUpsertOne) AddVendorID(v int64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddVendorID(v)
+	})
+}
+
+// UpdateVendorID sets the "vendor_id" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateVendorID() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateVendorID()
+	})
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (u *GroupUpsertOne) ClearVendorID() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.ClearVendorID()
 	})
 }
 
@@ -2542,6 +2612,34 @@ func (u *GroupUpsertBulk) AddSortOrder(v int) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateSortOrder() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateSortOrder()
+	})
+}
+
+// SetVendorID sets the "vendor_id" field.
+func (u *GroupUpsertBulk) SetVendorID(v int64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetVendorID(v)
+	})
+}
+
+// AddVendorID adds v to the "vendor_id" field.
+func (u *GroupUpsertBulk) AddVendorID(v int64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddVendorID(v)
+	})
+}
+
+// UpdateVendorID sets the "vendor_id" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateVendorID() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateVendorID()
+	})
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (u *GroupUpsertBulk) ClearVendorID() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.ClearVendorID()
 	})
 }
 

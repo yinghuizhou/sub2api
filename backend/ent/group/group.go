@@ -65,6 +65,8 @@ const (
 	FieldSupportedModelScopes = "supported_model_scopes"
 	// FieldSortOrder holds the string denoting the sort_order field in the database.
 	FieldSortOrder = "sort_order"
+	// FieldVendorID holds the string denoting the vendor_id field in the database.
+	FieldVendorID = "vendor_id"
 	// EdgeAPIKeys holds the string denoting the api_keys edge name in mutations.
 	EdgeAPIKeys = "api_keys"
 	// EdgeRedeemCodes holds the string denoting the redeem_codes edge name in mutations.
@@ -165,6 +167,7 @@ var Columns = []string{
 	FieldMcpXMLInject,
 	FieldSupportedModelScopes,
 	FieldSortOrder,
+	FieldVendorID,
 }
 
 var (
@@ -353,6 +356,11 @@ func ByMcpXMLInject(opts ...sql.OrderTermOption) OrderOption {
 // BySortOrder orders the results by the sort_order field.
 func BySortOrder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSortOrder, opts...).ToFunc()
+}
+
+// ByVendorID orders the results by the vendor_id field.
+func ByVendorID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVendorID, opts...).ToFunc()
 }
 
 // ByAPIKeysCount orders the results by api_keys count.

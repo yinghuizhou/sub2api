@@ -3524,12 +3524,25 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 	targetURL := claudeAPIURL
 
 	// 供应商账户：加载供应商配置，覆盖 targetURL 和认证方式
+	// 优先使用 Account 级别的 VendorID，然后回退到 Group 级别的 VendorID
 	var vendor *Vendor
 	if account.VendorID != nil && s.vendorRepo != nil {
 		v, err := s.vendorRepo.GetByID(ctx, *account.VendorID)
 		if err == nil {
 			vendor = v
 			targetURL = vendor.BaseURL + vendor.GetAPIPath()
+		}
+	}
+	// Group 级别供应商 fallback：如果 Account 没有绑定供应商，检查 Group 的供应商配置
+	if vendor == nil && c != nil && s.vendorRepo != nil {
+		if groupVendorID, ok := c.Get(ContextKeyGroupVendorID); ok {
+			if vid, ok := groupVendorID.(int64); ok {
+				v, err := s.vendorRepo.GetByID(ctx, vid)
+				if err == nil {
+					vendor = v
+					targetURL = vendor.BaseURL + vendor.GetAPIPath()
+				}
+			}
 		}
 	}
 

@@ -26,6 +26,11 @@ const (
 	PlatformAntigravity = domain.PlatformAntigravity
 )
 
+// Gin context keys for group-level vendor forwarding
+const (
+	ContextKeyGroupVendorID = "group_vendor_id"
+)
+
 // Account type constants
 const (
 	AccountTypeOAuth      = domain.AccountTypeOAuth      // OAuth类型账号（full scope: profile + inference）

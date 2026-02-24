@@ -126,6 +126,12 @@ func (Group) Fields() []ent.Field {
 		field.Int("sort_order").
 			Default(0).
 			Comment("分组显示排序，数值越小越靠前"),
+
+		// 供应商关联 (added by migration 057)
+		field.Int64("vendor_id").
+			Optional().
+			Nillable().
+			Comment("关联供应商 ID，设置后该分组所有请求通过供应商转发"),
 	}
 }
 
