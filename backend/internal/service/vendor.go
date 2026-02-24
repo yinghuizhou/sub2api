@@ -40,48 +40,48 @@ const (
 
 // Vendor 供应商领域模型
 type Vendor struct {
-	ID          int64
-	Name        string
-	Description *string
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
 
 	// API 配置
-	APIFormat       string
-	BaseURL         string
-	AuthType        string
-	APIPathOverride *string
-	ExtraHeaders    map[string]string
+	APIFormat       string            `json:"api_format"`
+	BaseURL         string            `json:"base_url"`
+	AuthType        string            `json:"auth_type"`
+	APIPathOverride *string           `json:"api_path_override,omitempty"`
+	ExtraHeaders    map[string]string `json:"extra_headers"`
 
 	// 计费信息
-	BillingType     string
-	CostPer1kInput  *float64
-	CostPer1kOutput *float64
-	TotalQuotaUSD   *float64
-	UsedQuotaUSD    float64
-	BalanceUSD      *float64
-	ExpiresAt       *time.Time
+	BillingType     string     `json:"billing_type"`
+	CostPer1kInput  *float64   `json:"cost_per_1k_input,omitempty"`
+	CostPer1kOutput *float64   `json:"cost_per_1k_output,omitempty"`
+	TotalQuotaUSD   *float64   `json:"total_quota_usd,omitempty"`
+	UsedQuotaUSD    float64    `json:"used_quota_usd"`
+	BalanceUSD      *float64   `json:"balance_usd,omitempty"`
+	ExpiresAt       *time.Time `json:"expires_at,omitempty"`
 
 	// 健康监控
-	Status              string
-	HealthCheckEnabled  bool
-	HealthCheckInterval int
-	HealthCheckModel    string
-	LastHealthCheckAt   *time.Time
-	LastHealthStatus    *string
-	LastHealthLatency   *int
-	ErrorMessage        *string
-	ConsecutiveFailures int
+	Status              string     `json:"status"`
+	HealthCheckEnabled  bool       `json:"health_check_enabled"`
+	HealthCheckInterval int        `json:"health_check_interval"`
+	HealthCheckModel    string     `json:"health_check_model"`
+	LastHealthCheckAt   *time.Time `json:"last_health_check_at,omitempty"`
+	LastHealthStatus    *string    `json:"last_health_status,omitempty"`
+	LastHealthLatency   *int       `json:"last_health_latency,omitempty"`
+	ErrorMessage        *string    `json:"error_message,omitempty"`
+	ConsecutiveFailures int        `json:"consecutive_failures"`
 
 	// 自动采购
-	AutoPurchaseEnabled bool
-	AutoPurchaseConfig  map[string]any
+	AutoPurchaseEnabled bool           `json:"auto_purchase_enabled"`
+	AutoPurchaseConfig  map[string]any `json:"auto_purchase_config,omitempty"`
 
 	// 余额预警
-	BalanceAlertEnabled   bool
-	BalanceAlertThreshold *float64
+	BalanceAlertEnabled   bool     `json:"balance_alert_enabled"`
+	BalanceAlertThreshold *float64 `json:"balance_alert_threshold,omitempty"`
 
 	// 时间戳
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (v *Vendor) IsActive() bool {
