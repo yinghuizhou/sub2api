@@ -3528,7 +3528,7 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 	var vendor *Vendor
 	if account.VendorID != nil && s.vendorRepo != nil {
 		v, err := s.vendorRepo.GetByID(ctx, *account.VendorID)
-		if err == nil {
+		if err == nil && v.IsActive() {
 			vendor = v
 			targetURL = vendor.BaseURL + vendor.GetAPIPath()
 		}
@@ -3538,7 +3538,7 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 		if groupVendorID, ok := c.Get(ContextKeyGroupVendorID); ok {
 			if vid, ok := groupVendorID.(int64); ok {
 				v, err := s.vendorRepo.GetByID(ctx, vid)
-				if err == nil {
+				if err == nil && v.IsActive() {
 					vendor = v
 					targetURL = vendor.BaseURL + vendor.GetAPIPath()
 				}
@@ -5283,7 +5283,28 @@ func (s *GatewayService) ForwardCountTokens(ctx context.Context, c *gin.Context,
 func (s *GatewayService) buildCountTokensRequest(ctx context.Context, c *gin.Context, account *Account, body []byte, token, tokenType, modelID string, mimicClaudeCode bool) (*http.Request, error) {
 	// 确定目标 URL
 	targetURL := claudeAPICountTokensURL
-	if account.Type == AccountTypeAPIKey {
+
+	// 供应商覆盖：Account VendorID > Group VendorID > 默认
+	var vendor *Vendor
+	if account.VendorID != nil && s.vendorRepo != nil {
+		v, err := s.vendorRepo.GetByID(ctx, *account.VendorID)
+		if err == nil && v.IsActive() {
+			vendor = v
+		}
+	}
+	if vendor == nil && c != nil && s.vendorRepo != nil {
+		if groupVendorID, ok := c.Get(ContextKeyGroupVendorID); ok {
+			if vid, ok := groupVendorID.(int64); ok {
+				v, err := s.vendorRepo.GetByID(ctx, vid)
+				if err == nil && v.IsActive() {
+					vendor = v
+				}
+			}
+		}
+	}
+	if vendor != nil {
+		targetURL = vendor.BaseURL + vendor.GetAPIPath() + "/count_tokens"
+	} else if account.Type == AccountTypeAPIKey {
 		baseURL := account.GetBaseURL()
 		if baseURL != "" {
 			validatedURL, err := s.validateUpstreamBaseURL(baseURL)
@@ -5319,7 +5340,23 @@ func (s *GatewayService) buildCountTokensRequest(ctx context.Context, c *gin.Con
 	}
 
 	// 设置认证头
-	if tokenType == "oauth" {
+	if vendor != nil {
+		switch vendor.AuthType {
+		case VendorAuthTypeBearer:
+			req.Header.Set("authorization", "Bearer "+token)
+		case VendorAuthTypeSession:
+			sessionKey := ""
+			if sk, ok := account.Credentials["session_key"].(string); ok {
+				sessionKey = sk
+			}
+			req.Header.Set("Cookie", "session="+sessionKey)
+		default:
+			req.Header.Set("x-api-key", token)
+		}
+		for k, v := range vendor.ExtraHeaders {
+			req.Header.Set(k, v)
+		}
+	} else if tokenType == "oauth" {
 		req.Header.Set("authorization", "Bearer "+token)
 	} else {
 		req.Header.Set("x-api-key", token)

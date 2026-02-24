@@ -1117,6 +1117,11 @@ func (h *GatewayHandler) CountTokens(c *gin.Context) {
 
 	setOpsRequestContext(c, "", false, body)
 
+	// 设置 Group 级别供应商 ID 到 context，供 Forward 阶段使用
+	if apiKey.Group != nil && apiKey.Group.VendorID != nil {
+		c.Set(service.ContextKeyGroupVendorID, *apiKey.Group.VendorID)
+	}
+
 	parsedReq, err := service.ParseGatewayRequest(body, domain.PlatformAnthropic)
 	if err != nil {
 		h.errorResponse(c, http.StatusBadRequest, "invalid_request_error", "Failed to parse request body")
