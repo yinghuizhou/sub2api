@@ -436,6 +436,11 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{GroupsColumns[25]},
 			},
+			{
+				Name:    "group_vendor_id",
+				Unique:  false,
+				Columns: []*schema.Column{GroupsColumns[26]},
+			},
 		},
 	}
 	// PromoCodesColumns holds the columns for the "promo_codes" table.
