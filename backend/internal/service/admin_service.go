@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 )
 
@@ -850,17 +851,17 @@ func (s *adminServiceImpl) validateFallbackGroupOnInvalidRequest(ctx context.Con
 // validateGroupVendor validates vendor_id for group: vendor must exist, be active, and group platform must be anthropic.
 func (s *adminServiceImpl) validateGroupVendor(ctx context.Context, vendorID int64, platform string) error {
 	if platform != PlatformAnthropic {
-		return fmt.Errorf("vendor forwarding is only supported for anthropic platform groups")
+		return infraerrors.BadRequest("VENDOR_PLATFORM_MISMATCH", "vendor forwarding is only supported for anthropic platform groups")
 	}
 	if s.vendorRepo == nil {
 		return fmt.Errorf("vendor repository not available")
 	}
 	vendor, err := s.vendorRepo.GetByID(ctx, vendorID)
 	if err != nil {
-		return fmt.Errorf("vendor %d not found", vendorID)
+		return infraerrors.NotFound("VENDOR_NOT_FOUND", fmt.Sprintf("vendor %d not found", vendorID))
 	}
 	if !vendor.IsActive() {
-		return fmt.Errorf("vendor %d is not active (status: %s)", vendorID, vendor.Status)
+		return infraerrors.BadRequest("VENDOR_NOT_ACTIVE", fmt.Sprintf("vendor %d is not active (status: %s)", vendorID, vendor.Status))
 	}
 	return nil
 }
