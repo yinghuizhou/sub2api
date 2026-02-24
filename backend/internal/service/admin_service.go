@@ -325,6 +325,7 @@ type adminServiceImpl struct {
 	proxyProber          ProxyExitInfoProber
 	proxyLatencyCache    ProxyLatencyCache
 	authCacheInvalidator APIKeyAuthCacheInvalidator
+	vendorRepo           VendorRepository
 }
 
 // NewAdminService creates a new AdminService
@@ -340,6 +341,7 @@ func NewAdminService(
 	proxyProber ProxyExitInfoProber,
 	proxyLatencyCache ProxyLatencyCache,
 	authCacheInvalidator APIKeyAuthCacheInvalidator,
+	vendorRepo VendorRepository,
 ) AdminService {
 	return &adminServiceImpl{
 		userRepo:             userRepo,
@@ -353,6 +355,7 @@ func NewAdminService(
 		proxyProber:          proxyProber,
 		proxyLatencyCache:    proxyLatencyCache,
 		authCacheInvalidator: authCacheInvalidator,
+		vendorRepo:           vendorRepo,
 	}
 }
 
@@ -677,6 +680,13 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		}
 	}
 
+	// 校验供应商关联
+	if input.VendorID != nil && *input.VendorID > 0 {
+		if err := s.validateGroupVendor(ctx, *input.VendorID, platform); err != nil {
+			return nil, err
+		}
+	}
+
 	// MCPXMLInject：默认为 true，仅当显式传入 false 时关闭
 	mcpXMLInject := true
 	if input.MCPXMLInject != nil {
@@ -837,6 +847,24 @@ func (s *adminServiceImpl) validateFallbackGroupOnInvalidRequest(ctx context.Con
 	return nil
 }
 
+// validateGroupVendor validates vendor_id for group: vendor must exist, be active, and group platform must be anthropic.
+func (s *adminServiceImpl) validateGroupVendor(ctx context.Context, vendorID int64, platform string) error {
+	if platform != PlatformAnthropic {
+		return fmt.Errorf("vendor forwarding is only supported for anthropic platform groups")
+	}
+	if s.vendorRepo == nil {
+		return fmt.Errorf("vendor repository not available")
+	}
+	vendor, err := s.vendorRepo.GetByID(ctx, vendorID)
+	if err != nil {
+		return fmt.Errorf("vendor %d not found", vendorID)
+	}
+	if !vendor.IsActive() {
+		return fmt.Errorf("vendor %d is not active (status: %s)", vendorID, vendor.Status)
+	}
+	return nil
+}
+
 func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *UpdateGroupInput) (*Group, error) {
 	group, err := s.groupRepo.GetByID(ctx, id)
 	if err != nil {
@@ -939,6 +967,9 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 		if *input.VendorID <= 0 {
 			group.VendorID = nil
 		} else {
+			if err := s.validateGroupVendor(ctx, *input.VendorID, group.Platform); err != nil {
+				return nil, err
+			}
 			group.VendorID = input.VendorID
 		}
 	}

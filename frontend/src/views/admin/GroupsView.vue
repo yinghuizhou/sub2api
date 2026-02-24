@@ -252,8 +252,8 @@
           />
           <p class="input-hint">{{ t('admin.groups.platformHint') }}</p>
         </div>
-        <!-- 供应商关联 -->
-        <div v-if="vendors.length > 0">
+        <!-- 供应商关联（仅 anthropic 平台支持） -->
+        <div v-if="vendors.length > 0 && createForm.platform === 'anthropic'">
           <label class="input-label">{{ t('admin.groups.form.vendor') }}</label>
           <select
             class="input"
@@ -884,8 +884,8 @@
           />
           <p class="input-hint">{{ t('admin.groups.platformNotEditable') }}</p>
         </div>
-        <!-- 供应商关联（编辑时） -->
-        <div v-if="vendors.length > 0">
+        <!-- 供应商关联（编辑时，仅 anthropic 平台） -->
+        <div v-if="vendors.length > 0 && editForm.platform === 'anthropic'">
           <label class="input-label">{{ t('admin.groups.form.vendor') }}</label>
           <select
             class="input"
