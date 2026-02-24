@@ -132,12 +132,18 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
         logger.info("Received valid webhook request from %s", self.client_address[0])
 
-        # Log sanitized body summary
+        # Parse payload and check branch
         try:
             payload = json.loads(body)
             ref = sanitize(payload.get("ref", "unknown"))
-            commit = sanitize(str(payload.get("commit", "unknown"))[:12])
+            commit = sanitize(str(payload.get("after", payload.get("commit", "unknown")))[:12])
             logger.info("ref=%s commit=%s", ref, commit)
+
+            # Only deploy on main branch push
+            if ref not in ("refs/heads/main", "refs/heads/master"):
+                logger.info("Skipping deploy for non-main branch: %s", ref)
+                self._respond(200, {"status": "skipped", "reason": "not main branch"})
+                return
         except (json.JSONDecodeError, AttributeError):
             logger.info("Body (non-JSON): %s", sanitize(body[:200]))
 

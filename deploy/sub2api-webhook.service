@@ -1,0 +1,27 @@
+[Unit]
+Description=Sub2API Gitee Webhook Server
+Documentation=https://gitee.com/xixi_24/sub2api
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/sub2api
+ExecStart=/bin/bash /opt/sub2api/webhook-server.sh
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sub2api-webhook
+
+# Environment (read from /opt/sub2api/.webhook.env)
+EnvironmentFile=/opt/sub2api/.webhook.env
+
+# Security
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
