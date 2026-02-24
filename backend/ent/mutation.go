@@ -7363,6 +7363,8 @@ type GroupMutation struct {
 	appendsupported_model_scopes            []string
 	sort_order                              *int
 	addsort_order                           *int
+	vendor_id                               *int64
+	addvendor_id                            *int64
 	clearedFields                           map[string]struct{}
 	api_keys                                map[int64]struct{}
 	removedapi_keys                         map[int64]struct{}
@@ -8771,6 +8773,76 @@ func (m *GroupMutation) ResetSortOrder() {
 	m.addsort_order = nil
 }
 
+// SetVendorID sets the "vendor_id" field.
+func (m *GroupMutation) SetVendorID(i int64) {
+	m.vendor_id = &i
+	m.addvendor_id = nil
+}
+
+// VendorID returns the value of the "vendor_id" field in the mutation.
+func (m *GroupMutation) VendorID() (r int64, exists bool) {
+	v := m.vendor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVendorID returns the old "vendor_id" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldVendorID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVendorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVendorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVendorID: %w", err)
+	}
+	return oldValue.VendorID, nil
+}
+
+// AddVendorID adds i to the "vendor_id" field.
+func (m *GroupMutation) AddVendorID(i int64) {
+	if m.addvendor_id != nil {
+		*m.addvendor_id += i
+	} else {
+		m.addvendor_id = &i
+	}
+}
+
+// AddedVendorID returns the value that was added to the "vendor_id" field in this mutation.
+func (m *GroupMutation) AddedVendorID() (r int64, exists bool) {
+	v := m.addvendor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearVendorID clears the value of the "vendor_id" field.
+func (m *GroupMutation) ClearVendorID() {
+	m.vendor_id = nil
+	m.addvendor_id = nil
+	m.clearedFields[group.FieldVendorID] = struct{}{}
+}
+
+// VendorIDCleared returns if the "vendor_id" field was cleared in this mutation.
+func (m *GroupMutation) VendorIDCleared() bool {
+	_, ok := m.clearedFields[group.FieldVendorID]
+	return ok
+}
+
+// ResetVendorID resets all changes to the "vendor_id" field.
+func (m *GroupMutation) ResetVendorID() {
+	m.vendor_id = nil
+	m.addvendor_id = nil
+	delete(m.clearedFields, group.FieldVendorID)
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by ids.
 func (m *GroupMutation) AddAPIKeyIDs(ids ...int64) {
 	if m.api_keys == nil {
@@ -9129,7 +9201,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 25)
+	fields := make([]string, 0, 26)
 	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
@@ -9205,6 +9277,9 @@ func (m *GroupMutation) Fields() []string {
 	if m.sort_order != nil {
 		fields = append(fields, group.FieldSortOrder)
 	}
+	if m.vendor_id != nil {
+		fields = append(fields, group.FieldVendorID)
+	}
 	return fields
 }
 
@@ -9263,6 +9338,8 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.SupportedModelScopes()
 	case group.FieldSortOrder:
 		return m.SortOrder()
+	case group.FieldVendorID:
+		return m.VendorID()
 	}
 	return nil, false
 }
@@ -9322,6 +9399,8 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldSupportedModelScopes(ctx)
 	case group.FieldSortOrder:
 		return m.OldSortOrder(ctx)
+	case group.FieldVendorID:
+		return m.OldVendorID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Group field %s", name)
 }
@@ -9506,6 +9585,13 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSortOrder(v)
 		return nil
+	case group.FieldVendorID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVendorID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
 }
@@ -9547,6 +9633,9 @@ func (m *GroupMutation) AddedFields() []string {
 	if m.addsort_order != nil {
 		fields = append(fields, group.FieldSortOrder)
 	}
+	if m.addvendor_id != nil {
+		fields = append(fields, group.FieldVendorID)
+	}
 	return fields
 }
 
@@ -9577,6 +9666,8 @@ func (m *GroupMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedFallbackGroupIDOnInvalidRequest()
 	case group.FieldSortOrder:
 		return m.AddedSortOrder()
+	case group.FieldVendorID:
+		return m.AddedVendorID()
 	}
 	return nil, false
 }
@@ -9663,6 +9754,13 @@ func (m *GroupMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddSortOrder(v)
 		return nil
+	case group.FieldVendorID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVendorID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Group numeric field %s", name)
 }
@@ -9703,6 +9801,9 @@ func (m *GroupMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(group.FieldModelRouting) {
 		fields = append(fields, group.FieldModelRouting)
+	}
+	if m.FieldCleared(group.FieldVendorID) {
+		fields = append(fields, group.FieldVendorID)
 	}
 	return fields
 }
@@ -9750,6 +9851,9 @@ func (m *GroupMutation) ClearField(name string) error {
 		return nil
 	case group.FieldModelRouting:
 		m.ClearModelRouting()
+		return nil
+	case group.FieldVendorID:
+		m.ClearVendorID()
 		return nil
 	}
 	return fmt.Errorf("unknown Group nullable field %s", name)
@@ -9833,6 +9937,9 @@ func (m *GroupMutation) ResetField(name string) error {
 		return nil
 	case group.FieldSortOrder:
 		m.ResetSortOrder()
+		return nil
+	case group.FieldVendorID:
+		m.ResetVendorID()
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)

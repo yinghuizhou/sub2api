@@ -252,6 +252,23 @@
           />
           <p class="input-hint">{{ t('admin.groups.platformHint') }}</p>
         </div>
+        <!-- 供应商关联 -->
+        <div v-if="vendors.length > 0">
+          <label class="input-label">{{ t('admin.groups.form.vendor') }}</label>
+          <select
+            class="input"
+            :value="createForm.vendor_id ?? ''"
+            @change="(e) => {
+              const val = (e.target as HTMLSelectElement).value
+              createForm.vendor_id = val ? Number(val) : null
+            }"
+          >
+            <option v-for="opt in vendorOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <p class="input-hint">{{ t('admin.groups.vendorHint') }}</p>
+        </div>
         <!-- 从分组复制账号 -->
         <div v-if="copyAccountsGroupOptions.length > 0">
           <div class="mb-1.5 flex items-center gap-1">
@@ -866,6 +883,23 @@
             data-tour="group-form-platform"
           />
           <p class="input-hint">{{ t('admin.groups.platformNotEditable') }}</p>
+        </div>
+        <!-- 供应商关联（编辑时） -->
+        <div v-if="vendors.length > 0">
+          <label class="input-label">{{ t('admin.groups.form.vendor') }}</label>
+          <select
+            class="input"
+            :value="editForm.vendor_id ?? ''"
+            @change="(e) => {
+              const val = (e.target as HTMLSelectElement).value
+              editForm.vendor_id = val ? Number(val) : null
+            }"
+          >
+            <option v-for="opt in vendorOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <p class="input-hint">{{ t('admin.groups.vendorHint') }}</p>
         </div>
         <!-- 从分组复制账号（编辑时） -->
         <div v-if="copyAccountsGroupOptionsForEdit.length > 0">
@@ -1558,6 +1592,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useOnboardingStore } from '@/stores/onboarding'
 import { adminAPI } from '@/api/admin'
+import { vendorApi } from '@/api/vendor'
 import type { AdminGroup, GroupPlatform, SubscriptionType } from '@/types'
 import type { Column } from '@/components/common/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -1716,6 +1751,7 @@ const copyAccountsGroupOptionsForEdit = computed(() => {
 })
 
 const groups = ref<AdminGroup[]>([])
+const vendors = ref<{ id: number; name: string; status: string }[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
 const filters = reactive({
@@ -1766,6 +1802,8 @@ const createForm = reactive({
   supported_model_scopes: ['claude', 'gemini_text', 'gemini_image'] as string[],
   // MCP XML 协议注入开关（仅 antigravity 平台）
   mcp_xml_inject: true,
+  // 供应商关联
+  vendor_id: null as number | null,
   // 从分组复制账号
   copy_accounts_from_group_ids: [] as number[]
 })
@@ -1964,6 +2002,8 @@ const editForm = reactive({
   supported_model_scopes: ['claude', 'gemini_text', 'gemini_image'] as string[],
   // MCP XML 协议注入开关（仅 antigravity 平台）
   mcp_xml_inject: true,
+  // 供应商关联
+  vendor_id: null as number | null,
   // 从分组复制账号
   copy_accounts_from_group_ids: [] as number[]
 })
@@ -2050,6 +2090,7 @@ const closeCreateModal = () => {
   createForm.fallback_group_id_on_invalid_request = null
   createForm.supported_model_scopes = ['claude', 'gemini_text', 'gemini_image']
   createForm.mcp_xml_inject = true
+  createForm.vendor_id = null
   createForm.copy_accounts_from_group_ids = []
   createModelRoutingRules.value = []
 }
@@ -2104,6 +2145,7 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.model_routing_enabled = group.model_routing_enabled || false
   editForm.supported_model_scopes = group.supported_model_scopes || ['claude', 'gemini_text', 'gemini_image']
   editForm.mcp_xml_inject = group.mcp_xml_inject ?? true
+  editForm.vendor_id = group.vendor_id ?? null
   editForm.copy_accounts_from_group_ids = [] // 复制账号字段每次编辑时重置为空
   // 加载模型路由规则（异步加载账号名称）
   editModelRoutingRules.value = await convertApiFormatToRoutingRules(group.model_routing)
@@ -2126,7 +2168,7 @@ const handleUpdateGroup = async () => {
 
   submitting.value = true
   try {
-    // 转换 fallback_group_id: null -> 0 (后端使用 0 表示清除)
+    // 转换 null -> 0 (后端使用 0 表示清除)
     const payload = {
       ...editForm,
       fallback_group_id: editForm.fallback_group_id === null ? 0 : editForm.fallback_group_id,
@@ -2134,6 +2176,7 @@ const handleUpdateGroup = async () => {
         editForm.fallback_group_id_on_invalid_request === null
           ? 0
           : editForm.fallback_group_id_on_invalid_request,
+      vendor_id: editForm.vendor_id === null ? 0 : editForm.vendor_id,
       model_routing: convertRoutingRulesToApiFormat(editModelRoutingRules.value)
     }
     await adminAPI.groups.update(editingGroup.value.id, payload)
@@ -2239,8 +2282,30 @@ const saveSortOrder = async () => {
   }
 }
 
+const loadVendors = async () => {
+  try {
+    const res = await vendorApi.list({ page: 1, page_size: 100, status: 'active' })
+    vendors.value = (res.data?.items || []).map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      status: v.status
+    }))
+  } catch {
+    // 静默失败，供应商列表仅用于选择器
+  }
+}
+
+const vendorOptions = computed(() => [
+  { label: t('admin.groups.noVendor'), value: '' },
+  ...vendors.value.map(v => ({
+    label: v.name,
+    value: v.id
+  }))
+])
+
 onMounted(() => {
   loadGroups()
+  loadVendors()
   document.addEventListener('click', handleClickOutside)
 })
 

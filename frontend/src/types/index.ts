@@ -362,6 +362,8 @@ export interface Group {
   claude_code_only: boolean
   fallback_group_id: number | null
   fallback_group_id_on_invalid_request: number | null
+  // 供应商关联
+  vendor_id?: number | null
   created_at: string
   updated_at: string
 }

@@ -170,6 +170,11 @@ func SortOrder(v int) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldSortOrder, v))
 }
 
+// VendorID applies equality check predicate on the "vendor_id" field. It's identical to VendorIDEQ.
+func VendorID(v int64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldVendorID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldCreatedAt, v))
@@ -1203,6 +1208,56 @@ func SortOrderLT(v int) predicate.Group {
 // SortOrderLTE applies the LTE predicate on the "sort_order" field.
 func SortOrderLTE(v int) predicate.Group {
 	return predicate.Group(sql.FieldLTE(FieldSortOrder, v))
+}
+
+// VendorIDEQ applies the EQ predicate on the "vendor_id" field.
+func VendorIDEQ(v int64) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldVendorID, v))
+}
+
+// VendorIDNEQ applies the NEQ predicate on the "vendor_id" field.
+func VendorIDNEQ(v int64) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldVendorID, v))
+}
+
+// VendorIDIn applies the In predicate on the "vendor_id" field.
+func VendorIDIn(vs ...int64) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldVendorID, vs...))
+}
+
+// VendorIDNotIn applies the NotIn predicate on the "vendor_id" field.
+func VendorIDNotIn(vs ...int64) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldVendorID, vs...))
+}
+
+// VendorIDGT applies the GT predicate on the "vendor_id" field.
+func VendorIDGT(v int64) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldVendorID, v))
+}
+
+// VendorIDGTE applies the GTE predicate on the "vendor_id" field.
+func VendorIDGTE(v int64) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldVendorID, v))
+}
+
+// VendorIDLT applies the LT predicate on the "vendor_id" field.
+func VendorIDLT(v int64) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldVendorID, v))
+}
+
+// VendorIDLTE applies the LTE predicate on the "vendor_id" field.
+func VendorIDLTE(v int64) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldVendorID, v))
+}
+
+// VendorIDIsNil applies the IsNil predicate on the "vendor_id" field.
+func VendorIDIsNil() predicate.Group {
+	return predicate.Group(sql.FieldIsNull(FieldVendorID))
+}
+
+// VendorIDNotNil applies the NotNil predicate on the "vendor_id" field.
+func VendorIDNotNil() predicate.Group {
+	return predicate.Group(sql.FieldNotNull(FieldVendorID))
 }
 
 // HasAPIKeys applies the HasEdge predicate on the "api_keys" edge.

@@ -62,6 +62,11 @@ func (r *groupRepository) Create(ctx context.Context, groupIn *service.Group) er
 	// 设置支持的模型系列（始终设置，空数组表示不限制）
 	builder = builder.SetSupportedModelScopes(groupIn.SupportedModelScopes)
 
+	// 设置供应商关联
+	if groupIn.VendorID != nil {
+		builder = builder.SetVendorID(*groupIn.VendorID)
+	}
+
 	created, err := builder.Save(ctx)
 	if err == nil {
 		groupIn.ID = created.ID
@@ -137,6 +142,13 @@ func (r *groupRepository) Update(ctx context.Context, groupIn *service.Group) er
 
 	// 处理 SupportedModelScopes（始终设置，空数组表示不限制）
 	builder = builder.SetSupportedModelScopes(groupIn.SupportedModelScopes)
+
+	// 处理 VendorID：nil 时清除，否则设置
+	if groupIn.VendorID != nil {
+		builder = builder.SetVendorID(*groupIn.VendorID)
+	} else {
+		builder = builder.ClearVendorID()
+	}
 
 	updated, err := builder.Save(ctx)
 	if err != nil {

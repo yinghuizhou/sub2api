@@ -1076,6 +1076,7 @@ export default {
         name: 'Name',
         description: 'Description',
         platform: 'Platform',
+        vendor: 'Vendor',
         rateMultiplier: 'Rate Multiplier',
         status: 'Status',
         exclusive: 'Exclusive Group'
@@ -1083,6 +1084,8 @@ export default {
       enterGroupName: 'Enter group name',
       optionalDescription: 'Optional description',
       platformHint: 'Select the platform this group is associated with',
+      vendorHint: 'All requests in this group will be forwarded through the selected vendor',
+      noVendor: 'None (direct)',
       platformNotEditable: 'Platform cannot be changed after creation',
       rateMultiplierHint: 'Cost multiplier for this group (e.g., 1.5 = 150% of base cost)',
       exclusiveHint: 'Exclusive group, manually assign to specific users',
