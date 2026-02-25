@@ -2126,6 +2126,7 @@ export default {
       selectTestModel: '选择测试模型',
       testModel: '测试模型',
       testPrompt: '提示词："hi"',
+      skipProxyLabel: '跳过代理直连测试',
       // Stats Modal
       viewStats: '查看统计',
       usageStatistics: '使用统计',

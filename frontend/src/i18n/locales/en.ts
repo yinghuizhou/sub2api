@@ -1993,6 +1993,7 @@ export default {
       selectTestModel: 'Select Test Model',
       testModel: 'Test model',
       testPrompt: 'Prompt: "hi"',
+      skipProxyLabel: 'Skip proxy (direct connection)',
       // Stats Modal
       viewStats: 'View Stats',
       usageStatistics: 'Usage Statistics',
