@@ -457,7 +457,7 @@ func createAdminUser(cfg *SetupConfig) (bool, string, error) {
 	// Check if admin already exists — update credentials if so
 	var count int64
 	if err := db.QueryRowContext(ctx, "SELECT COUNT(1) FROM users WHERE role = $1", service.RoleAdmin).Scan(&count); err != nil {
-		return err
+		return false, "", err
 	}
 
 	if count > 0 {
@@ -471,10 +471,10 @@ func createAdminUser(cfg *SetupConfig) (bool, string, error) {
 			service.RoleAdmin,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to update admin user: %w", err)
+			return false, "", fmt.Errorf("failed to update admin user: %w", err)
 		}
-		log.Printf("Admin user updated: %s", admin.Email)
-		return nil
+		fmt.Printf("Admin user updated: %s\n", admin.Email)
+		return false, "admin already exists, credentials updated", nil
 	}
 
 	_, err = db.ExecContext(

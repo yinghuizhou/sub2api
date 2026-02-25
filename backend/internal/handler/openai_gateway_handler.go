@@ -362,7 +362,7 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 					for _, id := range sameProxyIDs {
 						failedAccountIDs[id] = struct{}{}
 					}
-					log.Printf("Account %d: 429 with proxy %d, excluded %d same-proxy accounts from failover",
+					logger.LegacyPrintf("handler.openai_gateway", "Account %d: 429 with proxy %d, excluded %d same-proxy accounts from failover",
 						account.ID, *account.ProxyID, len(sameProxyIDs))
 				}
 

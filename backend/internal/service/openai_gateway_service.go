@@ -1180,7 +1180,7 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 			Message:            safeErr,
 		})
 		// Network errors should trigger account failover instead of returning error directly.
-		log.Printf("[OpenAI Forward] Network error (failover): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
+		logger.LegacyPrintf("service.openai_gateway", "[OpenAI Forward] Network error (failover): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
 		return nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
 	}
 	defer func() { _ = resp.Body.Close() }()

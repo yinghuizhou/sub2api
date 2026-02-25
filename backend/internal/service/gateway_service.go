@@ -3460,7 +3460,7 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 			// Network errors (DNS failure, connection timeout, TLS handshake failure, proxy down)
 			// should trigger account failover instead of returning error directly to the client.
 			// The handler layer will try other accounts before giving up.
-			log.Printf("[Forward] Network error (failover): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
+			logger.LegacyPrintf("service.gateway", "[Forward] Network error (failover): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
 			return nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
 		}
 

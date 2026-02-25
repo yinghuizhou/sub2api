@@ -449,7 +449,45 @@ var (
 			{
 				Name:    "group_vendor_id",
 				Unique:  false,
-				Columns: []*schema.Column{GroupsColumns[26]},
+				Columns: []*schema.Column{GroupsColumns[30]},
+			},
+		},
+	}
+	// IdempotencyRecordsColumns holds the columns for the "idempotency_records" table.
+	IdempotencyRecordsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "scope", Type: field.TypeString, Size: 128},
+		{Name: "idempotency_key_hash", Type: field.TypeString, Size: 64},
+		{Name: "request_fingerprint", Type: field.TypeString, Size: 64},
+		{Name: "status", Type: field.TypeString, Size: 32},
+		{Name: "response_status", Type: field.TypeInt, Nullable: true},
+		{Name: "response_body", Type: field.TypeString, Nullable: true},
+		{Name: "error_reason", Type: field.TypeString, Nullable: true, Size: 128},
+		{Name: "locked_until", Type: field.TypeTime, Nullable: true},
+		{Name: "expires_at", Type: field.TypeTime},
+	}
+	// IdempotencyRecordsTable holds the schema information for the "idempotency_records" table.
+	IdempotencyRecordsTable = &schema.Table{
+		Name:       "idempotency_records",
+		Columns:    IdempotencyRecordsColumns,
+		PrimaryKey: []*schema.Column{IdempotencyRecordsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idempotencyrecord_scope_idempotency_key_hash",
+				Unique:  true,
+				Columns: []*schema.Column{IdempotencyRecordsColumns[3], IdempotencyRecordsColumns[4]},
+			},
+			{
+				Name:    "idempotencyrecord_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{IdempotencyRecordsColumns[11]},
+			},
+			{
+				Name:    "idempotencyrecord_status_locked_until",
+				Unique:  false,
+				Columns: []*schema.Column{IdempotencyRecordsColumns[6], IdempotencyRecordsColumns[10]},
 			},
 		},
 	}
@@ -736,7 +774,6 @@ var (
 		{Name: "ip_address", Type: field.TypeString, Nullable: true, Size: 45},
 		{Name: "image_count", Type: field.TypeInt, Default: 0},
 		{Name: "image_size", Type: field.TypeString, Nullable: true, Size: 10},
-		{Name: "media_type", Type: field.TypeString, Nullable: true, Size: 16},
 		{Name: "cache_ttl_overridden", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "api_key_id", Type: field.TypeInt64},
@@ -753,31 +790,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "usage_logs_api_keys_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[28]},
+				Columns:    []*schema.Column{UsageLogsColumns[27]},
 				RefColumns: []*schema.Column{APIKeysColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "usage_logs_accounts_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[29]},
+				Columns:    []*schema.Column{UsageLogsColumns[28]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "usage_logs_groups_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[30]},
+				Columns:    []*schema.Column{UsageLogsColumns[29]},
 				RefColumns: []*schema.Column{GroupsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "usage_logs_users_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[31]},
+				Columns:    []*schema.Column{UsageLogsColumns[30]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "usage_logs_user_subscriptions_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[32]},
+				Columns:    []*schema.Column{UsageLogsColumns[31]},
 				RefColumns: []*schema.Column{UserSubscriptionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -786,32 +823,32 @@ var (
 			{
 				Name:    "usagelog_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[31]},
+				Columns: []*schema.Column{UsageLogsColumns[30]},
 			},
 			{
 				Name:    "usagelog_api_key_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[28]},
+				Columns: []*schema.Column{UsageLogsColumns[27]},
 			},
 			{
 				Name:    "usagelog_account_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[29]},
+				Columns: []*schema.Column{UsageLogsColumns[28]},
 			},
 			{
 				Name:    "usagelog_group_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[30]},
+				Columns: []*schema.Column{UsageLogsColumns[29]},
 			},
 			{
 				Name:    "usagelog_subscription_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[32]},
+				Columns: []*schema.Column{UsageLogsColumns[31]},
 			},
 			{
 				Name:    "usagelog_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[27]},
+				Columns: []*schema.Column{UsageLogsColumns[26]},
 			},
 			{
 				Name:    "usagelog_model",
@@ -826,12 +863,12 @@ var (
 			{
 				Name:    "usagelog_user_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[31], UsageLogsColumns[27]},
+				Columns: []*schema.Column{UsageLogsColumns[30], UsageLogsColumns[26]},
 			},
 			{
 				Name:    "usagelog_api_key_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[28], UsageLogsColumns[27]},
+				Columns: []*schema.Column{UsageLogsColumns[27], UsageLogsColumns[26]},
 			},
 		},
 	}
@@ -1145,6 +1182,7 @@ var (
 		AnnouncementReadsTable,
 		ErrorPassthroughRulesTable,
 		GroupsTable,
+		IdempotencyRecordsTable,
 		PromoCodesTable,
 		PromoCodeUsagesTable,
 		ProxiesTable,
@@ -1191,6 +1229,9 @@ func init() {
 	}
 	GroupsTable.Annotation = &entsql.Annotation{
 		Table: "groups",
+	}
+	IdempotencyRecordsTable.Annotation = &entsql.Annotation{
+		Table: "idempotency_records",
 	}
 	PromoCodesTable.Annotation = &entsql.Annotation{
 		Table: "promo_codes",
