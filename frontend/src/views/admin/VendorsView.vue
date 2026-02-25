@@ -377,7 +377,7 @@ const loadVendors = async () => {
     vendors.value = data.items || []
     pagination.total = data.total || 0
   } catch (e: any) {
-    appStore.showError(e?.response?.data?.detail || '加载供应商列表失败')
+    appStore.showError(e?.message || e?.response?.data?.message || '加载供应商列表失败')
   } finally { loading.value = false }
 }
 
@@ -408,7 +408,7 @@ const detectVendor = async () => {
       }
     }
   } catch (e: any) {
-    detectResult.value = { success: false, message: e?.response?.data?.detail || '检测请求失败', api_format: '', base_url: '', platform_type: '', models: [], latency_ms: 0, detected_at: '' }
+    detectResult.value = { success: false, message: e?.message || e?.response?.data?.message || '检测请求失败', api_format: '', base_url: '', platform_type: '', models: [], latency_ms: 0, detected_at: '' }
   } finally {
     detecting.value = false
   }
@@ -438,7 +438,15 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const payload: any = { ...form, extra_headers: parsedHeaders }
-    if (!payload.expires_at) delete payload.expires_at
+    if (!payload.expires_at) {
+      delete payload.expires_at
+    } else {
+      // datetime-local produces "YYYY-MM-DDTHH:mm", Go needs RFC3339
+      const raw = payload.expires_at as string
+      if (raw && !raw.includes('Z') && !raw.includes('+')) {
+        payload.expires_at = raw.length <= 16 ? raw + ':00Z' : raw + 'Z'
+      }
+    }
     if (editingVendor.value) {
       await vendorApi.update(editingVendor.value.id, payload)
       appStore.showSuccess('供应商已更新')
@@ -448,7 +456,7 @@ const handleSubmit = async () => {
       appStore.showSuccess('供应商已创建')
     }
     closeModal(); loadVendors()
-  } catch (e: any) { appStore.showError(e?.response?.data?.detail || '操作失败') }
+  } catch (e: any) { appStore.showError(e?.message || e?.response?.data?.message || '操作失败') }
   finally { submitting.value = false }
 }
 
@@ -458,7 +466,7 @@ const confirmDelete = async () => {
   try {
     await vendorApi.delete(deletingVendor.value.id)
     appStore.showSuccess('供应商已删除'); showDeleteDialog.value = false; deletingVendor.value = null; loadVendors()
-  } catch (e: any) { appStore.showError(e?.response?.data?.detail || '删除失败') }
+  } catch (e: any) { appStore.showError(e?.message || e?.response?.data?.message || '删除失败') }
 }
 
 const handleTest = async (v: Vendor) => {
@@ -482,7 +490,7 @@ const handleTest = async (v: Vendor) => {
       appStore.showError(errorMsg ? `连通失败: ${errorMsg}` : '连通测试失败')
     }
     loadVendors()
-  } catch (e: any) { appStore.showError(e?.message || e?.response?.data?.detail || '连通测试失败') }
+  } catch (e: any) { appStore.showError(e?.message || e?.response?.data?.message || '连通测试失败') }
   finally { const s = new Set(testingIds.value); s.delete(v.id); testingIds.value = s }
 }
 

@@ -58,6 +58,10 @@ func NewFrontendServer(settingsProvider PublicSettingsProvider) (*FrontendServer
 		return nil, err
 	}
 
+	// Strip any pre-existing settings script (e.g. from a previous build/deploy)
+	// so injectSettings can add a clean one with nonce support
+	baseHTML = stripExistingSettingsScript(baseHTML)
+
 	cache := NewHTMLCache()
 	cache.SetBaseHTML(baseHTML)
 
@@ -190,8 +194,23 @@ func (s *FrontendServer) injectSettings(settingsJSON []byte) []byte {
 }
 
 // replaceNoncePlaceholder replaces the nonce placeholder with actual nonce value
+// and adds nonce to any bare <script> tags that don't have one.
 func replaceNoncePlaceholder(html []byte, nonce string) []byte {
-	return bytes.ReplaceAll(html, []byte(NonceHTMLPlaceholder), []byte(nonce))
+	// Replace explicit nonce placeholders first
+	result := bytes.ReplaceAll(html, []byte(NonceHTMLPlaceholder), []byte(nonce))
+
+	if nonce == "" {
+		return result
+	}
+
+	// Add nonce to bare <script> tags (without nonce, type="module", or src=)
+	// This handles inline scripts that may exist in the build output
+	nonceAttr := []byte(` nonce="` + nonce + `"`)
+	scriptOpen := []byte("<script>")
+	scriptWithNonce := append([]byte("<script"), append(nonceAttr, '>')...)
+	result = bytes.ReplaceAll(result, scriptOpen, scriptWithNonce)
+
+	return result
 }
 
 // ServeEmbeddedFrontend returns a middleware for serving embedded frontend
@@ -251,6 +270,34 @@ func serveIndexHTML(c *gin.Context, fsys fs.FS) {
 
 	c.Data(http.StatusOK, "text/html; charset=utf-8", content)
 	c.Abort()
+}
+
+// stripExistingSettingsScript removes any pre-existing <script>window.__APP_CONFIG__=...;</script>
+// from the HTML so that injectSettings can add a fresh one with nonce support.
+func stripExistingSettingsScript(html []byte) []byte {
+	marker := []byte("window.__APP_CONFIG__=")
+	for {
+		idx := bytes.Index(html, marker)
+		if idx == -1 {
+			return html
+		}
+		// Walk backwards to find the opening <script
+		start := bytes.LastIndex(html[:idx], []byte("<script"))
+		if start == -1 {
+			return html
+		}
+		// Walk forwards to find </script>
+		end := bytes.Index(html[idx:], []byte("</script>"))
+		if end == -1 {
+			return html
+		}
+		end = idx + end + len("</script>")
+		// Also remove trailing newline if present
+		if end < len(html) && html[end] == '\n' {
+			end++
+		}
+		html = append(html[:start], html[end:]...)
+	}
 }
 
 func HasEmbeddedFrontend() bool {

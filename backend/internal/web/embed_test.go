@@ -50,13 +50,14 @@ func TestReplaceNoncePlaceholder(t *testing.T) {
 		assert.Equal(t, `<script nonce="">test</script>`, string(result))
 	})
 
-	t.Run("no_placeholder_returns_unchanged", func(t *testing.T) {
+	t.Run("adds_nonce_to_bare_script_tags", func(t *testing.T) {
 		html := []byte(`<script>console.log('test');</script>`)
 		nonce := "abc123"
 
 		result := replaceNoncePlaceholder(html, nonce)
 
-		assert.Equal(t, string(html), string(result))
+		expected := `<script nonce="abc123">console.log('test');</script>`
+		assert.Equal(t, expected, string(result))
 	})
 
 	t.Run("handles_empty_html", func(t *testing.T) {
@@ -66,6 +67,26 @@ func TestReplaceNoncePlaceholder(t *testing.T) {
 		result := replaceNoncePlaceholder(html, nonce)
 
 		assert.Empty(t, result)
+	})
+}
+
+func TestStripExistingSettingsScript(t *testing.T) {
+	t.Run("strips_settings_script", func(t *testing.T) {
+		html := []byte(`<head><script>window.__APP_CONFIG__={"key":"val"};</script></head>`)
+		result := stripExistingSettingsScript(html)
+		assert.Equal(t, `<head></head>`, string(result))
+	})
+
+	t.Run("strips_settings_script_with_nonce", func(t *testing.T) {
+		html := []byte(`<head><script nonce="abc">window.__APP_CONFIG__={};</script></head>`)
+		result := stripExistingSettingsScript(html)
+		assert.Equal(t, `<head></head>`, string(result))
+	})
+
+	t.Run("no_settings_script_unchanged", func(t *testing.T) {
+		html := []byte(`<head><script src="/app.js"></script></head>`)
+		result := stripExistingSettingsScript(html)
+		assert.Equal(t, string(html), string(result))
 	})
 }
 
