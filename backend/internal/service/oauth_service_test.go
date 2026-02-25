@@ -96,6 +96,15 @@ func (m *mockProxyRepoForOAuth) CountAccountsByProxyID(ctx context.Context, prox
 func (m *mockProxyRepoForOAuth) ListAccountSummariesByProxyID(ctx context.Context, proxyID int64) ([]ProxyAccountSummary, error) {
 	panic("ListAccountSummariesByProxyID not implemented")
 }
+func (m *mockProxyRepoForOAuth) CountAccountsByGroupName(ctx context.Context) (map[string]int64, error) {
+	panic("CountAccountsByGroupName not implemented")
+}
+func (m *mockProxyRepoForOAuth) ListByGroupName(ctx context.Context, groupName string) ([]Proxy, error) {
+	panic("ListByGroupName not implemented")
+}
+func (m *mockProxyRepoForOAuth) ListGroupNames(ctx context.Context) ([]string, error) {
+	panic("ListGroupNames not implemented")
+}
 
 // =====================
 // 测试用例

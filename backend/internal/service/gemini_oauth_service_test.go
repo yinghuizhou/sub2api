@@ -805,6 +805,15 @@ func (m *mockGeminiProxyRepo) CountAccountsByProxyID(ctx context.Context, proxyI
 func (m *mockGeminiProxyRepo) ListAccountSummariesByProxyID(ctx context.Context, proxyID int64) ([]ProxyAccountSummary, error) {
 	panic("not impl")
 }
+func (m *mockGeminiProxyRepo) CountAccountsByGroupName(ctx context.Context) (map[string]int64, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) ListByGroupName(ctx context.Context, groupName string) ([]Proxy, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) ListGroupNames(ctx context.Context) ([]string, error) {
+	panic("not impl")
+}
 
 // =====================
 // 新增测试：GeminiOAuthService.RefreshToken（含重试逻辑）
