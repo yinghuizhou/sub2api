@@ -35,7 +35,6 @@ func (s *ProxyAssignmentService) AutoAssign(ctx context.Context, platform string
 	}
 
 	type groupInfo struct {
-		region       string
 		proxyCount   int
 		accountCount int64
 		isPreferred  bool
@@ -48,7 +47,7 @@ func (s *ProxyAssignmentService) AutoAssign(ctx context.Context, platform string
 		}
 		g, exists := groups[p.GroupName]
 		if !exists {
-			g = &groupInfo{region: p.Proxy.Region}
+			g = &groupInfo{}
 			groups[p.GroupName] = g
 		}
 		g.proxyCount++

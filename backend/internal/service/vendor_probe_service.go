@@ -68,7 +68,11 @@ func (s *VendorProbeService) Probe(ctx context.Context, req *VendorProbeRequest)
 	if err != nil {
 		return nil, err
 	}
-	return v.(*VendorProbeResult), nil
+	result, ok := v.(*VendorProbeResult)
+	if !ok {
+		return nil, fmt.Errorf("unexpected probe result type: %T", v)
+	}
+	return result, nil
 }
 
 func (s *VendorProbeService) doProbe(ctx context.Context, baseURL, apiKey string) (*VendorProbeResult, error) {
@@ -157,7 +161,7 @@ func (s *VendorProbeService) probeModelsWithAuth(ctx context.Context, baseURL, a
 	if err != nil {
 		return nil, "unknown", fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 最多读 1MB
 	if err != nil {
@@ -267,7 +271,7 @@ func (s *VendorProbeService) probeNewAPIUserSelf(ctx context.Context, baseURL, a
 	if err != nil {
 		return nil, ""
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, ""
 	}
@@ -316,7 +320,7 @@ func (s *VendorProbeService) probeOpenAIBilling(ctx context.Context, baseURL, ap
 	if err != nil {
 		return nil, ""
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, ""
 	}
@@ -359,7 +363,7 @@ func (s *VendorProbeService) probeNewAPITokenSearch(ctx context.Context, baseURL
 	if err != nil {
 		return nil, ""
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, ""
 	}
