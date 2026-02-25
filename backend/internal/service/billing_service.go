@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"log"
 	"strings"
+
+	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 )
@@ -223,7 +224,7 @@ func (s *BillingService) GetModelPricing(model string) (*ModelPricing, error) {
 	// 2. 使用硬编码回退价格
 	fallback := s.getFallbackPricing(model)
 	if fallback != nil {
-		log.Printf("[Billing] Using fallback pricing for model: %s", model)
+		logger.LegacyPrintf("service.billing", "Using fallback pricing for model: %s", model)
 		return fallback, nil
 	}
 

@@ -4472,6 +4472,9 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 			if sk, ok := account.Credentials["session_key"].(string); ok {
 				sessionKey = sk
 			}
+			if sessionKey == "" {
+				return nil, fmt.Errorf("vendor session_key is empty for account %d", account.ID)
+			}
 			req.Header.Set("Cookie", "session="+sessionKey)
 		default: // api_key
 			req.Header.Set("x-api-key", token)
@@ -6466,6 +6469,9 @@ func (s *GatewayService) buildCountTokensRequest(ctx context.Context, c *gin.Con
 			sessionKey := ""
 			if sk, ok := account.Credentials["session_key"].(string); ok {
 				sessionKey = sk
+			}
+			if sessionKey == "" {
+				return nil, fmt.Errorf("vendor session_key is empty for account %d", account.ID)
 			}
 			req.Header.Set("Cookie", "session="+sessionKey)
 		default:
