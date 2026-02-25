@@ -123,6 +123,7 @@ backend/.installed
 
 # npm lock（项目使用 pnpm）
 frontend/package-lock.json
+package-lock.json
 
 # 延迟测试日志
 latency-logs/
@@ -141,7 +142,9 @@ docs/
 code-reviews/
 AGENTS.md
 backend/cmd/server/server
+backend/config.sandbox.yaml
 deploy/docker-compose.override.yml
+deploy/vpn/
 .gocache/
 vite.config.js
 docs/*
