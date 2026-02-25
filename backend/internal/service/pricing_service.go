@@ -584,17 +584,17 @@ func (s *PricingService) extractBaseName(model string) string {
 func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	// Claude模型系列匹配规则
 	familyPatterns := map[string][]string{
-		"opus-4.6":    {"claude-opus-4.6", "claude-opus-4-6"},
-		"opus-4.5":    {"claude-opus-4.5", "claude-opus-4-5"},
-		"opus-4":      {"claude-opus-4", "claude-3-opus"},
-		"sonnet-4.6":  {"claude-sonnet-4.6", "claude-sonnet-4-6"},
-		"sonnet-4.5":  {"claude-sonnet-4.5", "claude-sonnet-4-5"},
-		"sonnet-4":    {"claude-sonnet-4", "claude-3-5-sonnet"},
-		"sonnet-3.5":  {"claude-3-5-sonnet", "claude-3.5-sonnet"},
-		"sonnet-3":    {"claude-3-sonnet"},
-		"haiku-4.5":   {"claude-haiku-4.5", "claude-haiku-4-5"},
-		"haiku-3.5":   {"claude-3-5-haiku", "claude-3.5-haiku"},
-		"haiku-3":     {"claude-3-haiku"},
+		"opus-4.6":   {"claude-opus-4.6", "claude-opus-4-6"},
+		"opus-4.5":   {"claude-opus-4.5", "claude-opus-4-5"},
+		"opus-4":     {"claude-opus-4", "claude-3-opus"},
+		"sonnet-4.6": {"claude-sonnet-4.6", "claude-sonnet-4-6"},
+		"sonnet-4.5": {"claude-sonnet-4.5", "claude-sonnet-4-5"},
+		"sonnet-4":   {"claude-sonnet-4", "claude-3-5-sonnet"},
+		"sonnet-3.5": {"claude-3-5-sonnet", "claude-3.5-sonnet"},
+		"sonnet-3":   {"claude-3-sonnet"},
+		"haiku-4.5":  {"claude-haiku-4.5", "claude-haiku-4-5"},
+		"haiku-3.5":  {"claude-3-5-haiku", "claude-3.5-haiku"},
+		"haiku-3":    {"claude-3-haiku"},
 	}
 
 	// 确定模型属于哪个系列

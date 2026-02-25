@@ -433,8 +433,8 @@ func (h *AccountHandler) Delete(c *gin.Context) {
 
 // TestAccountRequest represents the request body for testing an account
 type TestAccountRequest struct {
-	ModelID    string `json:"model_id"`
-	SkipProxy  bool   `json:"skip_proxy"`
+	ModelID   string `json:"model_id"`
+	SkipProxy bool   `json:"skip_proxy"`
 }
 
 type SyncFromCRSRequest struct {

@@ -25,7 +25,7 @@ type VendorProbeResult struct {
 	Message string `json:"message,omitempty"`
 
 	// 自动填充建议
-	APIFormat    string `json:"api_format"`    // "openai" | "anthropic"
+	APIFormat    string `json:"api_format"` // "openai" | "anthropic"
 	BaseURL      string `json:"base_url"`
 	PlatformType string `json:"platform_type"` // "new-api" | "one-api" | "openai" | "anthropic" | "unknown"
 
