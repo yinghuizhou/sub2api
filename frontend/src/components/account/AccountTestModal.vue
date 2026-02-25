@@ -56,26 +56,28 @@
       </div>
 
       <!-- Skip Proxy Toggle -->
-      <div
+      <label
         v-if="account && account.proxy_id"
-        class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-500/10"
+        class="flex cursor-pointer items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-500/10"
+        :class="{ 'cursor-not-allowed opacity-60': status === 'connecting' }"
       >
         <div class="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
           <Icon name="shield" size="sm" :stroke-width="2" />
           <span>{{ t('admin.accounts.skipProxyLabel') }}</span>
         </div>
-        <label class="relative inline-flex cursor-pointer items-center">
+        <div class="relative inline-flex items-center">
           <input
             v-model="skipProxy"
             type="checkbox"
             class="peer sr-only"
             :disabled="status === 'connecting'"
+            :aria-label="t('admin.accounts.skipProxyLabel')"
           />
           <div
             class="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-amber-500 peer-checked:after:translate-x-full dark:bg-dark-500 dark:peer-checked:bg-amber-500"
           ></div>
-        </label>
-      </div>
+        </div>
+      </label>
 
       <!-- Terminal Output -->
       <div class="group relative">
@@ -297,9 +299,11 @@ watch(
   async (newVal) => {
     if (newVal && props.account) {
       resetState()
+      skipProxy.value = false
       await loadAvailableModels()
     } else {
       closeEventSource()
+      skipProxy.value = false
     }
   }
 )

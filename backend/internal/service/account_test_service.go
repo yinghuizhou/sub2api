@@ -479,22 +479,25 @@ func (s *AccountTestService) testAntigravityAccountConnection(c *gin.Context, ac
 	// Send test_start event
 	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
 
-	// If skipProxy, temporarily clear proxy info so AntigravityGatewayService uses direct connection
+	// Capture original proxy URL for error classification before any mutation
+	origProxyURL := ""
+	if account.ProxyID != nil && account.Proxy != nil {
+		origProxyURL = account.Proxy.URL()
+	}
+
+	// If skipProxy, use a shallow copy with proxy cleared so AntigravityGatewayService uses direct connection
+	testAccount := account
 	if skipProxy && account.ProxyID != nil {
-		origProxyID := account.ProxyID
-		origProxy := account.Proxy
-		account.ProxyID = nil
-		account.Proxy = nil
-		defer func() {
-			account.ProxyID = origProxyID
-			account.Proxy = origProxy
-		}()
+		copied := *account
+		copied.ProxyID = nil
+		copied.Proxy = nil
+		testAccount = &copied
 	}
 
 	// 调用 AntigravityGatewayService.TestConnection（复用协议转换逻辑）
-	result, err := s.antigravityGatewayService.TestConnection(ctx, account, testModelID)
+	result, err := s.antigravityGatewayService.TestConnection(ctx, testAccount, testModelID)
 	if err != nil {
-		return s.sendErrorAndEnd(c, classifyRequestError(err, ""))
+		return s.sendErrorAndEnd(c, classifyRequestError(err, origProxyURL))
 	}
 
 	// 发送响应内容
