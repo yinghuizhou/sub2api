@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/group"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/lib/pq"
@@ -47,6 +47,10 @@ func (r *groupRepository) Create(ctx context.Context, groupIn *service.Group) er
 		SetNillableImagePrice1k(groupIn.ImagePrice1K).
 		SetNillableImagePrice2k(groupIn.ImagePrice2K).
 		SetNillableImagePrice4k(groupIn.ImagePrice4K).
+		SetNillableSoraImagePrice360(groupIn.SoraImagePrice360).
+		SetNillableSoraImagePrice540(groupIn.SoraImagePrice540).
+		SetNillableSoraVideoPricePerRequest(groupIn.SoraVideoPricePerRequest).
+		SetNillableSoraVideoPricePerRequestHd(groupIn.SoraVideoPricePerRequestHD).
 		SetDefaultValidityDays(groupIn.DefaultValidityDays).
 		SetClaudeCodeOnly(groupIn.ClaudeCodeOnly).
 		SetNillableFallbackGroupID(groupIn.FallbackGroupID).
@@ -73,7 +77,7 @@ func (r *groupRepository) Create(ctx context.Context, groupIn *service.Group) er
 		groupIn.CreatedAt = created.CreatedAt
 		groupIn.UpdatedAt = created.UpdatedAt
 		if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &groupIn.ID, nil); err != nil {
-			log.Printf("[SchedulerOutbox] enqueue group create failed: group=%d err=%v", groupIn.ID, err)
+			logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue group create failed: group=%d err=%v", groupIn.ID, err)
 		}
 	}
 	return translatePersistenceError(err, nil, service.ErrGroupExists)
@@ -115,6 +119,10 @@ func (r *groupRepository) Update(ctx context.Context, groupIn *service.Group) er
 		SetNillableImagePrice1k(groupIn.ImagePrice1K).
 		SetNillableImagePrice2k(groupIn.ImagePrice2K).
 		SetNillableImagePrice4k(groupIn.ImagePrice4K).
+		SetNillableSoraImagePrice360(groupIn.SoraImagePrice360).
+		SetNillableSoraImagePrice540(groupIn.SoraImagePrice540).
+		SetNillableSoraVideoPricePerRequest(groupIn.SoraVideoPricePerRequest).
+		SetNillableSoraVideoPricePerRequestHd(groupIn.SoraVideoPricePerRequestHD).
 		SetDefaultValidityDays(groupIn.DefaultValidityDays).
 		SetClaudeCodeOnly(groupIn.ClaudeCodeOnly).
 		SetModelRoutingEnabled(groupIn.ModelRoutingEnabled).
@@ -156,7 +164,7 @@ func (r *groupRepository) Update(ctx context.Context, groupIn *service.Group) er
 	}
 	groupIn.UpdatedAt = updated.UpdatedAt
 	if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &groupIn.ID, nil); err != nil {
-		log.Printf("[SchedulerOutbox] enqueue group update failed: group=%d err=%v", groupIn.ID, err)
+		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue group update failed: group=%d err=%v", groupIn.ID, err)
 	}
 	return nil
 }
@@ -167,7 +175,7 @@ func (r *groupRepository) Delete(ctx context.Context, id int64) error {
 		return translatePersistenceError(err, service.ErrGroupNotFound, nil)
 	}
 	if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &id, nil); err != nil {
-		log.Printf("[SchedulerOutbox] enqueue group delete failed: group=%d err=%v", id, err)
+		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue group delete failed: group=%d err=%v", id, err)
 	}
 	return nil
 }
@@ -195,7 +203,7 @@ func (r *groupRepository) ListWithFilters(ctx context.Context, params pagination
 		q = q.Where(group.IsExclusiveEQ(*isExclusive))
 	}
 
-	total, err := q.Count(ctx)
+	total, err := q.Clone().Count(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -300,7 +308,7 @@ func (r *groupRepository) DeleteAccountGroupsByGroupID(ctx context.Context, grou
 	}
 	affected, _ := res.RowsAffected()
 	if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &groupID, nil); err != nil {
-		log.Printf("[SchedulerOutbox] enqueue group account clear failed: group=%d err=%v", groupID, err)
+		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue group account clear failed: group=%d err=%v", groupID, err)
 	}
 	return affected, nil
 }
@@ -410,7 +418,7 @@ func (r *groupRepository) DeleteCascade(ctx context.Context, id int64) ([]int64,
 		}
 	}
 	if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &id, nil); err != nil {
-		log.Printf("[SchedulerOutbox] enqueue group cascade delete failed: group=%d err=%v", id, err)
+		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue group cascade delete failed: group=%d err=%v", id, err)
 	}
 
 	return affectedUserIDs, nil
@@ -504,7 +512,7 @@ func (r *groupRepository) BindAccountsToGroup(ctx context.Context, groupID int64
 
 	// 发送调度器事件
 	if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &groupID, nil); err != nil {
-		log.Printf("[SchedulerOutbox] enqueue bind accounts to group failed: group=%d err=%v", groupID, err)
+		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue bind accounts to group failed: group=%d err=%v", groupID, err)
 	}
 
 	return nil

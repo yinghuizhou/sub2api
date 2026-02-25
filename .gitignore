@@ -138,7 +138,6 @@ AGENTS.md
 scripts
 .code-review-state
 openspec/
-docs/
 code-reviews/
 AGENTS.md
 backend/cmd/server/server
@@ -149,3 +148,7 @@ deploy/vpn/
 vite.config.js
 docs/*
 .serena/
+.codex/
+frontend/coverage/
+aicodex
+
