@@ -55,6 +55,30 @@
         />
       </div>
 
+      <!-- Skip Proxy Toggle -->
+      <label
+        v-if="account && account.proxy_id"
+        class="flex cursor-pointer items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-500/10"
+        :class="{ 'cursor-not-allowed opacity-60': status === 'connecting' }"
+      >
+        <div class="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
+          <Icon name="shield" size="sm" :stroke-width="2" />
+          <span>{{ t('admin.accounts.skipProxyLabel') }}</span>
+        </div>
+        <div class="relative inline-flex items-center">
+          <input
+            v-model="skipProxy"
+            type="checkbox"
+            class="peer sr-only"
+            :disabled="status === 'connecting'"
+            :aria-label="t('admin.accounts.skipProxyLabel')"
+          />
+          <div
+            class="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-amber-500 peer-checked:after:translate-x-full dark:bg-dark-500 dark:peer-checked:bg-amber-500"
+          ></div>
+        </div>
+      </label>
+
       <!-- Terminal Output -->
       <div class="group relative">
         <div
@@ -266,6 +290,7 @@ const errorMessage = ref('')
 const availableModels = ref<ClaudeModel[]>([])
 const selectedModelId = ref('')
 const loadingModels = ref(false)
+const skipProxy = ref(false)
 let eventSource: EventSource | null = null
 
 // Load available models when modal opens
@@ -274,9 +299,11 @@ watch(
   async (newVal) => {
     if (newVal && props.account) {
       resetState()
+      skipProxy.value = false
       await loadAvailableModels()
     } else {
       closeEventSource()
+      skipProxy.value = false
     }
   }
 )
@@ -319,6 +346,7 @@ const resetState = () => {
   outputLines.value = []
   streamingContent.value = ''
   errorMessage.value = ''
+  // Don't reset skipProxy - user may want to keep it across retries
 }
 
 const handleClose = () => {
@@ -327,6 +355,7 @@ const handleClose = () => {
     return
   }
   closeEventSource()
+  skipProxy.value = false
   emit('close')
 }
 
@@ -371,7 +400,7 @@ const startTest = async () => {
         Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ model_id: selectedModelId.value })
+      body: JSON.stringify({ model_id: selectedModelId.value, skip_proxy: skipProxy.value })
     })
 
     if (!response.ok) {

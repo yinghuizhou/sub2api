@@ -141,7 +141,8 @@ func createTestPayload(modelID string) (map[string]any, error) {
 // TestAccountConnection tests an account's connection by sending a test request
 // All account types use full Claude Code client characteristics, only auth header differs
 // modelID is optional - if empty, defaults to claude.DefaultTestModel
-func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int64, modelID string) error {
+// skipProxy - if true, bypasses account proxy for direct connection testing
+func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int64, modelID string, skipProxy bool) error {
 	ctx := c.Request.Context()
 
 	// Get account
@@ -152,22 +153,22 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 
 	// Route to platform-specific test method
 	if account.IsOpenAI() {
-		return s.testOpenAIAccountConnection(c, account, modelID)
+		return s.testOpenAIAccountConnection(c, account, modelID, skipProxy)
 	}
 
 	if account.IsGemini() {
-		return s.testGeminiAccountConnection(c, account, modelID)
+		return s.testGeminiAccountConnection(c, account, modelID, skipProxy)
 	}
 
 	if account.Platform == PlatformAntigravity {
-		return s.testAntigravityAccountConnection(c, account, modelID)
+		return s.testAntigravityAccountConnection(c, account, modelID, skipProxy)
 	}
 
-	return s.testClaudeAccountConnection(c, account, modelID)
+	return s.testClaudeAccountConnection(c, account, modelID, skipProxy)
 }
 
 // testClaudeAccountConnection tests an Anthropic Claude account's connection
-func (s *AccountTestService) testClaudeAccountConnection(c *gin.Context, account *Account, modelID string) error {
+func (s *AccountTestService) testClaudeAccountConnection(c *gin.Context, account *Account, modelID string, skipProxy bool) error {
 	ctx := c.Request.Context()
 
 	// Determine the model to use
@@ -261,14 +262,11 @@ func (s *AccountTestService) testClaudeAccountConnection(c *gin.Context, account
 	}
 
 	// Get proxy URL
-	proxyURL := ""
-	if account.ProxyID != nil && account.Proxy != nil {
-		proxyURL = account.Proxy.URL()
-	}
+	proxyURL := s.resolveProxyURL(account, skipProxy)
 
 	resp, err := s.httpUpstream.DoWithTLS(req, proxyURL, account.ID, account.Concurrency, account.IsTLSFingerprintEnabled())
 	if err != nil {
-		return s.sendErrorAndEnd(c, fmt.Sprintf("Request failed: %s", err.Error()))
+		return s.sendErrorAndEnd(c, classifyRequestError(err, proxyURL))
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -282,7 +280,7 @@ func (s *AccountTestService) testClaudeAccountConnection(c *gin.Context, account
 }
 
 // testOpenAIAccountConnection tests an OpenAI account's connection
-func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account *Account, modelID string) error {
+func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account *Account, modelID string, skipProxy bool) error {
 	ctx := c.Request.Context()
 
 	// Default to openai.DefaultTestModel for OpenAI testing
@@ -371,14 +369,11 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 	}
 
 	// Get proxy URL
-	proxyURL := ""
-	if account.ProxyID != nil && account.Proxy != nil {
-		proxyURL = account.Proxy.URL()
-	}
+	proxyURL := s.resolveProxyURL(account, skipProxy)
 
 	resp, err := s.httpUpstream.DoWithTLS(req, proxyURL, account.ID, account.Concurrency, account.IsTLSFingerprintEnabled())
 	if err != nil {
-		return s.sendErrorAndEnd(c, fmt.Sprintf("Request failed: %s", err.Error()))
+		return s.sendErrorAndEnd(c, classifyRequestError(err, proxyURL))
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -392,7 +387,7 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 }
 
 // testGeminiAccountConnection tests a Gemini account's connection
-func (s *AccountTestService) testGeminiAccountConnection(c *gin.Context, account *Account, modelID string) error {
+func (s *AccountTestService) testGeminiAccountConnection(c *gin.Context, account *Account, modelID string, skipProxy bool) error {
 	ctx := c.Request.Context()
 
 	// Determine the model to use
@@ -442,14 +437,11 @@ func (s *AccountTestService) testGeminiAccountConnection(c *gin.Context, account
 	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
 
 	// Get proxy and execute request
-	proxyURL := ""
-	if account.ProxyID != nil && account.Proxy != nil {
-		proxyURL = account.Proxy.URL()
-	}
+	proxyURL := s.resolveProxyURL(account, skipProxy)
 
 	resp, err := s.httpUpstream.DoWithTLS(req, proxyURL, account.ID, account.Concurrency, account.IsTLSFingerprintEnabled())
 	if err != nil {
-		return s.sendErrorAndEnd(c, fmt.Sprintf("Request failed: %s", err.Error()))
+		return s.sendErrorAndEnd(c, classifyRequestError(err, proxyURL))
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -464,7 +456,7 @@ func (s *AccountTestService) testGeminiAccountConnection(c *gin.Context, account
 
 // testAntigravityAccountConnection tests an Antigravity account's connection
 // 支持 Claude 和 Gemini 两种协议，使用非流式请求
-func (s *AccountTestService) testAntigravityAccountConnection(c *gin.Context, account *Account, modelID string) error {
+func (s *AccountTestService) testAntigravityAccountConnection(c *gin.Context, account *Account, modelID string, skipProxy bool) error {
 	ctx := c.Request.Context()
 
 	// 默认模型：Claude 使用 claude-sonnet-4-5，Gemini 使用 gemini-3-pro-preview
@@ -487,10 +479,25 @@ func (s *AccountTestService) testAntigravityAccountConnection(c *gin.Context, ac
 	// Send test_start event
 	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
 
+	// Capture original proxy URL for error classification before any mutation
+	origProxyURL := ""
+	if account.ProxyID != nil && account.Proxy != nil {
+		origProxyURL = account.Proxy.URL()
+	}
+
+	// If skipProxy, use a shallow copy with proxy cleared so AntigravityGatewayService uses direct connection
+	testAccount := account
+	if skipProxy && account.ProxyID != nil {
+		copied := *account
+		copied.ProxyID = nil
+		copied.Proxy = nil
+		testAccount = &copied
+	}
+
 	// 调用 AntigravityGatewayService.TestConnection（复用协议转换逻辑）
-	result, err := s.antigravityGatewayService.TestConnection(ctx, account, testModelID)
+	result, err := s.antigravityGatewayService.TestConnection(ctx, testAccount, testModelID)
 	if err != nil {
-		return s.sendErrorAndEnd(c, err.Error())
+		return s.sendErrorAndEnd(c, classifyRequestError(err, origProxyURL))
 	}
 
 	// 发送响应内容
@@ -845,4 +852,36 @@ func (s *AccountTestService) sendErrorAndEnd(c *gin.Context, errorMsg string) er
 	log.Printf("Account test error: %s", errorMsg)
 	s.sendEvent(c, TestEvent{Type: "error", Error: errorMsg})
 	return fmt.Errorf("%s", errorMsg)
+}
+
+// resolveProxyURL returns the proxy URL for the account, or empty string if skipProxy is true or no proxy is configured.
+func (s *AccountTestService) resolveProxyURL(account *Account, skipProxy bool) string {
+	if skipProxy {
+		return ""
+	}
+	if account.ProxyID != nil && account.Proxy != nil {
+		return account.Proxy.URL()
+	}
+	return ""
+}
+
+// classifyRequestError produces a user-friendly error message for request failures,
+// distinguishing proxy connectivity issues from other errors.
+// Note: proxyURL is included in admin-only error messages for debugging purposes.
+func classifyRequestError(err error, proxyURL string) string {
+	msg := err.Error()
+	if proxyURL != "" {
+		lower := strings.ToLower(msg)
+		if strings.Contains(lower, "connection refused") ||
+			strings.Contains(lower, "socks") ||
+			strings.Contains(lower, "proxy") ||
+			strings.Contains(lower, "i/o timeout") ||
+			strings.Contains(lower, "no route to host") ||
+			strings.Contains(lower, "network is unreachable") ||
+			strings.Contains(lower, "connection reset") ||
+			strings.Contains(lower, "context deadline exceeded") {
+			return fmt.Sprintf("Proxy connection failed (%s): %s. Try enabling 'Skip Proxy' to test without proxy.", proxyURL, msg)
+		}
+	}
+	return fmt.Sprintf("Request failed: %s", msg)
 }
