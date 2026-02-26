@@ -427,6 +427,8 @@ func TestSoraGatewayHandler_ChatCompletions(t *testing.T) {
 		nil,
 		testutil.StubSessionLimitCache{},
 		nil,
+		nil, // vendorRepository
+		nil, // proxyGroupService
 	)
 
 	soraClient := &stubSoraClient{imageURLs: []string{"https://example.com/a.png"}}
