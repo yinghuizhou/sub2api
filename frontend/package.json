@@ -38,6 +38,7 @@
     "@types/mdx": "^2.0.13",
     "@types/node": "^20.10.5",
     "@types/qrcode": "^1.5.6",
+    "@types/xlsx": "^0.0.36",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-vue": "^5.2.3",
