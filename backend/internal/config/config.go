@@ -1175,7 +1175,7 @@ func setDefaults() {
 	viper.SetDefault("gateway.max_idle_conns", 2560)          // 最大空闲连接总数（高并发场景可调大）
 	viper.SetDefault("gateway.max_idle_conns_per_host", 120)  // 每主机最大空闲连接（HTTP/2 场景默认）
 	viper.SetDefault("gateway.max_conns_per_host", 1024)      // 每主机最大连接数（含活跃；流式/HTTP1.1 场景可调大，如 2400+）
-	viper.SetDefault("gateway.idle_conn_timeout_seconds", 90) // 空闲连接超时（秒）
+	viper.SetDefault("gateway.idle_conn_timeout_seconds", 55) // 空闲连接超时（秒），必须小于上游 LB（Cloudflare/Envoy ~60-75s）
 	viper.SetDefault("gateway.max_upstream_clients", 5000)
 	viper.SetDefault("gateway.client_idle_ttl_seconds", 900)
 	viper.SetDefault("gateway.concurrency_slot_ttl_minutes", 30) // 并发槽位过期时间（支持超长请求）
@@ -1721,8 +1721,8 @@ func (c *Config) Validate() error {
 	if c.Gateway.IdleConnTimeoutSeconds <= 0 {
 		return fmt.Errorf("gateway.idle_conn_timeout_seconds must be positive")
 	}
-	if c.Gateway.IdleConnTimeoutSeconds > 180 {
-		slog.Warn("gateway.idle_conn_timeout_seconds is high; consider 60-120 seconds for better connection reuse", "idle_conn_timeout_seconds", c.Gateway.IdleConnTimeoutSeconds)
+	if c.Gateway.IdleConnTimeoutSeconds > 75 {
+		slog.Warn("gateway.idle_conn_timeout_seconds exceeds upstream LB idle timeout (~60-75s); stale connections may cause 503 errors", "idle_conn_timeout_seconds", c.Gateway.IdleConnTimeoutSeconds)
 	}
 	if c.Gateway.MaxUpstreamClients <= 0 {
 		return fmt.Errorf("gateway.max_upstream_clients must be positive")

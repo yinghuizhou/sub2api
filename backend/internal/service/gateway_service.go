@@ -2959,6 +2959,22 @@ func (s *GatewayService) shouldFailoverUpstreamError(statusCode int) bool {
 	}
 }
 
+// isLikelyStaleConnectionError checks if a network error is likely caused by
+// a stale idle connection (server closed it but client didn't know yet).
+// Only these errors warrant a same-account retry; other network errors (DNS, TLS,
+// proxy down) should failover immediately.
+func isLikelyStaleConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "connection reset by peer") ||
+		strings.Contains(msg, "connection was reset") ||
+		strings.Contains(msg, "use of closed network connection") ||
+		strings.Contains(msg, "broken pipe") ||
+		msg == "eof" || strings.HasSuffix(msg, ": eof")
+}
+
 func retryBackoffDelay(attempt int) time.Duration {
 	// attempt 从 1 开始，表示第 attempt 次请求刚失败，需要等待后进行第 attempt+1 次请求。
 	if attempt <= 0 {
@@ -3448,6 +3464,23 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 				_ = resp.Body.Close()
 			}
 			safeErr := sanitizeUpstreamErrorMessage(err.Error())
+
+			// Stale idle connection recovery: retry once on the same account before failover.
+			// Only retry errors that look like stale connections (reset/EOF/broken pipe).
+			// DNS failures, TLS errors, and proxy-down errors should failover immediately.
+			if attempt == 1 && isLikelyStaleConnectionError(err) {
+				logger.LegacyPrintf("service.gateway", "[Forward] Stale connection error (retry on same account): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
+				appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
+					Platform:           account.Platform,
+					AccountID:          account.ID,
+					AccountName:        account.Name,
+					UpstreamStatusCode: 0,
+					Kind:               "request_error_retry",
+					Message:            safeErr,
+				})
+				continue
+			}
+
 			setOpsUpstreamError(c, 0, safeErr, "")
 			appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
 				Platform:           account.Platform,
@@ -3840,6 +3873,23 @@ func (s *GatewayService) forwardAnthropicAPIKeyPassthrough(
 				_ = resp.Body.Close()
 			}
 			safeErr := sanitizeUpstreamErrorMessage(err.Error())
+
+			// Stale idle connection recovery: retry once on the same account before giving up.
+			// Only retry errors that look like stale connections (reset/EOF/broken pipe).
+			if attempt == 1 && isLikelyStaleConnectionError(err) {
+				logger.LegacyPrintf("service.gateway", "[Anthropic Passthrough] Stale connection error (retry on same account): Account=%d(%s) Error=%s", account.ID, account.Name, safeErr)
+				appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
+					Platform:           account.Platform,
+					AccountID:          account.ID,
+					AccountName:        account.Name,
+					UpstreamStatusCode: 0,
+					Passthrough:        true,
+					Kind:               "request_error_retry",
+					Message:            safeErr,
+				})
+				continue
+			}
+
 			setOpsUpstreamError(c, 0, safeErr, "")
 			appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
 				Platform:           account.Platform,
