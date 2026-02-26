@@ -209,7 +209,6 @@ func getNormalizedCodexModel(modelID string) string {
 	return ""
 }
 
-
 func getOpenCodeCodexHeader() string {
 	// 兼容保留：历史上这里会从 opencode 仓库拉取 codex_header.txt。
 	// 现在我们与 Codex CLI 一致，直接使用仓库内置的 instructions，避免读写缓存与外网依赖。
@@ -438,4 +437,3 @@ func normalizeCodexTools(reqBody map[string]any) bool {
 
 	return modified
 }
-
