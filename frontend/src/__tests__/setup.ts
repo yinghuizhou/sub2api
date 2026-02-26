@@ -36,6 +36,20 @@ class MockResizeObserver {
 
 globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
 
+// Mock localStorage (jsdom may not provide full Storage interface)
+const localStorageMock = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = String(value) }),
+    removeItem: vi.fn((key: string) => { delete store[key] }),
+    clear: vi.fn(() => { store = {} }),
+    get length() { return Object.keys(store).length },
+    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
+  }
+})()
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, writable: true })
+
 // Vue Test Utils 全局配置
 config.global.stubs = {
   // 可以在这里添加全局 stub

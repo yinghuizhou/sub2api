@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"log"
 	"strings"
+
+	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 )
@@ -134,25 +135,24 @@ func (s *BillingService) initFallbackPricing() {
 		SupportsCacheBreakdown:     false,
 	}
 
-	// Claude Opus 4.6
-	// Source: https://docs.anthropic.com/en/docs/about-claude/models (verified 2025-01)
-	// NOTE: 使用 Claude 3 Opus 同级定价，待官方更新后校正
-	s.fallbackPrices["claude-opus-4.6"] = &ModelPricing{
-		InputPricePerToken:         15e-6,    // $15 per MTok
-		OutputPricePerToken:        75e-6,    // $75 per MTok
-		CacheCreationPricePerToken: 18.75e-6, // $18.75 per MTok
-		CacheReadPricePerToken:     1.5e-6,   // $1.50 per MTok
-		SupportsCacheBreakdown:     false,
-	}
+	// Claude 4.6 Opus (与4.5同价)
+	s.fallbackPrices["claude-opus-4.6"] = s.fallbackPrices["claude-opus-4.5"]
 
-	// Claude Sonnet 4.6
-	// Source: https://docs.anthropic.com/en/docs/about-claude/models (verified 2025-01)
-	// NOTE: 使用 Claude 4 Sonnet 同级定价，待官方更新后校正
+	// Claude Sonnet 4.6 (与 Claude 4 Sonnet 同级定价)
 	s.fallbackPrices["claude-sonnet-4.6"] = &ModelPricing{
 		InputPricePerToken:         3e-6,    // $3 per MTok
 		OutputPricePerToken:        15e-6,   // $15 per MTok
 		CacheCreationPricePerToken: 3.75e-6, // $3.75 per MTok
 		CacheReadPricePerToken:     0.3e-6,  // $0.30 per MTok
+		SupportsCacheBreakdown:     false,
+	}
+
+	// Gemini 3.1 Pro
+	s.fallbackPrices["gemini-3.1-pro"] = &ModelPricing{
+		InputPricePerToken:         2e-6,   // $2 per MTok
+		OutputPricePerToken:        12e-6,  // $12 per MTok
+		CacheCreationPricePerToken: 2e-6,   // $2 per MTok
+		CacheReadPricePerToken:     0.2e-6, // $0.20 per MTok
 		SupportsCacheBreakdown:     false,
 	}
 }
@@ -185,6 +185,9 @@ func (s *BillingService) getFallbackPricing(model string) *ModelPricing {
 			return s.fallbackPrices["claude-3-5-haiku"]
 		}
 		return s.fallbackPrices["claude-3-haiku"]
+	}
+	if strings.Contains(modelLower, "gemini-3.1-pro") || strings.Contains(modelLower, "gemini-3-1-pro") {
+		return s.fallbackPrices["gemini-3.1-pro"]
 	}
 
 	// 默认使用Sonnet价格
@@ -221,7 +224,7 @@ func (s *BillingService) GetModelPricing(model string) (*ModelPricing, error) {
 	// 2. 使用硬编码回退价格
 	fallback := s.getFallbackPricing(model)
 	if fallback != nil {
-		log.Printf("[Billing] Using fallback pricing for model: %s", model)
+		logger.LegacyPrintf("service.billing", "Using fallback pricing for model: %s", model)
 		return fallback, nil
 	}
 
@@ -346,7 +349,7 @@ func (s *BillingService) CalculateCostWithLongContext(model string, tokens Usage
 	}
 	outRangeCost, err := s.CalculateCost(model, outRangeTokens, rateMultiplier*extraMultiplier)
 	if err != nil {
-		return inRangeCost, nil // 出错时返回范围内成本
+		return inRangeCost, fmt.Errorf("out-range cost: %w", err)
 	}
 
 	// 合并成本
@@ -422,6 +425,14 @@ type ImagePriceConfig struct {
 	Price4K *float64 // 4K 尺寸价格（nil 表示使用默认值）
 }
 
+// SoraPriceConfig Sora 按次计费配置
+type SoraPriceConfig struct {
+	ImagePrice360          *float64
+	ImagePrice540          *float64
+	VideoPricePerRequest   *float64
+	VideoPricePerRequestHD *float64
+}
+
 // CalculateImageCost 计算图片生成费用
 // model: 请求的模型名称（用于获取 LiteLLM 默认价格）
 // imageSize: 图片尺寸 "1K", "2K", "4K"
@@ -440,6 +451,65 @@ func (s *BillingService) CalculateImageCost(model string, imageSize string, imag
 	totalCost := unitPrice * float64(imageCount)
 
 	// 应用倍率
+	if rateMultiplier <= 0 {
+		rateMultiplier = 1.0
+	}
+	actualCost := totalCost * rateMultiplier
+
+	return &CostBreakdown{
+		TotalCost:  totalCost,
+		ActualCost: actualCost,
+	}
+}
+
+// CalculateSoraImageCost 计算 Sora 图片按次费用
+func (s *BillingService) CalculateSoraImageCost(imageSize string, imageCount int, groupConfig *SoraPriceConfig, rateMultiplier float64) *CostBreakdown {
+	if imageCount <= 0 {
+		return &CostBreakdown{}
+	}
+
+	unitPrice := 0.0
+	if groupConfig != nil {
+		switch imageSize {
+		case "540":
+			if groupConfig.ImagePrice540 != nil {
+				unitPrice = *groupConfig.ImagePrice540
+			}
+		default:
+			if groupConfig.ImagePrice360 != nil {
+				unitPrice = *groupConfig.ImagePrice360
+			}
+		}
+	}
+
+	totalCost := unitPrice * float64(imageCount)
+	if rateMultiplier <= 0 {
+		rateMultiplier = 1.0
+	}
+	actualCost := totalCost * rateMultiplier
+
+	return &CostBreakdown{
+		TotalCost:  totalCost,
+		ActualCost: actualCost,
+	}
+}
+
+// CalculateSoraVideoCost 计算 Sora 视频按次费用
+func (s *BillingService) CalculateSoraVideoCost(model string, groupConfig *SoraPriceConfig, rateMultiplier float64) *CostBreakdown {
+	unitPrice := 0.0
+	if groupConfig != nil {
+		modelLower := strings.ToLower(model)
+		if strings.Contains(modelLower, "sora2pro-hd") {
+			if groupConfig.VideoPricePerRequestHD != nil {
+				unitPrice = *groupConfig.VideoPricePerRequestHD
+			}
+		}
+		if unitPrice <= 0 && groupConfig.VideoPricePerRequest != nil {
+			unitPrice = *groupConfig.VideoPricePerRequest
+		}
+	}
+
+	totalCost := unitPrice
 	if rateMultiplier <= 0 {
 		rateMultiplier = 1.0
 	}

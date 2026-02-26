@@ -3,7 +3,7 @@
        env docker-local docker-build docker-up docker-down docker-tag docker-logs docker-ps \
        devcontainer-up devcontainer-down devcontainer-rebuild devcontainer-logs devcontainer-ps \
        clean version urls fmt fmt-check generate security coverage ci release-check \
-       build-prod \
+       build-prod secret-scan \
        gcp-auto gcp-setup gcp-deploy gcp-ssh gcp-status gcp-destroy
 
 # --------------------------------------------------------------------------
@@ -267,6 +267,9 @@ security:
 	@echo "$(BOLD)运行 gosec...$(RESET)"
 	cd backend && gosec ./...
 	@echo "$(GREEN)安全扫描通过$(RESET)"
+
+secret-scan:
+	@python3 tools/secret_scan.py
 
 # --------------------------------------------------------------------------
 # ci - 本地模拟 CI 全流程
