@@ -2233,6 +2233,12 @@ export default {
       dataExportConfirm: '确认导出',
       dataExported: '数据导出成功',
       dataExportFailed: '数据导出失败',
+      protocols: {
+        http: 'HTTP',
+        https: 'HTTPS',
+        socks5: 'SOCKS5',
+        socks5h: 'SOCKS5H（远程 DNS）'
+      },
       columns: {
         name: '名称',
         protocol: '协议',
