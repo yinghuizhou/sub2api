@@ -184,7 +184,7 @@ async function recognizeCaptcha(imgBase64: string): Promise<string> {
     });
     const data = JSON.parse(res.body.toString()) as { error?: { message: string }; content?: Array<{ text: string }> };
     if (data.error) { setMsg(`⚠️ AI 识别失败: ${data.error.message}`, 'warn'); return ''; }
-    if (data.content?.[0]?.text) return data.content[0].text.trim();
+    if (data.content?.[0]?.text) return data.content[0].text.trim().replace(/[^a-zA-Z0-9]/g, '');
   } catch (e) { setMsg(`⚠️ AI 识别出错: ${(e as Error).message}`, 'warn'); }
   return '';
 }
@@ -193,27 +193,36 @@ async function ensureLoggedIn(): Promise<void> {
   if (rt.stopRequested) throw new Error('STOPPED');
   const page = rt.page!;
   const gotoCtrl = new AbortController();
-  await Promise.race([
-    page.goto(ASTRILL_CERTS, { waitUntil: 'domcontentloaded', timeout: 30000 }),
-    stopRace(gotoCtrl.signal),
-  ]);
-  gotoCtrl.abort();
+  try {
+    await Promise.race([
+      page.goto(ASTRILL_CERTS, { waitUntil: 'domcontentloaded', timeout: 30000 }),
+      stopRace(gotoCtrl.signal),
+    ]);
+  } finally {
+    gotoCtrl.abort();
+  }
   const idleCtrl = new AbortController();
-  await Promise.race([
-    page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => { /* ignore */ }),
-    stopRace(idleCtrl.signal),
-  ]);
-  idleCtrl.abort();
+  try {
+    await Promise.race([
+      page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => { /* ignore */ }),
+      stopRace(idleCtrl.signal),
+    ]);
+  } finally {
+    idleCtrl.abort();
+  }
   const url = page.url();
   if (url.includes('log-in')) {
     setMsg('🔑 会话已过期，请在浏览器中重新登录...', 'warn');
     setState({ phase: 'login' });
     const loginCtrl = new AbortController();
-    await Promise.race([
-      page.waitForURL(u => u.toString().includes('member-zone') && !u.toString().includes('log-in'), { timeout: 600000 }),
-      stopRace(loginCtrl.signal),
-    ]);
-    loginCtrl.abort();
+    try {
+      await Promise.race([
+        page.waitForURL(u => u.toString().includes('member-zone') && !u.toString().includes('log-in'), { timeout: 600000 }),
+        stopRace(loginCtrl.signal),
+      ]);
+    } finally {
+      loginCtrl.abort();
+    }
     setMsg('✅ 重新登录成功', 'ok');
     const all = await page.context().cookies();
     rt.cookieStr = all.map(c => `${c.name}=${c.value}`).join('; ');

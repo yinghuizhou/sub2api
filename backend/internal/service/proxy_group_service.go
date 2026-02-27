@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 	"sync"
 	"time"
 )
@@ -187,14 +188,17 @@ func (s *ProxyGroupService) getCachedAssignment(ctx context.Context, accountID i
 		return nil
 	}
 
-	// Cache the result (even if nil), with eviction if cache is too large
-	s.assignMu.Lock()
-	if len(s.assignCache) >= maxAssignCacheSize {
-		s.evictExpiredAssignments()
+	// Only cache non-nil results — caching nil fills the cache with unknowns
+	// that can never be invalidated by SetAssignment (which only fires on real assignments).
+	if assignment != nil {
+		s.assignMu.Lock()
+		if len(s.assignCache) >= maxAssignCacheSize {
+			s.evictExpiredAssignments()
+		}
+		s.assignCache[accountID] = assignment
+		s.assignTime[accountID] = time.Now()
+		s.assignMu.Unlock()
 	}
-	s.assignCache[accountID] = assignment
-	s.assignTime[accountID] = time.Now()
-	s.assignMu.Unlock()
 
 	return assignment
 }
@@ -209,10 +213,22 @@ func (s *ProxyGroupService) evictExpiredAssignments() {
 			delete(s.assignTime, id)
 		}
 	}
-	// If still over limit after evicting expired entries, clear everything
+	// If still over limit after evicting expired entries, evict oldest 25%
 	if len(s.assignCache) >= maxAssignCacheSize {
-		s.assignCache = make(map[int64]*ProxyAssignment)
-		s.assignTime = make(map[int64]time.Time)
+		type entry struct {
+			id int64
+			t  time.Time
+		}
+		entries := make([]entry, 0, len(s.assignTime))
+		for id, t := range s.assignTime {
+			entries = append(entries, entry{id, t})
+		}
+		sort.Slice(entries, func(i, j int) bool { return entries[i].t.Before(entries[j].t) })
+		evictCount := len(entries)/4 + 1
+		for i := 0; i < evictCount && i < len(entries); i++ {
+			delete(s.assignCache, entries[i].id)
+			delete(s.assignTime, entries[i].id)
+		}
 	}
 }
 

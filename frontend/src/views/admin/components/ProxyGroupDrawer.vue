@@ -100,7 +100,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-dark-600">
-              <tr v-for="a in assignments" :key="a.account_id">
+              <tr v-for="a in assignments" :key="`${a.account_id}-${a.proxy_id}`">
                 <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ a.account_name }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-dark-300">{{ a.platform }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-dark-300">{{ a.proxy_name }}</td>
@@ -114,10 +114,10 @@
                 <td class="px-4 py-2 text-center">
                   <select
                     class="input input-sm w-32"
-                    :value="a.proxy_id"
+                    :value="pendingSelections.get(a.account_id) ?? a.proxy_id"
                     :disabled="reassigningAccountId === a.account_id"
                     :aria-label="t('admin.proxies.groupDrawer.reassign')"
-                    @change="handleReassign(a.account_id, Number(($event.target as HTMLSelectElement).value), $event)"
+                    @change="handleReassign(a.account_id, Number(($event.target as HTMLSelectElement).value))"
                   >
                     <option
                       v-for="p in summary.proxies"
@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, reactive, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import BaseDialog from '@/components/common/BaseDialog.vue'
@@ -196,7 +196,10 @@ let loadAbortController: AbortController | null = null
 
 // Confirmation dialog state
 const showDistributeConfirm = ref(false)
-const pendingReassign = ref<{ accountId: number; newProxyId: number; selectEl: HTMLSelectElement } | null>(null)
+const pendingReassign = ref<{ accountId: number; newProxyId: number } | null>(null)
+// Tracks the optimistically-selected proxy for each account while awaiting confirmation.
+// On cancel or error, deleting from this map reverts the <select> to the bound a.proxy_id.
+const pendingSelections = reactive(new Map<number, number>())
 const reassignConfirmMessage = computed(() => {
   if (!pendingReassign.value) return ''
   const current = assignments.value.find(a => a.account_id === pendingReassign.value!.accountId)
@@ -244,8 +247,10 @@ function handleDistribute() {
 async function confirmDistribute() {
   showDistributeConfirm.value = false
   distributing.value = true
+  const ctrl = new AbortController()
   try {
-    const result = await distributeAccounts(props.groupName)
+    const result = await distributeAccounts(props.groupName, 'round-robin', ctrl.signal)
+    if (ctrl.signal.aborted) return
     appStore.showSuccess(t('admin.proxies.groupDrawer.distributeSuccess', {
       assigned: result.assigned,
       skipped: result.skipped
@@ -253,36 +258,39 @@ async function confirmDistribute() {
     await loadData()
     emit('updated')
   } catch (e: any) {
+    if (ctrl.signal.aborted) return
     console.error('Distribute failed:', e)
     appStore.showError(e?.message || t('admin.proxies.groupDrawer.distributeFailed'))
   } finally {
     distributing.value = false
+    ctrl.abort()
   }
 }
 
-function handleReassign(accountId: number, newProxyId: number, event: Event) {
-  const selectEl = event.target as HTMLSelectElement
+function handleReassign(accountId: number, newProxyId: number) {
   const current = assignments.value.find(a => a.account_id === accountId)
   if (current && current.proxy_id === newProxyId) return
   if (reassigningAccountId.value !== null) return
-  pendingReassign.value = { accountId, newProxyId, selectEl }
+  pendingSelections.set(accountId, newProxyId)
+  pendingReassign.value = { accountId, newProxyId }
 }
 
 async function confirmReassign() {
   if (!pendingReassign.value) return
-  const { accountId, newProxyId, selectEl } = pendingReassign.value
-  const current = assignments.value.find(a => a.account_id === accountId)
+  const { accountId, newProxyId } = pendingReassign.value
   pendingReassign.value = null
   reassigningAccountId.value = accountId
   try {
     await reassignAccount(accountId, newProxyId)
     appStore.showSuccess(t('admin.proxies.groupDrawer.reassignSuccess'))
+    pendingSelections.delete(accountId)
     await loadData()
     emit('updated')
   } catch (e: any) {
     console.error('Reassign failed:', e)
     appStore.showError(e?.message || t('admin.proxies.groupDrawer.reassignFailed'))
-    selectEl.value = String(current?.proxy_id ?? '')
+    // Revert the optimistic selection — Vue's :value binding restores the <select> reactively
+    pendingSelections.delete(accountId)
   } finally {
     reassigningAccountId.value = null
   }
@@ -290,9 +298,7 @@ async function confirmReassign() {
 
 function cancelReassign() {
   if (pendingReassign.value) {
-    const { selectEl, accountId } = pendingReassign.value
-    const current = assignments.value.find(a => a.account_id === accountId)
-    selectEl.value = String(current?.proxy_id ?? '')
+    pendingSelections.delete(pendingReassign.value.accountId)
     pendingReassign.value = null
   }
 }

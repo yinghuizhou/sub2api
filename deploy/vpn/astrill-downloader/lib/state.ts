@@ -112,6 +112,28 @@ export function broadcast() {
   }
 }
 
+// Atomic batch lock — JS single-threaded event loop makes check-and-set race-free.
+// Returns true if the lock was acquired (phase set to 'downloading').
+export function tryAcquireBatch(): boolean {
+  if (store.state.phase === 'downloading') return false;
+  store.state.phase = 'downloading';
+  broadcast();
+  return true;
+}
+
+// Release the batch lock. Only resets phase if still 'downloading' to avoid
+// overriding a 'done' phase already set by startBatch completion.
+export function releaseBatch(failed = false): void {
+  if (store.state.phase === 'downloading') {
+    store.state.phase = failed ? 'error' : 'done';
+    broadcast();
+  }
+}
+
+export function getSseClientCount(): number {
+  return store.sseClients.size;
+}
+
 export function addSseClient(id: string, send: (data: string) => void) {
   store.sseClients.set(id, send);
 }

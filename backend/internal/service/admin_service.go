@@ -322,8 +322,9 @@ type ProxyAssignmentDetail struct {
 
 // DistributeResult is the result of distributing accounts to proxies.
 type DistributeResult struct {
-	Assigned int `json:"assigned"`
-	Skipped  int `json:"skipped"`
+	Assigned     int  `json:"assigned"`
+	Skipped      int  `json:"skipped"`
+	AllUnhealthy bool `json:"all_unhealthy,omitempty"`
 }
 
 type GenerateRedeemCodesInput struct {
@@ -1836,6 +1837,10 @@ func (s *adminServiceImpl) ListProxyAssignments(ctx context.Context, groupName s
 	if err != nil {
 		return nil, fmt.Errorf("list assignments: %w", err)
 	}
+	// Hard cap to avoid unbounded memory allocation
+	if len(assignments) > 5000 {
+		assignments = assignments[:5000]
+	}
 	return s.enrichAssignments(ctx, assignments)
 }
 
@@ -1951,7 +1956,8 @@ func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupN
 			healthy = append(healthy, p)
 		}
 	}
-	if len(healthy) == 0 {
+	allUnhealthy := len(healthy) == 0
+	if allUnhealthy {
 		healthy = proxies // fallback to all
 	}
 
@@ -1981,8 +1987,9 @@ func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupN
 	}
 
 	return &DistributeResult{
-		Assigned: assigned,
-		Skipped:  len(accountSummaries) - assigned,
+		Assigned:     assigned,
+		Skipped:      len(accountSummaries) - assigned,
+		AllUnhealthy: allUnhealthy,
 	}, nil
 }
 
@@ -1998,10 +2005,13 @@ func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, 
 		return err
 	}
 
-	groupName := acc.ProxyGroup
-	if groupName == "" && proxy.GroupName != "" {
-		groupName = proxy.GroupName
+	// Prevent assigning an ungrouped account to a grouped proxy — would leave account.proxy_group inconsistent
+	if acc.ProxyGroup == "" && proxy.GroupName != "" {
+		return infraerrors.BadRequest("UNMATCHED_GROUP",
+			fmt.Sprintf("cannot reassign ungrouped account to a proxy in group %q; update account.proxy_group first", proxy.GroupName))
 	}
+
+	groupName := acc.ProxyGroup
 
 	// Prevent assigning a grouped account to an ungrouped proxy
 	if acc.ProxyGroup != "" && proxy.GroupName == "" {

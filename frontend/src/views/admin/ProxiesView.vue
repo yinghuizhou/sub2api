@@ -24,7 +24,7 @@
               v-model="filters.protocol"
               :options="protocolOptions"
               :placeholder="t('admin.proxies.allProtocols')"
-              @change="loadProxies"
+              @change="handleFilterChange"
             />
           </div>
           <div class="w-full sm:w-36">
@@ -32,7 +32,7 @@
               v-model="filters.status"
               :options="statusOptions"
               :placeholder="t('admin.proxies.allStatus')"
-              @change="loadProxies"
+              @change="handleFilterChange"
             />
           </div>
           <div v-if="groupNames.length > 0" class="w-full sm:w-40">
@@ -114,7 +114,7 @@
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="filteredProxies" :loading="loading">
+        <DataTable :columns="columns" :data="proxies" :loading="loading">
           <template #header-select>
             <input
               type="checkbox"
@@ -1122,16 +1122,14 @@ const groupFilterOptions = computed(() => [
   ...groupNames.value.map(name => ({ value: name, label: name }))
 ])
 
-const filteredProxies = computed(() => proxies.value)
-
 const selectedCount = computed(() => selectedProxyIds.value.size)
 const allVisibleSelected = computed(() => {
-  if (filteredProxies.value.length === 0) return false
-  return filteredProxies.value.every((proxy) => selectedProxyIds.value.has(proxy.id))
+  if (proxies.value.length === 0) return false
+  return proxies.value.every((proxy) => selectedProxyIds.value.has(proxy.id))
 })
 
 const someVisibleSelected = computed(() =>
-  filteredProxies.value.some(p => selectedProxyIds.value.has(p.id)) && !allVisibleSelected.value
+  proxies.value.some(p => selectedProxyIds.value.has(p.id)) && !allVisibleSelected.value
 )
 
 // ref for the select-all checkbox to set indeterminate state
@@ -1219,11 +1217,17 @@ const toggleSelectRow = (id: number, event: Event) => {
 const toggleSelectAllVisible = () => {
   const next = new Set(selectedProxyIds.value)
   if (allVisibleSelected.value) {
-    for (const proxy of filteredProxies.value) next.delete(proxy.id)
+    for (const proxy of proxies.value) next.delete(proxy.id)
   } else {
-    for (const proxy of filteredProxies.value) next.add(proxy.id)
+    for (const proxy of proxies.value) next.add(proxy.id)
   }
   selectedProxyIds.value = next
+}
+
+const handleFilterChange = () => {
+  pagination.page = 1
+  selectedProxyIds.value = new Set()
+  loadProxies()
 }
 
 const loadProxies = async () => {
@@ -1786,7 +1790,8 @@ const fetchAllProxiesForBatch = async (): Promise<Proxy[]> => {
       {
         protocol: filters.protocol || undefined,
         status: filters.status as any,
-        search: searchQuery.value || undefined
+        search: searchQuery.value || undefined,
+        group_name: filterGroupName.value || undefined
       }
     )
     result.push(...response.items)
@@ -2003,7 +2008,7 @@ const handleExportData = async () => {
     link.href = url
     link.download = filename
     link.click()
-    URL.revokeObjectURL(url)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
     appStore.showSuccess(t('admin.proxies.dataExported'))
   } catch (error: any) {
     appStore.showError(error?.message || t('admin.proxies.dataExportFailed'))

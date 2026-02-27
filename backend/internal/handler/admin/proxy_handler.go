@@ -75,6 +75,10 @@ func (h *ProxyHandler) List(c *gin.Context) {
 		search = search[:100]
 	}
 	groupName := c.Query("group_name")
+	if groupName != "" && !validGroupName.MatchString(groupName) {
+		response.BadRequest(c, "invalid group_name")
+		return
+	}
 
 	proxies, total, err := h.adminService.ListProxiesWithAccountCount(c.Request.Context(), page, pageSize, protocol, status, search, groupName)
 	if err != nil {

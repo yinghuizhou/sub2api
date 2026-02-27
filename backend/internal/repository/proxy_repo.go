@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
@@ -269,8 +270,12 @@ func (r *proxyRepository) ListWithFiltersAndAccountCount(ctx context.Context, pa
 		return nil, nil, err
 	}
 
-	// Get account counts
-	counts, err := r.GetAccountCountsForProxies(ctx)
+	// Collect IDs of the returned page, then fetch counts only for those proxies
+	ids := make([]int64, 0, len(proxies))
+	for _, p := range proxies {
+		ids = append(ids, p.ID)
+	}
+	counts, err := r.GetAccountCountsForProxyIDs(ctx, ids)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -417,6 +422,46 @@ func (r *proxyRepository) GetAccountCountsForProxies(ctx context.Context) (count
 	}()
 
 	counts = make(map[int64]int64)
+	for rows.Next() {
+		var proxyID, count int64
+		if err = rows.Scan(&proxyID, &count); err != nil {
+			return nil, err
+		}
+		counts[proxyID] = count
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return counts, nil
+}
+
+// GetAccountCountsForProxyIDs returns a map of proxy ID to account count for the given set of proxy IDs.
+// Unlike GetAccountCountsForProxies, this only scans rows for the requested IDs.
+func (r *proxyRepository) GetAccountCountsForProxyIDs(ctx context.Context, ids []int64) (counts map[int64]int64, err error) {
+	if len(ids) == 0 {
+		return make(map[int64]int64), nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	q := fmt.Sprintf(
+		"SELECT proxy_id, COUNT(*) AS count FROM accounts WHERE proxy_id IN (%s) AND deleted_at IS NULL GROUP BY proxy_id",
+		strings.Join(placeholders, ","),
+	)
+	rows, err := r.sql.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil && err == nil {
+			err = closeErr
+			counts = nil
+		}
+	}()
+	counts = make(map[int64]int64, len(ids))
 	for rows.Next() {
 		var proxyID, count int64
 		if err = rows.Scan(&proxyID, &count); err != nil {

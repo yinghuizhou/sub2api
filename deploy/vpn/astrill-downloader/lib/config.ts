@@ -30,7 +30,7 @@ export function loadConfig(): AiConfig {
 }
 
 export function saveConfig(cfg: AiConfig): void {
-  try { writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2)); } catch { /* ignore */ }
+  try { writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), { mode: 0o600 }); } catch { /* ignore */ }
 }
 
 export function loadCookies(): CookieEntry[] | null {
@@ -43,5 +43,5 @@ export function loadCookies(): CookieEntry[] | null {
 }
 
 export function saveCookies(cookies: CookieEntry[]): void {
-  try { writeFileSync(COOKIES_FILE, JSON.stringify(cookies, null, 2)); } catch { /* ignore */ }
+  try { writeFileSync(COOKIES_FILE, JSON.stringify(cookies, null, 2), { mode: 0o600 }); } catch { /* ignore */ }
 }

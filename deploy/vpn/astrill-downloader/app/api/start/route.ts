@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { init, startBatch, getPage } from '@/lib/downloader';
-import { getState, setState, setMsg } from '@/lib/state';
+import { tryAcquireBatch, releaseBatch, setMsg } from '@/lib/state';
+
+const VALID_SERVER_VALUE = /^[a-zA-Z0-9._-]+$/;
 
 export async function POST(req: NextRequest) {
-  // Prevent concurrent batch runs
-  const { phase } = getState();
-  if (phase === 'downloading') {
-    return NextResponse.json({ ok: false, error: 'A batch is already running' }, { status: 409 });
-  }
 
   let body: { servers: Array<{ value: string; label: string; country: string }>; mode: string; auto: boolean };
   try {
@@ -30,6 +27,9 @@ export async function POST(req: NextRequest) {
     if (s.value.length > 100 || s.label.length > 200 || s.country.length > 100) {
       return NextResponse.json({ ok: false, error: 'Server field length exceeded (value:100, label:200, country:100)' }, { status: 400 });
     }
+    if (!VALID_SERVER_VALUE.test(s.value)) {
+      return NextResponse.json({ ok: false, error: 'Server value contains invalid characters (allowed: a-z A-Z 0-9 . _ -)' }, { status: 400 });
+    }
   }
   if (!['TCP', 'UDP'].includes(String(mode).toUpperCase())) {
     return NextResponse.json({ ok: false, error: 'mode must be TCP or UDP' }, { status: 400 });
@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'auto must be a boolean' }, { status: 400 });
   }
 
-  setState({ phase: 'downloading' });
+  // Atomic check-and-set — prevent concurrent batch runs
+  if (!tryAcquireBatch()) {
+    return NextResponse.json({ ok: false, error: 'A batch is already running' }, { status: 409 });
+  }
 
   // Fire and forget — run in background
   (async () => {
@@ -50,6 +53,7 @@ export async function POST(req: NextRequest) {
       await startBatch(servers, mode, auto);
     } catch (e) {
       setMsg(`❌ ${(e as Error).message}`, 'err');
+      releaseBatch(true);
     }
   })();
 

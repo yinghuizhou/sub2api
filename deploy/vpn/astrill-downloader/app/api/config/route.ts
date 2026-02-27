@@ -30,7 +30,22 @@ export async function POST(req: NextRequest) {
   if (body.apiUrl !== undefined) {
     const url = String(body.apiUrl);
     if (url.length > 300) return NextResponse.json({ ok: false, error: 'apiUrl too long' }, { status: 400 });
-    if (url && !url.startsWith('https://')) return NextResponse.json({ ok: false, error: 'apiUrl must start with https://' }, { status: 400 });
+    if (url) {
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        return NextResponse.json({ ok: false, error: 'apiUrl is not a valid URL' }, { status: 400 });
+      }
+      if (parsed.protocol !== 'https:') {
+        return NextResponse.json({ ok: false, error: 'apiUrl must use https://' }, { status: 400 });
+      }
+      const h = parsed.hostname.toLowerCase();
+      if (h === 'localhost' || h === '::1' || /^127\./.test(h) || /^10\./.test(h) ||
+          /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h)) {
+        return NextResponse.json({ ok: false, error: 'apiUrl must not point to a local address' }, { status: 400 });
+      }
+    }
     cfg.apiUrl = url;
   }
   if (body.model !== undefined) {

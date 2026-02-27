@@ -38,7 +38,7 @@ func (m *proxyAssignRepoMock) List(_ context.Context, _ pagination.PaginationPar
 func (m *proxyAssignRepoMock) ListWithFilters(_ context.Context, _ pagination.PaginationParams, _, _, _ string) ([]Proxy, *pagination.PaginationResult, error) {
 	return nil, nil, nil
 }
-func (m *proxyAssignRepoMock) ListWithFiltersAndAccountCount(_ context.Context, _ pagination.PaginationParams, _, _, _ string) ([]ProxyWithAccountCount, *pagination.PaginationResult, error) {
+func (m *proxyAssignRepoMock) ListWithFiltersAndAccountCount(_ context.Context, _ pagination.PaginationParams, _, _, _, _ string) ([]ProxyWithAccountCount, *pagination.PaginationResult, error) {
 	return nil, nil, nil
 }
 func (m *proxyAssignRepoMock) ListActive(_ context.Context) ([]Proxy, error) { return nil, nil }

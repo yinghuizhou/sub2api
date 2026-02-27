@@ -2,6 +2,7 @@
 package response
 
 import (
+	"errors"
 	"log"
 	"math"
 	"net/http"
@@ -186,7 +187,7 @@ func parseInt(s string) (int, error) {
 	var result int
 	for _, c := range s {
 		if c < '0' || c > '9' {
-			return 0, nil
+			return 0, errors.New("non-digit character")
 		}
 		result = result*10 + int(c-'0')
 	}

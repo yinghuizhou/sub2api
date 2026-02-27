@@ -1,8 +1,13 @@
-import { getState, addSseClient, removeSseClient, sanitizeForBroadcast } from '@/lib/state';
+import { getState, addSseClient, removeSseClient, sanitizeForBroadcast, getSseClientCount } from '@/lib/state';
+
+const MAX_SSE_CLIENTS = 10;
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  if (getSseClientCount() >= MAX_SSE_CLIENTS) {
+    return new Response('Too many connections', { status: 429 });
+  }
   const id = crypto.randomUUID();
   const encoder = new TextEncoder();
   let isClosed = false;
