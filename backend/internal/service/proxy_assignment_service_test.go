@@ -55,6 +55,25 @@ func (m *proxyAssignRepoMock) CountAccountsByProxyID(_ context.Context, _ int64)
 func (m *proxyAssignRepoMock) ListAccountSummariesByProxyID(_ context.Context, _ int64) ([]ProxyAccountSummary, error) {
 	return nil, nil
 }
+func (m *proxyAssignRepoMock) GetAssignment(_ context.Context, _ int64) (*ProxyAssignment, error) {
+	return nil, nil
+}
+func (m *proxyAssignRepoMock) SetAssignment(_ context.Context, _, _ int64, _, _ string) error {
+	return nil
+}
+func (m *proxyAssignRepoMock) DeleteAssignment(_ context.Context, _ int64) error { return nil }
+func (m *proxyAssignRepoMock) ListAssignmentsByGroup(_ context.Context, _ string) ([]ProxyAssignment, error) {
+	return nil, nil
+}
+func (m *proxyAssignRepoMock) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
+	return nil, nil
+}
+func (m *proxyAssignRepoMock) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
+	return 0, nil
+}
+func (m *proxyAssignRepoMock) ListAccountsByProxyGroup(_ context.Context, _ string) ([]ProxyAccountSummary, error) {
+	return nil, nil
+}
 
 func TestProxyAssignment_PreferredRegionLowestLoad(t *testing.T) {
 	mock := &proxyAssignRepoMock{

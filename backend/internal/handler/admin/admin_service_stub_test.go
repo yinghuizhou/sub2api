@@ -407,5 +407,18 @@ func (s *stubAdminService) UpdateGroupSortOrders(ctx context.Context, updates []
 	return nil
 }
 
+func (s *stubAdminService) GetProxyGroupSummary(ctx context.Context, groupName string) (*service.ProxyGroupSummary, error) {
+	return &service.ProxyGroupSummary{GroupName: groupName}, nil
+}
+func (s *stubAdminService) ListProxyAssignments(ctx context.Context, groupName string) ([]service.ProxyAssignmentDetail, error) {
+	return []service.ProxyAssignmentDetail{}, nil
+}
+func (s *stubAdminService) DistributeAccountsToGroup(ctx context.Context, groupName, strategy string) (*service.DistributeResult, error) {
+	return &service.DistributeResult{}, nil
+}
+func (s *stubAdminService) ReassignAccountProxy(ctx context.Context, accountID, newProxyID int64) error {
+	return nil
+}
+
 // Ensure stub implements interface.
 var _ service.AdminService = (*stubAdminService)(nil)

@@ -9,7 +9,8 @@ import (
 )
 
 // ProxyGroupService manages proxy group selection for accounts.
-// It selects healthy proxy nodes from a named group for shared-proxy scenarios.
+// It uses persistent assignments (account_proxy_assignments table) so that
+// once an account is bound to a proxy/region, it never switches.
 type ProxyGroupService struct {
 	proxyRepo ProxyRepository
 
@@ -17,15 +18,22 @@ type ProxyGroupService struct {
 	groupCache map[string][]Proxy
 	cacheTime  map[string]time.Time
 	cacheTTL   time.Duration
+
+	// assignmentCache: accountID -> ProxyAssignment (short-lived)
+	assignMu    sync.RWMutex
+	assignCache map[int64]*ProxyAssignment
+	assignTime  map[int64]time.Time
 }
 
 // NewProxyGroupService creates a new ProxyGroupService.
 func NewProxyGroupService(proxyRepo ProxyRepository) *ProxyGroupService {
 	return &ProxyGroupService{
-		proxyRepo:  proxyRepo,
-		groupCache: make(map[string][]Proxy),
-		cacheTime:  make(map[string]time.Time),
-		cacheTTL:   30 * time.Second,
+		proxyRepo:   proxyRepo,
+		groupCache:  make(map[string][]Proxy),
+		cacheTime:   make(map[string]time.Time),
+		cacheTTL:    30 * time.Second,
+		assignCache: make(map[int64]*ProxyAssignment),
+		assignTime:  make(map[int64]time.Time),
 	}
 }
 
@@ -48,9 +56,13 @@ func (s *ProxyGroupService) SelectProxyForAccount(ctx context.Context, account *
 	return proxy.URL()
 }
 
-// selectFromGroup picks a healthy proxy from the named group.
-// Algorithm: accountID % len(healthyProxies) for sticky selection;
-// automatically skips to the next node on failure.
+// selectFromGroup picks a proxy for an account using persistent assignment.
+//
+// Algorithm:
+//  1. Check assignment cache / DB for existing binding
+//  2. If assigned and proxy healthy → use it
+//  3. If assigned but proxy unhealthy → still use it (never switch region)
+//  4. If not assigned → pick the least-loaded healthy proxy, persist binding
 func (s *ProxyGroupService) selectFromGroup(ctx context.Context, groupName string, accountID int64) *Proxy {
 	proxies := s.getGroupProxies(ctx, groupName)
 	if len(proxies) == 0 {
@@ -58,32 +70,125 @@ func (s *ProxyGroupService) selectFromGroup(ctx context.Context, groupName strin
 		return nil
 	}
 
+	// Build a quick lookup map
+	proxyByID := make(map[int64]*Proxy, len(proxies))
+	for i := range proxies {
+		proxyByID[proxies[i].ID] = &proxies[i]
+	}
+
+	// 1. Check persistent assignment (with in-memory cache)
+	assignment := s.getCachedAssignment(ctx, accountID)
+	if assignment != nil {
+		if p, ok := proxyByID[assignment.ProxyID]; ok {
+			if !p.IsHealthy() {
+				slog.Warn("assigned proxy unhealthy, using anyway to preserve region",
+					"account_id", accountID, "proxy", p.Name, "proxy_id", p.ID,
+					"health_status", p.HealthStatus)
+			}
+			return p
+		}
+		// Assigned proxy no longer in group (deleted?) — log and reassign
+		slog.Warn("assigned proxy not found in group, will reassign",
+			"account_id", accountID, "proxy_id", assignment.ProxyID, "group", groupName)
+	}
+
+	// 2. No assignment → pick least-loaded healthy proxy
 	healthy := make([]Proxy, 0, len(proxies))
 	for i := range proxies {
 		if proxies[i].IsHealthy() {
 			healthy = append(healthy, proxies[i])
 		}
 	}
-
 	if len(healthy) == 0 {
-		slog.Warn("no healthy proxies in group, falling back to all active",
+		slog.Warn("no healthy proxies, assigning to least-loaded overall",
 			"group", groupName, "total", len(proxies))
 		healthy = proxies
 	}
 
-	idx := int(accountID % int64(len(healthy)))
-	selected := &healthy[idx]
+	// Get current assignment counts per proxy
+	counts, err := s.proxyRepo.CountAssignmentsByProxy(ctx)
+	if err != nil {
+		slog.Error("failed to count assignments", "error", err)
+		counts = make(map[int64]int64)
+	}
 
-	slog.Debug("proxy group selection",
+	// Pick the proxy with fewest assignments
+	var best *Proxy
+	var bestCount int64 = -1
+	for i := range healthy {
+		c := counts[healthy[i].ID]
+		if bestCount < 0 || c < bestCount {
+			bestCount = c
+			best = &healthy[i]
+		}
+	}
+
+	if best == nil {
+		return nil
+	}
+
+	// 3. Persist the assignment
+	if err := s.proxyRepo.SetAssignment(ctx, accountID, best.ID, groupName, "auto"); err != nil {
+		slog.Error("failed to persist proxy assignment",
+			"account_id", accountID, "proxy_id", best.ID, "error", err)
+	} else {
+		// Update cache
+		s.assignMu.Lock()
+		s.assignCache[accountID] = &ProxyAssignment{
+			AccountID:  accountID,
+			ProxyID:    best.ID,
+			ProxyGroup: groupName,
+			AssignedBy: "auto",
+		}
+		s.assignTime[accountID] = time.Now()
+		s.assignMu.Unlock()
+	}
+
+	slog.Info("new proxy assignment created",
 		"group", groupName,
 		"account_id", accountID,
-		"selected_proxy", selected.Name,
-		"proxy_id", selected.ID,
-		"healthy_count", len(healthy),
-		"total_count", len(proxies),
+		"proxy", best.Name,
+		"proxy_id", best.ID,
 	)
 
-	return selected
+	return best
+}
+
+// getCachedAssignment returns the assignment from cache or DB.
+func (s *ProxyGroupService) getCachedAssignment(ctx context.Context, accountID int64) *ProxyAssignment {
+	s.assignMu.RLock()
+	cached, ok := s.assignCache[accountID]
+	cacheTime := s.assignTime[accountID]
+	s.assignMu.RUnlock()
+
+	if ok && time.Since(cacheTime) < s.cacheTTL {
+		return cached
+	}
+
+	assignment, err := s.proxyRepo.GetAssignment(ctx, accountID)
+	if err != nil {
+		slog.Error("failed to get proxy assignment", "account_id", accountID, "error", err)
+		if ok {
+			return cached
+		}
+		return nil
+	}
+
+	// Cache the result (even if nil)
+	s.assignMu.Lock()
+	s.assignCache[accountID] = assignment
+	s.assignTime[accountID] = time.Now()
+	s.assignMu.Unlock()
+
+	return assignment
+}
+
+// InvalidateAssignmentCache clears the assignment cache for a specific account.
+func (s *ProxyGroupService) InvalidateAssignmentCache(accountID int64) {
+	s.assignMu.Lock()
+	delete(s.assignCache, accountID)
+	delete(s.assignTime, accountID)
+	s.assignMu.Unlock()
 }
 
 // getGroupProxies returns proxies for a group, with a short TTL cache.

@@ -76,6 +76,16 @@ type ProxyWithAccountCount struct {
 	QualityChecked *int64
 }
 
+// ProxyAssignment represents a persistent binding between an account and a proxy.
+type ProxyAssignment struct {
+	ID         int64
+	AccountID  int64
+	ProxyID    int64
+	ProxyGroup string
+	AssignedAt time.Time
+	AssignedBy string
+}
+
 type ProxyAccountSummary struct {
 	ID       int64
 	Name     string

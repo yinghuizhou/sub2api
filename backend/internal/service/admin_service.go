@@ -74,6 +74,12 @@ type AdminService interface {
 	ListProxyGroupNames(ctx context.Context) ([]string, error)
 	CheckProxyQuality(ctx context.Context, id int64) (*ProxyQualityCheckResult, error)
 
+	// Proxy group assignment management
+	GetProxyGroupSummary(ctx context.Context, groupName string) (*ProxyGroupSummary, error)
+	ListProxyAssignments(ctx context.Context, groupName string) ([]ProxyAssignmentDetail, error)
+	DistributeAccountsToGroup(ctx context.Context, groupName, strategy string) (*DistributeResult, error)
+	ReassignAccountProxy(ctx context.Context, accountID, newProxyID int64) error
+
 	// Redeem code management
 	ListRedeemCodes(ctx context.Context, page, pageSize int, codeType, status, search string) ([]RedeemCode, int64, error)
 	GetRedeemCode(ctx context.Context, id int64) (*RedeemCode, error)
@@ -283,6 +289,40 @@ type UpdateProxyInput struct {
 	OvpnUsername *string
 	OvpnPassword *string
 	IsDedicated  *bool
+}
+
+// ProxyGroupSummary contains summary info for a proxy group.
+type ProxyGroupSummary struct {
+	GroupName    string              `json:"group_name"`
+	TotalProxies int                `json:"total_proxies"`
+	HealthyCount int                `json:"healthy_count"`
+	TotalAccounts int64             `json:"total_accounts"`
+	Proxies      []ProxyGroupProxy  `json:"proxies"`
+}
+
+type ProxyGroupProxy struct {
+	ID              int64  `json:"id"`
+	Name            string `json:"name"`
+	Region          string `json:"region"`
+	HealthStatus    string `json:"health_status"`
+	AssignmentCount int64  `json:"assignment_count"`
+}
+
+// ProxyAssignmentDetail is a rich view of a single assignment.
+type ProxyAssignmentDetail struct {
+	AccountID   int64  `json:"account_id"`
+	AccountName string `json:"account_name"`
+	Platform    string `json:"platform"`
+	ProxyID     int64  `json:"proxy_id"`
+	ProxyName   string `json:"proxy_name"`
+	AssignedBy  string `json:"assigned_by"`
+	AssignedAt  string `json:"assigned_at"`
+}
+
+// DistributeResult is the result of distributing accounts to proxies.
+type DistributeResult struct {
+	Assigned int `json:"assigned"`
+	Skipped  int `json:"skipped"`
 }
 
 type GenerateRedeemCodesInput struct {
@@ -1741,6 +1781,176 @@ func (s *adminServiceImpl) GetProxyAccounts(ctx context.Context, proxyID int64) 
 
 func (s *adminServiceImpl) CheckProxyExists(ctx context.Context, host string, port int, username, password string) (bool, error) {
 	return s.proxyRepo.ExistsByHostPortAuth(ctx, host, port, username, password)
+}
+
+// --- Proxy group assignment management ---
+
+func (s *adminServiceImpl) GetProxyGroupSummary(ctx context.Context, groupName string) (*ProxyGroupSummary, error) {
+	proxies, err := s.proxyRepo.ListByGroupName(ctx, groupName)
+	if err != nil {
+		return nil, fmt.Errorf("list group proxies: %w", err)
+	}
+
+	counts, err := s.proxyRepo.CountAssignmentsByProxy(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("count assignments: %w", err)
+	}
+
+	summary := &ProxyGroupSummary{
+		GroupName:    groupName,
+		TotalProxies: len(proxies),
+		Proxies:      make([]ProxyGroupProxy, 0, len(proxies)),
+	}
+
+	for _, p := range proxies {
+		hs := "healthy"
+		if !p.IsHealthy() {
+			hs = p.HealthStatus
+		}
+		if p.IsHealthy() {
+			summary.HealthyCount++
+		}
+		ac := counts[p.ID]
+		summary.TotalAccounts += ac
+		summary.Proxies = append(summary.Proxies, ProxyGroupProxy{
+			ID:              p.ID,
+			Name:            p.Name,
+			Region:          p.Region,
+			HealthStatus:    hs,
+			AssignmentCount: ac,
+		})
+	}
+
+	return summary, nil
+}
+
+func (s *adminServiceImpl) ListProxyAssignments(ctx context.Context, groupName string) ([]ProxyAssignmentDetail, error) {
+	assignments, err := s.proxyRepo.ListAssignmentsByGroup(ctx, groupName)
+	if err != nil {
+		return nil, fmt.Errorf("list assignments: %w", err)
+	}
+	if len(assignments) == 0 {
+		return []ProxyAssignmentDetail{}, nil
+	}
+
+	// Collect unique account & proxy IDs
+	accountIDs := make([]int64, 0, len(assignments))
+	proxyIDs := make([]int64, 0, len(assignments))
+	for _, a := range assignments {
+		accountIDs = append(accountIDs, a.AccountID)
+		proxyIDs = append(proxyIDs, a.ProxyID)
+	}
+
+	accounts, err := s.accountRepo.GetByIDs(ctx, accountIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get accounts: %w", err)
+	}
+	accountMap := make(map[int64]*Account, len(accounts))
+	for _, a := range accounts {
+		accountMap[a.ID] = a
+	}
+
+	proxies, err := s.proxyRepo.ListByIDs(ctx, proxyIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get proxies: %w", err)
+	}
+	proxyMap := make(map[int64]Proxy, len(proxies))
+	for _, p := range proxies {
+		proxyMap[p.ID] = p
+	}
+
+	details := make([]ProxyAssignmentDetail, 0, len(assignments))
+	for _, a := range assignments {
+		d := ProxyAssignmentDetail{
+			AccountID:  a.AccountID,
+			ProxyID:    a.ProxyID,
+			AssignedBy: a.AssignedBy,
+			AssignedAt: a.AssignedAt.Format(time.RFC3339),
+		}
+		if acc, ok := accountMap[a.AccountID]; ok {
+			d.AccountName = acc.Name
+			d.Platform = acc.Platform
+		}
+		if p, ok := proxyMap[a.ProxyID]; ok {
+			d.ProxyName = p.Name
+		}
+		details = append(details, d)
+	}
+
+	return details, nil
+}
+
+func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupName, strategy string) (*DistributeResult, error) {
+	// Get all proxies in the group
+	proxies, err := s.proxyRepo.ListByGroupName(ctx, groupName)
+	if err != nil {
+		return nil, fmt.Errorf("list group proxies: %w", err)
+	}
+	if len(proxies) == 0 {
+		return nil, infraerrors.BadRequest("NO_PROXIES", "no proxies in group "+groupName)
+	}
+
+	// Get all accounts that use this proxy group
+	accountSummaries, err := s.proxyRepo.ListAccountsByProxyGroup(ctx, groupName)
+	if err != nil {
+		return nil, fmt.Errorf("list accounts by group: %w", err)
+	}
+	if len(accountSummaries) == 0 {
+		return &DistributeResult{Assigned: 0, Skipped: 0}, nil
+	}
+
+	// Get healthy proxies for assignment
+	healthy := make([]Proxy, 0, len(proxies))
+	for _, p := range proxies {
+		if p.IsHealthy() {
+			healthy = append(healthy, p)
+		}
+	}
+	if len(healthy) == 0 {
+		healthy = proxies // fallback to all
+	}
+
+	// Round-robin assignment
+	assignments := make([]ProxyAssignment, 0, len(accountSummaries))
+	for i, acc := range accountSummaries {
+		proxy := healthy[i%len(healthy)]
+		assignments = append(assignments, ProxyAssignment{
+			AccountID:  acc.ID,
+			ProxyID:    proxy.ID,
+			ProxyGroup: groupName,
+			AssignedBy: "admin",
+		})
+	}
+
+	assigned, err := s.proxyRepo.BulkSetAssignments(ctx, assignments)
+	if err != nil {
+		return nil, fmt.Errorf("bulk assign: %w", err)
+	}
+
+	return &DistributeResult{
+		Assigned: assigned,
+		Skipped:  len(accountSummaries) - assigned,
+	}, nil
+}
+
+func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, newProxyID int64) error {
+	// Verify account exists
+	acc, err := s.accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		return fmt.Errorf("get account: %w", err)
+	}
+	// Verify proxy exists
+	proxy, err := s.proxyRepo.GetByID(ctx, newProxyID)
+	if err != nil {
+		return fmt.Errorf("get proxy: %w", err)
+	}
+
+	groupName := acc.ProxyGroup
+	if groupName == "" && proxy.GroupName != "" {
+		groupName = proxy.GroupName
+	}
+
+	return s.proxyRepo.SetAssignment(ctx, accountID, newProxyID, groupName, "admin")
 }
 
 // Redeem code management implementations

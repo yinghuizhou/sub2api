@@ -814,6 +814,27 @@ func (m *mockGeminiProxyRepo) ListByGroupName(ctx context.Context, groupName str
 func (m *mockGeminiProxyRepo) ListGroupNames(ctx context.Context) ([]string, error) {
 	panic("not impl")
 }
+func (m *mockGeminiProxyRepo) GetAssignment(_ context.Context, _ int64) (*ProxyAssignment, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) SetAssignment(_ context.Context, _, _ int64, _, _ string) error {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) DeleteAssignment(_ context.Context, _ int64) error {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) ListAssignmentsByGroup(_ context.Context, _ string) ([]ProxyAssignment, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) ListAccountsByProxyGroup(_ context.Context, _ string) ([]ProxyAccountSummary, error) {
+	panic("not impl")
+}
 
 // =====================
 // 新增测试：GeminiOAuthService.RefreshToken（含重试逻辑）

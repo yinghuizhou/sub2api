@@ -316,6 +316,59 @@ export async function testAccountProxy(accountId: number): Promise<{
   return data
 }
 
+// --- Proxy Group Assignment API ---
+
+export interface ProxyGroupProxy {
+  id: number
+  name: string
+  region: string
+  health_status: string
+  assignment_count: number
+}
+
+export interface ProxyGroupSummary {
+  group_name: string
+  total_proxies: number
+  healthy_count: number
+  total_accounts: number
+  proxies: ProxyGroupProxy[]
+}
+
+export interface ProxyAssignmentDetail {
+  account_id: number
+  account_name: string
+  platform: string
+  proxy_id: number
+  proxy_name: string
+  assigned_by: string
+  assigned_at: string
+}
+
+export interface DistributeResult {
+  assigned: number
+  skipped: number
+}
+
+export async function getGroupSummary(name: string): Promise<ProxyGroupSummary> {
+  const { data } = await apiClient.get<ProxyGroupSummary>(`/admin/proxies/groups/${encodeURIComponent(name)}/summary`)
+  return data
+}
+
+export async function getGroupAssignments(name: string): Promise<ProxyAssignmentDetail[]> {
+  const { data } = await apiClient.get<ProxyAssignmentDetail[]>(`/admin/proxies/groups/${encodeURIComponent(name)}/assignments`)
+  return data
+}
+
+export async function distributeAccounts(name: string, strategy: string = 'round-robin'): Promise<DistributeResult> {
+  const { data } = await apiClient.post<DistributeResult>(`/admin/proxies/groups/${encodeURIComponent(name)}/distribute`, { strategy })
+  return data
+}
+
+export async function reassignAccount(accountId: number, proxyId: number): Promise<{ message: string }> {
+  const { data } = await apiClient.put<{ message: string }>(`/admin/proxies/assignments/${accountId}`, { proxy_id: proxyId })
+  return data
+}
+
 export const proxiesAPI = {
   list,
   getAll,
@@ -336,7 +389,11 @@ export const proxiesAPI = {
   getGroupNames,
   healthCheckAll,
   autoAssignProxy,
-  testAccountProxy
+  testAccountProxy,
+  getGroupSummary,
+  getGroupAssignments,
+  distributeAccounts,
+  reassignAccount
 }
 
 export default proxiesAPI

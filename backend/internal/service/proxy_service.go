@@ -32,6 +32,17 @@ type ProxyRepository interface {
 	CountAccountsByProxyID(ctx context.Context, proxyID int64) (int64, error)
 	CountAccountsByGroupName(ctx context.Context) (map[string]int64, error)
 	ListAccountSummariesByProxyID(ctx context.Context, proxyID int64) ([]ProxyAccountSummary, error)
+
+	// List accounts by proxy_group (lightweight: id only)
+	ListAccountsByProxyGroup(ctx context.Context, groupName string) ([]ProxyAccountSummary, error)
+
+	// Proxy assignment (persistent account-proxy binding)
+	GetAssignment(ctx context.Context, accountID int64) (*ProxyAssignment, error)
+	SetAssignment(ctx context.Context, accountID, proxyID int64, groupName, assignedBy string) error
+	DeleteAssignment(ctx context.Context, accountID int64) error
+	ListAssignmentsByGroup(ctx context.Context, groupName string) ([]ProxyAssignment, error)
+	CountAssignmentsByProxy(ctx context.Context) (map[int64]int64, error)
+	BulkSetAssignments(ctx context.Context, assignments []ProxyAssignment) (int, error)
 }
 
 // CreateProxyRequest 创建代理请求

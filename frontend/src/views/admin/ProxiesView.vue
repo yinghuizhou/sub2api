@@ -35,6 +35,13 @@
               @change="loadProxies"
             />
           </div>
+          <div v-if="groupNames.length > 0" class="w-full sm:w-40">
+            <Select
+              v-model="filterGroupName"
+              :options="groupFilterOptions"
+              :placeholder="t('admin.proxies.allGroups')"
+            />
+          </div>
 
           <!-- Right: All action buttons -->
           <div class="flex flex-1 flex-wrap items-center justify-end gap-2">
@@ -107,7 +114,7 @@
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="proxies" :loading="loading">
+        <DataTable :columns="columns" :data="filteredProxies" :loading="loading">
           <template #header-select>
             <input
               type="checkbox"
@@ -147,9 +154,13 @@
           </template>
 
           <template #cell-group_name="{ row }">
-            <span v-if="row.group_name" class="badge badge-primary">
+            <button
+              v-if="row.group_name"
+              @click="openGroupDrawer(row.group_name)"
+              class="badge badge-primary cursor-pointer hover:opacity-80"
+            >
               {{ row.group_name }}
-            </span>
+            </button>
             <span v-else class="text-sm text-gray-400">-</span>
           </template>
 
@@ -984,6 +995,14 @@
         </div>
       </template>
     </BaseDialog>
+
+    <!-- Proxy Group Drawer -->
+    <ProxyGroupDrawer
+      :show="showGroupDrawer"
+      :group-name="selectedGroupName"
+      @close="showGroupDrawer = false"
+      @updated="loadProxies"
+    />
   </AppLayout>
 </template>
 
@@ -1002,6 +1021,7 @@ import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ImportDataModal from '@/components/admin/proxy/ImportDataModal.vue'
+import ProxyGroupDrawer from './components/ProxyGroupDrawer.vue'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformTypeBadge from '@/components/common/PlatformTypeBadge.vue'
@@ -1089,6 +1109,22 @@ const deletingProxy = ref<Proxy | null>(null)
 const showQualityReportDialog = ref(false)
 const qualityReportProxy = ref<Proxy | null>(null)
 const qualityReport = ref<ProxyQualityCheckResult | null>(null)
+
+// Group drawer state
+const showGroupDrawer = ref(false)
+const selectedGroupName = ref('')
+const groupNames = ref<string[]>([])
+const filterGroupName = ref('')
+
+const groupFilterOptions = computed(() => [
+  { value: '', label: t('admin.proxies.allGroups') },
+  ...groupNames.value.map(name => ({ value: name, label: name }))
+])
+
+const filteredProxies = computed(() => {
+  if (!filterGroupName.value) return proxies.value
+  return proxies.value.filter(p => p.group_name === filterGroupName.value)
+})
 
 const selectedCount = computed(() => selectedProxyIds.value.size)
 const allVisibleSelected = computed(() => {
@@ -2044,8 +2080,22 @@ const closeAccountsModal = () => {
   proxyAccounts.value = []
 }
 
+function openGroupDrawer(name: string) {
+  selectedGroupName.value = name
+  showGroupDrawer.value = true
+}
+
+async function loadGroupNames() {
+  try {
+    groupNames.value = await adminAPI.proxies.getGroupNames()
+  } catch {
+    // ignore
+  }
+}
+
 onMounted(() => {
   loadProxies()
+  loadGroupNames()
 })
 
 onUnmounted(() => {

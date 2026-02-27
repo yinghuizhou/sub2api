@@ -428,3 +428,85 @@ func (h *ProxyHandler) HealthCheckAll(c *gin.Context) {
 	h.proxyHealthService.CheckAll(c.Request.Context())
 	response.Success(c, gin.H{"message": "Health check completed for all active proxies"})
 }
+
+// GetGroupSummary returns summary info for a proxy group (proxy list + assignment counts)
+// GET /api/v1/admin/proxies/groups/:name/summary
+func (h *ProxyHandler) GetGroupSummary(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		response.BadRequest(c, "Group name is required")
+		return
+	}
+
+	summary, err := h.adminService.GetProxyGroupSummary(c.Request.Context(), name)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, summary)
+}
+
+// GetGroupAssignments returns the list of account-proxy assignments for a group
+// GET /api/v1/admin/proxies/groups/:name/assignments
+func (h *ProxyHandler) GetGroupAssignments(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		response.BadRequest(c, "Group name is required")
+		return
+	}
+
+	assignments, err := h.adminService.ListProxyAssignments(c.Request.Context(), name)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, assignments)
+}
+
+// DistributeAccounts evenly distributes accounts to proxies within a group
+// POST /api/v1/admin/proxies/groups/:name/distribute
+func (h *ProxyHandler) DistributeAccounts(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		response.BadRequest(c, "Group name is required")
+		return
+	}
+
+	var req struct {
+		Strategy string `json:"strategy"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		req.Strategy = "round-robin"
+	}
+
+	result, err := h.adminService.DistributeAccountsToGroup(c.Request.Context(), name, req.Strategy)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, result)
+}
+
+// ReassignAccount reassigns a single account to a different proxy
+// PUT /api/v1/admin/proxies/assignments/:accountId
+func (h *ProxyHandler) ReassignAccount(c *gin.Context) {
+	accountID, err := strconv.ParseInt(c.Param("accountId"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid account ID")
+		return
+	}
+
+	var req struct {
+		ProxyID int64 `json:"proxy_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	if err := h.adminService.ReassignAccountProxy(c.Request.Context(), accountID, req.ProxyID); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"message": "Account reassigned successfully"})
+}

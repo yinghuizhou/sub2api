@@ -105,6 +105,27 @@ func (m *mockProxyRepoForOAuth) ListByGroupName(ctx context.Context, groupName s
 func (m *mockProxyRepoForOAuth) ListGroupNames(ctx context.Context) ([]string, error) {
 	panic("ListGroupNames not implemented")
 }
+func (m *mockProxyRepoForOAuth) GetAssignment(_ context.Context, _ int64) (*ProxyAssignment, error) {
+	panic("GetAssignment not implemented")
+}
+func (m *mockProxyRepoForOAuth) SetAssignment(_ context.Context, _, _ int64, _, _ string) error {
+	panic("SetAssignment not implemented")
+}
+func (m *mockProxyRepoForOAuth) DeleteAssignment(_ context.Context, _ int64) error {
+	panic("DeleteAssignment not implemented")
+}
+func (m *mockProxyRepoForOAuth) ListAssignmentsByGroup(_ context.Context, _ string) ([]ProxyAssignment, error) {
+	panic("ListAssignmentsByGroup not implemented")
+}
+func (m *mockProxyRepoForOAuth) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
+	panic("CountAssignmentsByProxy not implemented")
+}
+func (m *mockProxyRepoForOAuth) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
+	panic("BulkSetAssignments not implemented")
+}
+func (m *mockProxyRepoForOAuth) ListAccountsByProxyGroup(_ context.Context, _ string) ([]ProxyAccountSummary, error) {
+	panic("ListAccountsByProxyGroup not implemented")
+}
 
 // =====================
 // 测试用例

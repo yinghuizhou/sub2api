@@ -1131,6 +1131,26 @@ func (stubProxyRepo) CountAccountsByGroupName(ctx context.Context) (map[string]i
 	return nil, errors.New("not implemented")
 }
 
+func (stubProxyRepo) ListAccountsByProxyGroup(_ context.Context, _ string) ([]service.ProxyAccountSummary, error) {
+	return nil, nil
+}
+func (stubProxyRepo) GetAssignment(_ context.Context, _ int64) (*service.ProxyAssignment, error) {
+	return nil, nil
+}
+func (stubProxyRepo) SetAssignment(_ context.Context, _, _ int64, _, _ string) error {
+	return nil
+}
+func (stubProxyRepo) DeleteAssignment(_ context.Context, _ int64) error { return nil }
+func (stubProxyRepo) ListAssignmentsByGroup(_ context.Context, _ string) ([]service.ProxyAssignment, error) {
+	return nil, nil
+}
+func (stubProxyRepo) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
+	return nil, nil
+}
+func (stubProxyRepo) BulkSetAssignments(_ context.Context, _ []service.ProxyAssignment) (int, error) {
+	return 0, nil
+}
+
 type stubRedeemCodeRepo struct {
 	byUser map[int64][]service.RedeemCode
 }

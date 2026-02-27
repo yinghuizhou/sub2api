@@ -251,6 +251,26 @@ func (s *proxyRepoStub) ListGroupNames(ctx context.Context) ([]string, error) {
 	panic("unexpected ListGroupNames call")
 }
 
+func (s *proxyRepoStub) ListAccountsByProxyGroup(_ context.Context, _ string) ([]ProxyAccountSummary, error) {
+	return nil, nil
+}
+func (s *proxyRepoStub) GetAssignment(_ context.Context, _ int64) (*ProxyAssignment, error) {
+	return nil, nil
+}
+func (s *proxyRepoStub) SetAssignment(_ context.Context, _, _ int64, _, _ string) error {
+	return nil
+}
+func (s *proxyRepoStub) DeleteAssignment(_ context.Context, _ int64) error { return nil }
+func (s *proxyRepoStub) ListAssignmentsByGroup(_ context.Context, _ string) ([]ProxyAssignment, error) {
+	return nil, nil
+}
+func (s *proxyRepoStub) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
+	return nil, nil
+}
+func (s *proxyRepoStub) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
+	return 0, nil
+}
+
 type redeemRepoStub struct {
 	deleteErrByID map[int64]error
 	deletedIDs    []int64

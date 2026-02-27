@@ -336,6 +336,15 @@ func registerProxyRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		proxies.POST("/batch", h.Admin.Proxy.BatchCreate)
 		proxies.POST("/health-check-all", h.Admin.Proxy.HealthCheckAll)
 		proxies.POST("/:id/health-check", h.Admin.Proxy.HealthCheck)
+
+		// Proxy group assignment management
+		groups := proxies.Group("/groups")
+		{
+			groups.GET("/:name/summary", h.Admin.Proxy.GetGroupSummary)
+			groups.GET("/:name/assignments", h.Admin.Proxy.GetGroupAssignments)
+			groups.POST("/:name/distribute", h.Admin.Proxy.DistributeAccounts)
+		}
+		proxies.PUT("/assignments/:accountId", h.Admin.Proxy.ReassignAccount)
 	}
 }
 

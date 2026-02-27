@@ -2391,7 +2391,41 @@ export default {
       nameRequired: '请输入代理名称',
       hostRequired: '请输入主机地址',
       portInvalid: '端口必须在 1-65535 之间',
-      deleteConfirm: "确定要删除代理 '{name}' 吗？使用此代理的账号将被移除代理设置。"
+      deleteConfirm: "确定要删除代理 '{name}' 吗？使用此代理的账号将被移除代理设置。",
+      // Proxy group assignment management
+      groupDrawer: {
+        title: '分组概览',
+        totalProxies: '代理数量',
+        healthyProxies: '健康代理',
+        totalAccounts: '绑定账号',
+        proxyName: '代理名称',
+        region: '区域',
+        healthStatus: '健康状态',
+        assignmentCount: '已分配',
+        distribute: '均匀分配',
+        distributeConfirm: '确定将该分组的所有账号均匀分配到组内健康代理吗？现有绑定将被覆盖。',
+        distributeSuccess: '分配完成：已分配 {assigned} 个，跳过 {skipped} 个',
+        distributeFailed: '分配失败',
+        assignments: '绑定详情',
+        accountName: '账号名称',
+        platform: '平台',
+        proxyNode: '代理节点',
+        assignedBy: '分配方式',
+        assignedAt: '分配时间',
+        reassign: '重新分配',
+        reassignProxy: '选择新代理',
+        reassignSuccess: '重新分配成功',
+        reassignFailed: '重新分配失败',
+        noAssignments: '暂无绑定记录',
+        noAssignmentsHint: '点击"均匀分配"将账号分配到代理',
+        auto: '自动',
+        admin: '手动',
+        healthy: '健康',
+        unhealthy: '异常',
+        loadFailed: '加载分组信息失败'
+      },
+      filterByGroup: '按分组筛选',
+      allGroups: '全部分组'
     },
 
     // Redeem Codes Management

@@ -2252,7 +2252,41 @@ export default {
       hostRequired: 'Please enter host address',
       portInvalid: 'Port must be between 1-65535',
       deleteConfirm:
-        "Are you sure you want to delete '{name}'? Accounts using this proxy will have their proxy removed."
+        "Are you sure you want to delete '{name}'? Accounts using this proxy will have their proxy removed.",
+      // Proxy group assignment management
+      groupDrawer: {
+        title: 'Group Overview',
+        totalProxies: 'Total Proxies',
+        healthyProxies: 'Healthy',
+        totalAccounts: 'Assigned Accounts',
+        proxyName: 'Proxy Name',
+        region: 'Region',
+        healthStatus: 'Health',
+        assignmentCount: 'Assigned',
+        distribute: 'Distribute',
+        distributeConfirm: 'Distribute all accounts evenly across healthy proxies in this group? Existing assignments will be overwritten.',
+        distributeSuccess: 'Distribution complete: {assigned} assigned, {skipped} skipped',
+        distributeFailed: 'Distribution failed',
+        assignments: 'Assignment Details',
+        accountName: 'Account',
+        platform: 'Platform',
+        proxyNode: 'Proxy Node',
+        assignedBy: 'Assigned By',
+        assignedAt: 'Assigned At',
+        reassign: 'Reassign',
+        reassignProxy: 'Select New Proxy',
+        reassignSuccess: 'Reassignment successful',
+        reassignFailed: 'Reassignment failed',
+        noAssignments: 'No assignments yet',
+        noAssignmentsHint: 'Click "Distribute" to assign accounts to proxies',
+        auto: 'Auto',
+        admin: 'Manual',
+        healthy: 'Healthy',
+        unhealthy: 'Unhealthy',
+        loadFailed: 'Failed to load group info'
+      },
+      filterByGroup: 'Filter by Group',
+      allGroups: 'All Groups'
     },
 
     // Redeem Codes

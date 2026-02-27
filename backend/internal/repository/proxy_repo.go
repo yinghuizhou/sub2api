@@ -14,6 +14,7 @@ import (
 
 type sqlQuerier interface {
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
 type proxyRepository struct {
@@ -560,4 +561,127 @@ func (r *proxyRepository) ListGroupNames(ctx context.Context) ([]string, error) 
 		names = append(names, name)
 	}
 	return names, rows.Err()
+}
+
+// ListAccountsByProxyGroup returns basic info about accounts using a given proxy_group.
+func (r *proxyRepository) ListAccountsByProxyGroup(ctx context.Context, groupName string) ([]service.ProxyAccountSummary, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT id, name, platform, type, notes
+		FROM accounts
+		WHERE proxy_group = $1 AND deleted_at IS NULL
+		ORDER BY id
+	`, groupName)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []service.ProxyAccountSummary
+	for rows.Next() {
+		var (
+			id       int64
+			name     string
+			platform string
+			accType  string
+			notes    sql.NullString
+		)
+		if err := rows.Scan(&id, &name, &platform, &accType, &notes); err != nil {
+			return nil, err
+		}
+		var notesPtr *string
+		if notes.Valid {
+			notesPtr = &notes.String
+		}
+		out = append(out, service.ProxyAccountSummary{
+			ID:       id,
+			Name:     name,
+			Platform: platform,
+			Type:     accType,
+			Notes:    notesPtr,
+		})
+	}
+	return out, rows.Err()
+}
+
+// --- Proxy Assignment methods (persistent account-proxy binding) ---
+
+func (r *proxyRepository) GetAssignment(ctx context.Context, accountID int64) (*service.ProxyAssignment, error) {
+	var a service.ProxyAssignment
+	err := scanSingleRow(ctx, r.sql, `
+		SELECT id, account_id, proxy_id, proxy_group, assigned_at, assigned_by
+		FROM account_proxy_assignments WHERE account_id = $1
+	`, []any{accountID}, &a.ID, &a.AccountID, &a.ProxyID, &a.ProxyGroup, &a.AssignedAt, &a.AssignedBy)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (r *proxyRepository) SetAssignment(ctx context.Context, accountID, proxyID int64, groupName, assignedBy string) error {
+	_, err := r.sql.ExecContext(ctx, `
+		INSERT INTO account_proxy_assignments (account_id, proxy_id, proxy_group, assigned_by)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (account_id) DO UPDATE SET proxy_id = $2, proxy_group = $3, assigned_by = $4, assigned_at = NOW()
+	`, accountID, proxyID, groupName, assignedBy)
+	return err
+}
+
+func (r *proxyRepository) DeleteAssignment(ctx context.Context, accountID int64) error {
+	_, err := r.sql.ExecContext(ctx, `DELETE FROM account_proxy_assignments WHERE account_id = $1`, accountID)
+	return err
+}
+
+func (r *proxyRepository) ListAssignmentsByGroup(ctx context.Context, groupName string) ([]service.ProxyAssignment, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT id, account_id, proxy_id, proxy_group, assigned_at, assigned_by
+		FROM account_proxy_assignments WHERE proxy_group = $1 ORDER BY id
+	`, groupName)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []service.ProxyAssignment
+	for rows.Next() {
+		var a service.ProxyAssignment
+		if err := rows.Scan(&a.ID, &a.AccountID, &a.ProxyID, &a.ProxyGroup, &a.AssignedAt, &a.AssignedBy); err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+func (r *proxyRepository) CountAssignmentsByProxy(ctx context.Context) (map[int64]int64, error) {
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT proxy_id, COUNT(*) FROM account_proxy_assignments GROUP BY proxy_id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	counts := make(map[int64]int64)
+	for rows.Next() {
+		var proxyID, count int64
+		if err := rows.Scan(&proxyID, &count); err != nil {
+			return nil, err
+		}
+		counts[proxyID] = count
+	}
+	return counts, rows.Err()
+}
+
+func (r *proxyRepository) BulkSetAssignments(ctx context.Context, assignments []service.ProxyAssignment) (int, error) {
+	assigned := 0
+	for _, a := range assignments {
+		if err := r.SetAssignment(ctx, a.AccountID, a.ProxyID, a.ProxyGroup, a.AssignedBy); err != nil {
+			return assigned, fmt.Errorf("assign account %d to proxy %d: %w", a.AccountID, a.ProxyID, err)
+		}
+		assigned++
+	}
+	return assigned, nil
 }
