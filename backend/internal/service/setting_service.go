@@ -248,6 +248,10 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	updates[SettingKeyEnableIdentityPatch] = strconv.FormatBool(settings.EnableIdentityPatch)
 	updates[SettingKeyIdentityPatchPrompt] = settings.IdentityPatchPrompt
 
+	// Free trial settings
+	updates["free_trial.enabled"] = strconv.FormatBool(settings.FreeTrialEnabled)
+	updates["free_trial.amount"] = strconv.FormatFloat(settings.FreeTrialAmount, 'f', 8, 64)
+
 	// Ops monitoring (vNext)
 	updates[SettingKeyOpsMonitoringEnabled] = strconv.FormatBool(settings.OpsMonitoringEnabled)
 	updates[SettingKeyOpsRealtimeMonitoringEnabled] = strconv.FormatBool(settings.OpsRealtimeMonitoringEnabled)
@@ -415,6 +419,9 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyFallbackModelOpenAI:      "gpt-4o",
 		SettingKeyFallbackModelGemini:      "gemini-2.5-pro",
 		SettingKeyFallbackModelAntigravity: "gemini-2.5-pro",
+		// Free trial defaults
+		"free_trial.enabled": "false",
+		"free_trial.amount":  "0.5",
 		// Identity patch defaults
 		SettingKeyEnableIdentityPatch: "true",
 		SettingKeyIdentityPatchPrompt: "",
@@ -530,6 +537,14 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		result.EnableIdentityPatch = true
 	}
 	result.IdentityPatchPrompt = settings[SettingKeyIdentityPatchPrompt]
+
+	// Free trial settings
+	result.FreeTrialEnabled = settings["free_trial.enabled"] == "true"
+	if v, err := strconv.ParseFloat(settings["free_trial.amount"], 64); err == nil && v > 0 {
+		result.FreeTrialAmount = v
+	} else {
+		result.FreeTrialAmount = 0.5
+	}
 
 	// Ops monitoring settings (default: enabled, fail-open)
 	result.OpsMonitoringEnabled = !isFalseSettingValue(settings[SettingKeyOpsMonitoringEnabled])

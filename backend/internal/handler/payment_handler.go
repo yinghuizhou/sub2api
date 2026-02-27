@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"net/http"
 	"os"
 	"strconv"
@@ -155,6 +156,13 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 	// B2: Verify payment amount matches order (WeChat amount is in cents)
 	paidAmountCNY := float64(payResult.Amount.Total) / 100.0
 	if err := h.paymentService.HandleCallback(c.Request.Context(), payResult.OutTradeNo, payResult.TransactionId, paidAmountCNY); err != nil {
+		// B1: Amount mismatch is a deterministic error — return 200 to stop WeChat retries.
+		// The order has been marked as "failed" by the service layer.
+		if errors.Is(err, service.ErrPaymentAmountMismatch) {
+			logger.LegacyPrintf("handler.payment", "[WechatCallback] amount mismatch for order %s, marked as failed", payResult.OutTradeNo)
+			c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "SUCCESS", Message: "成功"})
+			return
+		}
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] handle callback failed for order %s: %v", payResult.OutTradeNo, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "PROCESS_FAILED"})
 		return
@@ -212,6 +220,12 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 	}
 
 	if err := h.paymentService.HandleCallback(c.Request.Context(), orderNo, tradeNo, paidAmountCNY); err != nil {
+		// B1: Amount mismatch is deterministic — return 200 to stop Alipay retries.
+		if errors.Is(err, service.ErrPaymentAmountMismatch) {
+			logger.LegacyPrintf("handler.payment", "[AlipayCallback] amount mismatch for order %s, marked as failed", orderNo)
+			c.String(http.StatusOK, "success")
+			return
+		}
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] handle callback failed for order %s: %v", orderNo, err)
 		c.String(http.StatusInternalServerError, "process failed")
 		return

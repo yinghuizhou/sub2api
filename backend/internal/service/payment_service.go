@@ -162,6 +162,26 @@ func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInpu
 // Atomically: verify amount → update order status → credit user balance.
 // Commission settlement runs in a separate transaction to avoid blocking payment on commission failure.
 func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo string, paidAmountCNY float64) error {
+	// B1: Pre-check amount BEFORE starting transaction to avoid leaving orders in limbo.
+	// If mismatch, mark order as "failed" so payment provider stops retrying.
+	order, err := s.orderRepo.GetByOrderNo(ctx, orderNo)
+	if err != nil {
+		return fmt.Errorf("get order: %w", err)
+	}
+	if order.Status != "pending" {
+		return nil // already processed (idempotent)
+	}
+
+	// B2: Verify paid amount matches order amount (tolerance: 0.01 CNY)
+	if math.Abs(paidAmountCNY-order.AmountCNY) > 0.01 {
+		logger.LegacyPrintf("service.payment", "[Payment] AMOUNT MISMATCH for order %s: paid=%.2f expected=%.2f", orderNo, paidAmountCNY, order.AmountCNY)
+		// Mark order as failed to prevent infinite retries
+		if _, err := s.orderRepo.UpdateStatusAtomically(ctx, orderNo, "pending", "failed", tradeNo, nil); err != nil {
+			logger.LegacyPrintf("service.payment", "[Payment] Failed to mark order %s as failed: %v", orderNo, err)
+		}
+		return ErrPaymentAmountMismatch
+	}
+
 	tx, err := s.entClient.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
@@ -180,19 +200,6 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 		return nil // already processed (idempotent)
 	}
 
-	// Fetch order details for balance credit
-	order, err := s.orderRepo.GetByOrderNo(txCtx, orderNo)
-	if err != nil {
-		return fmt.Errorf("get order: %w", err)
-	}
-
-	// B2: Verify paid amount matches order amount (tolerance: 0.01 CNY)
-	if math.Abs(paidAmountCNY-order.AmountCNY) > 0.01 {
-		// Rollback the status update — mark as failed instead
-		logger.LegacyPrintf("service.payment", "[Payment] AMOUNT MISMATCH for order %s: paid=%.2f expected=%.2f", orderNo, paidAmountCNY, order.AmountCNY)
-		return ErrPaymentAmountMismatch
-	}
-
 	// Credit user balance
 	if err := s.userRepo.UpdateBalance(txCtx, order.UserID, order.TotalCredit); err != nil {
 		return fmt.Errorf("credit balance: %w", err)
@@ -205,14 +212,17 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 	// B4: Settle referral commission in a SEPARATE transaction.
 	// This ensures payment is never blocked by commission failure.
 	// Failed commissions are tracked via commission_status for later reconciliation.
-	s.settleCommissionAsync(ctx, orderNo, order.UserID, order.ID, order.AmountUSD)
+	// C1: Use context.WithoutCancel to detach from HTTP request lifecycle,
+	// preventing cancelled HTTP context from aborting commission settlement.
+	s.settleCommissionBestEffort(context.WithoutCancel(ctx), orderNo, order.UserID, order.ID, order.AmountUSD)
 
 	return nil
 }
 
-// settleCommissionAsync settles referral commission in its own transaction,
+// settleCommissionBestEffort settles referral commission in its own transaction,
 // separate from the payment transaction to prevent commission failures from blocking payments.
-func (s *PaymentService) settleCommissionAsync(ctx context.Context, orderNo string, userID, orderID int64, amountUSD float64) {
+// The context should be detached from HTTP lifecycle (e.g., via context.WithoutCancel).
+func (s *PaymentService) settleCommissionBestEffort(ctx context.Context, orderNo string, userID, orderID int64, amountUSD float64) {
 	if s.referralService == nil {
 		return
 	}

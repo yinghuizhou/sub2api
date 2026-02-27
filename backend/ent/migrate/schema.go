@@ -525,11 +525,6 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{PaymentOrdersColumns[9]},
 			},
-			{
-				Name:    "paymentorder_order_no",
-				Unique:  false,
-				Columns: []*schema.Column{PaymentOrdersColumns[1]},
-			},
 		},
 	}
 	// PromoCodesColumns holds the columns for the "promo_codes" table.
@@ -746,7 +741,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "inviter_id", Type: field.TypeInt64},
 		{Name: "invitee_id", Type: field.TypeInt64, Unique: true},
-		{Name: "created_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 	}
 	// ReferralsTable holds the schema information for the "referrals" table.
 	ReferralsTable = &schema.Table{
@@ -771,8 +766,8 @@ var (
 		{Name: "commission_rate", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(5,4)"}},
 		{Name: "commission_amount", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "settled"},
-		{Name: "settled_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
+		{Name: "settled_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 	}
 	// ReferralCommissionsTable holds the schema information for the "referral_commissions" table.
 	ReferralCommissionsTable = &schema.Table{

@@ -19,7 +19,8 @@ func NewReferralRepository(client *dbent.Client) service.ReferralRepository {
 }
 
 func (r *ReferralRepository) CreateReferral(ctx context.Context, inviterID, inviteeID int64) error {
-	_, err := r.client.Referral.Create().
+	client := clientFromContext(ctx, r.client)
+	_, err := client.Referral.Create().
 		SetInviterID(inviterID).
 		SetInviteeID(inviteeID).
 		Save(ctx)
