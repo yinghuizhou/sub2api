@@ -294,11 +294,11 @@ type UpdateProxyInput struct {
 
 // ProxyGroupSummary contains summary info for a proxy group.
 type ProxyGroupSummary struct {
-	GroupName    string              `json:"group_name"`
-	TotalProxies int                `json:"total_proxies"`
-	HealthyCount int                `json:"healthy_count"`
+	GroupName     string            `json:"group_name"`
+	TotalProxies  int               `json:"total_proxies"`
+	HealthyCount  int               `json:"healthy_count"`
 	TotalAccounts int64             `json:"total_accounts"`
-	Proxies      []ProxyGroupProxy  `json:"proxies"`
+	Proxies       []ProxyGroupProxy `json:"proxies"`
 }
 
 type ProxyGroupProxy struct {
