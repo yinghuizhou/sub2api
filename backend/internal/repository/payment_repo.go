@@ -47,7 +47,8 @@ func (r *PaymentOrderRepository) GetByOrderNo(ctx context.Context, orderNo strin
 }
 
 func (r *PaymentOrderRepository) GetByID(ctx context.Context, id int64) (*service.PaymentOrder, error) {
-	o, err := r.client.PaymentOrder.Get(ctx, id)
+	client := clientFromContext(ctx, r.client)
+	o, err := client.PaymentOrder.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}

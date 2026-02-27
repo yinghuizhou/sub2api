@@ -33,5 +33,8 @@ func (ReferralCommission) Fields() []ent.Field {
 }
 
 func (ReferralCommission) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("inviter_id")}
+	return []ent.Index{
+		index.Fields("inviter_id"),
+		index.Fields("order_id").Unique(),
+	}
 }

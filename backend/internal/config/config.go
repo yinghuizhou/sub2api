@@ -76,6 +76,7 @@ type Config struct {
 	Update                  UpdateConfig                  `mapstructure:"update"`
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
 	Referral                ReferralConfig                `mapstructure:"referral"`
+	Payment                 PaymentConfig                 `mapstructure:"payment"`
 }
 
 type LogConfig struct {
@@ -161,6 +162,11 @@ type IdempotencyConfig struct {
 // ReferralConfig 邀请返佣配置
 type ReferralConfig struct {
 	CommissionRate float64 `mapstructure:"commission_rate"` // 返佣比例，默认 0.10 (10%)
+}
+
+// PaymentConfig 支付配置
+type PaymentConfig struct {
+	CNYToUSDRate float64 `mapstructure:"cny_to_usd_rate"` // 人民币兑美元汇率，默认 7.2
 }
 
 type LinuxDoConnectConfig struct {

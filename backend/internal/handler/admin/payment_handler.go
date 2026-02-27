@@ -58,7 +58,11 @@ func (h *PaymentHandler) CreatePackage(c *gin.Context) {
 }
 
 func (h *PaymentHandler) UpdatePackage(c *gin.Context) {
-	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		response.BadRequest(c, "invalid package id")
+		return
+	}
 	var req UpsertPackageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -80,7 +84,11 @@ func (h *PaymentHandler) UpdatePackage(c *gin.Context) {
 }
 
 func (h *PaymentHandler) DeletePackage(c *gin.Context) {
-	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		response.BadRequest(c, "invalid package id")
+		return
+	}
 	if err := h.paymentService.DeletePackage(c.Request.Context(), id); err != nil {
 		response.ErrorFrom(c, err)
 		return

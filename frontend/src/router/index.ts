@@ -466,7 +466,9 @@ router.beforeEach((to, _from, next) => {
       '/admin/subscriptions',
       '/admin/redeem',
       '/subscriptions',
-      '/redeem'
+      '/redeem',
+      '/recharge',
+      '/referral'
     ]
 
     if (restrictedPaths.some((path) => to.path.startsWith(path))) {

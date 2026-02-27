@@ -782,6 +782,11 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{ReferralCommissionsColumns[1]},
 			},
+			{
+				Name:    "referralcommission_order_id",
+				Unique:  true,
+				Columns: []*schema.Column{ReferralCommissionsColumns[3]},
+			},
 		},
 	}
 	// SecuritySecretsColumns holds the columns for the "security_secrets" table.

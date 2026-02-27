@@ -116,18 +116,20 @@ func (r *ReferralRepository) ListCommissions(ctx context.Context, inviterID int6
 }
 
 func (r *ReferralRepository) SumCommissions(ctx context.Context, inviterID int64) (float64, error) {
-	// Use raw query for SUM aggregation
-	items, err := r.client.ReferralCommission.Query().
+	var result []struct {
+		Sum *float64 `json:"sum"`
+	}
+	err := r.client.ReferralCommission.Query().
 		Where(referralcommission.InviterIDEQ(inviterID)).
-		All(ctx)
+		Aggregate(dbent.Sum(referralcommission.FieldCommissionAmount)).
+		Scan(ctx, &result)
 	if err != nil {
 		return 0, err
 	}
-	var sum float64
-	for _, item := range items {
-		sum += item.CommissionAmount
+	if len(result) == 0 || result[0].Sum == nil {
+		return 0, nil
 	}
-	return sum, nil
+	return *result[0].Sum, nil
 }
 
 func (r *ReferralRepository) CountInvitees(ctx context.Context, inviterID int64) (int, error) {

@@ -197,7 +197,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	vendorHandler := admin.NewVendorHandler(vendorService, vendorProbeService, vendorHealthService, vendorBalanceService)
 	paymentOrderRepository := repository.NewPaymentOrderRepository(client)
 	rechargePackageRepository := repository.NewRechargePackageRepository(client)
-	paymentService := service.NewPaymentService(paymentOrderRepository, rechargePackageRepository, userRepository, client, referralService)
+	paymentService := service.NewPaymentService(paymentOrderRepository, rechargePackageRepository, userRepository, client, referralService, configConfig)
 	paymentHandler := admin.NewAdminPaymentHandler(paymentService)
 	adminHandlers := handler.ProvideAdminHandlers(dashboardHandler, adminUserHandler, groupHandler, accountHandler, adminAnnouncementHandler, oAuthHandler, openAIOAuthHandler, geminiOAuthHandler, antigravityOAuthHandler, proxyHandler, adminRedeemHandler, promoHandler, settingHandler, opsHandler, systemHandler, adminSubscriptionHandler, adminUsageHandler, userAttributeHandler, errorPassthroughHandler, vendorHandler, paymentHandler)
 	usageRecordWorkerPool := service.NewUsageRecordWorkerPool(configConfig)

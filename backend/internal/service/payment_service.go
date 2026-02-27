@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
+	"github.com/Wei-Shaw/sub2api/internal/config"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 )
@@ -87,14 +89,19 @@ func NewPaymentService(
 	userRepo UserRepository,
 	entClient *dbent.Client,
 	referralService *ReferralService,
+	cfg *config.Config,
 ) *PaymentService {
+	rate := 7.2
+	if cfg != nil && cfg.Payment.CNYToUSDRate > 0 {
+		rate = cfg.Payment.CNYToUSDRate
+	}
 	return &PaymentService{
 		orderRepo:       orderRepo,
 		packageRepo:     packageRepo,
 		userRepo:        userRepo,
 		entClient:       entClient,
 		referralService: referralService,
-		rate:            7.2,
+		rate:            rate,
 	}
 }
 
@@ -220,5 +227,8 @@ func (s *PaymentService) GetOrderByID(ctx context.Context, id int64) (*PaymentOr
 }
 
 func generateOrderNo() string {
-	return fmt.Sprintf("PAY%d%06d", time.Now().UnixMilli(), time.Now().Nanosecond()%1000000)
+	now := time.Now()
+	b := make([]byte, 4)
+	_, _ = rand.Read(b)
+	return fmt.Sprintf("PAY%d%08x", now.UnixMilli(), b)
 }
