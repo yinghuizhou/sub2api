@@ -30,22 +30,59 @@ export default function HomePage() {
   }, []);
 
   async function handleStart(selected: ServerOption[]) {
-    await fetch('/api/start', {
-      method: 'POST',
-      body: JSON.stringify({ servers: selected, mode, auto }),
-    });
+    try {
+      const res = await fetch('/api/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ servers: selected, mode, auto }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Start failed:', err);
+      }
+    } catch (e) {
+      console.error('Start request failed:', e);
+    }
   }
 
   async function handleStop() {
-    await fetch('/api/stop', { method: 'POST', body: '{}' });
+    try {
+      await fetch('/api/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+    } catch (e) {
+      console.error('Stop request failed:', e);
+    }
   }
 
   async function handleCaptcha(solution: string) {
-    await fetch('/api/captcha', { method: 'POST', body: JSON.stringify({ solution }) });
+    try {
+      const res = await fetch('/api/captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ solution }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Captcha submit failed:', err);
+      }
+    } catch (e) {
+      console.error('Captcha request failed:', e);
+    }
   }
 
   async function handleSkip() {
-    await fetch('/api/skip', { method: 'POST', body: '{}' });
+    try {
+      await fetch('/api/skip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+    } catch (e) {
+      console.error('Skip request failed:', e);
+    }
   }
 
   const waitingJob = state.jobs.find(j => j.status === 'waiting');

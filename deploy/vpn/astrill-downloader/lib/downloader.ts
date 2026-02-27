@@ -3,7 +3,7 @@ import type { Browser, Page } from 'playwright';
 import https from 'https';
 import http from 'http';
 import { mkdirSync, writeFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { getState, setState, setMsg, broadcast } from './state';
 import { loadConfig, saveConfig, loadCookies, saveCookies, OVPN_DIR } from './config';
 
@@ -53,6 +53,8 @@ function stopRace(): Promise<never> {
 }
 
 function waitForCaptcha(): Promise<string | null> {
+  // Resolve any previously pending captcha to avoid Promise leak on rapid re-calls
+  if (rt.captchaResolve) rt.captchaResolve(null);
   return new Promise(r => { rt.captchaResolve = r; });
 }
 
@@ -248,7 +250,9 @@ async function parseCertsPage(skipNav = false): Promise<void> {
 
 export async function init(): Promise<void> {
   mkdirSync(OVPN_DIR, { recursive: true });
-  rt.browser = await chromium.launch({ headless: false, slowMo: 100 });
+  // Default headless=true for production; set ASTRILL_HEADLESS=false for local debug
+  const headless = process.env.ASTRILL_HEADLESS !== 'false';
+  rt.browser = await chromium.launch({ headless, slowMo: headless ? 0 : 100 });
   const ctx = await rt.browser.newContext({ acceptDownloads: true });
   rt.page = await ctx.newPage();
   setupCertIdInterception();
@@ -360,7 +364,7 @@ export async function startBatch(selectedServers: Array<{ value: string; label: 
         job.status = 'downloading'; broadcast();
         const { certId, csrfToken } = getState();
         if (!certId) throw new Error('certId 未获取到');
-        const downloadUrl = `${ASTRILL_CERTS}/download/${certId}/${job.server.value}/${modeVal}/${encodeURIComponent(solution)}/${csrfToken}`;
+        const downloadUrl = `${ASTRILL_CERTS}/download/${encodeURIComponent(certId)}/${encodeURIComponent(job.server.value)}/${encodeURIComponent(modeVal)}/${encodeURIComponent(solution)}/${encodeURIComponent(csrfToken)}`;
 
         const fileResult = await page.evaluate(async (url: string) => {
           try {
@@ -384,7 +388,12 @@ export async function startBatch(selectedServers: Array<{ value: string; label: 
 
         let fname = `${job.server.label.replace(/[^a-zA-Z0-9_-]/g, '_')}.ovpn`;
         const cdMatch = fileResult.cd.match(/filename[*]?=["']?([^"';\n]+)/);
-        if (cdMatch) fname = cdMatch[1].trim();
+        if (cdMatch) {
+          // Use basename only to prevent path traversal via Content-Disposition
+          const rawName = cdMatch[1].trim();
+          const safeName = basename(rawName).replace(/[^a-zA-Z0-9._-]/g, '_');
+          if (safeName && safeName.endsWith('.ovpn')) fname = safeName;
+        }
         writeFileSync(join(OVPN_DIR, fname), fileBytes);
 
         job.status = 'done'; job.file = fname; success = true;

@@ -94,8 +94,14 @@ export function setMsg(text: string, level: LogEntry['level'] = 'info') {
   console.log(text);
 }
 
+// Strip sensitive fields before broadcasting to SSE clients
+function sanitizeForBroadcast(state: AppState): Omit<AppState, 'csrfToken' | 'certId'> {
+  const { csrfToken: _csrf, certId: _cert, ...safe } = state;
+  return safe;
+}
+
 export function broadcast() {
-  const data = JSON.stringify(store.state);
+  const data = JSON.stringify(sanitizeForBroadcast(store.state));
   for (const send of store.sseClients.values()) {
     try { send(data); } catch { /* client disconnected */ }
   }
