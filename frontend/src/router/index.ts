@@ -459,6 +459,19 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
+  // Feature toggle: redirect when payment/referral is disabled
+  const publicSettings = appStore.cachedPublicSettings
+  if (publicSettings) {
+    if (to.path === '/recharge' && !publicSettings.payment_enabled) {
+      next('/dashboard')
+      return
+    }
+    if (to.path === '/referral' && !publicSettings.referral_enabled) {
+      next('/dashboard')
+      return
+    }
+  }
+
   // 简易模式下限制访问某些页面
   if (authStore.isSimpleMode) {
     const restrictedPaths = [

@@ -288,6 +288,15 @@ func (s *PaymentService) DeletePackage(ctx context.Context, id int64) error {
 	return s.packageRepo.Delete(ctx, id)
 }
 
+// CancelOrder atomically transitions an order from "pending" to "cancelled".
+// Used to clean up orphaned orders when the payment provider call fails.
+func (s *PaymentService) CancelOrder(ctx context.Context, orderNo string) {
+	if s.orderRepo == nil {
+		return
+	}
+	_, _ = s.orderRepo.UpdateStatusAtomically(ctx, orderNo, "pending", "cancelled", "", nil)
+}
+
 // GetOrderByID returns a payment order by ID.
 func (s *PaymentService) GetOrderByID(ctx context.Context, id int64) (*PaymentOrder, error) {
 	if s.orderRepo == nil {

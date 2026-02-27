@@ -25,27 +25,27 @@ func TestGenerateInviteCode_Unique(t *testing.T) {
 
 func TestCalculateCommission(t *testing.T) {
 	cfg := &config.Config{Referral: config.ReferralConfig{CommissionRate: 0.10}}
-	svc := service.NewReferralService(nil, nil, nil, nil, cfg)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil, cfg)
 	commission := svc.CalculateCommission(100.0)
 	assert.Equal(t, 10.0, commission)
 }
 
 func TestCalculateCommission_DefaultRate(t *testing.T) {
-	svc := service.NewReferralService(nil, nil, nil, nil, nil)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil, nil)
 	commission := svc.CalculateCommission(200.0)
 	assert.Equal(t, 20.0, commission) // default 10%
 }
 
 func TestCalculateCommission_CustomRate(t *testing.T) {
 	cfg := &config.Config{Referral: config.ReferralConfig{CommissionRate: 0.15}}
-	svc := service.NewReferralService(nil, nil, nil, nil, cfg)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil, cfg)
 	commission := svc.CalculateCommission(100.0)
 	assert.Equal(t, 15.0, commission)
 }
 
 func TestSettleCommission_SkipsWhenDisabled(t *testing.T) {
 	cfg := &config.Config{Referral: config.ReferralConfig{Enabled: false}}
-	svc := service.NewReferralService(nil, nil, nil, nil, cfg)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil, cfg)
 	err := svc.SettleCommission(context.Background(), 1, 100, 50.0)
 	require.NoError(t, err, "SettleCommission should return nil when disabled")
 }
@@ -55,7 +55,7 @@ func TestRecordReferral_SkipsSelfReferral(t *testing.T) {
 		codeToUser: map[string]int64{"ABCD1234": 42},
 	}
 	cfg := &config.Config{Referral: config.ReferralConfig{Enabled: true}}
-	svc := service.NewReferralService(repo, nil, nil, nil, cfg)
+	svc := service.NewReferralService(repo, nil, nil, nil, nil, cfg)
 
 	// inviteeID == inviterID (both 42) -> should be silently skipped
 	err := svc.RecordReferral(context.Background(), 42, "ABCD1234")
@@ -66,7 +66,7 @@ func TestRecordReferral_SkipsSelfReferral(t *testing.T) {
 func TestRecordReferral_SkipsEmptyCode(t *testing.T) {
 	repo := &stubReferralRepo{}
 	cfg := &config.Config{Referral: config.ReferralConfig{Enabled: true}}
-	svc := service.NewReferralService(repo, nil, nil, nil, cfg)
+	svc := service.NewReferralService(repo, nil, nil, nil, nil, cfg)
 
 	err := svc.RecordReferral(context.Background(), 42, "")
 	require.NoError(t, err)
@@ -75,14 +75,14 @@ func TestRecordReferral_SkipsEmptyCode(t *testing.T) {
 
 func TestCalculateCommission_RateCapped(t *testing.T) {
 	cfg := &config.Config{Referral: config.ReferralConfig{CommissionRate: 0.80}}
-	svc := service.NewReferralService(nil, nil, nil, nil, cfg)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil, cfg)
 	// Rate should be capped at 0.50
 	commission := svc.CalculateCommission(100.0)
 	assert.Equal(t, 50.0, commission, "commission rate should be capped at 50%")
 }
 
 func TestEnsureInviteCode_WithoutRepo(t *testing.T) {
-	svc := service.NewReferralService(nil, nil, nil, nil, nil)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil, nil)
 	code, err := svc.EnsureInviteCode(context.Background(), 1)
 	require.NoError(t, err)
 	assert.Len(t, code, 8, "generated code should be 8 characters")

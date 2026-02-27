@@ -150,6 +150,8 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 		qrURL, err = h.createAlipayPayment(c.Request.Context(), order)
 	}
 	if err != nil {
+		// Cancel the orphaned pending order to prevent data pollution
+		h.paymentService.CancelOrder(c.Request.Context(), order.OrderNo)
 		logger.LegacyPrintf("handler.payment", "[CreateOrder] failed to create %s payment for order %s: %v", req.Channel, order.OrderNo, err)
 		response.ErrorFrom(c, err)
 		return
@@ -179,7 +181,11 @@ func (h *PaymentHandler) createWechatPayment(ctx context.Context, order *service
 
 	rsp, err := h.wxClient.V3TransactionNative(ctx, bm)
 	if err != nil {
-		return "", fmt.Errorf("wechat native pay: %w", err)
+		logger.LegacyPrintf("handler.payment", "[createWechatPayment] wechat native pay error: %v", err)
+		return "", infraerrors.ServiceUnavailable("WECHAT_PAY_FAILED", "微信支付请求失败，请稍后重试")
+	}
+	if rsp == nil || rsp.Response == nil || rsp.Response.CodeUrl == "" {
+		return "", infraerrors.ServiceUnavailable("WECHAT_EMPTY_RESPONSE", "微信支付返回异常，请稍后重试")
 	}
 	return rsp.Response.CodeUrl, nil
 }
@@ -197,7 +203,11 @@ func (h *PaymentHandler) createAlipayPayment(ctx context.Context, order *service
 
 	rsp, err := h.aliClient.TradePrecreate(ctx, bm)
 	if err != nil {
-		return "", fmt.Errorf("alipay precreate: %w", err)
+		logger.LegacyPrintf("handler.payment", "[createAlipayPayment] alipay precreate error: %v", err)
+		return "", infraerrors.ServiceUnavailable("ALIPAY_PAY_FAILED", "支付宝请求失败，请稍后重试")
+	}
+	if rsp == nil || rsp.Response == nil || rsp.Response.QrCode == "" {
+		return "", infraerrors.ServiceUnavailable("ALIPAY_EMPTY_RESPONSE", "支付宝返回异常，请稍后重试")
 	}
 	return rsp.Response.QrCode, nil
 }

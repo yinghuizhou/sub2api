@@ -284,6 +284,14 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		}
 	}
 
+	// Referral commission rate validation (0–50%)
+	if req.ReferralCommissionRate != nil {
+		if *req.ReferralCommissionRate < 0 || *req.ReferralCommissionRate > 0.50 {
+			response.BadRequest(c, "Commission rate must be between 0 and 0.50 (0–50%)")
+			return
+		}
+	}
+
 	// Ops metrics collector interval validation (seconds).
 	if req.OpsMetricsIntervalSeconds != nil {
 		v := *req.OpsMetricsIntervalSeconds

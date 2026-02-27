@@ -151,7 +151,10 @@ async function handlePay() {
       package_id: selectedPackage.value?.id,
       channel: channel.value,
     })
-    // Generate QR code image from the payment URL string
+    // Validate payment URL before generating QR code
+    if (!res.qr_url) {
+      throw new Error('支付二维码生成失败，请稍后重试')
+    }
     qrDataUrl.value = await QRCode.toDataURL(res.qr_url, { width: 256, margin: 2 })
     currentOrderId.value = res.order.id
     startPolling()

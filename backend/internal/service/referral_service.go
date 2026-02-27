@@ -137,11 +137,16 @@ func (s *ReferralService) RecordReferral(ctx context.Context, inviteeID int64, i
 // Always creates its own transaction for atomicity.
 // After crediting the inviter, invalidates the billing cache so balance is immediately visible.
 func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, orderID int64, orderAmountUSD float64) error {
-	if s.repo == nil || !s.enabled {
+	if s.repo == nil {
 		return nil
 	}
-	// DB-backed soft switch: admin can disable at runtime
-	if s.settingService != nil && !s.settingService.IsReferralEnabled(ctx) {
+	// DB-backed setting is authoritative when settingService is available;
+	// otherwise fall back to config-file flag.
+	if s.settingService != nil {
+		if !s.settingService.IsReferralEnabled(ctx) {
+			return nil
+		}
+	} else if !s.enabled {
 		return nil
 	}
 	inviterID, err := s.repo.GetInviterByInviteeID(ctx, inviteeID)
@@ -149,12 +154,10 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 		return nil // no referral relationship, skip
 	}
 
-	// Use DB-backed commission rate if available, fallback to config
+	// Use DB-backed commission rate when settingService is available, fallback to config
 	rate := s.commissionRate
 	if s.settingService != nil {
-		if dbRate := s.settingService.GetReferralCommissionRate(ctx); dbRate > 0 {
-			rate = dbRate
-		}
+		rate = s.settingService.GetReferralCommissionRate(ctx)
 	}
 	if rate > 0.50 {
 		rate = 0.50
