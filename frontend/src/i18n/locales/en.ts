@@ -2283,6 +2283,7 @@ export default {
         auto: 'Auto',
         admin: 'Manual',
         healthy: 'Healthy',
+        degraded: 'Degraded',
         unhealthy: 'Unhealthy',
         loadFailed: 'Failed to load group info'
       },

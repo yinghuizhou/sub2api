@@ -2422,6 +2422,7 @@ export default {
         auto: '自动',
         admin: '手动',
         healthy: '健康',
+        degraded: '降级',
         unhealthy: '异常',
         loadFailed: '加载分组信息失败'
       },
