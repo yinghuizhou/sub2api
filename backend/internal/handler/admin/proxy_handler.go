@@ -451,6 +451,8 @@ func (h *ProxyHandler) GetGroupSummary(c *gin.Context) {
 
 // GetGroupAssignments returns the list of account-proxy assignments for a group
 // GET /api/v1/admin/proxies/groups/:name/assignments
+// Supports optional pagination via page/page_size query params.
+// Without pagination params, returns all assignments.
 func (h *ProxyHandler) GetGroupAssignments(c *gin.Context) {
 	name := c.Param("name")
 	if !validGroupName.MatchString(name) {
@@ -458,6 +460,19 @@ func (h *ProxyHandler) GetGroupAssignments(c *gin.Context) {
 		return
 	}
 
+	// If page param is present, use paginated version
+	if c.Query("page") != "" {
+		page, pageSize := response.ParsePagination(c)
+		assignments, total, err := h.adminService.ListProxyAssignmentsPaginated(c.Request.Context(), name, page, pageSize)
+		if err != nil {
+			response.ErrorFrom(c, err)
+			return
+		}
+		response.Paginated(c, assignments, total, page, pageSize)
+		return
+	}
+
+	// Default: return all (backward compatible)
 	assignments, err := h.adminService.ListProxyAssignments(c.Request.Context(), name)
 	if err != nil {
 		response.ErrorFrom(c, err)

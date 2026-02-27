@@ -68,6 +68,15 @@ func (m *proxyAssignRepoMock) ListAssignmentsByGroup(_ context.Context, _ string
 func (m *proxyAssignRepoMock) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
 	return nil, nil
 }
+func (m *proxyAssignRepoMock) CountAssignmentsByProxyInGroup(_ context.Context, _ string) (map[int64]int64, error) {
+	return nil, nil
+}
+func (m *proxyAssignRepoMock) ListAssignmentsByGroupPaginated(_ context.Context, _ string, _, _ int) ([]ProxyAssignment, error) {
+	return nil, nil
+}
+func (m *proxyAssignRepoMock) CountAssignmentsByGroup(_ context.Context, _ string) (int64, error) {
+	return 0, nil
+}
 func (m *proxyAssignRepoMock) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
 	return 0, nil
 }

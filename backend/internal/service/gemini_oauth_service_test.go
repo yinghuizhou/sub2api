@@ -829,6 +829,15 @@ func (m *mockGeminiProxyRepo) ListAssignmentsByGroup(_ context.Context, _ string
 func (m *mockGeminiProxyRepo) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
 	panic("not impl")
 }
+func (m *mockGeminiProxyRepo) CountAssignmentsByProxyInGroup(_ context.Context, _ string) (map[int64]int64, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) ListAssignmentsByGroupPaginated(_ context.Context, _ string, _, _ int) ([]ProxyAssignment, error) {
+	panic("not impl")
+}
+func (m *mockGeminiProxyRepo) CountAssignmentsByGroup(_ context.Context, _ string) (int64, error) {
+	panic("not impl")
+}
 func (m *mockGeminiProxyRepo) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
 	panic("not impl")
 }

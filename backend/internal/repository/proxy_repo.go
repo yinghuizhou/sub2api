@@ -653,10 +653,18 @@ func (r *proxyRepository) DeleteAssignment(ctx context.Context, accountID int64)
 }
 
 func (r *proxyRepository) ListAssignmentsByGroup(ctx context.Context, groupName string) ([]service.ProxyAssignment, error) {
-	rows, err := r.sql.QueryContext(ctx, `
-		SELECT id, account_id, proxy_id, proxy_group, assigned_at, assigned_by
-		FROM account_proxy_assignments WHERE proxy_group = $1 ORDER BY id
-	`, groupName)
+	return r.ListAssignmentsByGroupPaginated(ctx, groupName, 0, 0)
+}
+
+func (r *proxyRepository) ListAssignmentsByGroupPaginated(ctx context.Context, groupName string, offset, limit int) ([]service.ProxyAssignment, error) {
+	query := `SELECT id, account_id, proxy_id, proxy_group, assigned_at, assigned_by
+		FROM account_proxy_assignments WHERE proxy_group = $1 ORDER BY id`
+	var args []any
+	args = append(args, groupName)
+	if limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+	}
+	rows, err := r.sql.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -673,10 +681,28 @@ func (r *proxyRepository) ListAssignmentsByGroup(ctx context.Context, groupName 
 	return out, rows.Err()
 }
 
+func (r *proxyRepository) CountAssignmentsByGroup(ctx context.Context, groupName string) (int64, error) {
+	var count int64
+	if err := scanSingleRow(ctx, r.sql, `SELECT COUNT(*) FROM account_proxy_assignments WHERE proxy_group = $1`, []any{groupName}, &count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *proxyRepository) CountAssignmentsByProxy(ctx context.Context) (map[int64]int64, error) {
-	rows, err := r.sql.QueryContext(ctx, `
+	return r.countAssignments(ctx, `
 		SELECT proxy_id, COUNT(*) FROM account_proxy_assignments GROUP BY proxy_id
 	`)
+}
+
+func (r *proxyRepository) CountAssignmentsByProxyInGroup(ctx context.Context, groupName string) (map[int64]int64, error) {
+	return r.countAssignments(ctx, `
+		SELECT proxy_id, COUNT(*) FROM account_proxy_assignments WHERE proxy_group = $1 GROUP BY proxy_id
+	`, groupName)
+}
+
+func (r *proxyRepository) countAssignments(ctx context.Context, query string, args ...any) (map[int64]int64, error) {
+	rows, err := r.sql.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

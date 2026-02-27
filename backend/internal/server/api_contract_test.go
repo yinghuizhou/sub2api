@@ -1147,6 +1147,15 @@ func (stubProxyRepo) ListAssignmentsByGroup(_ context.Context, _ string) ([]serv
 func (stubProxyRepo) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
 	return nil, nil
 }
+func (stubProxyRepo) CountAssignmentsByProxyInGroup(_ context.Context, _ string) (map[int64]int64, error) {
+	return nil, nil
+}
+func (stubProxyRepo) ListAssignmentsByGroupPaginated(_ context.Context, _ string, _, _ int) ([]service.ProxyAssignment, error) {
+	return nil, nil
+}
+func (stubProxyRepo) CountAssignmentsByGroup(_ context.Context, _ string) (int64, error) {
+	return 0, nil
+}
 func (stubProxyRepo) BulkSetAssignments(_ context.Context, _ []service.ProxyAssignment) (int, error) {
 	return 0, nil
 }

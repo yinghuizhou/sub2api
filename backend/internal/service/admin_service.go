@@ -77,6 +77,7 @@ type AdminService interface {
 	// Proxy group assignment management
 	GetProxyGroupSummary(ctx context.Context, groupName string) (*ProxyGroupSummary, error)
 	ListProxyAssignments(ctx context.Context, groupName string) ([]ProxyAssignmentDetail, error)
+	ListProxyAssignmentsPaginated(ctx context.Context, groupName string, page, pageSize int) ([]ProxyAssignmentDetail, int64, error)
 	DistributeAccountsToGroup(ctx context.Context, groupName, strategy string) (*DistributeResult, error)
 	ReassignAccountProxy(ctx context.Context, accountID, newProxyID int64) error
 
@@ -1794,7 +1795,7 @@ func (s *adminServiceImpl) GetProxyGroupSummary(ctx context.Context, groupName s
 		return nil, fmt.Errorf("list group proxies: %w", err)
 	}
 
-	counts, err := s.proxyRepo.CountAssignmentsByProxy(ctx)
+	counts, err := s.proxyRepo.CountAssignmentsByProxyInGroup(ctx, groupName)
 	if err != nil {
 		return nil, fmt.Errorf("count assignments: %w", err)
 	}
@@ -1809,6 +1810,9 @@ func (s *adminServiceImpl) GetProxyGroupSummary(ctx context.Context, groupName s
 		hs := "healthy"
 		if !p.IsHealthy() {
 			hs = p.HealthStatus
+			if hs == "" {
+				hs = "unhealthy"
+			}
 		}
 		if p.IsHealthy() {
 			summary.HealthyCount++
@@ -1832,11 +1836,34 @@ func (s *adminServiceImpl) ListProxyAssignments(ctx context.Context, groupName s
 	if err != nil {
 		return nil, fmt.Errorf("list assignments: %w", err)
 	}
+	return s.enrichAssignments(ctx, assignments)
+}
+
+func (s *adminServiceImpl) ListProxyAssignmentsPaginated(ctx context.Context, groupName string, page, pageSize int) ([]ProxyAssignmentDetail, int64, error) {
+	total, err := s.proxyRepo.CountAssignmentsByGroup(ctx, groupName)
+	if err != nil {
+		return nil, 0, fmt.Errorf("count assignments: %w", err)
+	}
+	if total == 0 {
+		return []ProxyAssignmentDetail{}, 0, nil
+	}
+	offset := (page - 1) * pageSize
+	assignments, err := s.proxyRepo.ListAssignmentsByGroupPaginated(ctx, groupName, offset, pageSize)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list assignments: %w", err)
+	}
+	details, err := s.enrichAssignments(ctx, assignments)
+	if err != nil {
+		return nil, 0, err
+	}
+	return details, total, nil
+}
+
+func (s *adminServiceImpl) enrichAssignments(ctx context.Context, assignments []ProxyAssignment) ([]ProxyAssignmentDetail, error) {
 	if len(assignments) == 0 {
 		return []ProxyAssignmentDetail{}, nil
 	}
 
-	// Collect unique account & proxy IDs
 	accountIDs := make([]int64, 0, len(assignments))
 	proxyIDs := make([]int64, 0, len(assignments))
 	for _, a := range assignments {
@@ -1935,9 +1962,12 @@ func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupN
 		return nil, fmt.Errorf("bulk assign: %w", err)
 	}
 
-	// Invalidate all assignment caches so the gateway picks up changes immediately
+	// Invalidate assignment caches for affected accounts and the group
 	if s.proxyGroupService != nil {
-		s.proxyGroupService.InvalidateAllCache()
+		for _, a := range assignments {
+			s.proxyGroupService.InvalidateAssignmentCache(a.AccountID)
+		}
+		s.proxyGroupService.InvalidateGroupCache(groupName)
 	}
 
 	return &DistributeResult{

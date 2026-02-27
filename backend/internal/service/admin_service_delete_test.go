@@ -267,6 +267,15 @@ func (s *proxyRepoStub) ListAssignmentsByGroup(_ context.Context, _ string) ([]P
 func (s *proxyRepoStub) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
 	return nil, nil
 }
+func (s *proxyRepoStub) CountAssignmentsByProxyInGroup(_ context.Context, _ string) (map[int64]int64, error) {
+	return nil, nil
+}
+func (s *proxyRepoStub) ListAssignmentsByGroupPaginated(_ context.Context, _ string, _, _ int) ([]ProxyAssignment, error) {
+	return nil, nil
+}
+func (s *proxyRepoStub) CountAssignmentsByGroup(_ context.Context, _ string) (int64, error) {
+	return 0, nil
+}
 func (s *proxyRepoStub) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
 	return 0, nil
 }

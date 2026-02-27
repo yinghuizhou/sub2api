@@ -120,6 +120,15 @@ func (m *mockProxyRepoForOAuth) ListAssignmentsByGroup(_ context.Context, _ stri
 func (m *mockProxyRepoForOAuth) CountAssignmentsByProxy(_ context.Context) (map[int64]int64, error) {
 	panic("CountAssignmentsByProxy not implemented")
 }
+func (m *mockProxyRepoForOAuth) CountAssignmentsByProxyInGroup(_ context.Context, _ string) (map[int64]int64, error) {
+	panic("CountAssignmentsByProxyInGroup not implemented")
+}
+func (m *mockProxyRepoForOAuth) ListAssignmentsByGroupPaginated(_ context.Context, _ string, _, _ int) ([]ProxyAssignment, error) {
+	panic("ListAssignmentsByGroupPaginated not implemented")
+}
+func (m *mockProxyRepoForOAuth) CountAssignmentsByGroup(_ context.Context, _ string) (int64, error) {
+	panic("CountAssignmentsByGroup not implemented")
+}
 func (m *mockProxyRepoForOAuth) BulkSetAssignments(_ context.Context, _ []ProxyAssignment) (int, error) {
 	panic("BulkSetAssignments not implemented")
 }

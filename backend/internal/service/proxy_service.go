@@ -41,7 +41,10 @@ type ProxyRepository interface {
 	SetAssignment(ctx context.Context, accountID, proxyID int64, groupName, assignedBy string) error
 	DeleteAssignment(ctx context.Context, accountID int64) error
 	ListAssignmentsByGroup(ctx context.Context, groupName string) ([]ProxyAssignment, error)
+	ListAssignmentsByGroupPaginated(ctx context.Context, groupName string, offset, limit int) ([]ProxyAssignment, error)
+	CountAssignmentsByGroup(ctx context.Context, groupName string) (int64, error)
 	CountAssignmentsByProxy(ctx context.Context) (map[int64]int64, error)
+	CountAssignmentsByProxyInGroup(ctx context.Context, groupName string) (map[int64]int64, error)
 	BulkSetAssignments(ctx context.Context, assignments []ProxyAssignment) (int, error)
 }
 
