@@ -1008,7 +1008,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, watchEffect, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
@@ -1139,11 +1139,11 @@ const someVisibleSelected = computed(() =>
 
 // ref for the select-all checkbox to set indeterminate state
 const selectAllCheckboxRef = ref<HTMLInputElement | null>(null)
-watchEffect(() => {
+watch(someVisibleSelected, (val) => {
   if (selectAllCheckboxRef.value) {
-    selectAllCheckboxRef.value.indeterminate = someVisibleSelected.value
+    selectAllCheckboxRef.value.indeterminate = val
   }
-})
+}, { immediate: true, flush: 'post' })
 
 // Clear selection when switching group filter to avoid cross-group batch operations
 watch(filterGroupName, () => {
@@ -1270,11 +1270,13 @@ const handleSearch = () => {
 }
 
 const handlePageChange = (page: number) => {
+  selectedProxyIds.value = new Set()
   pagination.page = page
   loadProxies()
 }
 
 const handlePageSizeChange = (pageSize: number) => {
+  selectedProxyIds.value = new Set()
   pagination.page_size = pageSize
   pagination.page = 1
   loadProxies()

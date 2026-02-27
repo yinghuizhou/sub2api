@@ -20,6 +20,14 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(servers) || servers.length === 0) {
     return NextResponse.json({ ok: false, error: 'servers must be a non-empty array' }, { status: 400 });
   }
+  if (servers.length > 500) {
+    return NextResponse.json({ ok: false, error: 'servers must not exceed 500 entries' }, { status: 400 });
+  }
+  for (const s of servers) {
+    if (!s || typeof s.value !== 'string' || typeof s.label !== 'string' || typeof s.country !== 'string') {
+      return NextResponse.json({ ok: false, error: 'Each server must have string fields: value, label, country' }, { status: 400 });
+    }
+  }
   if (!['TCP', 'UDP'].includes(String(mode).toUpperCase())) {
     return NextResponse.json({ ok: false, error: 'mode must be TCP or UDP' }, { status: 400 });
   }

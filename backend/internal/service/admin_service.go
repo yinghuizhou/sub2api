@@ -1850,6 +1850,9 @@ func (s *adminServiceImpl) ListProxyAssignmentsPaginated(ctx context.Context, gr
 	if page < 1 {
 		page = 1
 	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
 	offset := (page - 1) * pageSize
 	assignments, err := s.proxyRepo.ListAssignmentsByGroupPaginated(ctx, groupName, offset, pageSize)
 	if err != nil {
@@ -2007,7 +2010,7 @@ func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, 
 	}
 
 	if err := s.proxyRepo.SetAssignment(ctx, accountID, newProxyID, groupName, "admin"); err != nil {
-		return err
+		return fmt.Errorf("set assignment for account %d: %w", accountID, err)
 	}
 	// Invalidate in-memory cache so the gateway picks up the change immediately
 	if s.proxyGroupService != nil {

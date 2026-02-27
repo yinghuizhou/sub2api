@@ -364,6 +364,7 @@ export async function startBatch(selectedServers: Array<{ value: string; label: 
         job.status = 'downloading'; broadcast();
         const { certId, csrfToken } = getState();
         if (!certId) throw new Error('certId 未获取到');
+        if (!csrfToken) throw new Error('csrfToken 未获取到');
         const downloadUrl = `${ASTRILL_CERTS}/download/${encodeURIComponent(certId)}/${encodeURIComponent(job.server.value)}/${encodeURIComponent(modeVal)}/${encodeURIComponent(solution)}/${encodeURIComponent(csrfToken)}`;
 
         const fileResult = await page.evaluate(async (url: string) => {

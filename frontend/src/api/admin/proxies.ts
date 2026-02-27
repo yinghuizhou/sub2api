@@ -349,13 +349,13 @@ export interface DistributeResult {
   skipped: number
 }
 
-export async function getGroupSummary(name: string): Promise<ProxyGroupSummary> {
-  const { data } = await apiClient.get<ProxyGroupSummary>(`/admin/proxies/groups/${encodeURIComponent(name)}/summary`)
+export async function getGroupSummary(name: string, signal?: AbortSignal): Promise<ProxyGroupSummary> {
+  const { data } = await apiClient.get<ProxyGroupSummary>(`/admin/proxies/groups/${encodeURIComponent(name)}/summary`, { signal })
   return data
 }
 
-export async function getGroupAssignments(name: string): Promise<ProxyAssignmentDetail[]> {
-  const { data } = await apiClient.get<ProxyAssignmentDetail[]>(`/admin/proxies/groups/${encodeURIComponent(name)}/assignments`)
+export async function getGroupAssignments(name: string, signal?: AbortSignal): Promise<ProxyAssignmentDetail[]> {
+  const { data } = await apiClient.get<ProxyAssignmentDetail[]>(`/admin/proxies/groups/${encodeURIComponent(name)}/assignments`, { signal })
   return data
 }
 

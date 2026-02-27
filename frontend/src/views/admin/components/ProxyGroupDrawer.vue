@@ -182,8 +182,8 @@ async function loadData() {
   loading.value = true
   try {
     const [s, a] = await Promise.all([
-      getGroupSummary(props.groupName),
-      getGroupAssignments(props.groupName)
+      getGroupSummary(props.groupName, ctrl.signal),
+      getGroupAssignments(props.groupName, ctrl.signal)
     ])
     if (ctrl.signal.aborted) return
     summary.value = s
@@ -254,6 +254,7 @@ watch(
   [() => props.show, () => props.groupName],
   ([show, name]) => {
     if (show && name) loadData()
-  }
+  },
+  { immediate: true }
 )
 </script>

@@ -662,8 +662,10 @@ func (r *proxyRepository) ListAssignmentsByGroupPaginated(ctx context.Context, g
 	var args []any
 	args = append(args, groupName)
 	if limit > 0 {
+		limitIdx := len(args) + 1
+		offsetIdx := len(args) + 2
 		args = append(args, limit, offset)
-		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)-1, len(args))
+		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitIdx, offsetIdx)
 	}
 	rows, err := r.sql.QueryContext(ctx, query, args...)
 	if err != nil {
