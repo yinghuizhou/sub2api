@@ -116,7 +116,10 @@ func NewPaymentService(
 func (s *PaymentService) SetRate(rate float64) { s.rate.Store(rate) }
 
 // getRate returns the current exchange rate (thread-safe).
-func (s *PaymentService) getRate() float64 { return s.rate.Load().(float64) }
+func (s *PaymentService) getRate() float64 {
+	v, _ := s.rate.Load().(float64)
+	return v
+}
 
 // CreateOrder creates a new pending payment order.
 func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInput) (*PaymentOrder, error) {

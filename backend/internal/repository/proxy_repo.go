@@ -28,7 +28,7 @@ func NewProxyRepository(client *dbent.Client, sqlDB *sql.DB) service.ProxyReposi
 	return &proxyRepository{client: client, sql: sqlDB, sqlDB: sqlDB}
 }
 
-func newProxyRepositoryWithSQL(client *dbent.Client, sqlq sqlQuerier) *proxyRepository {
+func newProxyRepositoryWithSQL(client *dbent.Client, sqlq sqlQuerier) *proxyRepository { //nolint:unused // used in integration tests
 	return &proxyRepository{client: client, sql: sqlq}
 }
 
