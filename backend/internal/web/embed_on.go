@@ -193,7 +193,19 @@ func (s *FrontendServer) injectSettings(settingsJSON []byte) []byte {
 
 	// Inject before </head>
 	headClose := []byte("</head>")
-	return bytes.Replace(s.baseHTML, headClose, append(script, headClose...), 1)
+	result := bytes.Replace(s.baseHTML, headClose, append(script, headClose...), 1)
+
+	// Replace <title> with site_name from settings if available
+	var cfg struct {
+		SiteName string `json:"site_name"`
+	}
+	if json.Unmarshal(settingsJSON, &cfg) == nil && cfg.SiteName != "" {
+		oldTitle := []byte("<title>Sub2API - AI API Gateway</title>")
+		newTitle := []byte("<title>" + cfg.SiteName + "</title>")
+		result = bytes.Replace(result, oldTitle, newTitle, 1)
+	}
+
+	return result
 }
 
 // replaceNoncePlaceholder replaces the nonce placeholder with actual nonce value
