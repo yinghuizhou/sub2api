@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS referral_commissions (
     order_amount_usd  DECIMAL(20,8) NOT NULL,
     commission_rate   DECIMAL(5,4) NOT NULL,
     commission_amount DECIMAL(20,8) NOT NULL,
-    status            VARCHAR(20) NOT NULL DEFAULT 'settled',
+    status            VARCHAR(20) NOT NULL DEFAULT 'pending',
     settled_at        TIMESTAMPTZ,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

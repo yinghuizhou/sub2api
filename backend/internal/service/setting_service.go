@@ -330,6 +330,9 @@ func (s *SettingService) IsTotpEnabled(ctx context.Context) bool {
 // IsTotpEncryptionKeyConfigured 检查 TOTP 加密密钥是否已手动配置
 // 只有手动配置了密钥才允许在管理后台启用 TOTP 功能
 func (s *SettingService) IsTotpEncryptionKeyConfigured() bool {
+	if s.cfg == nil {
+		return false
+	}
 	return s.cfg.Totp.EncryptionKeyConfigured
 }
 
@@ -346,24 +349,36 @@ func (s *SettingService) GetSiteName(ctx context.Context) string {
 func (s *SettingService) GetDefaultConcurrency(ctx context.Context) int {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyDefaultConcurrency)
 	if err != nil {
-		return s.cfg.Default.UserConcurrency
+		if s.cfg != nil {
+			return s.cfg.Default.UserConcurrency
+		}
+		return 0
 	}
 	if v, err := strconv.Atoi(value); err == nil && v > 0 {
 		return v
 	}
-	return s.cfg.Default.UserConcurrency
+	if s.cfg != nil {
+		return s.cfg.Default.UserConcurrency
+	}
+	return 0
 }
 
 // GetDefaultBalance 获取默认余额
 func (s *SettingService) GetDefaultBalance(ctx context.Context) float64 {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyDefaultBalance)
 	if err != nil {
-		return s.cfg.Default.UserBalance
+		if s.cfg != nil {
+			return s.cfg.Default.UserBalance
+		}
+		return 0
 	}
 	if v, err := strconv.ParseFloat(value, 64); err == nil && v >= 0 {
 		return v
 	}
-	return s.cfg.Default.UserBalance
+	if s.cfg != nil {
+		return s.cfg.Default.UserBalance
+	}
+	return 0
 }
 
 // IsFreeTrialEnabled returns whether new user free trial credit is enabled.
@@ -476,14 +491,14 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 
 	if concurrency, err := strconv.Atoi(settings[SettingKeyDefaultConcurrency]); err == nil {
 		result.DefaultConcurrency = concurrency
-	} else {
+	} else if s.cfg != nil {
 		result.DefaultConcurrency = s.cfg.Default.UserConcurrency
 	}
 
 	// 解析浮点数类型
 	if balance, err := strconv.ParseFloat(settings[SettingKeyDefaultBalance], 64); err == nil {
 		result.DefaultBalance = balance
-	} else {
+	} else if s.cfg != nil {
 		result.DefaultBalance = s.cfg.Default.UserBalance
 	}
 

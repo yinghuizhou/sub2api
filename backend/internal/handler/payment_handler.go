@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
@@ -19,6 +20,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// sanitizeLogValue removes newlines and control characters from external input
+// to prevent log injection attacks.
+func sanitizeLogValue(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\r' || r < 0x20 {
+			return '_'
+		}
+		return r
+	}, s)
+}
 
 // PaymentHandler handles payment-related requests.
 type PaymentHandler struct {
@@ -210,8 +222,9 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 		return
 	}
 
-	orderNo := notifyReq.Get("out_trade_no")
-	tradeNo := notifyReq.Get("trade_no")
+	// M2: Sanitize external input to prevent log injection via newlines/control chars.
+	orderNo := sanitizeLogValue(notifyReq.Get("out_trade_no"))
+	tradeNo := sanitizeLogValue(notifyReq.Get("trade_no"))
 	tradeStatus := notifyReq.Get("trade_status")
 
 	if tradeStatus != "TRADE_SUCCESS" && tradeStatus != "TRADE_FINISHED" {

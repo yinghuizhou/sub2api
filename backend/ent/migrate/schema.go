@@ -770,7 +770,7 @@ var (
 		{Name: "order_amount_usd", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "commission_rate", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(5,4)"}},
 		{Name: "commission_amount", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
-		{Name: "status", Type: field.TypeString, Size: 20, Default: "settled"},
+		{Name: "status", Type: field.TypeString, Size: 20, Default: "pending"},
 		{Name: "settled_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 	}
