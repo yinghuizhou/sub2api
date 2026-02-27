@@ -2414,6 +2414,7 @@ export default {
         assignedAt: '分配时间',
         reassign: '重新分配',
         reassignProxy: '选择新代理',
+        reassignConfirm: '确定将账号「{account}」重新分配到代理「{proxy}」吗？这会改变账号的出口 IP 区域。',
         reassignSuccess: '重新分配成功',
         reassignFailed: '重新分配失败',
         noAssignments: '暂无绑定记录',

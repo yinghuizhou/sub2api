@@ -111,7 +111,7 @@
                   <select
                     class="input input-sm w-32"
                     :value="a.proxy_id"
-                    @change="handleReassign(a.account_id, Number(($event.target as HTMLSelectElement).value))"
+                    @change="handleReassign(a.account_id, Number(($event.target as HTMLSelectElement).value), $event)"
                   >
                     <option v-for="p in summary.proxies" :key="p.id" :value="p.id">
                       {{ p.name }}
@@ -195,10 +195,20 @@ async function handleDistribute() {
   }
 }
 
-async function handleReassign(accountId: number, newProxyId: number) {
-  // Skip if reassigning to the same proxy
+async function handleReassign(accountId: number, newProxyId: number, event: Event) {
+  const selectEl = event.target as HTMLSelectElement
   const current = assignments.value.find(a => a.account_id === accountId)
   if (current && current.proxy_id === newProxyId) return
+
+  const newProxyName = summary.value?.proxies.find(p => p.id === newProxyId)?.name ?? String(newProxyId)
+  if (!confirm(t('admin.proxies.groupDrawer.reassignConfirm', {
+    account: current?.account_name ?? String(accountId),
+    proxy: newProxyName
+  }))) {
+    // Revert select to original value
+    selectEl.value = String(current?.proxy_id ?? '')
+    return
+  }
 
   try {
     await reassignAccount(accountId, newProxyId)
@@ -207,6 +217,7 @@ async function handleReassign(accountId: number, newProxyId: number) {
     emit('updated')
   } catch (e: any) {
     appStore.showError(t('admin.proxies.groupDrawer.reassignFailed'))
+    selectEl.value = String(current?.proxy_id ?? '')
   }
 }
 

@@ -2275,6 +2275,7 @@ export default {
         assignedAt: 'Assigned At',
         reassign: 'Reassign',
         reassignProxy: 'Select New Proxy',
+        reassignConfirm: 'Reassign account "{account}" to proxy "{proxy}"? This will change the account\'s exit IP region.',
         reassignSuccess: 'Reassignment successful',
         reassignFailed: 'Reassignment failed',
         noAssignments: 'No assignments yet',
