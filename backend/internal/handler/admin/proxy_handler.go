@@ -494,6 +494,14 @@ func (h *ProxyHandler) DistributeAccounts(c *gin.Context) {
 		Strategy string `json:"strategy"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
+		// Allow empty body (defaults to round-robin), but reject malformed JSON
+		if c.Request.ContentLength > 0 {
+			response.BadRequest(c, "Invalid JSON body: "+err.Error())
+			return
+		}
+		req.Strategy = "round-robin"
+	}
+	if req.Strategy == "" {
 		req.Strategy = "round-robin"
 	}
 

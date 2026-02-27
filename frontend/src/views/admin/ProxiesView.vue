@@ -1128,8 +1128,8 @@ const filteredProxies = computed(() => {
 
 const selectedCount = computed(() => selectedProxyIds.value.size)
 const allVisibleSelected = computed(() => {
-  if (proxies.value.length === 0) return false
-  return proxies.value.every((proxy) => selectedProxyIds.value.has(proxy.id))
+  if (filteredProxies.value.length === 0) return false
+  return filteredProxies.value.every((proxy) => selectedProxyIds.value.has(proxy.id))
 })
 
 // Batch import state
@@ -1202,7 +1202,7 @@ const toggleSelectRow = (id: number, event: Event) => {
 const toggleSelectAllVisible = (event: Event) => {
   const target = event.target as HTMLInputElement
   const next = new Set(selectedProxyIds.value)
-  for (const proxy of proxies.value) {
+  for (const proxy of filteredProxies.value) {
     if (target.checked) {
       next.add(proxy.id)
     } else {

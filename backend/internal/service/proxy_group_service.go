@@ -107,10 +107,10 @@ func (s *ProxyGroupService) selectFromGroup(ctx context.Context, groupName strin
 		healthy = proxies
 	}
 
-	// Get current assignment counts per proxy
-	counts, err := s.proxyRepo.CountAssignmentsByProxy(ctx)
+	// Get current assignment counts per proxy (scoped to this group)
+	counts, err := s.proxyRepo.CountAssignmentsByProxyInGroup(ctx, groupName)
 	if err != nil {
-		slog.Error("failed to count assignments", "error", err)
+		slog.Error("failed to count assignments", "error", err, "group", groupName)
 		counts = make(map[int64]int64)
 	}
 

@@ -1865,10 +1865,14 @@ func (s *adminServiceImpl) enrichAssignments(ctx context.Context, assignments []
 	}
 
 	accountIDs := make([]int64, 0, len(assignments))
-	proxyIDs := make([]int64, 0, len(assignments))
+	proxyIDSet := make(map[int64]struct{}, len(assignments))
 	for _, a := range assignments {
 		accountIDs = append(accountIDs, a.AccountID)
-		proxyIDs = append(proxyIDs, a.ProxyID)
+		proxyIDSet[a.ProxyID] = struct{}{}
+	}
+	proxyIDs := make([]int64, 0, len(proxyIDSet))
+	for id := range proxyIDSet {
+		proxyIDs = append(proxyIDs, id)
 	}
 
 	accounts, err := s.accountRepo.GetByIDs(ctx, accountIDs)
@@ -1993,12 +1997,21 @@ func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, 
 		groupName = proxy.GroupName
 	}
 
+	// Validate proxy belongs to the same group to prevent cross-region reassignment
+	if groupName != "" && proxy.GroupName != "" && groupName != proxy.GroupName {
+		return infraerrors.BadRequest("CROSS_GROUP_REASSIGN",
+			fmt.Sprintf("cannot reassign to proxy in different group: account group %q, proxy group %q", groupName, proxy.GroupName))
+	}
+
 	if err := s.proxyRepo.SetAssignment(ctx, accountID, newProxyID, groupName, "admin"); err != nil {
 		return err
 	}
 	// Invalidate in-memory cache so the gateway picks up the change immediately
 	if s.proxyGroupService != nil {
 		s.proxyGroupService.InvalidateAssignmentCache(accountID)
+		if groupName != "" {
+			s.proxyGroupService.InvalidateGroupCache(groupName)
+		}
 	}
 	return nil
 }

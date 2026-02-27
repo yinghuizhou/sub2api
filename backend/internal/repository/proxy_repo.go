@@ -746,7 +746,7 @@ func (r *proxyRepository) BulkSetAssignments(ctx context.Context, assignments []
 			ON CONFLICT (account_id) DO UPDATE SET proxy_id = $2, proxy_group = $3, assigned_by = $4, assigned_at = NOW()
 		`, a.AccountID, a.ProxyID, a.ProxyGroup, a.AssignedBy)
 		if err != nil {
-			return assigned, fmt.Errorf("assign account %d to proxy %d: %w", a.AccountID, a.ProxyID, err)
+			return 0, fmt.Errorf("assign account %d to proxy %d: %w", a.AccountID, a.ProxyID, err)
 		}
 		assigned++
 	}

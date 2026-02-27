@@ -59,11 +59,15 @@
                   <span
                     :class="proxy.health_status === 'healthy'
                       ? 'badge badge-success'
-                      : 'badge badge-danger'"
+                      : proxy.health_status === 'degraded'
+                        ? 'badge badge-warning'
+                        : 'badge badge-danger'"
                   >
                     {{ proxy.health_status === 'healthy'
                       ? t('admin.proxies.groupDrawer.healthy')
-                      : t('admin.proxies.groupDrawer.unhealthy') }}
+                      : proxy.health_status === 'degraded'
+                        ? t('admin.proxies.groupDrawer.degraded')
+                        : t('admin.proxies.groupDrawer.unhealthy') }}
                   </span>
                 </td>
                 <td class="px-4 py-2 text-center font-mono text-gray-900 dark:text-white">
@@ -111,6 +115,8 @@
                   <select
                     class="input input-sm w-32"
                     :value="a.proxy_id"
+                    :disabled="reassigningAccountId === a.account_id"
+                    :aria-label="t('admin.proxies.groupDrawer.reassign')"
                     @change="handleReassign(a.account_id, Number(($event.target as HTMLSelectElement).value), $event)"
                   >
                     <option v-for="p in summary.proxies" :key="p.id" :value="p.id">
@@ -157,6 +163,7 @@ const emit = defineEmits<{
 
 const loading = ref(false)
 const distributing = ref(false)
+const reassigningAccountId = ref<number | null>(null)
 const summary = ref<ProxyGroupSummary | null>(null)
 const assignments = ref<ProxyAssignmentDetail[]>([])
 
@@ -171,7 +178,8 @@ async function loadData() {
     summary.value = s
     assignments.value = a
   } catch (e: any) {
-    appStore.showError(t('admin.proxies.groupDrawer.loadFailed'))
+    console.error('Load group data failed:', e)
+    appStore.showError(e?.message || t('admin.proxies.groupDrawer.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -189,7 +197,8 @@ async function handleDistribute() {
     await loadData()
     emit('updated')
   } catch (e: any) {
-    appStore.showError(t('admin.proxies.groupDrawer.distributeFailed'))
+    console.error('Distribute failed:', e)
+    appStore.showError(e?.message || t('admin.proxies.groupDrawer.distributeFailed'))
   } finally {
     distributing.value = false
   }
@@ -199,25 +208,29 @@ async function handleReassign(accountId: number, newProxyId: number, event: Even
   const selectEl = event.target as HTMLSelectElement
   const current = assignments.value.find(a => a.account_id === accountId)
   if (current && current.proxy_id === newProxyId) return
+  if (reassigningAccountId.value !== null) return
 
   const newProxyName = summary.value?.proxies.find(p => p.id === newProxyId)?.name ?? String(newProxyId)
   if (!confirm(t('admin.proxies.groupDrawer.reassignConfirm', {
     account: current?.account_name ?? String(accountId),
     proxy: newProxyName
   }))) {
-    // Revert select to original value
     selectEl.value = String(current?.proxy_id ?? '')
     return
   }
 
+  reassigningAccountId.value = accountId
   try {
     await reassignAccount(accountId, newProxyId)
     appStore.showSuccess(t('admin.proxies.groupDrawer.reassignSuccess'))
     await loadData()
     emit('updated')
   } catch (e: any) {
-    appStore.showError(t('admin.proxies.groupDrawer.reassignFailed'))
+    console.error('Reassign failed:', e)
+    appStore.showError(e?.message || t('admin.proxies.groupDrawer.reassignFailed'))
     selectEl.value = String(current?.proxy_id ?? '')
+  } finally {
+    reassigningAccountId.value = null
   }
 }
 
