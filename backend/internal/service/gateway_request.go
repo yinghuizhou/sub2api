@@ -90,7 +90,12 @@ func ParseGatewayRequest(body []byte, protocol string) (*ParsedRequest, error) {
 		if modelResult.Type != gjson.String {
 			return nil, fmt.Errorf("invalid model field type")
 		}
-		parsed.Model = modelResult.String()
+		model := modelResult.String()
+		// Reject placeholder model names that should be resolved client-side
+		if model == "inherit" {
+			return nil, fmt.Errorf("invalid model name: '%s' is a client-side placeholder and must be resolved before sending to the API", model)
+		}
+		parsed.Model = model
 	}
 
 	// stream: 需要严格类型校验，非 bool 返回错误

@@ -441,11 +441,11 @@ func ensureAntigravityDefaultPassthroughs(mapping map[string]string, models []st
 }
 
 // IsModelSupported 检查模型是否在 model_mapping 中（支持通配符）
-// 如果未配置 mapping，返回 true（允许所有模型）
+// 如果未配置 mapping，按平台前缀白名单校验模型名
 func (a *Account) IsModelSupported(requestedModel string) bool {
 	mapping := a.GetModelMapping()
 	if len(mapping) == 0 {
-		return true // 无映射 = 允许所有
+		return isModelPrefixValidForPlatform(a.Platform, requestedModel)
 	}
 	// 精确匹配
 	if _, exists := mapping[requestedModel]; exists {
@@ -473,6 +473,21 @@ func (a *Account) GetMappedModel(requestedModel string) string {
 	}
 	// 通配符匹配（最长优先）
 	return matchWildcardMapping(mapping, requestedModel)
+}
+
+// isModelPrefixValidForPlatform checks if a model name has a valid prefix for the given platform.
+// Returns true if the platform has no prefix restrictions or the model matches any allowed prefix.
+func isModelPrefixValidForPlatform(platform, model string) bool {
+	prefixes, ok := domain.PlatformModelPrefixes[platform]
+	if !ok {
+		return true // no prefix restrictions for this platform
+	}
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(model, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *Account) GetBaseURL() string {

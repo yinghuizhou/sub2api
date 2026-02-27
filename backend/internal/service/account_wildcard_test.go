@@ -126,21 +126,73 @@ func TestMatchWildcardMapping(t *testing.T) {
 func TestAccountIsModelSupported(t *testing.T) {
 	tests := []struct {
 		name           string
+		platform       string
 		credentials    map[string]any
 		requestedModel string
 		expected       bool
 	}{
-		// 无映射 = 允许所有
+		// 无映射 + 无平台 = 允许所有（向后兼容）
 		{
-			name:           "no mapping allows all",
+			name:           "no mapping no platform allows all",
 			credentials:    nil,
 			requestedModel: "any-model",
 			expected:       true,
 		},
 		{
-			name:           "empty mapping allows all",
+			name:           "empty mapping no platform allows all",
 			credentials:    map[string]any{},
 			requestedModel: "any-model",
+			expected:       true,
+		},
+
+		// 无映射 + 平台前缀校验
+		{
+			name:           "no mapping rejects invalid prefix for anthropic",
+			platform:       "anthropic",
+			credentials:    nil,
+			requestedModel: "inherit",
+			expected:       false,
+		},
+		{
+			name:           "no mapping accepts valid claude prefix for anthropic",
+			platform:       "anthropic",
+			credentials:    nil,
+			requestedModel: "claude-sonnet-4-5",
+			expected:       true,
+		},
+		{
+			name:           "no mapping rejects invalid prefix for openai",
+			platform:       "openai",
+			credentials:    nil,
+			requestedModel: "claude-sonnet-4-5",
+			expected:       false,
+		},
+		{
+			name:           "no mapping accepts gpt prefix for openai",
+			platform:       "openai",
+			credentials:    nil,
+			requestedModel: "gpt-5",
+			expected:       true,
+		},
+		{
+			name:           "no mapping accepts o3 prefix for openai",
+			platform:       "openai",
+			credentials:    nil,
+			requestedModel: "o3-mini",
+			expected:       true,
+		},
+		{
+			name:           "no mapping rejects garbage for gemini",
+			platform:       "gemini",
+			credentials:    nil,
+			requestedModel: "test-model",
+			expected:       false,
+		},
+		{
+			name:           "no mapping accepts gemini prefix",
+			platform:       "gemini",
+			credentials:    nil,
+			requestedModel: "gemini-2.5-pro",
 			expected:       true,
 		},
 
@@ -192,6 +244,7 @@ func TestAccountIsModelSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			account := &Account{
+				Platform:    tt.platform,
 				Credentials: tt.credentials,
 			}
 			result := account.IsModelSupported(tt.requestedModel)

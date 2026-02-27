@@ -76,6 +76,14 @@ func TestParseGatewayRequest_InvalidStreamType(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestParseGatewayRequest_InheritModel(t *testing.T) {
+	// "inherit" is a client-side placeholder that should never reach upstream
+	body := []byte(`{"model": "inherit", "messages": [{"role": "user", "content": "hi"}]}`)
+	_, err := ParseGatewayRequest(body, "")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "inherit")
+}
+
 // ============ Gemini 原生格式解析测试 ============
 
 func TestParseGatewayRequest_GeminiContents(t *testing.T) {

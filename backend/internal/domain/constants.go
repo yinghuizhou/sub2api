@@ -25,6 +25,15 @@ const (
 	PlatformSora        = "sora"
 )
 
+// PlatformModelPrefixes defines valid model name prefixes for each platform.
+// Used to reject obviously invalid model names when no model_mapping is configured.
+var PlatformModelPrefixes = map[string][]string{
+	PlatformAnthropic: {"claude-"},
+	PlatformOpenAI:    {"gpt-", "o1-", "o3-", "o4-", "chatgpt-", "dall-e-"},
+	PlatformGemini:    {"gemini-"},
+	PlatformSora:      {"sora-", "gpt-"},
+}
+
 // Account type constants
 const (
 	AccountTypeOAuth      = "oauth"       // OAuth类型账号（full scope: profile + inference）
