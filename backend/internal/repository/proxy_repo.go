@@ -240,7 +240,7 @@ func (r *proxyRepository) ListWithFilters(ctx context.Context, params pagination
 }
 
 // ListWithFiltersAndAccountCount lists proxies with filters and includes account count per proxy
-func (r *proxyRepository) ListWithFiltersAndAccountCount(ctx context.Context, params pagination.PaginationParams, protocol, status, search string) ([]service.ProxyWithAccountCount, *pagination.PaginationResult, error) {
+func (r *proxyRepository) ListWithFiltersAndAccountCount(ctx context.Context, params pagination.PaginationParams, protocol, status, search, groupName string) ([]service.ProxyWithAccountCount, *pagination.PaginationResult, error) {
 	q := r.client.Proxy.Query()
 	if protocol != "" {
 		q = q.Where(proxy.ProtocolEQ(protocol))
@@ -250,6 +250,9 @@ func (r *proxyRepository) ListWithFiltersAndAccountCount(ctx context.Context, pa
 	}
 	if search != "" {
 		q = q.Where(proxy.NameContainsFold(search))
+	}
+	if groupName != "" {
+		q = q.Where(proxy.GroupNameEQ(groupName))
 	}
 
 	total, err := q.Count(ctx)
@@ -724,7 +727,7 @@ func (r *proxyRepository) countAssignments(ctx context.Context, query string, ar
 
 func (r *proxyRepository) BulkSetAssignments(ctx context.Context, assignments []service.ProxyAssignment) (int, error) {
 	if r.sqlDB == nil {
-		// Fallback: no transaction support (test stubs)
+		// Fallback path (no raw SQL client — test stubs only). Not transactional; must NOT be used in production.
 		assigned := 0
 		for _, a := range assignments {
 			if err := r.SetAssignment(ctx, a.AccountID, a.ProxyID, a.ProxyGroup, a.AssignedBy); err != nil {

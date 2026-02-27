@@ -1,4 +1,4 @@
-import { getState, addSseClient, removeSseClient } from '@/lib/state';
+import { getState, addSseClient, removeSseClient, sanitizeForBroadcast } from '@/lib/state';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ export async function GET() {
         }
       }
       addSseClient(id, send);
-      send(JSON.stringify(getState()));
+      send(JSON.stringify(sanitizeForBroadcast(getState())));
     },
     cancel() {
       isClosed = true;

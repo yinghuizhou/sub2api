@@ -44,11 +44,12 @@ export function resolveCaptcha(solution: string | null): void {
   if (rt.captchaResolve) rt.captchaResolve(solution);
 }
 
-function stopRace(): Promise<never> {
+function stopRace(signal: AbortSignal): Promise<never> {
   return new Promise((_, reject) => {
     const t = setInterval(() => {
       if (rt.stopRequested) { clearInterval(t); reject(new Error('STOPPED')); }
     }, 200);
+    signal.addEventListener('abort', () => clearInterval(t), { once: true });
   });
 }
 
@@ -191,22 +192,28 @@ async function recognizeCaptcha(imgBase64: string): Promise<string> {
 async function ensureLoggedIn(): Promise<void> {
   if (rt.stopRequested) throw new Error('STOPPED');
   const page = rt.page!;
+  const gotoCtrl = new AbortController();
   await Promise.race([
     page.goto(ASTRILL_CERTS, { waitUntil: 'domcontentloaded', timeout: 30000 }),
-    stopRace(),
+    stopRace(gotoCtrl.signal),
   ]);
+  gotoCtrl.abort();
+  const idleCtrl = new AbortController();
   await Promise.race([
     page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => { /* ignore */ }),
-    stopRace(),
+    stopRace(idleCtrl.signal),
   ]);
+  idleCtrl.abort();
   const url = page.url();
   if (url.includes('log-in')) {
     setMsg('🔑 会话已过期，请在浏览器中重新登录...', 'warn');
     setState({ phase: 'login' });
+    const loginCtrl = new AbortController();
     await Promise.race([
       page.waitForURL(u => u.toString().includes('member-zone') && !u.toString().includes('log-in'), { timeout: 600000 }),
-      stopRace(),
+      stopRace(loginCtrl.signal),
     ]);
+    loginCtrl.abort();
     setMsg('✅ 重新登录成功', 'ok');
     const all = await page.context().cookies();
     rt.cookieStr = all.map(c => `${c.name}=${c.value}`).join('; ');

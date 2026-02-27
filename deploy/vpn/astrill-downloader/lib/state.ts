@@ -96,8 +96,8 @@ export function setMsg(text: string, level: LogEntry['level'] = 'info') {
 
 // Strip sensitive fields before broadcasting to SSE clients.
 // captchaB64 is only kept for the 'waiting' job (user needs to solve it manually).
-function sanitizeForBroadcast(state: AppState): object {
-  const { csrfToken: _csrf, certId: _cert, ...safe } = state;
+export function sanitizeForBroadcast(state: AppState): object {
+  const { csrfToken: _csrf, certId: _cert, captchaB64: _topCap, ...safe } = state;
   const sanitizedJobs = safe.jobs.map(job => ({
     ...job,
     captchaB64: job.status === 'waiting' ? job.captchaB64 : null,

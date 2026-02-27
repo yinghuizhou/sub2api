@@ -29,6 +29,7 @@ export async function list(
     protocol?: string
     status?: 'active' | 'inactive'
     search?: string
+    group_name?: string
   },
   options?: {
     signal?: AbortSignal
@@ -359,8 +360,8 @@ export async function getGroupAssignments(name: string, signal?: AbortSignal): P
   return data
 }
 
-export async function distributeAccounts(name: string, strategy: string = 'round-robin'): Promise<DistributeResult> {
-  const { data } = await apiClient.post<DistributeResult>(`/admin/proxies/groups/${encodeURIComponent(name)}/distribute`, { strategy })
+export async function distributeAccounts(name: string, strategy: string = 'round-robin', signal?: AbortSignal): Promise<DistributeResult> {
+  const { data } = await apiClient.post<DistributeResult>(`/admin/proxies/groups/${encodeURIComponent(name)}/distribute`, { strategy }, { signal })
   return data
 }
 

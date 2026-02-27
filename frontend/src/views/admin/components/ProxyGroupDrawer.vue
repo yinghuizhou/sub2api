@@ -100,7 +100,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-dark-600">
-              <tr v-for="a in assignments" :key="`${props.groupName}-${a.account_id}`">
+              <tr v-for="a in assignments" :key="a.account_id">
                 <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ a.account_name }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-dark-300">{{ a.platform }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-dark-300">{{ a.proxy_name }}</td>
@@ -136,13 +136,34 @@
       </div>
     </div>
   </BaseDialog>
+
+  <ConfirmDialog
+    :show="showDistributeConfirm"
+    :title="t('admin.proxies.groupDrawer.distribute')"
+    :message="t('admin.proxies.groupDrawer.distributeConfirm')"
+    :confirm-text="t('admin.proxies.groupDrawer.distribute')"
+    :cancel-text="t('common.cancel')"
+    @confirm="confirmDistribute"
+    @cancel="showDistributeConfirm = false"
+  />
+
+  <ConfirmDialog
+    :show="!!pendingReassign"
+    :title="t('admin.proxies.groupDrawer.reassign')"
+    :message="reassignConfirmMessage"
+    :confirm-text="t('admin.proxies.groupDrawer.reassign')"
+    :cancel-text="t('common.cancel')"
+    @confirm="confirmReassign"
+    @cancel="cancelReassign"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import BaseDialog from '@/components/common/BaseDialog.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import {
   getGroupSummary,
   getGroupAssignments,
@@ -173,10 +194,25 @@ const summary = ref<ProxyGroupSummary | null>(null)
 const assignments = ref<ProxyAssignmentDetail[]>([])
 let loadAbortController: AbortController | null = null
 
+// Confirmation dialog state
+const showDistributeConfirm = ref(false)
+const pendingReassign = ref<{ accountId: number; newProxyId: number; selectEl: HTMLSelectElement } | null>(null)
+const reassignConfirmMessage = computed(() => {
+  if (!pendingReassign.value) return ''
+  const current = assignments.value.find(a => a.account_id === pendingReassign.value!.accountId)
+  const newProxyName = summary.value?.proxies.find(p => p.id === pendingReassign.value!.newProxyId)?.name ?? String(pendingReassign.value!.newProxyId)
+  return t('admin.proxies.groupDrawer.reassignConfirm', {
+    account: current?.account_name ?? String(pendingReassign.value!.accountId),
+    proxy: newProxyName
+  })
+})
+
 async function loadData() {
   if (!props.groupName) return
-  // Cancel any in-flight request
+  // Cancel any in-flight request and clear stale data
   loadAbortController?.abort()
+  summary.value = null
+  assignments.value = []
   const ctrl = new AbortController()
   loadAbortController = ctrl
   loading.value = true
@@ -201,8 +237,12 @@ onUnmounted(() => {
   loadAbortController?.abort()
 })
 
-async function handleDistribute() {
-  if (!confirm(t('admin.proxies.groupDrawer.distributeConfirm'))) return
+function handleDistribute() {
+  showDistributeConfirm.value = true
+}
+
+async function confirmDistribute() {
+  showDistributeConfirm.value = false
   distributing.value = true
   try {
     const result = await distributeAccounts(props.groupName)
@@ -220,21 +260,19 @@ async function handleDistribute() {
   }
 }
 
-async function handleReassign(accountId: number, newProxyId: number, event: Event) {
+function handleReassign(accountId: number, newProxyId: number, event: Event) {
   const selectEl = event.target as HTMLSelectElement
   const current = assignments.value.find(a => a.account_id === accountId)
   if (current && current.proxy_id === newProxyId) return
   if (reassigningAccountId.value !== null) return
+  pendingReassign.value = { accountId, newProxyId, selectEl }
+}
 
-  const newProxyName = summary.value?.proxies.find(p => p.id === newProxyId)?.name ?? String(newProxyId)
-  if (!confirm(t('admin.proxies.groupDrawer.reassignConfirm', {
-    account: current?.account_name ?? String(accountId),
-    proxy: newProxyName
-  }))) {
-    selectEl.value = String(current?.proxy_id ?? '')
-    return
-  }
-
+async function confirmReassign() {
+  if (!pendingReassign.value) return
+  const { accountId, newProxyId, selectEl } = pendingReassign.value
+  const current = assignments.value.find(a => a.account_id === accountId)
+  pendingReassign.value = null
   reassigningAccountId.value = accountId
   try {
     await reassignAccount(accountId, newProxyId)
@@ -247,6 +285,15 @@ async function handleReassign(accountId: number, newProxyId: number, event: Even
     selectEl.value = String(current?.proxy_id ?? '')
   } finally {
     reassigningAccountId.value = null
+  }
+}
+
+function cancelReassign() {
+  if (pendingReassign.value) {
+    const { selectEl, accountId } = pendingReassign.value
+    const current = assignments.value.find(a => a.account_id === accountId)
+    selectEl.value = String(current?.proxy_id ?? '')
+    pendingReassign.value = null
   }
 }
 

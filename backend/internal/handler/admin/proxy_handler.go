@@ -74,8 +74,9 @@ func (h *ProxyHandler) List(c *gin.Context) {
 	if len(search) > 100 {
 		search = search[:100]
 	}
+	groupName := c.Query("group_name")
 
-	proxies, total, err := h.adminService.ListProxiesWithAccountCount(c.Request.Context(), page, pageSize, protocol, status, search)
+	proxies, total, err := h.adminService.ListProxiesWithAccountCount(c.Request.Context(), page, pageSize, protocol, status, search, groupName)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -527,7 +528,7 @@ func (h *ProxyHandler) ReassignAccount(c *gin.Context) {
 	}
 
 	var req struct {
-		ProxyID int64 `json:"proxy_id" binding:"required"`
+		ProxyID int64 `json:"proxy_id" binding:"required,min=1"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid request: "+err.Error())

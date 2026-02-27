@@ -15,11 +15,29 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json() as { apiKey?: string; apiUrl?: string; model?: string };
+  let body: { apiKey?: unknown; apiUrl?: unknown; model?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 });
+  }
   const cfg = loadConfig();
-  if (body.apiKey !== undefined) cfg.apiKey = body.apiKey;
-  if (body.apiUrl !== undefined) cfg.apiUrl = body.apiUrl;
-  if (body.model !== undefined) cfg.model = body.model;
+  if (body.apiKey !== undefined) {
+    const key = String(body.apiKey);
+    if (key.length > 500) return NextResponse.json({ ok: false, error: 'apiKey too long' }, { status: 400 });
+    cfg.apiKey = key;
+  }
+  if (body.apiUrl !== undefined) {
+    const url = String(body.apiUrl);
+    if (url.length > 300) return NextResponse.json({ ok: false, error: 'apiUrl too long' }, { status: 400 });
+    if (url && !url.startsWith('https://')) return NextResponse.json({ ok: false, error: 'apiUrl must start with https://' }, { status: 400 });
+    cfg.apiUrl = url;
+  }
+  if (body.model !== undefined) {
+    const model = String(body.model);
+    if (model.length > 200) return NextResponse.json({ ok: false, error: 'model too long' }, { status: 400 });
+    cfg.model = model;
+  }
   saveConfig(cfg);
   setMsg('✅ AI 配置已保存', 'ok');
   return NextResponse.json({ ok: true });

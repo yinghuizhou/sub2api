@@ -59,7 +59,7 @@ type AdminService interface {
 
 	// Proxy management
 	ListProxies(ctx context.Context, page, pageSize int, protocol, status, search string) ([]Proxy, int64, error)
-	ListProxiesWithAccountCount(ctx context.Context, page, pageSize int, protocol, status, search string) ([]ProxyWithAccountCount, int64, error)
+	ListProxiesWithAccountCount(ctx context.Context, page, pageSize int, protocol, status, search, groupName string) ([]ProxyWithAccountCount, int64, error)
 	GetAllProxies(ctx context.Context) ([]Proxy, error)
 	GetAllProxiesWithAccountCount(ctx context.Context) ([]ProxyWithAccountCount, error)
 	GetProxy(ctx context.Context, id int64) (*Proxy, error)
@@ -1622,9 +1622,9 @@ func (s *adminServiceImpl) ListProxies(ctx context.Context, page, pageSize int, 
 	return proxies, result.Total, nil
 }
 
-func (s *adminServiceImpl) ListProxiesWithAccountCount(ctx context.Context, page, pageSize int, protocol, status, search string) ([]ProxyWithAccountCount, int64, error) {
+func (s *adminServiceImpl) ListProxiesWithAccountCount(ctx context.Context, page, pageSize int, protocol, status, search, groupName string) ([]ProxyWithAccountCount, int64, error) {
 	params := pagination.PaginationParams{Page: page, PageSize: pageSize}
-	proxies, result, err := s.proxyRepo.ListWithFiltersAndAccountCount(ctx, params, protocol, status, search)
+	proxies, result, err := s.proxyRepo.ListWithFiltersAndAccountCount(ctx, params, protocol, status, search, groupName)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -1844,14 +1844,14 @@ func (s *adminServiceImpl) ListProxyAssignmentsPaginated(ctx context.Context, gr
 	if err != nil {
 		return nil, 0, fmt.Errorf("count assignments: %w", err)
 	}
-	if total == 0 {
-		return []ProxyAssignmentDetail{}, 0, nil
-	}
 	if page < 1 {
 		page = 1
 	}
 	if pageSize < 1 {
 		pageSize = 20
+	}
+	if pageSize > 1000 {
+		pageSize = 1000
 	}
 	offset := (page - 1) * pageSize
 	assignments, err := s.proxyRepo.ListAssignmentsByGroupPaginated(ctx, groupName, offset, pageSize)
@@ -2001,6 +2001,12 @@ func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, 
 	groupName := acc.ProxyGroup
 	if groupName == "" && proxy.GroupName != "" {
 		groupName = proxy.GroupName
+	}
+
+	// Prevent assigning a grouped account to an ungrouped proxy
+	if acc.ProxyGroup != "" && proxy.GroupName == "" {
+		return infraerrors.BadRequest("UNGROUPED_PROXY",
+			fmt.Sprintf("cannot reassign account in group %q to an ungrouped proxy", acc.ProxyGroup))
 	}
 
 	// Validate proxy belongs to the same group to prevent cross-region reassignment

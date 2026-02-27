@@ -1122,10 +1122,7 @@ const groupFilterOptions = computed(() => [
   ...groupNames.value.map(name => ({ value: name, label: name }))
 ])
 
-const filteredProxies = computed(() => {
-  if (!filterGroupName.value) return proxies.value
-  return proxies.value.filter(p => p.group_name === filterGroupName.value)
-})
+const filteredProxies = computed(() => proxies.value)
 
 const selectedCount = computed(() => selectedProxyIds.value.size)
 const allVisibleSelected = computed(() => {
@@ -1145,9 +1142,11 @@ watch(someVisibleSelected, (val) => {
   }
 }, { immediate: true, flush: 'post' })
 
-// Clear selection when switching group filter to avoid cross-group batch operations
+// Clear selection and reload when switching group filter (server-side filtering)
 watch(filterGroupName, () => {
   selectedProxyIds.value = new Set()
+  pagination.page = 1
+  loadProxies()
 })
 
 // Batch import state
@@ -1238,7 +1237,8 @@ const loadProxies = async () => {
     const response = await adminAPI.proxies.list(pagination.page, pagination.page_size, {
       protocol: filters.protocol || undefined,
       status: filters.status as any,
-      search: searchQuery.value || undefined
+      search: searchQuery.value || undefined,
+      group_name: filterGroupName.value || undefined
     }, { signal: currentAbortController.signal })
     if (currentAbortController.signal.aborted || abortController !== currentAbortController) {
       return
@@ -1672,9 +1672,10 @@ const runBatchProxyQualityChecks = async (ids: number[]) => {
   let failed = 0
 
   const worker = async () => {
-    while (index < ids.length) {
-      const current = ids[index]
-      index++
+    while (true) {
+      const i = index++
+      if (i >= ids.length) break
+      const current = ids[i]
       startQualityCheckingProxy(current)
       try {
         const result = await adminAPI.proxies.checkProxyQuality(current)
@@ -1802,10 +1803,10 @@ const runBatchProxyTests = async (ids: number[]) => {
   let index = 0
 
   const worker = async () => {
-    while (index < ids.length) {
-      const current = ids[index]
-      index++
-      await runProxyTest(current, false)
+    while (true) {
+      const i = index++
+      if (i >= ids.length) break
+      await runProxyTest(ids[i], false)
     }
   }
 
