@@ -1847,6 +1847,9 @@ func (s *adminServiceImpl) ListProxyAssignmentsPaginated(ctx context.Context, gr
 	if total == 0 {
 		return []ProxyAssignmentDetail{}, 0, nil
 	}
+	if page < 1 {
+		page = 1
+	}
 	offset := (page - 1) * pageSize
 	assignments, err := s.proxyRepo.ListAssignmentsByGroupPaginated(ctx, groupName, offset, pageSize)
 	if err != nil {
@@ -1981,15 +1984,15 @@ func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupN
 }
 
 func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, newProxyID int64) error {
-	// Verify account exists
+	// Verify account exists — pass error through without wrapping to preserve type for HTTP layer
 	acc, err := s.accountRepo.GetByID(ctx, accountID)
 	if err != nil {
-		return fmt.Errorf("get account: %w", err)
+		return err
 	}
-	// Verify proxy exists
+	// Verify proxy exists — same as above
 	proxy, err := s.proxyRepo.GetByID(ctx, newProxyID)
 	if err != nil {
-		return fmt.Errorf("get proxy: %w", err)
+		return err
 	}
 
 	groupName := acc.ProxyGroup
