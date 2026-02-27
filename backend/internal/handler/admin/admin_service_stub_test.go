@@ -413,6 +413,9 @@ func (s *stubAdminService) GetProxyGroupSummary(ctx context.Context, groupName s
 func (s *stubAdminService) ListProxyAssignments(ctx context.Context, groupName string) ([]service.ProxyAssignmentDetail, error) {
 	return []service.ProxyAssignmentDetail{}, nil
 }
+func (s *stubAdminService) ListProxyAssignmentsPaginated(ctx context.Context, groupName string, page, pageSize int) ([]service.ProxyAssignmentDetail, int64, error) {
+	return []service.ProxyAssignmentDetail{}, 0, nil
+}
 func (s *stubAdminService) DistributeAccountsToGroup(ctx context.Context, groupName, strategy string) (*service.DistributeResult, error) {
 	return &service.DistributeResult{}, nil
 }
