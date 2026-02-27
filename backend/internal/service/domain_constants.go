@@ -180,6 +180,10 @@ const (
 	// Vendor Resale System
 	// =========================
 
+	// Free trial settings
+	SettingKeyFreeTrialEnabled = "free_trial.enabled" // 新用户免费试用开关
+	SettingKeyFreeTrialAmount  = "free_trial.amount"  // 新用户免费试用额度 (USD)
+
 	// SettingKeyVendorSystemEnabled 供应商系统总开关（默认关闭）
 	SettingKeyVendorSystemEnabled = "vendor_system_enabled"
 	// SettingKeyVendorHealthCheckEnabled 全局健康检查开关

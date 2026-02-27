@@ -120,8 +120,9 @@ func (h *PaymentHandler) ListPackages(c *gin.Context) {
 func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 	wxCfg := h.cfg.Payment.Wechat
 	if wxCfg.APIV3Key == "" || h.wxPubKey == nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] wechat payment not configured")
-		c.JSON(http.StatusServiceUnavailable, gin.H{"code": "NOT_CONFIGURED"})
+		// M1: Return 200 for deterministic "not configured" — stops WeChat from retrying indefinitely.
+		logger.LegacyPrintf("handler.payment", "[WechatCallback] ERROR: wechat payment not configured, acking to stop retries")
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "not configured"})
 		return
 	}
 
@@ -134,8 +135,9 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 
 	// Verify signature using cached public key (C4: no disk I/O per request)
 	if err := notifyReq.VerifySignByPK(h.wxPubKey); err != nil {
+		// M1: Signature failure is deterministic — return 200 to stop retries for forged/invalid requests.
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] signature verification failed: %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"code": "SIGNATURE_INVALID"})
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "signature invalid"})
 		return
 	}
 
@@ -175,8 +177,9 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 	aliCfg := h.cfg.Payment.Alipay
 	if aliCfg.PublicKey == "" || aliCfg.AppID == "" {
-		logger.LegacyPrintf("handler.payment", "[AlipayCallback] alipay payment not configured")
-		c.String(http.StatusServiceUnavailable, "not configured")
+		// M1: Return 200/"success" for deterministic "not configured" — stops Alipay from retrying.
+		logger.LegacyPrintf("handler.payment", "[AlipayCallback] ERROR: alipay payment not configured, acking to stop retries")
+		c.String(http.StatusOK, "success")
 		return
 	}
 
@@ -189,15 +192,16 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 
 	ok, err := alipay.VerifySign(aliCfg.PublicKey, notifyReq)
 	if err != nil || !ok {
+		// M1: Signature failure is deterministic — return 200/"success" to stop Alipay retries.
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] signature verification failed: %v, ok=%v", err, ok)
-		c.String(http.StatusUnauthorized, "signature invalid")
+		c.String(http.StatusOK, "success")
 		return
 	}
 
 	// B3: Verify app_id to prevent cross-merchant notification replay
 	if notifyReq.Get("app_id") != aliCfg.AppID {
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] app_id mismatch: got %s, expected %s", notifyReq.Get("app_id"), aliCfg.AppID)
-		c.String(http.StatusUnauthorized, "app_id mismatch")
+		c.String(http.StatusOK, "success")
 		return
 	}
 

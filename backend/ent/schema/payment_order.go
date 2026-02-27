@@ -41,6 +41,6 @@ func (PaymentOrder) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("user_id"),
 		index.Fields("status"),
-		// M7: order_no already has Unique() constraint, no need for redundant index
+		index.Fields("created_at"),
 	}
 }

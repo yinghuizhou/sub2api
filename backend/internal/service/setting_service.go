@@ -249,8 +249,8 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	updates[SettingKeyIdentityPatchPrompt] = settings.IdentityPatchPrompt
 
 	// Free trial settings
-	updates["free_trial.enabled"] = strconv.FormatBool(settings.FreeTrialEnabled)
-	updates["free_trial.amount"] = strconv.FormatFloat(settings.FreeTrialAmount, 'f', 8, 64)
+	updates[SettingKeyFreeTrialEnabled] = strconv.FormatBool(settings.FreeTrialEnabled)
+	updates[SettingKeyFreeTrialAmount] = strconv.FormatFloat(settings.FreeTrialAmount, 'f', 8, 64)
 
 	// Ops monitoring (vNext)
 	updates[SettingKeyOpsMonitoringEnabled] = strconv.FormatBool(settings.OpsMonitoringEnabled)
@@ -369,7 +369,7 @@ func (s *SettingService) GetDefaultBalance(ctx context.Context) float64 {
 // IsFreeTrialEnabled returns whether new user free trial credit is enabled.
 // Defaults to false (disabled) when the setting does not exist in the database.
 func (s *SettingService) IsFreeTrialEnabled(ctx context.Context) bool {
-	value, err := s.settingRepo.GetValue(ctx, "free_trial.enabled")
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyFreeTrialEnabled)
 	if err != nil {
 		return false // default disabled — must be explicitly enabled by admin
 	}
@@ -378,7 +378,7 @@ func (s *SettingService) IsFreeTrialEnabled(ctx context.Context) bool {
 
 // GetFreeTrialAmount returns the free trial credit amount in USD.
 func (s *SettingService) GetFreeTrialAmount(ctx context.Context) float64 {
-	value, err := s.settingRepo.GetValue(ctx, "free_trial.amount")
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyFreeTrialAmount)
 	if err != nil {
 		return 0.5 // default $0.50
 	}
@@ -420,8 +420,8 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyFallbackModelGemini:      "gemini-2.5-pro",
 		SettingKeyFallbackModelAntigravity: "gemini-2.5-pro",
 		// Free trial defaults
-		"free_trial.enabled": "false",
-		"free_trial.amount":  "0.5",
+		SettingKeyFreeTrialEnabled: "false",
+		SettingKeyFreeTrialAmount:  "0.5",
 		// Identity patch defaults
 		SettingKeyEnableIdentityPatch: "true",
 		SettingKeyIdentityPatchPrompt: "",
@@ -539,8 +539,8 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	result.IdentityPatchPrompt = settings[SettingKeyIdentityPatchPrompt]
 
 	// Free trial settings
-	result.FreeTrialEnabled = settings["free_trial.enabled"] == "true"
-	if v, err := strconv.ParseFloat(settings["free_trial.amount"], 64); err == nil && v > 0 {
+	result.FreeTrialEnabled = settings[SettingKeyFreeTrialEnabled] == "true"
+	if v, err := strconv.ParseFloat(settings[SettingKeyFreeTrialAmount], 64); err == nil && v > 0 {
 		result.FreeTrialAmount = v
 	} else {
 		result.FreeTrialAmount = 0.5

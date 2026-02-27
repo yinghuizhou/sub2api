@@ -525,6 +525,11 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{PaymentOrdersColumns[9]},
 			},
+			{
+				Name:    "paymentorder_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{PaymentOrdersColumns[13]},
+			},
 		},
 	}
 	// PromoCodesColumns holds the columns for the "promo_codes" table.

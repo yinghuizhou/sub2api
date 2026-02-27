@@ -175,9 +175,12 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 	// B2: Verify paid amount matches order amount (tolerance: 0.01 CNY)
 	if math.Abs(paidAmountCNY-order.AmountCNY) > 0.01 {
 		logger.LegacyPrintf("service.payment", "[Payment] AMOUNT MISMATCH for order %s: paid=%.2f expected=%.2f", orderNo, paidAmountCNY, order.AmountCNY)
-		// Mark order as failed to prevent infinite retries
+		// Mark order as failed to prevent infinite retries.
+		// C3: If mark-as-failed itself fails, return a generic error (not ErrPaymentAmountMismatch)
+		// so the handler returns 5xx and the payment provider retries.
 		if _, err := s.orderRepo.UpdateStatusAtomically(ctx, orderNo, "pending", "failed", tradeNo, nil); err != nil {
 			logger.LegacyPrintf("service.payment", "[Payment] Failed to mark order %s as failed: %v", orderNo, err)
+			return fmt.Errorf("mark order failed: %w", err)
 		}
 		return ErrPaymentAmountMismatch
 	}
@@ -209,12 +212,12 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 		return fmt.Errorf("commit payment: %w", err)
 	}
 
-	// B4: Settle referral commission in a SEPARATE transaction.
-	// This ensures payment is never blocked by commission failure.
+	// B4: Settle referral commission in a SEPARATE goroutine + transaction.
+	// This ensures: (1) payment HTTP response is not blocked by commission latency,
+	// (2) commission failure never affects payment success.
 	// Failed commissions are tracked via commission_status for later reconciliation.
-	// C1: Use context.WithoutCancel to detach from HTTP request lifecycle,
-	// preventing cancelled HTTP context from aborting commission settlement.
-	s.settleCommissionBestEffort(context.WithoutCancel(ctx), orderNo, order.UserID, order.ID, order.AmountUSD)
+	// context.WithoutCancel detaches from HTTP lifecycle so the goroutine survives handler return.
+	go s.settleCommissionBestEffort(context.WithoutCancel(ctx), orderNo, order.UserID, order.ID, order.AmountUSD)
 
 	return nil
 }

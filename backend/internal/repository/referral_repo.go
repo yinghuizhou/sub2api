@@ -28,7 +28,8 @@ func (r *ReferralRepository) CreateReferral(ctx context.Context, inviterID, invi
 }
 
 func (r *ReferralRepository) GetInviterByInviteeID(ctx context.Context, inviteeID int64) (int64, error) {
-	ref, err := r.client.Referral.Query().
+	client := clientFromContext(ctx, r.client)
+	ref, err := client.Referral.Query().
 		Where(referral.InviteeIDEQ(inviteeID)).
 		Only(ctx)
 	if err != nil {
