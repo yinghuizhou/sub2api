@@ -65,6 +65,7 @@ type AuthService struct {
 	turnstileService  *TurnstileService
 	emailQueueService *EmailQueueService
 	promoService      *PromoService
+	referralService   *ReferralService
 }
 
 // NewAuthService 创建认证服务实例
@@ -78,6 +79,7 @@ func NewAuthService(
 	turnstileService *TurnstileService,
 	emailQueueService *EmailQueueService,
 	promoService *PromoService,
+	referralService *ReferralService,
 ) *AuthService {
 	return &AuthService{
 		userRepo:          userRepo,
@@ -89,16 +91,17 @@ func NewAuthService(
 		turnstileService:  turnstileService,
 		emailQueueService: emailQueueService,
 		promoService:      promoService,
+		referralService:   referralService,
 	}
 }
 
 // Register 用户注册，返回token和用户
 func (s *AuthService) Register(ctx context.Context, email, password string) (string, *User, error) {
-	return s.RegisterWithVerification(ctx, email, password, "", "", "")
+	return s.RegisterWithVerification(ctx, email, password, "", "", "", "")
 }
 
-// RegisterWithVerification 用户注册（支持邮件验证、优惠码和邀请码），返回token和用户
-func (s *AuthService) RegisterWithVerification(ctx context.Context, email, password, verifyCode, promoCode, invitationCode string) (string, *User, error) {
+// RegisterWithVerification 用户注册（支持邮件验证、优惠码、邀请码和返佣邀请码），返回token和用户
+func (s *AuthService) RegisterWithVerification(ctx context.Context, email, password, verifyCode, promoCode, invitationCode, referralCode string) (string, *User, error) {
 	// 检查是否开放注册（默认关闭：settingService 未配置时不允许注册）
 	if s.settingService == nil || !s.settingService.IsRegistrationEnabled(ctx) {
 		return "", nil, ErrRegDisabled
@@ -168,6 +171,10 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 	if s.settingService != nil {
 		defaultBalance = s.settingService.GetDefaultBalance(ctx)
 		defaultConcurrency = s.settingService.GetDefaultConcurrency(ctx)
+		// When free trial is enabled, it replaces defaultBalance (not stacks on top)
+		if s.settingService.IsFreeTrialEnabled(ctx) {
+			defaultBalance = 0
+		}
 	}
 
 	// 创建用户
@@ -189,6 +196,18 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 		return "", nil, ErrServiceUnavailable
 	}
 
+	// 处理返佣邀请码：记录邀请关系 + 生成当前用户的邀请码
+	if s.referralService != nil {
+		if referralCode != "" {
+			if err := s.referralService.RecordReferral(ctx, user.ID, referralCode); err != nil {
+				logger.LegacyPrintf("service.auth", "[Auth] Failed to record referral for user %d: %v", user.ID, err)
+			}
+		}
+		if _, err := s.referralService.EnsureInviteCode(ctx, user.ID); err != nil {
+			logger.LegacyPrintf("service.auth", "[Auth] Failed to generate invite code for user %d: %v", user.ID, err)
+		}
+	}
+
 	// 标记邀请码为已使用（如果使用了邀请码）
 	if invitationRedeemCode != nil {
 		if err := s.redeemRepo.Use(ctx, invitationRedeemCode.ID, user.ID); err != nil {
@@ -207,6 +226,23 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 				user = updatedUser
 			}
 		}
+	}
+
+	// 发放新用户免费试用额度
+	if s.settingService != nil && s.settingService.IsFreeTrialEnabled(ctx) {
+		amount := s.settingService.GetFreeTrialAmount(ctx)
+		if amount > 0 {
+			if err := s.userRepo.UpdateBalance(ctx, user.ID, amount); err != nil {
+				logger.LegacyPrintf("service.auth", "[Auth] Failed to grant free trial credit to user %d: %v", user.ID, err)
+			} else {
+				logger.LegacyPrintf("service.auth", "[Auth] Free trial credit %.4f USD granted to user %d", amount, user.ID)
+			}
+		}
+	}
+
+	// 重新获取最新余额
+	if updatedUser, err := s.userRepo.GetByID(ctx, user.ID); err == nil {
+		user = updatedUser
 	}
 
 	// 生成token

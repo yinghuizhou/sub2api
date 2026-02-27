@@ -787,6 +787,10 @@ func (r *stubUserRepo) DisableTotp(ctx context.Context, userID int64) error {
 	return errors.New("not implemented")
 }
 
+func (r *stubUserRepo) UpdateResellerLevel(ctx context.Context, userID int64, level int) error {
+	return errors.New("not implemented")
+}
+
 type stubApiKeyCache struct{}
 
 func (stubApiKeyCache) GetCreateAttemptCount(ctx context.Context, userID int64) (int, error) {

@@ -13,10 +13,14 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/errorpassthroughrule"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/idempotencyrecord"
+	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/rechargepackage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referral"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
 	"github.com/Wei-Shaw/sub2api/ent/schema"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
@@ -465,6 +469,60 @@ func init() {
 	idempotencyrecordDescErrorReason := idempotencyrecordFields[6].Descriptor()
 	// idempotencyrecord.ErrorReasonValidator is a validator for the "error_reason" field. It is called by the builders before save.
 	idempotencyrecord.ErrorReasonValidator = idempotencyrecordDescErrorReason.Validators[0].(func(string) error)
+	paymentorderFields := schema.PaymentOrder{}.Fields()
+	_ = paymentorderFields
+	// paymentorderDescOrderNo is the schema descriptor for order_no field.
+	paymentorderDescOrderNo := paymentorderFields[0].Descriptor()
+	// paymentorder.OrderNoValidator is a validator for the "order_no" field. It is called by the builders before save.
+	paymentorder.OrderNoValidator = func() func(string) error {
+		validators := paymentorderDescOrderNo.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(order_no string) error {
+			for _, fn := range fns {
+				if err := fn(order_no); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// paymentorderDescBonus is the schema descriptor for bonus field.
+	paymentorderDescBonus := paymentorderFields[5].Descriptor()
+	// paymentorder.DefaultBonus holds the default value on creation for the bonus field.
+	paymentorder.DefaultBonus = paymentorderDescBonus.Default.(float64)
+	// paymentorderDescChannel is the schema descriptor for channel field.
+	paymentorderDescChannel := paymentorderFields[7].Descriptor()
+	// paymentorder.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
+	paymentorder.ChannelValidator = paymentorderDescChannel.Validators[0].(func(string) error)
+	// paymentorderDescStatus is the schema descriptor for status field.
+	paymentorderDescStatus := paymentorderFields[8].Descriptor()
+	// paymentorder.DefaultStatus holds the default value on creation for the status field.
+	paymentorder.DefaultStatus = paymentorderDescStatus.Default.(string)
+	// paymentorder.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	paymentorder.StatusValidator = paymentorderDescStatus.Validators[0].(func(string) error)
+	// paymentorderDescCommissionStatus is the schema descriptor for commission_status field.
+	paymentorderDescCommissionStatus := paymentorderFields[9].Descriptor()
+	// paymentorder.DefaultCommissionStatus holds the default value on creation for the commission_status field.
+	paymentorder.DefaultCommissionStatus = paymentorderDescCommissionStatus.Default.(string)
+	// paymentorder.CommissionStatusValidator is a validator for the "commission_status" field. It is called by the builders before save.
+	paymentorder.CommissionStatusValidator = paymentorderDescCommissionStatus.Validators[0].(func(string) error)
+	// paymentorderDescTradeNo is the schema descriptor for trade_no field.
+	paymentorderDescTradeNo := paymentorderFields[10].Descriptor()
+	// paymentorder.TradeNoValidator is a validator for the "trade_no" field. It is called by the builders before save.
+	paymentorder.TradeNoValidator = paymentorderDescTradeNo.Validators[0].(func(string) error)
+	// paymentorderDescCreatedAt is the schema descriptor for created_at field.
+	paymentorderDescCreatedAt := paymentorderFields[12].Descriptor()
+	// paymentorder.DefaultCreatedAt holds the default value on creation for the created_at field.
+	paymentorder.DefaultCreatedAt = paymentorderDescCreatedAt.Default.(func() time.Time)
+	// paymentorderDescUpdatedAt is the schema descriptor for updated_at field.
+	paymentorderDescUpdatedAt := paymentorderFields[13].Descriptor()
+	// paymentorder.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	paymentorder.DefaultUpdatedAt = paymentorderDescUpdatedAt.Default.(func() time.Time)
+	// paymentorder.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	paymentorder.UpdateDefaultUpdatedAt = paymentorderDescUpdatedAt.UpdateDefault.(func() time.Time)
 	promocodeFields := schema.PromoCode{}.Fields()
 	_ = promocodeFields
 	// promocodeDescCode is the schema descriptor for code field.
@@ -642,6 +700,38 @@ func init() {
 	proxyDescHealthCheckFailures := proxyFields[18].Descriptor()
 	// proxy.DefaultHealthCheckFailures holds the default value on creation for the health_check_failures field.
 	proxy.DefaultHealthCheckFailures = proxyDescHealthCheckFailures.Default.(int)
+	rechargepackageFields := schema.RechargePackage{}.Fields()
+	_ = rechargepackageFields
+	// rechargepackageDescBonusRate is the schema descriptor for bonus_rate field.
+	rechargepackageDescBonusRate := rechargepackageFields[1].Descriptor()
+	// rechargepackage.DefaultBonusRate holds the default value on creation for the bonus_rate field.
+	rechargepackage.DefaultBonusRate = rechargepackageDescBonusRate.Default.(float64)
+	// rechargepackageDescBonusFixed is the schema descriptor for bonus_fixed field.
+	rechargepackageDescBonusFixed := rechargepackageFields[2].Descriptor()
+	// rechargepackage.DefaultBonusFixed holds the default value on creation for the bonus_fixed field.
+	rechargepackage.DefaultBonusFixed = rechargepackageDescBonusFixed.Default.(float64)
+	// rechargepackageDescLabel is the schema descriptor for label field.
+	rechargepackageDescLabel := rechargepackageFields[3].Descriptor()
+	// rechargepackage.LabelValidator is a validator for the "label" field. It is called by the builders before save.
+	rechargepackage.LabelValidator = rechargepackageDescLabel.Validators[0].(func(string) error)
+	// rechargepackageDescIsActive is the schema descriptor for is_active field.
+	rechargepackageDescIsActive := rechargepackageFields[4].Descriptor()
+	// rechargepackage.DefaultIsActive holds the default value on creation for the is_active field.
+	rechargepackage.DefaultIsActive = rechargepackageDescIsActive.Default.(bool)
+	// rechargepackageDescSortOrder is the schema descriptor for sort_order field.
+	rechargepackageDescSortOrder := rechargepackageFields[5].Descriptor()
+	// rechargepackage.DefaultSortOrder holds the default value on creation for the sort_order field.
+	rechargepackage.DefaultSortOrder = rechargepackageDescSortOrder.Default.(int)
+	// rechargepackageDescCreatedAt is the schema descriptor for created_at field.
+	rechargepackageDescCreatedAt := rechargepackageFields[6].Descriptor()
+	// rechargepackage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rechargepackage.DefaultCreatedAt = rechargepackageDescCreatedAt.Default.(func() time.Time)
+	// rechargepackageDescUpdatedAt is the schema descriptor for updated_at field.
+	rechargepackageDescUpdatedAt := rechargepackageFields[7].Descriptor()
+	// rechargepackage.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rechargepackage.DefaultUpdatedAt = rechargepackageDescUpdatedAt.Default.(func() time.Time)
+	// rechargepackage.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rechargepackage.UpdateDefaultUpdatedAt = rechargepackageDescUpdatedAt.UpdateDefault.(func() time.Time)
 	redeemcodeFields := schema.RedeemCode{}.Fields()
 	_ = redeemcodeFields
 	// redeemcodeDescCode is the schema descriptor for code field.
@@ -686,6 +776,24 @@ func init() {
 	redeemcodeDescValidityDays := redeemcodeFields[9].Descriptor()
 	// redeemcode.DefaultValidityDays holds the default value on creation for the validity_days field.
 	redeemcode.DefaultValidityDays = redeemcodeDescValidityDays.Default.(int)
+	referralFields := schema.Referral{}.Fields()
+	_ = referralFields
+	// referralDescCreatedAt is the schema descriptor for created_at field.
+	referralDescCreatedAt := referralFields[2].Descriptor()
+	// referral.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referral.DefaultCreatedAt = referralDescCreatedAt.Default.(func() time.Time)
+	referralcommissionFields := schema.ReferralCommission{}.Fields()
+	_ = referralcommissionFields
+	// referralcommissionDescStatus is the schema descriptor for status field.
+	referralcommissionDescStatus := referralcommissionFields[6].Descriptor()
+	// referralcommission.DefaultStatus holds the default value on creation for the status field.
+	referralcommission.DefaultStatus = referralcommissionDescStatus.Default.(string)
+	// referralcommission.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	referralcommission.StatusValidator = referralcommissionDescStatus.Validators[0].(func(string) error)
+	// referralcommissionDescCreatedAt is the schema descriptor for created_at field.
+	referralcommissionDescCreatedAt := referralcommissionFields[8].Descriptor()
+	// referralcommission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referralcommission.DefaultCreatedAt = referralcommissionDescCreatedAt.Default.(func() time.Time)
 	securitysecretMixin := schema.SecuritySecret{}.Mixin()
 	securitysecretMixinFields0 := securitysecretMixin[0].Fields()
 	_ = securitysecretMixinFields0
@@ -1001,6 +1109,14 @@ func init() {
 	userDescTotpEnabled := userFields[9].Descriptor()
 	// user.DefaultTotpEnabled holds the default value on creation for the totp_enabled field.
 	user.DefaultTotpEnabled = userDescTotpEnabled.Default.(bool)
+	// userDescInviteCode is the schema descriptor for invite_code field.
+	userDescInviteCode := userFields[11].Descriptor()
+	// user.InviteCodeValidator is a validator for the "invite_code" field. It is called by the builders before save.
+	user.InviteCodeValidator = userDescInviteCode.Validators[0].(func(string) error)
+	// userDescResellerLevel is the schema descriptor for reseller_level field.
+	userDescResellerLevel := userFields[12].Descriptor()
+	// user.DefaultResellerLevel holds the default value on creation for the reseller_level field.
+	user.DefaultResellerLevel = userDescResellerLevel.Default.(int)
 	userallowedgroupFields := schema.UserAllowedGroup{}.Fields()
 	_ = userallowedgroupFields
 	// userallowedgroupDescCreatedAt is the schema descriptor for created_at field.

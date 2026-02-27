@@ -210,6 +210,34 @@ func (_c *UserCreate) SetNillableTotpEnabledAt(v *time.Time) *UserCreate {
 	return _c
 }
 
+// SetInviteCode sets the "invite_code" field.
+func (_c *UserCreate) SetInviteCode(v string) *UserCreate {
+	_c.mutation.SetInviteCode(v)
+	return _c
+}
+
+// SetNillableInviteCode sets the "invite_code" field if the given value is not nil.
+func (_c *UserCreate) SetNillableInviteCode(v *string) *UserCreate {
+	if v != nil {
+		_c.SetInviteCode(*v)
+	}
+	return _c
+}
+
+// SetResellerLevel sets the "reseller_level" field.
+func (_c *UserCreate) SetResellerLevel(v int) *UserCreate {
+	_c.mutation.SetResellerLevel(v)
+	return _c
+}
+
+// SetNillableResellerLevel sets the "reseller_level" field if the given value is not nil.
+func (_c *UserCreate) SetNillableResellerLevel(v *int) *UserCreate {
+	if v != nil {
+		_c.SetResellerLevel(*v)
+	}
+	return _c
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_c *UserCreate) AddAPIKeyIDs(ids ...int64) *UserCreate {
 	_c.mutation.AddAPIKeyIDs(ids...)
@@ -424,6 +452,10 @@ func (_c *UserCreate) defaults() error {
 		v := user.DefaultTotpEnabled
 		_c.mutation.SetTotpEnabled(v)
 	}
+	if _, ok := _c.mutation.ResellerLevel(); !ok {
+		v := user.DefaultResellerLevel
+		_c.mutation.SetResellerLevel(v)
+	}
 	return nil
 }
 
@@ -486,6 +518,14 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.TotpEnabled(); !ok {
 		return &ValidationError{Name: "totp_enabled", err: errors.New(`ent: missing required field "User.totp_enabled"`)}
+	}
+	if v, ok := _c.mutation.InviteCode(); ok {
+		if err := user.InviteCodeValidator(v); err != nil {
+			return &ValidationError{Name: "invite_code", err: fmt.Errorf(`ent: validator failed for field "User.invite_code": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ResellerLevel(); !ok {
+		return &ValidationError{Name: "reseller_level", err: errors.New(`ent: missing required field "User.reseller_level"`)}
 	}
 	return nil
 }
@@ -569,6 +609,14 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.TotpEnabledAt(); ok {
 		_spec.SetField(user.FieldTotpEnabledAt, field.TypeTime, value)
 		_node.TotpEnabledAt = &value
+	}
+	if value, ok := _c.mutation.InviteCode(); ok {
+		_spec.SetField(user.FieldInviteCode, field.TypeString, value)
+		_node.InviteCode = &value
+	}
+	if value, ok := _c.mutation.ResellerLevel(); ok {
+		_spec.SetField(user.FieldResellerLevel, field.TypeInt, value)
+		_node.ResellerLevel = value
 	}
 	if nodes := _c.mutation.APIKeysIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -956,6 +1004,42 @@ func (u *UserUpsert) ClearTotpEnabledAt() *UserUpsert {
 	return u
 }
 
+// SetInviteCode sets the "invite_code" field.
+func (u *UserUpsert) SetInviteCode(v string) *UserUpsert {
+	u.Set(user.FieldInviteCode, v)
+	return u
+}
+
+// UpdateInviteCode sets the "invite_code" field to the value that was provided on create.
+func (u *UserUpsert) UpdateInviteCode() *UserUpsert {
+	u.SetExcluded(user.FieldInviteCode)
+	return u
+}
+
+// ClearInviteCode clears the value of the "invite_code" field.
+func (u *UserUpsert) ClearInviteCode() *UserUpsert {
+	u.SetNull(user.FieldInviteCode)
+	return u
+}
+
+// SetResellerLevel sets the "reseller_level" field.
+func (u *UserUpsert) SetResellerLevel(v int) *UserUpsert {
+	u.Set(user.FieldResellerLevel, v)
+	return u
+}
+
+// UpdateResellerLevel sets the "reseller_level" field to the value that was provided on create.
+func (u *UserUpsert) UpdateResellerLevel() *UserUpsert {
+	u.SetExcluded(user.FieldResellerLevel)
+	return u
+}
+
+// AddResellerLevel adds v to the "reseller_level" field.
+func (u *UserUpsert) AddResellerLevel(v int) *UserUpsert {
+	u.Add(user.FieldResellerLevel, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -1215,6 +1299,48 @@ func (u *UserUpsertOne) UpdateTotpEnabledAt() *UserUpsertOne {
 func (u *UserUpsertOne) ClearTotpEnabledAt() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearTotpEnabledAt()
+	})
+}
+
+// SetInviteCode sets the "invite_code" field.
+func (u *UserUpsertOne) SetInviteCode(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetInviteCode(v)
+	})
+}
+
+// UpdateInviteCode sets the "invite_code" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateInviteCode() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateInviteCode()
+	})
+}
+
+// ClearInviteCode clears the value of the "invite_code" field.
+func (u *UserUpsertOne) ClearInviteCode() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearInviteCode()
+	})
+}
+
+// SetResellerLevel sets the "reseller_level" field.
+func (u *UserUpsertOne) SetResellerLevel(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetResellerLevel(v)
+	})
+}
+
+// AddResellerLevel adds v to the "reseller_level" field.
+func (u *UserUpsertOne) AddResellerLevel(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddResellerLevel(v)
+	})
+}
+
+// UpdateResellerLevel sets the "reseller_level" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateResellerLevel() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateResellerLevel()
 	})
 }
 
@@ -1643,6 +1769,48 @@ func (u *UserUpsertBulk) UpdateTotpEnabledAt() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearTotpEnabledAt() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearTotpEnabledAt()
+	})
+}
+
+// SetInviteCode sets the "invite_code" field.
+func (u *UserUpsertBulk) SetInviteCode(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetInviteCode(v)
+	})
+}
+
+// UpdateInviteCode sets the "invite_code" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateInviteCode() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateInviteCode()
+	})
+}
+
+// ClearInviteCode clears the value of the "invite_code" field.
+func (u *UserUpsertBulk) ClearInviteCode() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearInviteCode()
+	})
+}
+
+// SetResellerLevel sets the "reseller_level" field.
+func (u *UserUpsertBulk) SetResellerLevel(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetResellerLevel(v)
+	})
+}
+
+// AddResellerLevel adds v to the "reseller_level" field.
+func (u *UserUpsertBulk) AddResellerLevel(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddResellerLevel(v)
+	})
+}
+
+// UpdateResellerLevel sets the "reseller_level" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateResellerLevel() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateResellerLevel()
 	})
 }
 

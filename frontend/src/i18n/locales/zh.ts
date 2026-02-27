@@ -284,6 +284,8 @@ export default {
     github: 'GitHub',
     mySubscriptions: '我的订阅',
     buySubscription: '购买订阅',
+    recharge: '充值',
+    referral: '邀请返佣',
     docs: '文档'
   },
 
@@ -4060,5 +4062,37 @@ export default {
           '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;">点击确认创建您的 API 密钥。</p><div style="padding: 8px 12px; background: #fee2e2; border-left: 3px solid #ef4444; border-radius: 4px; font-size: 13px; margin-bottom: 12px;"><b>⚠️ 重要：</b><ul style="margin: 8px 0 0 16px;"><li>创建后请立即复制密钥（sk-xxx）</li><li>密钥只显示一次，丢失需重新生成</li></ul></div><p style="padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>🚀 如何使用：</b><br/>将密钥配置到支持 OpenAI 接口的任何客户端（如 ChatBox、OpenCat 等），即可开始使用！</p><p style="margin-top: 12px; color: #10b981; font-weight: 600;">👉 点击"创建"按钮</p></div>'
       }
     }
+  },
+
+  // Recharge
+  recharge: {
+    title: '充值余额',
+    bonus: '赠送',
+    customAmount: '自定义金额（元）',
+    wechat: '微信支付',
+    alipay: '支付宝',
+    payAmount: '实付金额',
+    bonusCredit: '赠送额度',
+    totalCredit: '到账余额',
+    creating: '创建订单中...',
+    payNow: '立即充值',
+    wechatScan: '微信扫码支付',
+    alipayScan: '支付宝扫码支付',
+    scanTip: '请在 5 分钟内完成支付',
+    paySuccess: '支付成功！'
+  },
+
+  // Referral
+  referral: {
+    title: '邀请返佣',
+    yourCode: '你的邀请码',
+    copied: '已复制',
+    copy: '复制',
+    tip: '分享邀请码给好友，好友充值后你可获得 10% 返佣',
+    invitees: '邀请人数',
+    totalCommission: '累计返佣',
+    records: '返佣记录',
+    noRecords: '暂无返佣记录',
+    orderAmount: '订单金额'
   }
 }

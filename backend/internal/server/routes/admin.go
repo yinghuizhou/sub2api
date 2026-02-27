@@ -75,6 +75,9 @@ func RegisterAdminRoutes(
 
 		// 供应商管理
 		registerVendorRoutes(admin, h)
+
+		// 支付管理
+		registerAdminPaymentRoutes(admin, h)
 	}
 }
 
@@ -473,5 +476,16 @@ func registerVendorRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		vendors.POST("/:id/health-check", h.Admin.Vendor.TriggerHealthCheck)
 		vendors.GET("/:id/accounts", h.Admin.Vendor.GetVendorAccounts)
 		vendors.POST("/:id/accounts", h.Admin.Vendor.BatchCreateAccounts)
+	}
+}
+
+func registerAdminPaymentRoutes(adminGroup *gin.RouterGroup, h *handler.Handlers) {
+	payment := adminGroup.Group("/payment")
+	{
+		payment.GET("/packages", h.Admin.Payment.ListPackages)
+		payment.POST("/packages", h.Admin.Payment.CreatePackage)
+		payment.PUT("/packages/:id", h.Admin.Payment.UpdatePackage)
+		payment.DELETE("/packages/:id", h.Admin.Payment.DeletePackage)
+		payment.GET("/orders", h.Admin.Payment.ListOrders)
 	}
 }

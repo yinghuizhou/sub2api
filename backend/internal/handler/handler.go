@@ -26,6 +26,7 @@ type AdminHandlers struct {
 	UserAttribute    *admin.UserAttributeHandler
 	ErrorPassthrough *admin.ErrorPassthroughHandler
 	Vendor           *admin.VendorHandler
+	Payment          *admin.PaymentHandler
 }
 
 // Handlers contains all HTTP handlers
@@ -43,6 +44,7 @@ type Handlers struct {
 	SoraGateway   *SoraGatewayHandler
 	Setting       *SettingHandler
 	Totp          *TotpHandler
+	Payment       *PaymentHandler
 }
 
 // BuildInfo contains build-time information

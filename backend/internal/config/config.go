@@ -75,6 +75,8 @@ type Config struct {
 	Gemini                  GeminiConfig                  `mapstructure:"gemini"`
 	Update                  UpdateConfig                  `mapstructure:"update"`
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
+	Referral                ReferralConfig                `mapstructure:"referral"`
+	Payment                 PaymentConfig                 `mapstructure:"payment"`
 }
 
 type LogConfig struct {
@@ -155,6 +157,30 @@ type IdempotencyConfig struct {
 	CleanupIntervalSeconds int `mapstructure:"cleanup_interval_seconds"`
 	// CleanupBatchSize 每次清理的最大记录数。
 	CleanupBatchSize int `mapstructure:"cleanup_batch_size"`
+}
+
+// ReferralConfig 邀请返佣配置
+type ReferralConfig struct {
+	Enabled        bool    `mapstructure:"enabled"`         // 是否启用返佣，默认 false
+	CommissionRate float64 `mapstructure:"commission_rate"` // 返佣比例，Enabled=true 时生效，默认 0.10 (10%)
+}
+
+// PaymentConfig 支付配置
+type PaymentConfig struct {
+	CNYToUSDRate float64 `mapstructure:"cny_to_usd_rate"` // 人民币兑美元汇率，默认 7.2
+	Wechat       WechatPayConfig `mapstructure:"wechat"`
+	Alipay       AlipayConfig    `mapstructure:"alipay"`
+}
+
+// WechatPayConfig 微信支付 V3 配置
+type WechatPayConfig struct {
+	APIV3Key    string `mapstructure:"api_v3_key"`     // 微信支付 APIv3 密钥（32字节）
+	PublicKeyPath string `mapstructure:"public_key_path"` // 微信平台证书公钥文件路径
+}
+
+// AlipayConfig 支付宝配置
+type AlipayConfig struct {
+	PublicKey string `mapstructure:"public_key"` // 支付宝公钥（RSA2）
 }
 
 type LinuxDoConnectConfig struct {

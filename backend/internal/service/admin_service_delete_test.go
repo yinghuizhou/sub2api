@@ -71,7 +71,7 @@ func (s *userRepoStub) ListWithFilters(ctx context.Context, params pagination.Pa
 }
 
 func (s *userRepoStub) UpdateBalance(ctx context.Context, id int64, amount float64) error {
-	panic("unexpected UpdateBalance call")
+	return nil
 }
 
 func (s *userRepoStub) DeductBalance(ctx context.Context, id int64, amount float64) error {
@@ -103,6 +103,10 @@ func (s *userRepoStub) EnableTotp(ctx context.Context, userID int64) error {
 
 func (s *userRepoStub) DisableTotp(ctx context.Context, userID int64) error {
 	panic("unexpected DisableTotp call")
+}
+
+func (s *userRepoStub) UpdateResellerLevel(ctx context.Context, userID int64, level int) error {
+	return nil
 }
 
 type groupRepoStub struct {

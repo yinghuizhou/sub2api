@@ -513,3 +513,14 @@ func (r *userRepository) DisableTotp(ctx context.Context, userID int64) error {
 	}
 	return nil
 }
+
+// UpdateResellerLevel 更新用户代理等级
+func (r *userRepository) UpdateResellerLevel(ctx context.Context, userID int64, level int) error {
+	_, err := r.client.User.UpdateOneID(userID).
+		SetResellerLevel(level).
+		Save(ctx)
+	if err != nil {
+		return translatePersistenceError(err, service.ErrUserNotFound, nil)
+	}
+	return nil
+}

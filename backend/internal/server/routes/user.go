@@ -87,5 +87,17 @@ func RegisterUserRoutes(
 			subscriptions.GET("/progress", h.Subscription.GetProgress)
 			subscriptions.GET("/summary", h.Subscription.GetSummary)
 		}
+
+		// 支付充值
+		payment := authenticated.Group("/payment")
+		{
+			payment.POST("/create", h.Payment.CreateOrder)
+			payment.GET("/orders/:id", h.Payment.GetOrder)
+			payment.GET("/packages", h.Payment.ListPackages)
+		}
 	}
+
+	// 支付回调（无需JWT认证，通过签名验证保护）
+	v1.POST("/payment/callback/wechat", h.Payment.WechatCallback)
+	v1.POST("/payment/callback/alipay", h.Payment.AlipayCallback)
 }

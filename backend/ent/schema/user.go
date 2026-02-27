@@ -72,6 +72,17 @@ func (User) Fields() []ent.Field {
 		field.Time("totp_enabled_at").
 			Optional().
 			Nillable(),
+
+		// 邀请码（8位大写十六进制，唯一）
+		field.String("invite_code").
+			MaxLen(16).
+			Optional().
+			Nillable().
+			Unique(),
+
+		// 代理商等级：0=普通用户, 1=基础代理, 2=高级代理
+		field.Int("reseller_level").
+			Default(0),
 	}
 }
 
