@@ -154,7 +154,7 @@ func (r *RechargePackageRepository) GetByID(ctx context.Context, id int64) (*ser
 
 func (r *RechargePackageRepository) Create(ctx context.Context, pkg *service.RechargePackage) error {
 	p, err := r.client.RechargePackage.Create().
-		SetAmount(pkg.AmountCNY).
+		SetAmountCny(pkg.AmountCNY).
 		SetBonusRate(pkg.BonusRate).
 		SetBonusFixed(pkg.BonusFixed).
 		SetNillableLabel(pkg.Label).
@@ -170,7 +170,7 @@ func (r *RechargePackageRepository) Create(ctx context.Context, pkg *service.Rec
 
 func (r *RechargePackageRepository) Update(ctx context.Context, pkg *service.RechargePackage) error {
 	_, err := r.client.RechargePackage.UpdateOneID(pkg.ID).
-		SetAmount(pkg.AmountCNY).
+		SetAmountCny(pkg.AmountCNY).
 		SetBonusRate(pkg.BonusRate).
 		SetBonusFixed(pkg.BonusFixed).
 		SetNillableLabel(pkg.Label).
@@ -187,7 +187,7 @@ func (r *RechargePackageRepository) Delete(ctx context.Context, id int64) error 
 func entToRechargePackage(p *dbent.RechargePackage) service.RechargePackage {
 	return service.RechargePackage{
 		ID:         int64(p.ID),
-		AmountCNY:  p.Amount,
+		AmountCNY:  p.AmountCny,
 		BonusRate:  p.BonusRate,
 		BonusFixed: p.BonusFixed,
 		Label:      p.Label,

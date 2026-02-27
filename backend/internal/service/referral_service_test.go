@@ -73,6 +73,14 @@ func TestRecordReferral_SkipsEmptyCode(t *testing.T) {
 	assert.False(t, repo.createReferralCalled, "CreateReferral should NOT be called for empty invite code")
 }
 
+func TestCalculateCommission_RateCapped(t *testing.T) {
+	cfg := &config.Config{Referral: config.ReferralConfig{CommissionRate: 0.80}}
+	svc := service.NewReferralService(nil, nil, nil, nil, cfg)
+	// Rate should be capped at 0.50
+	commission := svc.CalculateCommission(100.0)
+	assert.Equal(t, 50.0, commission, "commission rate should be capped at 50%")
+}
+
 func TestEnsureInviteCode_WithoutRepo(t *testing.T) {
 	svc := service.NewReferralService(nil, nil, nil, nil, nil)
 	code, err := svc.EnsureInviteCode(context.Background(), 1)
@@ -82,7 +90,7 @@ func TestEnsureInviteCode_WithoutRepo(t *testing.T) {
 
 // stubReferralRepo implements service.ReferralRepository for unit tests.
 type stubReferralRepo struct {
-	codeToUser          map[string]int64
+	codeToUser           map[string]int64
 	createReferralCalled bool
 }
 

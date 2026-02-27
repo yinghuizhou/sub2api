@@ -28,24 +28,24 @@ func (_u *RechargePackageUpdate) Where(ps ...predicate.RechargePackage) *Recharg
 	return _u
 }
 
-// SetAmount sets the "amount" field.
-func (_u *RechargePackageUpdate) SetAmount(v float64) *RechargePackageUpdate {
-	_u.mutation.ResetAmount()
-	_u.mutation.SetAmount(v)
+// SetAmountCny sets the "amount_cny" field.
+func (_u *RechargePackageUpdate) SetAmountCny(v float64) *RechargePackageUpdate {
+	_u.mutation.ResetAmountCny()
+	_u.mutation.SetAmountCny(v)
 	return _u
 }
 
-// SetNillableAmount sets the "amount" field if the given value is not nil.
-func (_u *RechargePackageUpdate) SetNillableAmount(v *float64) *RechargePackageUpdate {
+// SetNillableAmountCny sets the "amount_cny" field if the given value is not nil.
+func (_u *RechargePackageUpdate) SetNillableAmountCny(v *float64) *RechargePackageUpdate {
 	if v != nil {
-		_u.SetAmount(*v)
+		_u.SetAmountCny(*v)
 	}
 	return _u
 }
 
-// AddAmount adds value to the "amount" field.
-func (_u *RechargePackageUpdate) AddAmount(v float64) *RechargePackageUpdate {
-	_u.mutation.AddAmount(v)
+// AddAmountCny adds value to the "amount_cny" field.
+func (_u *RechargePackageUpdate) AddAmountCny(v float64) *RechargePackageUpdate {
+	_u.mutation.AddAmountCny(v)
 	return _u
 }
 
@@ -215,11 +215,11 @@ func (_u *RechargePackageUpdate) sqlSave(ctx context.Context) (_node int, err er
 			}
 		}
 	}
-	if value, ok := _u.mutation.Amount(); ok {
-		_spec.SetField(rechargepackage.FieldAmount, field.TypeFloat64, value)
+	if value, ok := _u.mutation.AmountCny(); ok {
+		_spec.SetField(rechargepackage.FieldAmountCny, field.TypeFloat64, value)
 	}
-	if value, ok := _u.mutation.AddedAmount(); ok {
-		_spec.AddField(rechargepackage.FieldAmount, field.TypeFloat64, value)
+	if value, ok := _u.mutation.AddedAmountCny(); ok {
+		_spec.AddField(rechargepackage.FieldAmountCny, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(rechargepackage.FieldBonusRate, field.TypeFloat64, value)
@@ -271,24 +271,24 @@ type RechargePackageUpdateOne struct {
 	mutation *RechargePackageMutation
 }
 
-// SetAmount sets the "amount" field.
-func (_u *RechargePackageUpdateOne) SetAmount(v float64) *RechargePackageUpdateOne {
-	_u.mutation.ResetAmount()
-	_u.mutation.SetAmount(v)
+// SetAmountCny sets the "amount_cny" field.
+func (_u *RechargePackageUpdateOne) SetAmountCny(v float64) *RechargePackageUpdateOne {
+	_u.mutation.ResetAmountCny()
+	_u.mutation.SetAmountCny(v)
 	return _u
 }
 
-// SetNillableAmount sets the "amount" field if the given value is not nil.
-func (_u *RechargePackageUpdateOne) SetNillableAmount(v *float64) *RechargePackageUpdateOne {
+// SetNillableAmountCny sets the "amount_cny" field if the given value is not nil.
+func (_u *RechargePackageUpdateOne) SetNillableAmountCny(v *float64) *RechargePackageUpdateOne {
 	if v != nil {
-		_u.SetAmount(*v)
+		_u.SetAmountCny(*v)
 	}
 	return _u
 }
 
-// AddAmount adds value to the "amount" field.
-func (_u *RechargePackageUpdateOne) AddAmount(v float64) *RechargePackageUpdateOne {
-	_u.mutation.AddAmount(v)
+// AddAmountCny adds value to the "amount_cny" field.
+func (_u *RechargePackageUpdateOne) AddAmountCny(v float64) *RechargePackageUpdateOne {
+	_u.mutation.AddAmountCny(v)
 	return _u
 }
 
@@ -488,11 +488,11 @@ func (_u *RechargePackageUpdateOne) sqlSave(ctx context.Context) (_node *Recharg
 			}
 		}
 	}
-	if value, ok := _u.mutation.Amount(); ok {
-		_spec.SetField(rechargepackage.FieldAmount, field.TypeFloat64, value)
+	if value, ok := _u.mutation.AmountCny(); ok {
+		_spec.SetField(rechargepackage.FieldAmountCny, field.TypeFloat64, value)
 	}
-	if value, ok := _u.mutation.AddedAmount(); ok {
-		_spec.AddField(rechargepackage.FieldAmount, field.TypeFloat64, value)
+	if value, ok := _u.mutation.AddedAmountCny(); ok {
+		_spec.AddField(rechargepackage.FieldAmountCny, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.BonusRate(); ok {
 		_spec.SetField(rechargepackage.FieldBonusRate, field.TypeFloat64, value)

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
@@ -21,7 +22,7 @@ func (Referral) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("inviter_id"),
 		field.Int64("invitee_id").Unique(),
-		field.Time("created_at").Immutable().Default(time.Now),
+		field.Time("created_at").Immutable().Default(time.Now).SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
 	}
 }
 

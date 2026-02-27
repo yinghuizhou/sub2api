@@ -248,6 +248,10 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	updates[SettingKeyEnableIdentityPatch] = strconv.FormatBool(settings.EnableIdentityPatch)
 	updates[SettingKeyIdentityPatchPrompt] = settings.IdentityPatchPrompt
 
+	// Free trial settings
+	updates[SettingKeyFreeTrialEnabled] = strconv.FormatBool(settings.FreeTrialEnabled)
+	updates[SettingKeyFreeTrialAmount] = strconv.FormatFloat(settings.FreeTrialAmount, 'f', 8, 64)
+
 	// Ops monitoring (vNext)
 	updates[SettingKeyOpsMonitoringEnabled] = strconv.FormatBool(settings.OpsMonitoringEnabled)
 	updates[SettingKeyOpsRealtimeMonitoringEnabled] = strconv.FormatBool(settings.OpsRealtimeMonitoringEnabled)
@@ -326,6 +330,9 @@ func (s *SettingService) IsTotpEnabled(ctx context.Context) bool {
 // IsTotpEncryptionKeyConfigured 检查 TOTP 加密密钥是否已手动配置
 // 只有手动配置了密钥才允许在管理后台启用 TOTP 功能
 func (s *SettingService) IsTotpEncryptionKeyConfigured() bool {
+	if s.cfg == nil {
+		return false
+	}
 	return s.cfg.Totp.EncryptionKeyConfigured
 }
 
@@ -342,38 +349,51 @@ func (s *SettingService) GetSiteName(ctx context.Context) string {
 func (s *SettingService) GetDefaultConcurrency(ctx context.Context) int {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyDefaultConcurrency)
 	if err != nil {
-		return s.cfg.Default.UserConcurrency
+		if s.cfg != nil {
+			return s.cfg.Default.UserConcurrency
+		}
+		return 0
 	}
 	if v, err := strconv.Atoi(value); err == nil && v > 0 {
 		return v
 	}
-	return s.cfg.Default.UserConcurrency
+	if s.cfg != nil {
+		return s.cfg.Default.UserConcurrency
+	}
+	return 0
 }
 
 // GetDefaultBalance 获取默认余额
 func (s *SettingService) GetDefaultBalance(ctx context.Context) float64 {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyDefaultBalance)
 	if err != nil {
-		return s.cfg.Default.UserBalance
+		if s.cfg != nil {
+			return s.cfg.Default.UserBalance
+		}
+		return 0
 	}
 	if v, err := strconv.ParseFloat(value, 64); err == nil && v >= 0 {
 		return v
 	}
-	return s.cfg.Default.UserBalance
+	if s.cfg != nil {
+		return s.cfg.Default.UserBalance
+	}
+	return 0
 }
 
 // IsFreeTrialEnabled returns whether new user free trial credit is enabled.
+// Defaults to false (disabled) when the setting does not exist in the database.
 func (s *SettingService) IsFreeTrialEnabled(ctx context.Context) bool {
-	value, err := s.settingRepo.GetValue(ctx, "free_trial.enabled")
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyFreeTrialEnabled)
 	if err != nil {
-		return true // default enabled
+		return false // default disabled — must be explicitly enabled by admin
 	}
 	return value == "true" || value == "1"
 }
 
 // GetFreeTrialAmount returns the free trial credit amount in USD.
 func (s *SettingService) GetFreeTrialAmount(ctx context.Context) float64 {
-	value, err := s.settingRepo.GetValue(ctx, "free_trial.amount")
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyFreeTrialAmount)
 	if err != nil {
 		return 0.5 // default $0.50
 	}
@@ -414,6 +434,9 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyFallbackModelOpenAI:      "gpt-4o",
 		SettingKeyFallbackModelGemini:      "gemini-2.5-pro",
 		SettingKeyFallbackModelAntigravity: "gemini-2.5-pro",
+		// Free trial defaults
+		SettingKeyFreeTrialEnabled: "false",
+		SettingKeyFreeTrialAmount:  "0.5",
 		// Identity patch defaults
 		SettingKeyEnableIdentityPatch: "true",
 		SettingKeyIdentityPatchPrompt: "",
@@ -468,14 +491,14 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 
 	if concurrency, err := strconv.Atoi(settings[SettingKeyDefaultConcurrency]); err == nil {
 		result.DefaultConcurrency = concurrency
-	} else {
+	} else if s.cfg != nil {
 		result.DefaultConcurrency = s.cfg.Default.UserConcurrency
 	}
 
 	// 解析浮点数类型
 	if balance, err := strconv.ParseFloat(settings[SettingKeyDefaultBalance], 64); err == nil {
 		result.DefaultBalance = balance
-	} else {
+	} else if s.cfg != nil {
 		result.DefaultBalance = s.cfg.Default.UserBalance
 	}
 
@@ -529,6 +552,15 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		result.EnableIdentityPatch = true
 	}
 	result.IdentityPatchPrompt = settings[SettingKeyIdentityPatchPrompt]
+
+	// Free trial settings (M3: accept both "true" and "1", consistent with IsFreeTrialEnabled)
+	ftVal := settings[SettingKeyFreeTrialEnabled]
+	result.FreeTrialEnabled = ftVal == "true" || ftVal == "1"
+	if v, err := strconv.ParseFloat(settings[SettingKeyFreeTrialAmount], 64); err == nil && v > 0 {
+		result.FreeTrialAmount = v
+	} else {
+		result.FreeTrialAmount = 0.5
+	}
 
 	// Ops monitoring settings (default: enabled, fail-open)
 	result.OpsMonitoringEnabled = !isFalseSettingValue(settings[SettingKeyOpsMonitoringEnabled])

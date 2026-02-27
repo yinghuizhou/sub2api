@@ -54,6 +54,10 @@ type SystemSettings struct {
 	EnableIdentityPatch bool   `json:"enable_identity_patch"`
 	IdentityPatchPrompt string `json:"identity_patch_prompt"`
 
+	// Free trial settings
+	FreeTrialEnabled bool    `json:"free_trial_enabled"`
+	FreeTrialAmount  float64 `json:"free_trial_amount"`
+
 	// Ops monitoring (vNext)
 	OpsMonitoringEnabled         bool
 	OpsRealtimeMonitoringEnabled bool

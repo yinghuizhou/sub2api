@@ -13,8 +13,8 @@ const (
 	Label = "recharge_package"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldAmount holds the string denoting the amount field in the database.
-	FieldAmount = "amount"
+	// FieldAmountCny holds the string denoting the amount_cny field in the database.
+	FieldAmountCny = "amount_cny"
 	// FieldBonusRate holds the string denoting the bonus_rate field in the database.
 	FieldBonusRate = "bonus_rate"
 	// FieldBonusFixed holds the string denoting the bonus_fixed field in the database.
@@ -36,7 +36,7 @@ const (
 // Columns holds all SQL columns for rechargepackage fields.
 var Columns = []string{
 	FieldID,
-	FieldAmount,
+	FieldAmountCny,
 	FieldBonusRate,
 	FieldBonusFixed,
 	FieldLabel,
@@ -83,9 +83,9 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByAmount orders the results by the amount field.
-func ByAmount(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAmount, opts...).ToFunc()
+// ByAmountCny orders the results by the amount_cny field.
+func ByAmountCny(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAmountCny, opts...).ToFunc()
 }
 
 // ByBonusRate orders the results by the bonus_rate field.

@@ -26,9 +26,9 @@ func (ReferralCommission) Fields() []ent.Field {
 		field.Float("order_amount_usd").SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
 		field.Float("commission_rate").SchemaType(map[string]string{dialect.Postgres: "decimal(5,4)"}),
 		field.Float("commission_amount").SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
-		field.String("status").MaxLen(20).Default("settled"),
-		field.Time("settled_at").Optional().Nillable(),
-		field.Time("created_at").Immutable().Default(time.Now),
+		field.String("status").MaxLen(20).Default("pending"),
+		field.Time("settled_at").Optional().Nillable().SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
+		field.Time("created_at").Immutable().Default(time.Now).SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
 	}
 }
 

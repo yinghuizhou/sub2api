@@ -54,9 +54,9 @@ func IDLTE(id int64) predicate.RechargePackage {
 	return predicate.RechargePackage(sql.FieldLTE(FieldID, id))
 }
 
-// Amount applies equality check predicate on the "amount" field. It's identical to AmountEQ.
-func Amount(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldEQ(FieldAmount, v))
+// AmountCny applies equality check predicate on the "amount_cny" field. It's identical to AmountCnyEQ.
+func AmountCny(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldEQ(FieldAmountCny, v))
 }
 
 // BonusRate applies equality check predicate on the "bonus_rate" field. It's identical to BonusRateEQ.
@@ -89,44 +89,44 @@ func UpdatedAt(v time.Time) predicate.RechargePackage {
 	return predicate.RechargePackage(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// AmountEQ applies the EQ predicate on the "amount" field.
-func AmountEQ(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldEQ(FieldAmount, v))
+// AmountCnyEQ applies the EQ predicate on the "amount_cny" field.
+func AmountCnyEQ(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldEQ(FieldAmountCny, v))
 }
 
-// AmountNEQ applies the NEQ predicate on the "amount" field.
-func AmountNEQ(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldNEQ(FieldAmount, v))
+// AmountCnyNEQ applies the NEQ predicate on the "amount_cny" field.
+func AmountCnyNEQ(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldNEQ(FieldAmountCny, v))
 }
 
-// AmountIn applies the In predicate on the "amount" field.
-func AmountIn(vs ...float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldIn(FieldAmount, vs...))
+// AmountCnyIn applies the In predicate on the "amount_cny" field.
+func AmountCnyIn(vs ...float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldIn(FieldAmountCny, vs...))
 }
 
-// AmountNotIn applies the NotIn predicate on the "amount" field.
-func AmountNotIn(vs ...float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldNotIn(FieldAmount, vs...))
+// AmountCnyNotIn applies the NotIn predicate on the "amount_cny" field.
+func AmountCnyNotIn(vs ...float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldNotIn(FieldAmountCny, vs...))
 }
 
-// AmountGT applies the GT predicate on the "amount" field.
-func AmountGT(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldGT(FieldAmount, v))
+// AmountCnyGT applies the GT predicate on the "amount_cny" field.
+func AmountCnyGT(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldGT(FieldAmountCny, v))
 }
 
-// AmountGTE applies the GTE predicate on the "amount" field.
-func AmountGTE(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldGTE(FieldAmount, v))
+// AmountCnyGTE applies the GTE predicate on the "amount_cny" field.
+func AmountCnyGTE(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldGTE(FieldAmountCny, v))
 }
 
-// AmountLT applies the LT predicate on the "amount" field.
-func AmountLT(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldLT(FieldAmount, v))
+// AmountCnyLT applies the LT predicate on the "amount_cny" field.
+func AmountCnyLT(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldLT(FieldAmountCny, v))
 }
 
-// AmountLTE applies the LTE predicate on the "amount" field.
-func AmountLTE(v float64) predicate.RechargePackage {
-	return predicate.RechargePackage(sql.FieldLTE(FieldAmount, v))
+// AmountCnyLTE applies the LTE predicate on the "amount_cny" field.
+func AmountCnyLTE(v float64) predicate.RechargePackage {
+	return predicate.RechargePackage(sql.FieldLTE(FieldAmountCny, v))
 }
 
 // BonusRateEQ applies the EQ predicate on the "bonus_rate" field.

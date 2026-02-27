@@ -50,7 +50,7 @@ type ReferralService struct {
 }
 
 // NewReferralService creates a new ReferralService.
-// commissionRate defaults to 0.10 (10%) if not set in config.
+// commissionRate defaults to 0.10 (10%) if not set in config, capped at 0.50 (50%).
 // Commission settlement is only active when Referral.Enabled=true.
 func NewReferralService(
 	repo ReferralRepository,
@@ -66,6 +66,10 @@ func NewReferralService(
 		if cfg.Referral.CommissionRate > 0 {
 			rate = cfg.Referral.CommissionRate
 		}
+	}
+	// M4: Cap commission rate at 50% to prevent misconfiguration
+	if rate > 0.50 {
+		rate = 0.50
 	}
 	return &ReferralService{
 		repo:           repo,
@@ -127,8 +131,8 @@ func (s *ReferralService) RecordReferral(ctx context.Context, inviteeID int64, i
 }
 
 // SettleCommission settles commission for the inviter after an invitee's payment.
-// If called within an existing transaction (via txCtx), uses that transaction.
-// Otherwise creates its own transaction for atomicity.
+// Always creates its own transaction for atomicity.
+// After crediting the inviter, invalidates the billing cache so balance is immediately visible.
 func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, orderID int64, orderAmountUSD float64) error {
 	if s.repo == nil || !s.enabled {
 		return nil
@@ -151,18 +155,6 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 		SettledAt:        &now,
 	}
 
-	// If already in a transaction (called from HandleCallback), use it directly
-	if dbent.TxFromContext(ctx) != nil {
-		if err := s.repo.CreateCommission(ctx, commission); err != nil {
-			return fmt.Errorf("create commission: %w", err)
-		}
-		if err := s.userRepo.UpdateBalance(ctx, inviterID, amount); err != nil {
-			return fmt.Errorf("credit inviter balance: %w", err)
-		}
-		return nil
-	}
-
-	// Otherwise create our own transaction
 	tx, err := s.entClient.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
@@ -172,11 +164,25 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 	txCtx := dbent.NewTxContext(ctx, tx)
 
 	if err := s.repo.CreateCommission(txCtx, commission); err != nil {
+		// M2: If order_id unique constraint violation, commission already settled (idempotent).
+		// Safe: Ent's generated Save() wraps sqlgraph constraint errors as *ConstraintError.
+		if dbent.IsConstraintError(err) {
+			return nil
+		}
 		return fmt.Errorf("create commission: %w", err)
 	}
 	if err := s.userRepo.UpdateBalance(txCtx, inviterID, amount); err != nil {
 		return fmt.Errorf("credit inviter balance: %w", err)
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit commission: %w", err)
+	}
+
+	// C2: Invalidate billing cache so the inviter sees updated balance immediately
+	if s.billingCache != nil {
+		_ = s.billingCache.InvalidateUserBalance(ctx, inviterID)
+	}
+
+	return nil
 }

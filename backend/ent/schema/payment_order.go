@@ -41,6 +41,6 @@ func (PaymentOrder) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("user_id"),
 		index.Fields("status"),
-		index.Fields("order_no"),
+		index.Fields("created_at"),
 	}
 }

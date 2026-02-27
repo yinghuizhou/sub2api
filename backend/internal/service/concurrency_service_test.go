@@ -12,20 +12,20 @@ import (
 
 // stubConcurrencyCacheForTest 用于并发服务单元测试的缓存桩
 type stubConcurrencyCacheForTest struct {
-	acquireResult bool
-	acquireErr    error
-	releaseErr    error
-	concurrency   int
+	acquireResult  bool
+	acquireErr     error
+	releaseErr     error
+	concurrency    int
 	concurrencyErr error
-	waitAllowed   bool
-	waitErr       error
-	waitCount     int
-	waitCountErr  error
-	loadBatch     map[int64]*AccountLoadInfo
-	loadBatchErr  error
+	waitAllowed    bool
+	waitErr        error
+	waitCount      int
+	waitCountErr   error
+	loadBatch      map[int64]*AccountLoadInfo
+	loadBatchErr   error
 	usersLoadBatch map[int64]*UserLoadInfo
 	usersLoadErr   error
-	cleanupErr    error
+	cleanupErr     error
 
 	// 记录调用
 	releasedAccountIDs []int64

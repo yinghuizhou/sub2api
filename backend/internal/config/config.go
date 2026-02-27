@@ -167,19 +167,20 @@ type ReferralConfig struct {
 
 // PaymentConfig 支付配置
 type PaymentConfig struct {
-	CNYToUSDRate float64 `mapstructure:"cny_to_usd_rate"` // 人民币兑美元汇率，默认 7.2
+	CNYToUSDRate float64         `mapstructure:"cny_to_usd_rate"` // 人民币兑美元汇率，默认 7.2
 	Wechat       WechatPayConfig `mapstructure:"wechat"`
 	Alipay       AlipayConfig    `mapstructure:"alipay"`
 }
 
 // WechatPayConfig 微信支付 V3 配置
 type WechatPayConfig struct {
-	APIV3Key    string `mapstructure:"api_v3_key"`     // 微信支付 APIv3 密钥（32字节）
+	APIV3Key      string `mapstructure:"api_v3_key"`      // 微信支付 APIv3 密钥（32字节）
 	PublicKeyPath string `mapstructure:"public_key_path"` // 微信平台证书公钥文件路径
 }
 
 // AlipayConfig 支付宝配置
 type AlipayConfig struct {
+	AppID     string `mapstructure:"app_id"`     // 支付宝应用 APPID（用于回调验证）
 	PublicKey string `mapstructure:"public_key"` // 支付宝公钥（RSA2）
 }
 

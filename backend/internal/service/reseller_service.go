@@ -29,13 +29,12 @@ var ResellerCommissionRate = map[int]float64{
 
 // ResellerService handles reseller/agent operations.
 type ResellerService struct {
-	userRepo   UserRepository
-	redeemRepo RedeemCodeRepository
+	userRepo UserRepository
 }
 
 // NewResellerService creates a new ResellerService.
-func NewResellerService(userRepo UserRepository, redeemRepo RedeemCodeRepository) *ResellerService {
-	return &ResellerService{userRepo: userRepo, redeemRepo: redeemRepo}
+func NewResellerService(userRepo UserRepository) *ResellerService {
+	return &ResellerService{userRepo: userRepo}
 }
 
 // GetEffectiveCommissionRate returns the effective commission rate for a user.

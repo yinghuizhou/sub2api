@@ -97,5 +97,5 @@ func (h *PaymentHandler) DeletePackage(c *gin.Context) {
 }
 
 func (h *PaymentHandler) ListOrders(c *gin.Context) {
-	response.Success(c, []interface{}{})
+	response.Success(c, []any{})
 }

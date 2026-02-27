@@ -4,9 +4,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
@@ -19,20 +21,49 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// sanitizeLogValue removes newlines and control characters from external input
+// to prevent log injection attacks.
+func sanitizeLogValue(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\r' || r < 0x20 {
+			return '_'
+		}
+		return r
+	}, s)
+}
+
 // PaymentHandler handles payment-related requests.
 type PaymentHandler struct {
 	paymentService *service.PaymentService
 	cfg            *config.Config
+	wxPubKey       *rsa.PublicKey // cached WeChat public key, loaded once at startup
 }
 
 // NewPaymentHandler creates a new PaymentHandler.
+// Loads and caches the WeChat public key at startup to avoid per-request disk I/O.
 func NewPaymentHandler(svc *service.PaymentService, cfg *config.Config) *PaymentHandler {
-	return &PaymentHandler{paymentService: svc, cfg: cfg}
+	h := &PaymentHandler{paymentService: svc, cfg: cfg}
+	// Pre-load WeChat public key if configured
+	if wxCfg := cfg.Payment.Wechat; wxCfg.PublicKeyPath != "" {
+		pemBytes, err := os.ReadFile(wxCfg.PublicKeyPath)
+		if err != nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: failed to read wechat public key: %v", err)
+		} else if block, _ := pem.Decode(pemBytes); block == nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: invalid PEM data in %s", wxCfg.PublicKeyPath)
+		} else if pub, err := x509.ParsePKIXPublicKey(block.Bytes); err != nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: parse public key failed: %v", err)
+		} else if rsaPub, ok := pub.(*rsa.PublicKey); !ok {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: not an RSA public key")
+		} else {
+			h.wxPubKey = rsaPub
+		}
+	}
+	return h
 }
 
 // CreateOrderRequest is the request body for creating a payment order.
 type CreateOrderRequest struct {
-	AmountCNY float64 `json:"amount_cny" binding:"required,gt=0"`
+	AmountCNY float64 `json:"amount_cny" binding:"required,gte=1,lte=100000"`
 	PackageID *int64  `json:"package_id"`
 	Channel   string  `json:"channel" binding:"required,oneof=wechat alipay"`
 }
@@ -100,60 +131,58 @@ func (h *PaymentHandler) ListPackages(c *gin.Context) {
 // WechatCallback handles POST /api/v1/payment/callback/wechat
 func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 	wxCfg := h.cfg.Payment.Wechat
-	if wxCfg.APIV3Key == "" || wxCfg.PublicKeyPath == "" {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] wechat payment not configured")
-		c.JSON(http.StatusServiceUnavailable, gin.H{"code": "NOT_CONFIGURED"})
+	if wxCfg.APIV3Key == "" || h.wxPubKey == nil {
+		// M1: Return 200 for deterministic "not configured" — stops WeChat from retrying indefinitely.
+		logger.LegacyPrintf("handler.payment", "[WechatCallback] ERROR: wechat payment not configured, acking to stop retries")
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "not configured"})
 		return
 	}
 
 	notifyReq, err := wechat.V3ParseNotify(c.Request)
 	if err != nil {
+		// M1: Parse failure is deterministic (malformed body) — return 200 to stop infinite retries.
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] parse notify failed: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"code": "PARSE_FAILED"})
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "parse failed"})
 		return
 	}
 
-	pemBytes, err := os.ReadFile(wxCfg.PublicKeyPath)
-	if err != nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] read public key failed: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-	block, _ := pem.Decode(pemBytes)
-	if block == nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] invalid PEM data")
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] parse public key failed: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-	rsaPub, ok := pub.(*rsa.PublicKey)
-	if !ok {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] not an RSA public key")
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-
-	if err := notifyReq.VerifySignByPK(rsaPub); err != nil {
+	// Verify signature using cached public key (C4: no disk I/O per request)
+	if err := notifyReq.VerifySignByPK(h.wxPubKey); err != nil {
+		// M1: Signature failure is deterministic — return 200 to stop retries for forged/invalid requests.
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] signature verification failed: %v", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"code": "SIGNATURE_INVALID"})
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "signature invalid"})
 		return
 	}
 
 	payResult, err := notifyReq.DecryptPayCipherText(wxCfg.APIV3Key)
 	if err != nil {
+		// M1: Decrypt failure is deterministic (wrong key or corrupt ciphertext) — return 200 to stop retries.
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] decrypt pay result failed: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"code": "DECRYPT_FAILED"})
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "decrypt failed"})
 		return
 	}
 
-	if err := h.paymentService.HandleCallback(c.Request.Context(), payResult.OutTradeNo, payResult.TransactionId); err != nil {
+	// B1: Check trade state — only process successful payments
+	if payResult.TradeState != "SUCCESS" {
+		logger.LegacyPrintf("handler.payment", "[WechatCallback] non-success trade state: %s for order %s", payResult.TradeState, payResult.OutTradeNo)
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "SUCCESS", Message: "成功"})
+		return
+	}
+
+	// B2: Verify payment amount matches order (WeChat amount is in cents)
+	paidAmountCNY := float64(payResult.Amount.Total) / 100.0
+	if err := h.paymentService.HandleCallback(c.Request.Context(), payResult.OutTradeNo, payResult.TransactionId, paidAmountCNY); err != nil {
+		// B1: Amount mismatch is a deterministic error — return 200 to stop WeChat retries.
+		// The order has been marked as "failed" by the service layer.
+		if errors.Is(err, service.ErrPaymentAmountMismatch) {
+			logger.LegacyPrintf("handler.payment", "[WechatCallback] amount mismatch for order %s, marked as failed", payResult.OutTradeNo)
+			c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "SUCCESS", Message: "成功"})
+			return
+		}
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] handle callback failed for order %s: %v", payResult.OutTradeNo, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "PROCESS_FAILED"})
+		// M2: Use standard V3NotifyRsp format (not gin.H) for consistent WeChat protocol compliance.
+		// 5xx triggers WeChat retry, which is desired for transient DB failures.
+		c.JSON(http.StatusInternalServerError, &wechat.V3NotifyRsp{Code: "FAIL", Message: "process failed"})
 		return
 	}
 
@@ -163,28 +192,39 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 // AlipayCallback handles POST /api/v1/payment/callback/alipay
 func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 	aliCfg := h.cfg.Payment.Alipay
-	if aliCfg.PublicKey == "" {
-		logger.LegacyPrintf("handler.payment", "[AlipayCallback] alipay payment not configured")
-		c.String(http.StatusServiceUnavailable, "not configured")
+	if aliCfg.PublicKey == "" || aliCfg.AppID == "" {
+		// M1: Return 200/"success" for deterministic "not configured" — stops Alipay from retrying.
+		logger.LegacyPrintf("handler.payment", "[AlipayCallback] ERROR: alipay payment not configured, acking to stop retries")
+		c.String(http.StatusOK, "success")
 		return
 	}
 
 	notifyReq, err := alipay.ParseNotifyToBodyMap(c.Request)
 	if err != nil {
+		// M1: Parse failure is deterministic — return 200/"success" to stop Alipay retries.
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] parse notify failed: %v", err)
-		c.String(http.StatusBadRequest, "parse failed")
+		c.String(http.StatusOK, "success")
 		return
 	}
 
 	ok, err := alipay.VerifySign(aliCfg.PublicKey, notifyReq)
 	if err != nil || !ok {
+		// M1: Signature failure is deterministic — return 200/"success" to stop Alipay retries.
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] signature verification failed: %v, ok=%v", err, ok)
-		c.String(http.StatusUnauthorized, "signature invalid")
+		c.String(http.StatusOK, "success")
 		return
 	}
 
-	orderNo := notifyReq.Get("out_trade_no")
-	tradeNo := notifyReq.Get("trade_no")
+	// B3: Verify app_id to prevent cross-merchant notification replay
+	if notifyReq.Get("app_id") != aliCfg.AppID {
+		logger.LegacyPrintf("handler.payment", "[AlipayCallback] app_id mismatch: got %s, expected %s", notifyReq.Get("app_id"), aliCfg.AppID)
+		c.String(http.StatusOK, "success")
+		return
+	}
+
+	// M2: Sanitize external input to prevent log injection via newlines/control chars.
+	orderNo := sanitizeLogValue(notifyReq.Get("out_trade_no"))
+	tradeNo := sanitizeLogValue(notifyReq.Get("trade_no"))
 	tradeStatus := notifyReq.Get("trade_status")
 
 	if tradeStatus != "TRADE_SUCCESS" && tradeStatus != "TRADE_FINISHED" {
@@ -192,7 +232,23 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 		return
 	}
 
-	if err := h.paymentService.HandleCallback(c.Request.Context(), orderNo, tradeNo); err != nil {
+	// B2: Verify payment amount matches order
+	totalAmountStr := notifyReq.Get("total_amount")
+	paidAmountCNY, err := strconv.ParseFloat(totalAmountStr, 64)
+	if err != nil {
+		// M1: Invalid amount format is deterministic — return 200 to stop retries.
+		logger.LegacyPrintf("handler.payment", "[AlipayCallback] invalid total_amount: %s", totalAmountStr)
+		c.String(http.StatusOK, "success")
+		return
+	}
+
+	if err := h.paymentService.HandleCallback(c.Request.Context(), orderNo, tradeNo, paidAmountCNY); err != nil {
+		// B1: Amount mismatch is deterministic — return 200 to stop Alipay retries.
+		if errors.Is(err, service.ErrPaymentAmountMismatch) {
+			logger.LegacyPrintf("handler.payment", "[AlipayCallback] amount mismatch for order %s, marked as failed", orderNo)
+			c.String(http.StatusOK, "success")
+			return
+		}
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] handle callback failed for order %s: %v", orderNo, err)
 		c.String(http.StatusInternalServerError, "process failed")
 		return
