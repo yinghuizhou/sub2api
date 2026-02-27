@@ -128,8 +128,9 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 
 	notifyReq, err := wechat.V3ParseNotify(c.Request)
 	if err != nil {
+		// M1: Parse failure is deterministic (malformed body) — return 200 to stop infinite retries.
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] parse notify failed: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"code": "PARSE_FAILED"})
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "parse failed"})
 		return
 	}
 
@@ -143,8 +144,9 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 
 	payResult, err := notifyReq.DecryptPayCipherText(wxCfg.APIV3Key)
 	if err != nil {
+		// M1: Decrypt failure is deterministic (wrong key or corrupt ciphertext) — return 200 to stop retries.
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] decrypt pay result failed: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"code": "DECRYPT_FAILED"})
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "FAIL", Message: "decrypt failed"})
 		return
 	}
 
@@ -185,8 +187,9 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 
 	notifyReq, err := alipay.ParseNotifyToBodyMap(c.Request)
 	if err != nil {
+		// M1: Parse failure is deterministic — return 200/"success" to stop Alipay retries.
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] parse notify failed: %v", err)
-		c.String(http.StatusBadRequest, "parse failed")
+		c.String(http.StatusOK, "success")
 		return
 	}
 
@@ -218,8 +221,9 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 	totalAmountStr := notifyReq.Get("total_amount")
 	paidAmountCNY, err := strconv.ParseFloat(totalAmountStr, 64)
 	if err != nil {
+		// M1: Invalid amount format is deterministic — return 200 to stop retries.
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] invalid total_amount: %s", totalAmountStr)
-		c.String(http.StatusBadRequest, "invalid amount")
+		c.String(http.StatusOK, "success")
 		return
 	}
 

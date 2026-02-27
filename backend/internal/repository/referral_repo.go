@@ -39,7 +39,8 @@ func (r *ReferralRepository) GetInviterByInviteeID(ctx context.Context, inviteeI
 }
 
 func (r *ReferralRepository) GetUserByInviteCode(ctx context.Context, code string) (int64, error) {
-	u, err := r.client.User.Query().
+	client := clientFromContext(ctx, r.client)
+	u, err := client.User.Query().
 		Where(user.InviteCodeEQ(code)).
 		Only(ctx)
 	if err != nil {
@@ -49,7 +50,8 @@ func (r *ReferralRepository) GetUserByInviteCode(ctx context.Context, code strin
 }
 
 func (r *ReferralRepository) GetInviteCode(ctx context.Context, userID int64) (string, error) {
-	u, err := r.client.User.Get(ctx, userID)
+	client := clientFromContext(ctx, r.client)
+	u, err := client.User.Get(ctx, userID)
 	if err != nil {
 		return "", err
 	}
@@ -60,8 +62,9 @@ func (r *ReferralRepository) GetInviteCode(ctx context.Context, userID int64) (s
 }
 
 func (r *ReferralRepository) SetInviteCode(ctx context.Context, userID int64, code string) error {
+	client := clientFromContext(ctx, r.client)
 	// Optimistic lock: only set if invite_code is currently NULL to prevent race conditions
-	n, err := r.client.User.Update().
+	n, err := client.User.Update().
 		Where(user.IDEQ(userID), user.InviteCodeIsNil()).
 		SetInviteCode(code).
 		Save(ctx)
@@ -97,12 +100,13 @@ func (r *ReferralRepository) CreateCommission(ctx context.Context, c *service.Re
 }
 
 func (r *ReferralRepository) ListCommissions(ctx context.Context, inviterID int64, limit, offset int) ([]service.ReferralCommission, int, error) {
-	total, err := r.client.ReferralCommission.Query().
+	client := clientFromContext(ctx, r.client)
+	total, err := client.ReferralCommission.Query().
 		Where(referralcommission.InviterIDEQ(inviterID)).Count(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
-	items, err := r.client.ReferralCommission.Query().
+	items, err := client.ReferralCommission.Query().
 		Where(referralcommission.InviterIDEQ(inviterID)).
 		Order(dbent.Desc(referralcommission.FieldCreatedAt)).
 		Limit(limit).Offset(offset).
@@ -129,10 +133,11 @@ func (r *ReferralRepository) ListCommissions(ctx context.Context, inviterID int6
 }
 
 func (r *ReferralRepository) SumCommissions(ctx context.Context, inviterID int64) (float64, error) {
+	client := clientFromContext(ctx, r.client)
 	var result []struct {
 		Sum *float64 `json:"sum"`
 	}
-	err := r.client.ReferralCommission.Query().
+	err := client.ReferralCommission.Query().
 		Where(referralcommission.InviterIDEQ(inviterID)).
 		Aggregate(dbent.Sum(referralcommission.FieldCommissionAmount)).
 		Scan(ctx, &result)
@@ -146,7 +151,8 @@ func (r *ReferralRepository) SumCommissions(ctx context.Context, inviterID int64
 }
 
 func (r *ReferralRepository) CountInvitees(ctx context.Context, inviterID int64) (int, error) {
-	return r.client.Referral.Query().
+	client := clientFromContext(ctx, r.client)
+	return client.Referral.Query().
 		Where(referral.InviterIDEQ(inviterID)).
 		Count(ctx)
 }

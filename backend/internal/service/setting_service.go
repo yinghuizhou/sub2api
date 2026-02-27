@@ -538,8 +538,9 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	}
 	result.IdentityPatchPrompt = settings[SettingKeyIdentityPatchPrompt]
 
-	// Free trial settings
-	result.FreeTrialEnabled = settings[SettingKeyFreeTrialEnabled] == "true"
+	// Free trial settings (M3: accept both "true" and "1", consistent with IsFreeTrialEnabled)
+	ftVal := settings[SettingKeyFreeTrialEnabled]
+	result.FreeTrialEnabled = ftVal == "true" || ftVal == "1"
 	if v, err := strconv.ParseFloat(settings[SettingKeyFreeTrialAmount], 64); err == nil && v > 0 {
 		result.FreeTrialAmount = v
 	} else {

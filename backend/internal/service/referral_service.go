@@ -164,6 +164,10 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 	txCtx := dbent.NewTxContext(ctx, tx)
 
 	if err := s.repo.CreateCommission(txCtx, commission); err != nil {
+		// M2: If order_id unique constraint violation, commission already settled (idempotent).
+		if dbent.IsConstraintError(err) {
+			return nil
+		}
 		return fmt.Errorf("create commission: %w", err)
 	}
 	if err := s.userRepo.UpdateBalance(txCtx, inviterID, amount); err != nil {

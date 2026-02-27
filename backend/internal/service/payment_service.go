@@ -178,9 +178,16 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 		// Mark order as failed to prevent infinite retries.
 		// C3: If mark-as-failed itself fails, return a generic error (not ErrPaymentAmountMismatch)
 		// so the handler returns 5xx and the payment provider retries.
-		if _, err := s.orderRepo.UpdateStatusAtomically(ctx, orderNo, "pending", "failed", tradeNo, nil); err != nil {
+		affected, err := s.orderRepo.UpdateStatusAtomically(ctx, orderNo, "pending", "failed", tradeNo, nil)
+		if err != nil {
 			logger.LegacyPrintf("service.payment", "[Payment] Failed to mark order %s as failed: %v", orderNo, err)
 			return fmt.Errorf("mark order failed: %w", err)
+		}
+		// C1: If affected==0, a concurrent callback already moved the order out of "pending"
+		// (likely to "paid"). Don't return mismatch error — the legitimate callback won the race.
+		if affected == 0 {
+			logger.LegacyPrintf("service.payment", "[Payment] Order %s already processed by concurrent callback, skipping mismatch", orderNo)
+			return nil
 		}
 		return ErrPaymentAmountMismatch
 	}
@@ -226,6 +233,13 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 // separate from the payment transaction to prevent commission failures from blocking payments.
 // The context should be detached from HTTP lifecycle (e.g., via context.WithoutCancel).
 func (s *PaymentService) settleCommissionBestEffort(ctx context.Context, orderNo string, userID, orderID int64, amountUSD float64) {
+	// C2: Recover from panics so a commission bug never crashes the server process.
+	defer func() {
+		if r := recover(); r != nil {
+			logger.LegacyPrintf("service.payment", "[Payment] PANIC in settleCommissionBestEffort for order %s: %v", orderNo, r)
+		}
+	}()
+
 	if s.referralService == nil {
 		return
 	}

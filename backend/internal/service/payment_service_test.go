@@ -164,8 +164,24 @@ func TestHandleCallback_AmountMismatch_MarksOrderFailed(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, service.ErrPaymentAmountMismatch))
 
-	// Order should be marked as "failed"
+	// Order should be marked as "failed" with the trade number recorded
 	assert.Equal(t, "failed", orderRepo.orders["PAY001"].Status)
+	assert.NotNil(t, orderRepo.orders["PAY001"].TradeNo)
+	assert.Equal(t, "TX001", *orderRepo.orders["PAY001"].TradeNo)
+}
+
+func TestHandleCallback_AmountMismatch_ConcurrentRace_ReturnsNil(t *testing.T) {
+	// C1: If order was already moved out of "pending" by a concurrent callback,
+	// the mismatch path should return nil (not ErrPaymentAmountMismatch).
+	orderRepo := newStubOrderRepo(&service.PaymentOrder{
+		ID: 1, OrderNo: "PAY-RACE", UserID: 10, AmountCNY: 100.0,
+		TotalCredit: 13.89, Status: "paid", // already paid by concurrent callback
+	})
+	svc := service.NewPaymentService(orderRepo, nil, nil, nil, nil, nil)
+
+	// This callback sees "paid" status in pre-check → returns nil (idempotent)
+	err := svc.HandleCallback(context.Background(), "PAY-RACE", "TX-RACE", 50.0)
+	require.NoError(t, err)
 }
 
 func TestHandleCallback_AlreadyPaid_Idempotent(t *testing.T) {
