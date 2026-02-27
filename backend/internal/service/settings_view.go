@@ -58,6 +58,11 @@ type SystemSettings struct {
 	FreeTrialEnabled bool    `json:"free_trial_enabled"`
 	FreeTrialAmount  float64 `json:"free_trial_amount"`
 
+	// Referral & Payment
+	ReferralEnabled        bool    `json:"referral_enabled"`
+	ReferralCommissionRate float64 `json:"referral_commission_rate"`
+	PaymentEnabled         bool    `json:"payment_enabled"`
+
 	// Ops monitoring (vNext)
 	OpsMonitoringEnabled         bool
 	OpsRealtimeMonitoringEnabled bool
@@ -87,6 +92,8 @@ type PublicSettings struct {
 	PurchaseSubscriptionURL     string
 
 	LinuxDoOAuthEnabled bool
+	ReferralEnabled     bool
+	PaymentEnabled      bool
 	Version             string
 }
 

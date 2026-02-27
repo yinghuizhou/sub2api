@@ -91,6 +91,8 @@ export interface PublicSettings {
   purchase_subscription_enabled: boolean
   purchase_subscription_url: string
   linuxdo_oauth_enabled: boolean
+  referral_enabled: boolean
+  payment_enabled: boolean
   version: string
 }
 

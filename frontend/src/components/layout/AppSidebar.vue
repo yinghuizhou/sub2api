@@ -495,8 +495,12 @@ const userNavItems = computed(() => {
           }
         ]
       : []),
-    { path: '/recharge', label: t('nav.recharge', '充值'), icon: WalletIcon, hideInSimpleMode: true },
-    { path: '/referral', label: t('nav.referral', '邀请返佣'), icon: UserPlusIcon, hideInSimpleMode: true },
+    ...(appStore.cachedPublicSettings?.payment_enabled
+      ? [{ path: '/recharge', label: t('nav.recharge', '充值'), icon: WalletIcon, hideInSimpleMode: true }]
+      : []),
+    ...(appStore.cachedPublicSettings?.referral_enabled
+      ? [{ path: '/referral', label: t('nav.referral', '邀请返佣'), icon: UserPlusIcon, hideInSimpleMode: true }]
+      : []),
     { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
     { path: '/profile', label: t('nav.profile'), icon: UserIcon }
   ]
@@ -519,8 +523,12 @@ const personalNavItems = computed(() => {
           }
         ]
       : []),
-    { path: '/recharge', label: t('nav.recharge', '充值'), icon: WalletIcon, hideInSimpleMode: true },
-    { path: '/referral', label: t('nav.referral', '邀请返佣'), icon: UserPlusIcon, hideInSimpleMode: true },
+    ...(appStore.cachedPublicSettings?.payment_enabled
+      ? [{ path: '/recharge', label: t('nav.recharge', '充值'), icon: WalletIcon, hideInSimpleMode: true }]
+      : []),
+    ...(appStore.cachedPublicSettings?.referral_enabled
+      ? [{ path: '/referral', label: t('nav.referral', '邀请返佣'), icon: UserPlusIcon, hideInSimpleMode: true }]
+      : []),
     { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
     { path: '/profile', label: t('nav.profile'), icon: UserIcon }
   ]

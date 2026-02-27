@@ -1,20 +1,25 @@
 package handler
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
 	wechat "github.com/go-pay/gopay/wechat/v3"
 
@@ -35,16 +40,27 @@ func sanitizeLogValue(s string) string {
 // PaymentHandler handles payment-related requests.
 type PaymentHandler struct {
 	paymentService *service.PaymentService
+	settingService *service.SettingService
 	cfg            *config.Config
-	wxPubKey       *rsa.PublicKey // cached WeChat public key, loaded once at startup
+	wxPubKey       *rsa.PublicKey    // cached WeChat public key for callback verification
+	wxClient       *wechat.ClientV3 // WeChat V3 client for creating payments
+	aliClient      *alipay.Client   // Alipay client for creating payments
+}
+
+// CreateOrderResponse is the response for creating a payment order.
+type CreateOrderResponse struct {
+	Order *service.PaymentOrder `json:"order"`
+	QrURL string               `json:"qr_url"`
 }
 
 // NewPaymentHandler creates a new PaymentHandler.
-// Loads and caches the WeChat public key at startup to avoid per-request disk I/O.
-func NewPaymentHandler(svc *service.PaymentService, cfg *config.Config) *PaymentHandler {
-	h := &PaymentHandler{paymentService: svc, cfg: cfg}
-	// Pre-load WeChat public key if configured
-	if wxCfg := cfg.Payment.Wechat; wxCfg.PublicKeyPath != "" {
+// Loads and caches payment credentials at startup to avoid per-request disk I/O.
+func NewPaymentHandler(svc *service.PaymentService, settingSvc *service.SettingService, cfg *config.Config) *PaymentHandler {
+	h := &PaymentHandler{paymentService: svc, settingService: settingSvc, cfg: cfg}
+	wxCfg := cfg.Payment.Wechat
+
+	// Pre-load WeChat public key for callback verification
+	if wxCfg.PublicKeyPath != "" {
 		pemBytes, err := os.ReadFile(wxCfg.PublicKeyPath)
 		if err != nil {
 			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: failed to read wechat public key: %v", err)
@@ -58,6 +74,36 @@ func NewPaymentHandler(svc *service.PaymentService, cfg *config.Config) *Payment
 			h.wxPubKey = rsaPub
 		}
 	}
+
+	// Initialize WeChat V3 client for creating payments
+	if wxCfg.MchID != "" && wxCfg.SerialNo != "" && wxCfg.APIV3Key != "" && wxCfg.PrivateKeyPath != "" {
+		privBytes, err := os.ReadFile(wxCfg.PrivateKeyPath)
+		if err != nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: failed to read wechat private key: %v", err)
+		} else {
+			client, err := wechat.NewClientV3(wxCfg.MchID, wxCfg.SerialNo, wxCfg.APIV3Key, string(privBytes))
+			if err != nil {
+				logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: failed to create wechat V3 client: %v", err)
+			} else {
+				h.wxClient = client
+			}
+		}
+	}
+
+	// Initialize Alipay client for creating payments
+	aliCfg := cfg.Payment.Alipay
+	if aliCfg.AppID != "" && aliCfg.PrivateKey != "" {
+		client, err := alipay.NewClient(aliCfg.AppID, aliCfg.PrivateKey, aliCfg.IsProd)
+		if err != nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: failed to create alipay client: %v", err)
+		} else {
+			if aliCfg.NotifyURL != "" {
+				client.SetNotifyUrl(aliCfg.NotifyURL)
+			}
+			h.aliClient = client
+		}
+	}
+
 	return h
 }
 
@@ -70,6 +116,10 @@ type CreateOrderRequest struct {
 
 // CreateOrder handles POST /api/v1/payment/create
 func (h *PaymentHandler) CreateOrder(c *gin.Context) {
+	if h.settingService != nil && !h.settingService.IsPaymentEnabled(c.Request.Context()) {
+		response.ErrorFrom(c, infraerrors.Forbidden("PAYMENT_DISABLED", "充值功能未开启"))
+		return
+	}
 	subject, ok := middleware2.GetAuthSubjectFromContext(c)
 	if !ok {
 		response.Unauthorized(c, "User not authenticated")
@@ -90,7 +140,66 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
-	response.Success(c, order)
+
+	// Call payment provider to get QR code URL
+	var qrURL string
+	switch req.Channel {
+	case "wechat":
+		qrURL, err = h.createWechatPayment(c.Request.Context(), order)
+	case "alipay":
+		qrURL, err = h.createAlipayPayment(c.Request.Context(), order)
+	}
+	if err != nil {
+		logger.LegacyPrintf("handler.payment", "[CreateOrder] failed to create %s payment for order %s: %v", req.Channel, order.OrderNo, err)
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, CreateOrderResponse{Order: order, QrURL: qrURL})
+}
+
+// createWechatPayment calls WeChat V3 Native Pay API to get a QR code URL.
+func (h *PaymentHandler) createWechatPayment(ctx context.Context, order *service.PaymentOrder) (string, error) {
+	if h.wxClient == nil {
+		return "", infraerrors.ServiceUnavailable("WECHAT_NOT_CONFIGURED", "微信支付未配置")
+	}
+	wxCfg := h.cfg.Payment.Wechat
+	amountCents := int(math.Round(order.AmountCNY * 100))
+
+	bm := make(gopay.BodyMap)
+	bm.Set("appid", wxCfg.AppID).
+		Set("mchid", wxCfg.MchID).
+		Set("description", fmt.Sprintf("充值 ¥%.0f", order.AmountCNY)).
+		Set("out_trade_no", order.OrderNo).
+		Set("notify_url", wxCfg.NotifyURL).
+		SetBodyMap("amount", func(bm gopay.BodyMap) {
+			bm.Set("total", amountCents).
+				Set("currency", "CNY")
+		})
+
+	rsp, err := h.wxClient.V3TransactionNative(ctx, bm)
+	if err != nil {
+		return "", fmt.Errorf("wechat native pay: %w", err)
+	}
+	return rsp.Response.CodeUrl, nil
+}
+
+// createAlipayPayment calls Alipay TradePrecreate API to get a QR code URL.
+func (h *PaymentHandler) createAlipayPayment(ctx context.Context, order *service.PaymentOrder) (string, error) {
+	if h.aliClient == nil {
+		return "", infraerrors.ServiceUnavailable("ALIPAY_NOT_CONFIGURED", "支付宝未配置")
+	}
+
+	bm := make(gopay.BodyMap)
+	bm.Set("subject", fmt.Sprintf("充值 ¥%.0f", order.AmountCNY)).
+		Set("out_trade_no", order.OrderNo).
+		Set("total_amount", fmt.Sprintf("%.2f", order.AmountCNY))
+
+	rsp, err := h.aliClient.TradePrecreate(ctx, bm)
+	if err != nil {
+		return "", fmt.Errorf("alipay precreate: %w", err)
+	}
+	return rsp.Response.QrCode, nil
 }
 
 // GetOrder handles GET /api/v1/payment/orders/:id

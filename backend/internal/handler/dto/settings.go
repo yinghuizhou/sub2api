@@ -52,6 +52,11 @@ type SystemSettings struct {
 	EnableIdentityPatch bool   `json:"enable_identity_patch"`
 	IdentityPatchPrompt string `json:"identity_patch_prompt"`
 
+	// Referral & Payment
+	ReferralEnabled        bool    `json:"referral_enabled"`
+	ReferralCommissionRate float64 `json:"referral_commission_rate"`
+	PaymentEnabled         bool    `json:"payment_enabled"`
+
 	// Ops monitoring (vNext)
 	OpsMonitoringEnabled         bool   `json:"ops_monitoring_enabled"`
 	OpsRealtimeMonitoringEnabled bool   `json:"ops_realtime_monitoring_enabled"`
@@ -79,6 +84,8 @@ type PublicSettings struct {
 	PurchaseSubscriptionEnabled bool   `json:"purchase_subscription_enabled"`
 	PurchaseSubscriptionURL     string `json:"purchase_subscription_url"`
 	LinuxDoOAuthEnabled         bool   `json:"linuxdo_oauth_enabled"`
+	ReferralEnabled             bool   `json:"referral_enabled"`
+	PaymentEnabled              bool   `json:"payment_enabled"`
 	Version                     string `json:"version"`
 }
 

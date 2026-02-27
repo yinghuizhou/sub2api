@@ -78,6 +78,11 @@
       </div>
     </div>
 
+    <!-- 错误提示 -->
+    <div v-if="errorMsg" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+      {{ errorMsg }}
+    </div>
+
     <button
       @click="handlePay"
       :disabled="finalAmount <= 0 || loading"
@@ -88,7 +93,7 @@
 
     <!-- 二维码弹窗 -->
     <div
-      v-if="qrUrl"
+      v-if="qrDataUrl"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="closeQR"
     >
@@ -96,7 +101,7 @@
         <h3 class="font-bold mb-4">
           {{ channel === 'wechat' ? $t('recharge.wechatScan', '微信扫码支付') : $t('recharge.alipayScan', '支付宝扫码支付') }}
         </h3>
-        <img :src="qrUrl" alt="QR Code" class="w-48 h-48 mx-auto mb-4" />
+        <img :src="qrDataUrl" alt="QR Code" class="w-48 h-48 mx-auto mb-4" />
         <p class="text-sm text-gray-500">{{ $t('recharge.scanTip', '请在 5 分钟内完成支付') }}</p>
         <div v-if="pollStatus === 'paid'" class="mt-3 text-green-600 font-medium">
           {{ $t('recharge.paySuccess', '支付成功！') }}
@@ -108,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import QRCode from 'qrcode'
 import { paymentApi, type RechargePackage } from '@/api/payment'
 
 const packages = ref<RechargePackage[]>([])
@@ -115,9 +121,10 @@ const selectedPackage = ref<RechargePackage | null>(null)
 const customAmount = ref<number | null>(null)
 const channel = ref<'wechat' | 'alipay'>('wechat')
 const loading = ref(false)
-const qrUrl = ref('')
+const qrDataUrl = ref('')
 const currentOrderId = ref<number | null>(null)
 const pollStatus = ref('')
+const errorMsg = ref('')
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const CNY_TO_USD = 7.2
@@ -137,15 +144,19 @@ function selectPackage(pkg: RechargePackage) {
 async function handlePay() {
   if (finalAmount.value <= 0) return
   loading.value = true
+  errorMsg.value = ''
   try {
     const res = await paymentApi.createOrder({
       amount_cny: finalAmount.value,
       package_id: selectedPackage.value?.id,
       channel: channel.value,
     })
-    qrUrl.value = res.qr_url
+    // Generate QR code image from the payment URL string
+    qrDataUrl.value = await QRCode.toDataURL(res.qr_url, { width: 256, margin: 2 })
     currentOrderId.value = res.order.id
     startPolling()
+  } catch (e: any) {
+    errorMsg.value = e?.message || '创建订单失败，请稍后重试'
   } finally {
     loading.value = false
   }
@@ -175,7 +186,7 @@ function stopPolling() {
 }
 
 function closeQR() {
-  qrUrl.value = ''
+  qrDataUrl.value = ''
   pollStatus.value = ''
   stopPolling()
 }

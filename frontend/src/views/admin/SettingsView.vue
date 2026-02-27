@@ -994,6 +994,70 @@
           </div>
         </div>
 
+        <!-- Referral & Payment Settings -->
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.commerce.title', '商业化设置') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.commerce.description', '管理充值和邀请返佣功能') }}
+            </p>
+          </div>
+          <div class="space-y-6 p-6">
+            <!-- Payment Toggle -->
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="font-medium text-gray-900 dark:text-white">{{
+                  t('admin.settings.commerce.paymentEnabled', '启用充值')
+                }}</label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.commerce.paymentHint', '开启后用户可通过微信/支付宝充值余额') }}
+                </p>
+              </div>
+              <Toggle v-model="form.payment_enabled" />
+            </div>
+
+            <!-- Referral Toggle -->
+            <div class="border-t border-gray-100 pt-6 dark:border-dark-700">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="font-medium text-gray-900 dark:text-white">{{
+                    t('admin.settings.commerce.referralEnabled', '启用邀请返佣')
+                  }}</label>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.commerce.referralHint', '开启后邀请人可获得被邀请人充值的佣金') }}
+                  </p>
+                </div>
+                <Toggle v-model="form.referral_enabled" />
+              </div>
+            </div>
+
+            <!-- Commission Rate - Only show when referral enabled -->
+            <div v-if="form.referral_enabled">
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.commerce.commissionRate', '返佣比例') }}
+              </label>
+              <div class="flex items-center gap-3">
+                <input
+                  v-model.number="form.referral_commission_rate"
+                  type="number"
+                  min="0"
+                  max="0.5"
+                  step="0.01"
+                  class="input w-32"
+                />
+                <span class="text-sm text-gray-500">
+                  {{ ((form.referral_commission_rate || 0) * 100).toFixed(0) }}%
+                </span>
+              </div>
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.commerce.commissionRateHint', '被邀请人每次充值，邀请人获得的佣金比例（0-50%）') }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Send Test Email - Only show when email verification is enabled -->
         <div v-if="form.email_verify_enabled" class="card">
           <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
@@ -1173,6 +1237,10 @@ const form = reactive<SettingsForm>({
   // Identity patch (Claude -> Gemini)
   enable_identity_patch: true,
   identity_patch_prompt: '',
+  // Referral & Payment
+  referral_enabled: false,
+  referral_commission_rate: 0.10,
+  payment_enabled: false,
   // Ops monitoring (vNext)
   ops_monitoring_enabled: true,
   ops_realtime_monitoring_enabled: true,
@@ -1293,7 +1361,10 @@ async function saveSettings() {
       fallback_model_gemini: form.fallback_model_gemini,
       fallback_model_antigravity: form.fallback_model_antigravity,
       enable_identity_patch: form.enable_identity_patch,
-      identity_patch_prompt: form.identity_patch_prompt
+      identity_patch_prompt: form.identity_patch_prompt,
+      referral_enabled: form.referral_enabled,
+      referral_commission_rate: form.referral_commission_rate,
+      payment_enabled: form.payment_enabled
     }
     const updated = await adminAPI.settings.updateSettings(payload)
     Object.assign(form, updated)

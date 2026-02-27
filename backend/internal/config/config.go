@@ -174,14 +174,22 @@ type PaymentConfig struct {
 
 // WechatPayConfig 微信支付 V3 配置
 type WechatPayConfig struct {
-	APIV3Key      string `mapstructure:"api_v3_key"`      // 微信支付 APIv3 密钥（32字节）
-	PublicKeyPath string `mapstructure:"public_key_path"` // 微信平台证书公钥文件路径
+	AppID          string `mapstructure:"app_id"`           // 微信公众号/小程序 AppID
+	MchID          string `mapstructure:"mch_id"`           // 商户号
+	SerialNo       string `mapstructure:"serial_no"`        // API证书序列号
+	APIV3Key       string `mapstructure:"api_v3_key"`       // 微信支付 APIv3 密钥（32字节）
+	PrivateKeyPath string `mapstructure:"private_key_path"` // 商户API私钥文件路径
+	PublicKeyPath  string `mapstructure:"public_key_path"`  // 微信平台证书公钥文件路径
+	NotifyURL      string `mapstructure:"notify_url"`       // 支付回调通知URL
 }
 
 // AlipayConfig 支付宝配置
 type AlipayConfig struct {
-	AppID     string `mapstructure:"app_id"`     // 支付宝应用 APPID（用于回调验证）
-	PublicKey string `mapstructure:"public_key"` // 支付宝公钥（RSA2）
+	AppID      string `mapstructure:"app_id"`      // 支付宝应用 APPID
+	PrivateKey string `mapstructure:"private_key"` // 应用私钥（RSA2，用于签名请求）
+	PublicKey  string `mapstructure:"public_key"`  // 支付宝公钥（RSA2，用于验签回调）
+	NotifyURL  string `mapstructure:"notify_url"`  // 支付回调通知URL
+	IsProd     bool   `mapstructure:"is_prod"`     // 是否生产环境（默认false=沙箱）
 }
 
 type LinuxDoConnectConfig struct {

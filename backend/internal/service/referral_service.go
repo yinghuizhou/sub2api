@@ -45,6 +45,7 @@ type ReferralService struct {
 	userRepo       UserRepository
 	billingCache   *BillingCacheService
 	entClient      *dbent.Client
+	settingService *SettingService
 	enabled        bool
 	commissionRate float64
 }
@@ -57,6 +58,7 @@ func NewReferralService(
 	userRepo UserRepository,
 	billingCache *BillingCacheService,
 	entClient *dbent.Client,
+	settingService *SettingService,
 	cfg *config.Config,
 ) *ReferralService {
 	enabled := false
@@ -76,6 +78,7 @@ func NewReferralService(
 		userRepo:       userRepo,
 		billingCache:   billingCache,
 		entClient:      entClient,
+		settingService: settingService,
 		enabled:        enabled,
 		commissionRate: rate,
 	}
@@ -137,19 +140,33 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 	if s.repo == nil || !s.enabled {
 		return nil
 	}
+	// DB-backed soft switch: admin can disable at runtime
+	if s.settingService != nil && !s.settingService.IsReferralEnabled(ctx) {
+		return nil
+	}
 	inviterID, err := s.repo.GetInviterByInviteeID(ctx, inviteeID)
 	if err != nil {
 		return nil // no referral relationship, skip
 	}
 
-	amount := s.CalculateCommission(orderAmountUSD)
+	// Use DB-backed commission rate if available, fallback to config
+	rate := s.commissionRate
+	if s.settingService != nil {
+		if dbRate := s.settingService.GetReferralCommissionRate(ctx); dbRate > 0 {
+			rate = dbRate
+		}
+	}
+	if rate > 0.50 {
+		rate = 0.50
+	}
+	amount := orderAmountUSD * rate
 	now := time.Now()
 	commission := &ReferralCommission{
 		InviterID:        inviterID,
 		InviteeID:        inviteeID,
 		OrderID:          orderID,
 		OrderAmountUSD:   orderAmountUSD,
-		CommissionRate:   s.commissionRate,
+		CommissionRate:   rate,
 		CommissionAmount: amount,
 		Status:           "settled",
 		SettledAt:        &now,

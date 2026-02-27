@@ -77,6 +77,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyPurchaseSubscriptionEnabled,
 		SettingKeyPurchaseSubscriptionURL,
 		SettingKeyLinuxDoConnectEnabled,
+		SettingKeyReferralEnabled,
+		SettingKeyPaymentEnabled,
 	}
 
 	settings, err := s.settingRepo.GetMultiple(ctx, keys)
@@ -115,6 +117,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		PurchaseSubscriptionEnabled: settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
 		PurchaseSubscriptionURL:     strings.TrimSpace(settings[SettingKeyPurchaseSubscriptionURL]),
 		LinuxDoOAuthEnabled:         linuxDoEnabled,
+		ReferralEnabled:             settings[SettingKeyReferralEnabled] == "true",
+		PaymentEnabled:              settings[SettingKeyPaymentEnabled] == "true",
 	}, nil
 }
 
@@ -158,6 +162,8 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		PurchaseSubscriptionEnabled bool   `json:"purchase_subscription_enabled"`
 		PurchaseSubscriptionURL     string `json:"purchase_subscription_url,omitempty"`
 		LinuxDoOAuthEnabled         bool   `json:"linuxdo_oauth_enabled"`
+		ReferralEnabled             bool   `json:"referral_enabled"`
+		PaymentEnabled              bool   `json:"payment_enabled"`
 		Version                     string `json:"version,omitempty"`
 	}{
 		RegistrationEnabled:         settings.RegistrationEnabled,
@@ -179,6 +185,8 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		PurchaseSubscriptionEnabled: settings.PurchaseSubscriptionEnabled,
 		PurchaseSubscriptionURL:     settings.PurchaseSubscriptionURL,
 		LinuxDoOAuthEnabled:         settings.LinuxDoOAuthEnabled,
+		ReferralEnabled:             settings.ReferralEnabled,
+		PaymentEnabled:              settings.PaymentEnabled,
 		Version:                     s.version,
 	}, nil
 }
@@ -251,6 +259,11 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	// Free trial settings
 	updates[SettingKeyFreeTrialEnabled] = strconv.FormatBool(settings.FreeTrialEnabled)
 	updates[SettingKeyFreeTrialAmount] = strconv.FormatFloat(settings.FreeTrialAmount, 'f', 8, 64)
+
+	// Referral & Payment
+	updates[SettingKeyReferralEnabled] = strconv.FormatBool(settings.ReferralEnabled)
+	updates[SettingKeyReferralCommissionRate] = strconv.FormatFloat(settings.ReferralCommissionRate, 'f', 4, 64)
+	updates[SettingKeyPaymentEnabled] = strconv.FormatBool(settings.PaymentEnabled)
 
 	// Ops monitoring (vNext)
 	updates[SettingKeyOpsMonitoringEnabled] = strconv.FormatBool(settings.OpsMonitoringEnabled)
@@ -437,6 +450,10 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		// Free trial defaults
 		SettingKeyFreeTrialEnabled: "false",
 		SettingKeyFreeTrialAmount:  "0.5",
+		// Referral & Payment defaults
+		SettingKeyReferralEnabled:        "false",
+		SettingKeyReferralCommissionRate: "0.10",
+		SettingKeyPaymentEnabled:         "false",
 		// Identity patch defaults
 		SettingKeyEnableIdentityPatch: "true",
 		SettingKeyIdentityPatchPrompt: "",
@@ -561,6 +578,15 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	} else {
 		result.FreeTrialAmount = 0.5
 	}
+
+	// Referral & Payment settings
+	result.ReferralEnabled = settings[SettingKeyReferralEnabled] == "true"
+	if v, err := strconv.ParseFloat(settings[SettingKeyReferralCommissionRate], 64); err == nil && v >= 0 {
+		result.ReferralCommissionRate = v
+	} else if s.cfg != nil {
+		result.ReferralCommissionRate = s.cfg.Referral.CommissionRate
+	}
+	result.PaymentEnabled = settings[SettingKeyPaymentEnabled] == "true"
 
 	// Ops monitoring settings (default: enabled, fail-open)
 	result.OpsMonitoringEnabled = !isFalseSettingValue(settings[SettingKeyOpsMonitoringEnabled])
@@ -694,6 +720,43 @@ func (s *SettingService) GetAdminAPIKey(ctx context.Context) (string, error) {
 // DeleteAdminAPIKey 删除管理员 API Key
 func (s *SettingService) DeleteAdminAPIKey(ctx context.Context) error {
 	return s.settingRepo.Delete(ctx, SettingKeyAdminAPIKey)
+}
+
+// IsReferralEnabled 检查是否启用邀请返佣
+func (s *SettingService) IsReferralEnabled(ctx context.Context) bool {
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyReferralEnabled)
+	if err != nil {
+		// Fallback to config file
+		if s.cfg != nil {
+			return s.cfg.Referral.Enabled
+		}
+		return false
+	}
+	return value == "true"
+}
+
+// IsPaymentEnabled 检查是否启用充值功能
+func (s *SettingService) IsPaymentEnabled(ctx context.Context) bool {
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyPaymentEnabled)
+	if err != nil {
+		return false // default disabled
+	}
+	return value == "true"
+}
+
+// GetReferralCommissionRate 获取返佣比例
+func (s *SettingService) GetReferralCommissionRate(ctx context.Context) float64 {
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyReferralCommissionRate)
+	if err != nil {
+		if s.cfg != nil && s.cfg.Referral.CommissionRate > 0 {
+			return s.cfg.Referral.CommissionRate
+		}
+		return 0.10
+	}
+	if v, parseErr := strconv.ParseFloat(value, 64); parseErr == nil && v >= 0 {
+		return v
+	}
+	return 0.10
 }
 
 // IsModelFallbackEnabled 检查是否启用模型兜底机制

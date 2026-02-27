@@ -184,6 +184,14 @@ const (
 	SettingKeyFreeTrialEnabled = "free_trial_enabled" // 新用户免费试用开关
 	SettingKeyFreeTrialAmount  = "free_trial_amount"  // 新用户免费试用额度 (USD)
 
+	// =========================
+	// Referral & Payment
+	// =========================
+
+	SettingKeyReferralEnabled        = "referral_enabled"         // 邀请返佣开关
+	SettingKeyReferralCommissionRate = "referral_commission_rate"  // 返佣比例 (0-1)
+	SettingKeyPaymentEnabled         = "payment_enabled"          // 充值功能开关
+
 	// SettingKeyVendorSystemEnabled 供应商系统总开关（默认关闭）
 	SettingKeyVendorSystemEnabled = "vendor_system_enabled"
 	// SettingKeyVendorHealthCheckEnabled 全局健康检查开关

@@ -85,6 +85,9 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		FallbackModelAntigravity:             settings.FallbackModelAntigravity,
 		EnableIdentityPatch:                  settings.EnableIdentityPatch,
 		IdentityPatchPrompt:                  settings.IdentityPatchPrompt,
+		ReferralEnabled:                      settings.ReferralEnabled,
+		ReferralCommissionRate:               settings.ReferralCommissionRate,
+		PaymentEnabled:                       settings.PaymentEnabled,
 		OpsMonitoringEnabled:                 opsEnabled && settings.OpsMonitoringEnabled,
 		OpsRealtimeMonitoringEnabled:         settings.OpsRealtimeMonitoringEnabled,
 		OpsQueryModeDefault:                  settings.OpsQueryModeDefault,
@@ -148,6 +151,11 @@ type UpdateSettingsRequest struct {
 	// Identity patch configuration (Claude -> Gemini)
 	EnableIdentityPatch bool   `json:"enable_identity_patch"`
 	IdentityPatchPrompt string `json:"identity_patch_prompt"`
+
+	// Referral & Payment
+	ReferralEnabled        *bool    `json:"referral_enabled"`
+	ReferralCommissionRate *float64 `json:"referral_commission_rate"`
+	PaymentEnabled         *bool    `json:"payment_enabled"`
 
 	// Ops monitoring (vNext)
 	OpsMonitoringEnabled         *bool   `json:"ops_monitoring_enabled"`
@@ -328,6 +336,24 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		FallbackModelAntigravity:    req.FallbackModelAntigravity,
 		EnableIdentityPatch:         req.EnableIdentityPatch,
 		IdentityPatchPrompt:         req.IdentityPatchPrompt,
+		ReferralEnabled: func() bool {
+			if req.ReferralEnabled != nil {
+				return *req.ReferralEnabled
+			}
+			return previousSettings.ReferralEnabled
+		}(),
+		ReferralCommissionRate: func() float64 {
+			if req.ReferralCommissionRate != nil {
+				return *req.ReferralCommissionRate
+			}
+			return previousSettings.ReferralCommissionRate
+		}(),
+		PaymentEnabled: func() bool {
+			if req.PaymentEnabled != nil {
+				return *req.PaymentEnabled
+			}
+			return previousSettings.PaymentEnabled
+		}(),
 		OpsMonitoringEnabled: func() bool {
 			if req.OpsMonitoringEnabled != nil {
 				return *req.OpsMonitoringEnabled
@@ -409,6 +435,9 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		FallbackModelAntigravity:             updatedSettings.FallbackModelAntigravity,
 		EnableIdentityPatch:                  updatedSettings.EnableIdentityPatch,
 		IdentityPatchPrompt:                  updatedSettings.IdentityPatchPrompt,
+		ReferralEnabled:                      updatedSettings.ReferralEnabled,
+		ReferralCommissionRate:               updatedSettings.ReferralCommissionRate,
+		PaymentEnabled:                       updatedSettings.PaymentEnabled,
 		OpsMonitoringEnabled:                 updatedSettings.OpsMonitoringEnabled,
 		OpsRealtimeMonitoringEnabled:         updatedSettings.OpsRealtimeMonitoringEnabled,
 		OpsQueryModeDefault:                  updatedSettings.OpsQueryModeDefault,
@@ -542,6 +571,15 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	}
 	if before.IdentityPatchPrompt != after.IdentityPatchPrompt {
 		changed = append(changed, "identity_patch_prompt")
+	}
+	if before.ReferralEnabled != after.ReferralEnabled {
+		changed = append(changed, "referral_enabled")
+	}
+	if before.ReferralCommissionRate != after.ReferralCommissionRate {
+		changed = append(changed, "referral_commission_rate")
+	}
+	if before.PaymentEnabled != after.PaymentEnabled {
+		changed = append(changed, "payment_enabled")
 	}
 	if before.OpsMonitoringEnabled != after.OpsMonitoringEnabled {
 		changed = append(changed, "ops_monitoring_enabled")
