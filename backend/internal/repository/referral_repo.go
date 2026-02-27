@@ -58,8 +58,19 @@ func (r *ReferralRepository) GetInviteCode(ctx context.Context, userID int64) (s
 }
 
 func (r *ReferralRepository) SetInviteCode(ctx context.Context, userID int64, code string) error {
-	_, err := r.client.User.UpdateOneID(userID).SetInviteCode(code).Save(ctx)
-	return err
+	// Optimistic lock: only set if invite_code is currently NULL to prevent race conditions
+	n, err := r.client.User.Update().
+		Where(user.IDEQ(userID), user.InviteCodeIsNil()).
+		SetInviteCode(code).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		// Already has an invite code (concurrent request won), fetch and return it
+		return nil
+	}
+	return nil
 }
 
 func (r *ReferralRepository) CreateCommission(ctx context.Context, c *service.ReferralCommission) error {

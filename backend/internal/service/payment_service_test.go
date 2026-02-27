@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,3 +54,43 @@ func (s *stubPackageRepo) GetByID(_ context.Context, _ int64) (*service.Recharge
 func (s *stubPackageRepo) Create(_ context.Context, _ *service.RechargePackage) error { return nil }
 func (s *stubPackageRepo) Update(_ context.Context, _ *service.RechargePackage) error { return nil }
 func (s *stubPackageRepo) Delete(_ context.Context, _ int64) error                    { return nil }
+
+func TestCreatePaymentOrder_PersistsExchangeRate(t *testing.T) {
+	svc := service.NewPaymentService(nil, nil, nil, nil, nil, nil)
+	order, err := svc.CreateOrder(context.Background(), &service.CreateOrderInput{
+		UserID:    1,
+		AmountCNY: 100,
+		Channel:   "alipay",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 7.2, order.ExchangeRate, "default exchange rate should be 7.2")
+	assert.Equal(t, 100.0, order.AmountCNY, "AmountCNY should match input")
+}
+
+func TestCreatePaymentOrder_CustomRate(t *testing.T) {
+	cfg := &config.Config{Payment: config.PaymentConfig{CNYToUSDRate: 7.5}}
+	svc := service.NewPaymentService(nil, nil, nil, nil, nil, cfg)
+	order, err := svc.CreateOrder(context.Background(), &service.CreateOrderInput{
+		UserID:    1,
+		AmountCNY: 150,
+		Channel:   "wechat",
+	})
+	require.NoError(t, err)
+	assert.InDelta(t, 150.0/7.5, order.AmountUSD, 0.001, "AmountUSD should be AmountCNY/7.5")
+	assert.Equal(t, 7.5, order.ExchangeRate)
+}
+
+func TestGenerateOrderNo_Unique(t *testing.T) {
+	svc := service.NewPaymentService(nil, nil, nil, nil, nil, nil)
+	seen := map[string]bool{}
+	for i := 0; i < 100; i++ {
+		order, err := svc.CreateOrder(context.Background(), &service.CreateOrderInput{
+			UserID:    1,
+			AmountCNY: 10,
+			Channel:   "wechat",
+		})
+		require.NoError(t, err)
+		assert.False(t, seen[order.OrderNo], "duplicate order number: %s", order.OrderNo)
+		seen[order.OrderNo] = true
+	}
+}

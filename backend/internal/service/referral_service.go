@@ -45,11 +45,13 @@ type ReferralService struct {
 	userRepo       UserRepository
 	billingCache   *BillingCacheService
 	entClient      *dbent.Client
+	enabled        bool
 	commissionRate float64
 }
 
 // NewReferralService creates a new ReferralService.
 // commissionRate defaults to 0.10 (10%) if not set in config.
+// Commission settlement is only active when Referral.Enabled=true.
 func NewReferralService(
 	repo ReferralRepository,
 	userRepo UserRepository,
@@ -57,15 +59,20 @@ func NewReferralService(
 	entClient *dbent.Client,
 	cfg *config.Config,
 ) *ReferralService {
+	enabled := false
 	rate := 0.10
-	if cfg != nil && cfg.Referral.CommissionRate > 0 {
-		rate = cfg.Referral.CommissionRate
+	if cfg != nil {
+		enabled = cfg.Referral.Enabled
+		if cfg.Referral.CommissionRate > 0 {
+			rate = cfg.Referral.CommissionRate
+		}
 	}
 	return &ReferralService{
 		repo:           repo,
 		userRepo:       userRepo,
 		billingCache:   billingCache,
 		entClient:      entClient,
+		enabled:        enabled,
 		commissionRate: rate,
 	}
 }
@@ -83,6 +90,7 @@ func (s *ReferralService) CalculateCommission(orderAmountUSD float64) float64 {
 }
 
 // EnsureInviteCode ensures the user has an invite code, generating one if missing.
+// Uses optimistic locking in SetInviteCode to handle concurrent requests safely.
 func (s *ReferralService) EnsureInviteCode(ctx context.Context, userID int64) (string, error) {
 	if s.repo == nil {
 		return GenerateInviteCode(), nil
@@ -94,6 +102,11 @@ func (s *ReferralService) EnsureInviteCode(ctx context.Context, userID int64) (s
 	code = GenerateInviteCode()
 	if err := s.repo.SetInviteCode(ctx, userID, code); err != nil {
 		return "", fmt.Errorf("set invite code: %w", err)
+	}
+	// Re-fetch to get the actual code (in case of race, another request may have won)
+	actual, err := s.repo.GetInviteCode(ctx, userID)
+	if err == nil && actual != "" {
+		return actual, nil
 	}
 	return code, nil
 }
@@ -117,7 +130,7 @@ func (s *ReferralService) RecordReferral(ctx context.Context, inviteeID int64, i
 // If called within an existing transaction (via txCtx), uses that transaction.
 // Otherwise creates its own transaction for atomicity.
 func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, orderID int64, orderAmountUSD float64) error {
-	if s.repo == nil {
+	if s.repo == nil || !s.enabled {
 		return nil
 	}
 	inviterID, err := s.repo.GetInviterByInviteeID(ctx, inviteeID)

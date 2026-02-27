@@ -161,7 +161,8 @@ type IdempotencyConfig struct {
 
 // ReferralConfig 邀请返佣配置
 type ReferralConfig struct {
-	CommissionRate float64 `mapstructure:"commission_rate"` // 返佣比例，默认 0.10 (10%)
+	Enabled        bool    `mapstructure:"enabled"`         // 是否启用返佣，默认 false
+	CommissionRate float64 `mapstructure:"commission_rate"` // 返佣比例，Enabled=true 时生效，默认 0.10 (10%)
 }
 
 // PaymentConfig 支付配置

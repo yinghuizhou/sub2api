@@ -171,6 +171,10 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 	if s.settingService != nil {
 		defaultBalance = s.settingService.GetDefaultBalance(ctx)
 		defaultConcurrency = s.settingService.GetDefaultConcurrency(ctx)
+		// When free trial is enabled, it replaces defaultBalance (not stacks on top)
+		if s.settingService.IsFreeTrialEnabled(ctx) {
+			defaultBalance = 0
+		}
 	}
 
 	// 创建用户
