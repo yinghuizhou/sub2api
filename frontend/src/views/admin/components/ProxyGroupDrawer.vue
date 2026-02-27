@@ -38,7 +38,7 @@
             :disabled="distributing"
             class="btn btn-primary btn-sm"
           >
-            {{ distributing ? '...' : t('admin.proxies.groupDrawer.distribute') }}
+            {{ distributing ? t('admin.proxies.groupDrawer.distributing') : t('admin.proxies.groupDrawer.distribute') }}
           </button>
         </div>
         <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-dark-600">
@@ -100,7 +100,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-dark-600">
-              <tr v-for="a in assignments" :key="a.account_id">
+              <tr v-for="a in assignments" :key="`${props.groupName}-${a.account_id}`">
                 <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">{{ a.account_name }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-dark-300">{{ a.platform }}</td>
                 <td class="px-4 py-2 text-gray-600 dark:text-dark-300">{{ a.proxy_name }}</td>
@@ -119,8 +119,13 @@
                     :aria-label="t('admin.proxies.groupDrawer.reassign')"
                     @change="handleReassign(a.account_id, Number(($event.target as HTMLSelectElement).value), $event)"
                   >
-                    <option v-for="p in summary.proxies" :key="p.id" :value="p.id">
-                      {{ p.name }}
+                    <option
+                      v-for="p in summary.proxies"
+                      :key="p.id"
+                      :value="p.id"
+                      :disabled="p.health_status === 'unhealthy'"
+                    >
+                      {{ p.name }}{{ p.health_status !== 'healthy' ? ` (${p.health_status})` : '' }}
                     </option>
                   </select>
                 </td>
@@ -134,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import BaseDialog from '@/components/common/BaseDialog.vue'
@@ -166,24 +171,35 @@ const distributing = ref(false)
 const reassigningAccountId = ref<number | null>(null)
 const summary = ref<ProxyGroupSummary | null>(null)
 const assignments = ref<ProxyAssignmentDetail[]>([])
+let loadAbortController: AbortController | null = null
 
 async function loadData() {
   if (!props.groupName) return
+  // Cancel any in-flight request
+  loadAbortController?.abort()
+  const ctrl = new AbortController()
+  loadAbortController = ctrl
   loading.value = true
   try {
     const [s, a] = await Promise.all([
       getGroupSummary(props.groupName),
       getGroupAssignments(props.groupName)
     ])
+    if (ctrl.signal.aborted) return
     summary.value = s
     assignments.value = a
   } catch (e: any) {
+    if (ctrl.signal.aborted) return
     console.error('Load group data failed:', e)
     appStore.showError(e?.message || t('admin.proxies.groupDrawer.loadFailed'))
   } finally {
-    loading.value = false
+    if (!ctrl.signal.aborted) loading.value = false
   }
 }
+
+onUnmounted(() => {
+  loadAbortController?.abort()
+})
 
 async function handleDistribute() {
   if (!confirm(t('admin.proxies.groupDrawer.distributeConfirm'))) return
@@ -234,7 +250,10 @@ async function handleReassign(accountId: number, newProxyId: number, event: Even
   }
 }
 
-watch(() => props.show, (newVal) => {
-  if (newVal) loadData()
-})
+watch(
+  [() => props.show, () => props.groupName],
+  ([show, name]) => {
+    if (show && name) loadData()
+  }
+)
 </script>

@@ -2407,6 +2407,7 @@ export default {
         distribute: '均匀分配',
         distributeConfirm: '确定将该分组的所有账号均匀分配到组内健康代理吗？现有绑定将被覆盖。',
         distributeSuccess: '分配完成：已分配 {assigned} 个，跳过 {skipped} 个',
+        distributing: '分配中...',
         distributeFailed: '分配失败',
         assignments: '绑定详情',
         accountName: '账号名称',

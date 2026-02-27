@@ -118,10 +118,11 @@
           <template #header-select>
             <input
               type="checkbox"
+              ref="selectAllCheckboxRef"
               class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               :checked="allVisibleSelected"
               @click.stop
-              @change="toggleSelectAllVisible($event)"
+              @change="toggleSelectAllVisible()"
             />
           </template>
 
@@ -1007,7 +1008,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, watchEffect, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
@@ -1132,6 +1133,23 @@ const allVisibleSelected = computed(() => {
   return filteredProxies.value.every((proxy) => selectedProxyIds.value.has(proxy.id))
 })
 
+const someVisibleSelected = computed(() =>
+  filteredProxies.value.some(p => selectedProxyIds.value.has(p.id)) && !allVisibleSelected.value
+)
+
+// ref for the select-all checkbox to set indeterminate state
+const selectAllCheckboxRef = ref<HTMLInputElement | null>(null)
+watchEffect(() => {
+  if (selectAllCheckboxRef.value) {
+    selectAllCheckboxRef.value.indeterminate = someVisibleSelected.value
+  }
+})
+
+// Clear selection when switching group filter to avoid cross-group batch operations
+watch(filterGroupName, () => {
+  selectedProxyIds.value = new Set()
+})
+
 // Batch import state
 const createMode = ref<'standard' | 'batch'>('standard')
 const batchInput = ref('')
@@ -1199,15 +1217,12 @@ const toggleSelectRow = (id: number, event: Event) => {
   selectedProxyIds.value = next
 }
 
-const toggleSelectAllVisible = (event: Event) => {
-  const target = event.target as HTMLInputElement
+const toggleSelectAllVisible = () => {
   const next = new Set(selectedProxyIds.value)
-  for (const proxy of filteredProxies.value) {
-    if (target.checked) {
-      next.add(proxy.id)
-    } else {
-      next.delete(proxy.id)
-    }
+  if (allVisibleSelected.value) {
+    for (const proxy of filteredProxies.value) next.delete(proxy.id)
+  } else {
+    for (const proxy of filteredProxies.value) next.add(proxy.id)
   }
   selectedProxyIds.value = next
 }

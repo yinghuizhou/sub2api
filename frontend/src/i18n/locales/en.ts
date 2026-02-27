@@ -2268,6 +2268,7 @@ export default {
         distribute: 'Distribute',
         distributeConfirm: 'Distribute all accounts evenly across healthy proxies in this group? Existing assignments will be overwritten.',
         distributeSuccess: 'Distribution complete: {assigned} assigned, {skipped} skipped',
+        distributing: 'Distributing...',
         distributeFailed: 'Distribution failed',
         assignments: 'Assignment Details',
         accountName: 'Account',
