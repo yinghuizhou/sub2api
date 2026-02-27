@@ -64,6 +64,16 @@ func UserID(v int64) predicate.PaymentOrder {
 	return predicate.PaymentOrder(sql.FieldEQ(FieldUserID, v))
 }
 
+// AmountCny applies equality check predicate on the "amount_cny" field. It's identical to AmountCnyEQ.
+func AmountCny(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEQ(FieldAmountCny, v))
+}
+
+// ExchangeRate applies equality check predicate on the "exchange_rate" field. It's identical to ExchangeRateEQ.
+func ExchangeRate(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEQ(FieldExchangeRate, v))
+}
+
 // Amount applies equality check predicate on the "amount" field. It's identical to AmountEQ.
 func Amount(v float64) predicate.PaymentOrder {
 	return predicate.PaymentOrder(sql.FieldEQ(FieldAmount, v))
@@ -87,6 +97,11 @@ func Channel(v string) predicate.PaymentOrder {
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
 func Status(v string) predicate.PaymentOrder {
 	return predicate.PaymentOrder(sql.FieldEQ(FieldStatus, v))
+}
+
+// CommissionStatus applies equality check predicate on the "commission_status" field. It's identical to CommissionStatusEQ.
+func CommissionStatus(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEQ(FieldCommissionStatus, v))
 }
 
 // TradeNo applies equality check predicate on the "trade_no" field. It's identical to TradeNoEQ.
@@ -212,6 +227,86 @@ func UserIDLT(v int64) predicate.PaymentOrder {
 // UserIDLTE applies the LTE predicate on the "user_id" field.
 func UserIDLTE(v int64) predicate.PaymentOrder {
 	return predicate.PaymentOrder(sql.FieldLTE(FieldUserID, v))
+}
+
+// AmountCnyEQ applies the EQ predicate on the "amount_cny" field.
+func AmountCnyEQ(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEQ(FieldAmountCny, v))
+}
+
+// AmountCnyNEQ applies the NEQ predicate on the "amount_cny" field.
+func AmountCnyNEQ(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldNEQ(FieldAmountCny, v))
+}
+
+// AmountCnyIn applies the In predicate on the "amount_cny" field.
+func AmountCnyIn(vs ...float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldIn(FieldAmountCny, vs...))
+}
+
+// AmountCnyNotIn applies the NotIn predicate on the "amount_cny" field.
+func AmountCnyNotIn(vs ...float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldNotIn(FieldAmountCny, vs...))
+}
+
+// AmountCnyGT applies the GT predicate on the "amount_cny" field.
+func AmountCnyGT(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldGT(FieldAmountCny, v))
+}
+
+// AmountCnyGTE applies the GTE predicate on the "amount_cny" field.
+func AmountCnyGTE(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldGTE(FieldAmountCny, v))
+}
+
+// AmountCnyLT applies the LT predicate on the "amount_cny" field.
+func AmountCnyLT(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldLT(FieldAmountCny, v))
+}
+
+// AmountCnyLTE applies the LTE predicate on the "amount_cny" field.
+func AmountCnyLTE(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldLTE(FieldAmountCny, v))
+}
+
+// ExchangeRateEQ applies the EQ predicate on the "exchange_rate" field.
+func ExchangeRateEQ(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEQ(FieldExchangeRate, v))
+}
+
+// ExchangeRateNEQ applies the NEQ predicate on the "exchange_rate" field.
+func ExchangeRateNEQ(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldNEQ(FieldExchangeRate, v))
+}
+
+// ExchangeRateIn applies the In predicate on the "exchange_rate" field.
+func ExchangeRateIn(vs ...float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldIn(FieldExchangeRate, vs...))
+}
+
+// ExchangeRateNotIn applies the NotIn predicate on the "exchange_rate" field.
+func ExchangeRateNotIn(vs ...float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldNotIn(FieldExchangeRate, vs...))
+}
+
+// ExchangeRateGT applies the GT predicate on the "exchange_rate" field.
+func ExchangeRateGT(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldGT(FieldExchangeRate, v))
+}
+
+// ExchangeRateGTE applies the GTE predicate on the "exchange_rate" field.
+func ExchangeRateGTE(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldGTE(FieldExchangeRate, v))
+}
+
+// ExchangeRateLT applies the LT predicate on the "exchange_rate" field.
+func ExchangeRateLT(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldLT(FieldExchangeRate, v))
+}
+
+// ExchangeRateLTE applies the LTE predicate on the "exchange_rate" field.
+func ExchangeRateLTE(v float64) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldLTE(FieldExchangeRate, v))
 }
 
 // AmountEQ applies the EQ predicate on the "amount" field.
@@ -462,6 +557,71 @@ func StatusEqualFold(v string) predicate.PaymentOrder {
 // StatusContainsFold applies the ContainsFold predicate on the "status" field.
 func StatusContainsFold(v string) predicate.PaymentOrder {
 	return predicate.PaymentOrder(sql.FieldContainsFold(FieldStatus, v))
+}
+
+// CommissionStatusEQ applies the EQ predicate on the "commission_status" field.
+func CommissionStatusEQ(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEQ(FieldCommissionStatus, v))
+}
+
+// CommissionStatusNEQ applies the NEQ predicate on the "commission_status" field.
+func CommissionStatusNEQ(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldNEQ(FieldCommissionStatus, v))
+}
+
+// CommissionStatusIn applies the In predicate on the "commission_status" field.
+func CommissionStatusIn(vs ...string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldIn(FieldCommissionStatus, vs...))
+}
+
+// CommissionStatusNotIn applies the NotIn predicate on the "commission_status" field.
+func CommissionStatusNotIn(vs ...string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldNotIn(FieldCommissionStatus, vs...))
+}
+
+// CommissionStatusGT applies the GT predicate on the "commission_status" field.
+func CommissionStatusGT(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldGT(FieldCommissionStatus, v))
+}
+
+// CommissionStatusGTE applies the GTE predicate on the "commission_status" field.
+func CommissionStatusGTE(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldGTE(FieldCommissionStatus, v))
+}
+
+// CommissionStatusLT applies the LT predicate on the "commission_status" field.
+func CommissionStatusLT(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldLT(FieldCommissionStatus, v))
+}
+
+// CommissionStatusLTE applies the LTE predicate on the "commission_status" field.
+func CommissionStatusLTE(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldLTE(FieldCommissionStatus, v))
+}
+
+// CommissionStatusContains applies the Contains predicate on the "commission_status" field.
+func CommissionStatusContains(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldContains(FieldCommissionStatus, v))
+}
+
+// CommissionStatusHasPrefix applies the HasPrefix predicate on the "commission_status" field.
+func CommissionStatusHasPrefix(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldHasPrefix(FieldCommissionStatus, v))
+}
+
+// CommissionStatusHasSuffix applies the HasSuffix predicate on the "commission_status" field.
+func CommissionStatusHasSuffix(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldHasSuffix(FieldCommissionStatus, v))
+}
+
+// CommissionStatusEqualFold applies the EqualFold predicate on the "commission_status" field.
+func CommissionStatusEqualFold(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldEqualFold(FieldCommissionStatus, v))
+}
+
+// CommissionStatusContainsFold applies the ContainsFold predicate on the "commission_status" field.
+func CommissionStatusContainsFold(v string) predicate.PaymentOrder {
+	return predicate.PaymentOrder(sql.FieldContainsFold(FieldCommissionStatus, v))
 }
 
 // TradeNoEQ applies the EQ predicate on the "trade_no" field.

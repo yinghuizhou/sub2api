@@ -63,6 +63,48 @@ func (_u *PaymentOrderUpdate) AddUserID(v int64) *PaymentOrderUpdate {
 	return _u
 }
 
+// SetAmountCny sets the "amount_cny" field.
+func (_u *PaymentOrderUpdate) SetAmountCny(v float64) *PaymentOrderUpdate {
+	_u.mutation.ResetAmountCny()
+	_u.mutation.SetAmountCny(v)
+	return _u
+}
+
+// SetNillableAmountCny sets the "amount_cny" field if the given value is not nil.
+func (_u *PaymentOrderUpdate) SetNillableAmountCny(v *float64) *PaymentOrderUpdate {
+	if v != nil {
+		_u.SetAmountCny(*v)
+	}
+	return _u
+}
+
+// AddAmountCny adds value to the "amount_cny" field.
+func (_u *PaymentOrderUpdate) AddAmountCny(v float64) *PaymentOrderUpdate {
+	_u.mutation.AddAmountCny(v)
+	return _u
+}
+
+// SetExchangeRate sets the "exchange_rate" field.
+func (_u *PaymentOrderUpdate) SetExchangeRate(v float64) *PaymentOrderUpdate {
+	_u.mutation.ResetExchangeRate()
+	_u.mutation.SetExchangeRate(v)
+	return _u
+}
+
+// SetNillableExchangeRate sets the "exchange_rate" field if the given value is not nil.
+func (_u *PaymentOrderUpdate) SetNillableExchangeRate(v *float64) *PaymentOrderUpdate {
+	if v != nil {
+		_u.SetExchangeRate(*v)
+	}
+	return _u
+}
+
+// AddExchangeRate adds value to the "exchange_rate" field.
+func (_u *PaymentOrderUpdate) AddExchangeRate(v float64) *PaymentOrderUpdate {
+	_u.mutation.AddExchangeRate(v)
+	return _u
+}
+
 // SetAmount sets the "amount" field.
 func (_u *PaymentOrderUpdate) SetAmount(v float64) *PaymentOrderUpdate {
 	_u.mutation.ResetAmount()
@@ -150,6 +192,20 @@ func (_u *PaymentOrderUpdate) SetStatus(v string) *PaymentOrderUpdate {
 func (_u *PaymentOrderUpdate) SetNillableStatus(v *string) *PaymentOrderUpdate {
 	if v != nil {
 		_u.SetStatus(*v)
+	}
+	return _u
+}
+
+// SetCommissionStatus sets the "commission_status" field.
+func (_u *PaymentOrderUpdate) SetCommissionStatus(v string) *PaymentOrderUpdate {
+	_u.mutation.SetCommissionStatus(v)
+	return _u
+}
+
+// SetNillableCommissionStatus sets the "commission_status" field if the given value is not nil.
+func (_u *PaymentOrderUpdate) SetNillableCommissionStatus(v *string) *PaymentOrderUpdate {
+	if v != nil {
+		_u.SetCommissionStatus(*v)
 	}
 	return _u
 }
@@ -258,6 +314,11 @@ func (_u *PaymentOrderUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "PaymentOrder.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.CommissionStatus(); ok {
+		if err := paymentorder.CommissionStatusValidator(v); err != nil {
+			return &ValidationError{Name: "commission_status", err: fmt.Errorf(`ent: validator failed for field "PaymentOrder.commission_status": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.TradeNo(); ok {
 		if err := paymentorder.TradeNoValidator(v); err != nil {
 			return &ValidationError{Name: "trade_no", err: fmt.Errorf(`ent: validator failed for field "PaymentOrder.trade_no": %w`, err)}
@@ -287,6 +348,18 @@ func (_u *PaymentOrderUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if value, ok := _u.mutation.AddedUserID(); ok {
 		_spec.AddField(paymentorder.FieldUserID, field.TypeInt64, value)
 	}
+	if value, ok := _u.mutation.AmountCny(); ok {
+		_spec.SetField(paymentorder.FieldAmountCny, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedAmountCny(); ok {
+		_spec.AddField(paymentorder.FieldAmountCny, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ExchangeRate(); ok {
+		_spec.SetField(paymentorder.FieldExchangeRate, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedExchangeRate(); ok {
+		_spec.AddField(paymentorder.FieldExchangeRate, field.TypeFloat64, value)
+	}
 	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(paymentorder.FieldAmount, field.TypeFloat64, value)
 	}
@@ -310,6 +383,9 @@ func (_u *PaymentOrderUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(paymentorder.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CommissionStatus(); ok {
+		_spec.SetField(paymentorder.FieldCommissionStatus, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.TradeNo(); ok {
 		_spec.SetField(paymentorder.FieldTradeNo, field.TypeString, value)
@@ -378,6 +454,48 @@ func (_u *PaymentOrderUpdateOne) SetNillableUserID(v *int64) *PaymentOrderUpdate
 // AddUserID adds value to the "user_id" field.
 func (_u *PaymentOrderUpdateOne) AddUserID(v int64) *PaymentOrderUpdateOne {
 	_u.mutation.AddUserID(v)
+	return _u
+}
+
+// SetAmountCny sets the "amount_cny" field.
+func (_u *PaymentOrderUpdateOne) SetAmountCny(v float64) *PaymentOrderUpdateOne {
+	_u.mutation.ResetAmountCny()
+	_u.mutation.SetAmountCny(v)
+	return _u
+}
+
+// SetNillableAmountCny sets the "amount_cny" field if the given value is not nil.
+func (_u *PaymentOrderUpdateOne) SetNillableAmountCny(v *float64) *PaymentOrderUpdateOne {
+	if v != nil {
+		_u.SetAmountCny(*v)
+	}
+	return _u
+}
+
+// AddAmountCny adds value to the "amount_cny" field.
+func (_u *PaymentOrderUpdateOne) AddAmountCny(v float64) *PaymentOrderUpdateOne {
+	_u.mutation.AddAmountCny(v)
+	return _u
+}
+
+// SetExchangeRate sets the "exchange_rate" field.
+func (_u *PaymentOrderUpdateOne) SetExchangeRate(v float64) *PaymentOrderUpdateOne {
+	_u.mutation.ResetExchangeRate()
+	_u.mutation.SetExchangeRate(v)
+	return _u
+}
+
+// SetNillableExchangeRate sets the "exchange_rate" field if the given value is not nil.
+func (_u *PaymentOrderUpdateOne) SetNillableExchangeRate(v *float64) *PaymentOrderUpdateOne {
+	if v != nil {
+		_u.SetExchangeRate(*v)
+	}
+	return _u
+}
+
+// AddExchangeRate adds value to the "exchange_rate" field.
+func (_u *PaymentOrderUpdateOne) AddExchangeRate(v float64) *PaymentOrderUpdateOne {
+	_u.mutation.AddExchangeRate(v)
 	return _u
 }
 
@@ -468,6 +586,20 @@ func (_u *PaymentOrderUpdateOne) SetStatus(v string) *PaymentOrderUpdateOne {
 func (_u *PaymentOrderUpdateOne) SetNillableStatus(v *string) *PaymentOrderUpdateOne {
 	if v != nil {
 		_u.SetStatus(*v)
+	}
+	return _u
+}
+
+// SetCommissionStatus sets the "commission_status" field.
+func (_u *PaymentOrderUpdateOne) SetCommissionStatus(v string) *PaymentOrderUpdateOne {
+	_u.mutation.SetCommissionStatus(v)
+	return _u
+}
+
+// SetNillableCommissionStatus sets the "commission_status" field if the given value is not nil.
+func (_u *PaymentOrderUpdateOne) SetNillableCommissionStatus(v *string) *PaymentOrderUpdateOne {
+	if v != nil {
+		_u.SetCommissionStatus(*v)
 	}
 	return _u
 }
@@ -589,6 +721,11 @@ func (_u *PaymentOrderUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "PaymentOrder.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.CommissionStatus(); ok {
+		if err := paymentorder.CommissionStatusValidator(v); err != nil {
+			return &ValidationError{Name: "commission_status", err: fmt.Errorf(`ent: validator failed for field "PaymentOrder.commission_status": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.TradeNo(); ok {
 		if err := paymentorder.TradeNoValidator(v); err != nil {
 			return &ValidationError{Name: "trade_no", err: fmt.Errorf(`ent: validator failed for field "PaymentOrder.trade_no": %w`, err)}
@@ -635,6 +772,18 @@ func (_u *PaymentOrderUpdateOne) sqlSave(ctx context.Context) (_node *PaymentOrd
 	if value, ok := _u.mutation.AddedUserID(); ok {
 		_spec.AddField(paymentorder.FieldUserID, field.TypeInt64, value)
 	}
+	if value, ok := _u.mutation.AmountCny(); ok {
+		_spec.SetField(paymentorder.FieldAmountCny, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedAmountCny(); ok {
+		_spec.AddField(paymentorder.FieldAmountCny, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ExchangeRate(); ok {
+		_spec.SetField(paymentorder.FieldExchangeRate, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedExchangeRate(); ok {
+		_spec.AddField(paymentorder.FieldExchangeRate, field.TypeFloat64, value)
+	}
 	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(paymentorder.FieldAmount, field.TypeFloat64, value)
 	}
@@ -658,6 +807,9 @@ func (_u *PaymentOrderUpdateOne) sqlSave(ctx context.Context) (_node *PaymentOrd
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(paymentorder.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CommissionStatus(); ok {
+		_spec.SetField(paymentorder.FieldCommissionStatus, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.TradeNo(); ok {
 		_spec.SetField(paymentorder.FieldTradeNo, field.TypeString, value)

@@ -26,6 +26,7 @@ type PaymentOrderRepository interface {
 	// Returns number of rows affected (0 means order was already processed).
 	UpdateStatusAtomically(ctx context.Context, orderNo, fromStatus, toStatus, tradeNo string, paidAt *time.Time) (int, error)
 	ListByUser(ctx context.Context, userID int64, limit, offset int) ([]PaymentOrder, int, error)
+	UpdateCommissionStatus(ctx context.Context, orderNo, status string) (int, error)
 }
 
 // RechargePackageRepository defines data access for recharge packages.
@@ -39,18 +40,20 @@ type RechargePackageRepository interface {
 
 // PaymentOrder represents a payment order domain object.
 type PaymentOrder struct {
-	ID          int64
-	OrderNo     string
-	UserID      int64
-	AmountCNY   float64
-	AmountUSD   float64
-	Bonus       float64
-	TotalCredit float64
-	Channel     string
-	Status      string
-	TradeNo     *string
-	PaidAt      *time.Time
-	CreatedAt   time.Time
+	ID               int64
+	OrderNo          string
+	UserID           int64
+	AmountCNY        float64
+	ExchangeRate     float64
+	AmountUSD        float64
+	Bonus            float64
+	TotalCredit      float64
+	Channel          string
+	Status           string
+	CommissionStatus string
+	TradeNo          *string
+	PaidAt           *time.Time
+	CreatedAt        time.Time
 }
 
 // RechargePackage represents a recharge package domain object.
@@ -122,15 +125,16 @@ func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInpu
 	}
 
 	order := &PaymentOrder{
-		OrderNo:     generateOrderNo(),
-		UserID:      input.UserID,
-		AmountCNY:   input.AmountCNY,
-		AmountUSD:   amountUSD,
-		Bonus:       bonus,
-		TotalCredit: amountUSD + bonus,
-		Channel:     input.Channel,
-		Status:      "pending",
-		CreatedAt:   time.Now(),
+		OrderNo:      generateOrderNo(),
+		UserID:       input.UserID,
+		AmountCNY:    input.AmountCNY,
+		ExchangeRate: s.rate,
+		AmountUSD:    amountUSD,
+		Bonus:        bonus,
+		TotalCredit:  amountUSD + bonus,
+		Channel:      input.Channel,
+		Status:       "pending",
+		CreatedAt:    time.Now(),
 	}
 
 	if s.orderRepo != nil {
@@ -173,19 +177,25 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 		return fmt.Errorf("credit balance: %w", err)
 	}
 
-	// Commit the payment transaction first
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit transaction: %w", err)
-	}
-
-	// Settle referral commission (best-effort, outside transaction)
+	// Settle referral commission within the same transaction
+	commissionStatus := "none"
 	if s.referralService != nil {
-		if err := s.referralService.SettleCommission(ctx, order.UserID, order.ID, order.AmountUSD); err != nil {
+		if err := s.referralService.SettleCommission(txCtx, order.UserID, order.ID, order.AmountUSD); err != nil {
+			commissionStatus = "failed"
 			logger.LegacyPrintf("service.payment", "[Payment] Failed to settle commission for order %s: %v", orderNo, err)
+		} else {
+			commissionStatus = "settled"
 		}
 	}
 
-	return nil
+	// Update commission status on the order
+	if commissionStatus != "none" {
+		if _, err := s.orderRepo.UpdateCommissionStatus(txCtx, orderNo, commissionStatus); err != nil {
+			logger.LegacyPrintf("service.payment", "[Payment] Failed to update commission status for order %s: %v", orderNo, err)
+		}
+	}
+
+	return tx.Commit()
 }
 
 // ListPackages returns recharge packages.

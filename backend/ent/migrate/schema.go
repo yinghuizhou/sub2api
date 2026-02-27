@@ -496,11 +496,14 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "order_no", Type: field.TypeString, Unique: true, Size: 64},
 		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "amount_cny", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "exchange_rate", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(10,6)"}},
 		{Name: "amount", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "bonus", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "total_credit", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "channel", Type: field.TypeString, Size: 20},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "pending"},
+		{Name: "commission_status", Type: field.TypeString, Size: 20, Default: "none"},
 		{Name: "trade_no", Type: field.TypeString, Nullable: true, Size: 128},
 		{Name: "paid_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
@@ -520,7 +523,7 @@ var (
 			{
 				Name:    "paymentorder_status",
 				Unique:  false,
-				Columns: []*schema.Column{PaymentOrdersColumns[7]},
+				Columns: []*schema.Column{PaymentOrdersColumns[9]},
 			},
 			{
 				Name:    "paymentorder_order_no",

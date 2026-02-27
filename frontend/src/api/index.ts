@@ -18,6 +18,10 @@ export { userGroupsAPI } from './groups'
 export { totpAPI } from './totp'
 export { default as announcementsAPI } from './announcements'
 
+// Payment & Referral APIs
+export { paymentApi, type RechargePackage, type CreateOrderRequest, type PaymentOrder } from './payment'
+export { referralApi, type ReferralInfo, type ReferralCommission } from './referral'
+
 // Admin APIs
 export { adminAPI } from './admin'
 

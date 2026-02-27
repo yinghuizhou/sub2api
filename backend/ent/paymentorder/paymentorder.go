@@ -17,6 +17,10 @@ const (
 	FieldOrderNo = "order_no"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
+	// FieldAmountCny holds the string denoting the amount_cny field in the database.
+	FieldAmountCny = "amount_cny"
+	// FieldExchangeRate holds the string denoting the exchange_rate field in the database.
+	FieldExchangeRate = "exchange_rate"
 	// FieldAmount holds the string denoting the amount field in the database.
 	FieldAmount = "amount"
 	// FieldBonus holds the string denoting the bonus field in the database.
@@ -27,6 +31,8 @@ const (
 	FieldChannel = "channel"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldCommissionStatus holds the string denoting the commission_status field in the database.
+	FieldCommissionStatus = "commission_status"
 	// FieldTradeNo holds the string denoting the trade_no field in the database.
 	FieldTradeNo = "trade_no"
 	// FieldPaidAt holds the string denoting the paid_at field in the database.
@@ -44,11 +50,14 @@ var Columns = []string{
 	FieldID,
 	FieldOrderNo,
 	FieldUserID,
+	FieldAmountCny,
+	FieldExchangeRate,
 	FieldAmount,
 	FieldBonus,
 	FieldTotalCredit,
 	FieldChannel,
 	FieldStatus,
+	FieldCommissionStatus,
 	FieldTradeNo,
 	FieldPaidAt,
 	FieldCreatedAt,
@@ -76,6 +85,10 @@ var (
 	DefaultStatus string
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(string) error
+	// DefaultCommissionStatus holds the default value on creation for the "commission_status" field.
+	DefaultCommissionStatus string
+	// CommissionStatusValidator is a validator for the "commission_status" field. It is called by the builders before save.
+	CommissionStatusValidator func(string) error
 	// TradeNoValidator is a validator for the "trade_no" field. It is called by the builders before save.
 	TradeNoValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -104,6 +117,16 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUserID, opts...).ToFunc()
 }
 
+// ByAmountCny orders the results by the amount_cny field.
+func ByAmountCny(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAmountCny, opts...).ToFunc()
+}
+
+// ByExchangeRate orders the results by the exchange_rate field.
+func ByExchangeRate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExchangeRate, opts...).ToFunc()
+}
+
 // ByAmount orders the results by the amount field.
 func ByAmount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAmount, opts...).ToFunc()
@@ -127,6 +150,11 @@ func ByChannel(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByCommissionStatus orders the results by the commission_status field.
+func ByCommissionStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommissionStatus, opts...).ToFunc()
 }
 
 // ByTradeNo orders the results by the trade_no field.

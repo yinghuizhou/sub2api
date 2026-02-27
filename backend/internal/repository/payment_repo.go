@@ -22,6 +22,8 @@ func (r *PaymentOrderRepository) Create(ctx context.Context, order *service.Paym
 	o, err := r.client.PaymentOrder.Create().
 		SetOrderNo(order.OrderNo).
 		SetUserID(order.UserID).
+		SetAmountCny(order.AmountCNY).
+		SetExchangeRate(order.ExchangeRate).
 		SetAmount(order.AmountUSD).
 		SetBonus(order.Bonus).
 		SetTotalCredit(order.TotalCredit).
@@ -90,19 +92,30 @@ func (r *PaymentOrderRepository) ListByUser(ctx context.Context, userID int64, l
 	return result, total, nil
 }
 
+func (r *PaymentOrderRepository) UpdateCommissionStatus(ctx context.Context, orderNo, status string) (int, error) {
+	client := clientFromContext(ctx, r.client)
+	return client.PaymentOrder.Update().
+		Where(paymentorder.OrderNoEQ(orderNo)).
+		SetCommissionStatus(status).
+		Save(ctx)
+}
+
 func entToPaymentOrder(o *dbent.PaymentOrder) *service.PaymentOrder {
 	return &service.PaymentOrder{
-		ID:          int64(o.ID),
-		OrderNo:     o.OrderNo,
-		UserID:      o.UserID,
-		AmountUSD:   o.Amount,
-		Bonus:       o.Bonus,
-		TotalCredit: o.TotalCredit,
-		Channel:     o.Channel,
-		Status:      o.Status,
-		TradeNo:     o.TradeNo,
-		PaidAt:      o.PaidAt,
-		CreatedAt:   o.CreatedAt,
+		ID:               int64(o.ID),
+		OrderNo:          o.OrderNo,
+		UserID:           o.UserID,
+		AmountCNY:        o.AmountCny,
+		ExchangeRate:     o.ExchangeRate,
+		AmountUSD:        o.Amount,
+		Bonus:            o.Bonus,
+		TotalCredit:      o.TotalCredit,
+		Channel:          o.Channel,
+		Status:           o.Status,
+		CommissionStatus: o.CommissionStatus,
+		TradeNo:          o.TradeNo,
+		PaidAt:           o.PaidAt,
+		CreatedAt:        o.CreatedAt,
 	}
 }
 

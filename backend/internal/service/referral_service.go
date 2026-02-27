@@ -114,7 +114,8 @@ func (s *ReferralService) RecordReferral(ctx context.Context, inviteeID int64, i
 }
 
 // SettleCommission settles commission for the inviter after an invitee's payment.
-// Uses a database transaction to ensure commission record and balance update are atomic.
+// If called within an existing transaction (via txCtx), uses that transaction.
+// Otherwise creates its own transaction for atomicity.
 func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, orderID int64, orderAmountUSD float64) error {
 	if s.repo == nil {
 		return nil
@@ -137,6 +138,18 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 		SettledAt:        &now,
 	}
 
+	// If already in a transaction (called from HandleCallback), use it directly
+	if dbent.TxFromContext(ctx) != nil {
+		if err := s.repo.CreateCommission(ctx, commission); err != nil {
+			return fmt.Errorf("create commission: %w", err)
+		}
+		if err := s.userRepo.UpdateBalance(ctx, inviterID, amount); err != nil {
+			return fmt.Errorf("credit inviter balance: %w", err)
+		}
+		return nil
+	}
+
+	// Otherwise create our own transaction
 	tx, err := s.entClient.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)

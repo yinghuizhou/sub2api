@@ -97,8 +97,7 @@ func RegisterUserRoutes(
 		}
 	}
 
-	// 支付回调（未实现签名验证，暂不暴露）
-	// TODO: 实现微信V3/支付宝RSA2签名验证后取消注释
-	// v1.POST("/payment/callback/wechat", h.Payment.WechatCallback)
-	// v1.POST("/payment/callback/alipay", h.Payment.AlipayCallback)
+	// 支付回调（无需JWT认证，通过签名验证保护）
+	v1.POST("/payment/callback/wechat", h.Payment.WechatCallback)
+	v1.POST("/payment/callback/alipay", h.Payment.AlipayCallback)
 }

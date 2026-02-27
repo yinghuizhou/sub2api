@@ -490,29 +490,35 @@ func init() {
 		}
 	}()
 	// paymentorderDescBonus is the schema descriptor for bonus field.
-	paymentorderDescBonus := paymentorderFields[3].Descriptor()
+	paymentorderDescBonus := paymentorderFields[5].Descriptor()
 	// paymentorder.DefaultBonus holds the default value on creation for the bonus field.
 	paymentorder.DefaultBonus = paymentorderDescBonus.Default.(float64)
 	// paymentorderDescChannel is the schema descriptor for channel field.
-	paymentorderDescChannel := paymentorderFields[5].Descriptor()
+	paymentorderDescChannel := paymentorderFields[7].Descriptor()
 	// paymentorder.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
 	paymentorder.ChannelValidator = paymentorderDescChannel.Validators[0].(func(string) error)
 	// paymentorderDescStatus is the schema descriptor for status field.
-	paymentorderDescStatus := paymentorderFields[6].Descriptor()
+	paymentorderDescStatus := paymentorderFields[8].Descriptor()
 	// paymentorder.DefaultStatus holds the default value on creation for the status field.
 	paymentorder.DefaultStatus = paymentorderDescStatus.Default.(string)
 	// paymentorder.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	paymentorder.StatusValidator = paymentorderDescStatus.Validators[0].(func(string) error)
+	// paymentorderDescCommissionStatus is the schema descriptor for commission_status field.
+	paymentorderDescCommissionStatus := paymentorderFields[9].Descriptor()
+	// paymentorder.DefaultCommissionStatus holds the default value on creation for the commission_status field.
+	paymentorder.DefaultCommissionStatus = paymentorderDescCommissionStatus.Default.(string)
+	// paymentorder.CommissionStatusValidator is a validator for the "commission_status" field. It is called by the builders before save.
+	paymentorder.CommissionStatusValidator = paymentorderDescCommissionStatus.Validators[0].(func(string) error)
 	// paymentorderDescTradeNo is the schema descriptor for trade_no field.
-	paymentorderDescTradeNo := paymentorderFields[7].Descriptor()
+	paymentorderDescTradeNo := paymentorderFields[10].Descriptor()
 	// paymentorder.TradeNoValidator is a validator for the "trade_no" field. It is called by the builders before save.
 	paymentorder.TradeNoValidator = paymentorderDescTradeNo.Validators[0].(func(string) error)
 	// paymentorderDescCreatedAt is the schema descriptor for created_at field.
-	paymentorderDescCreatedAt := paymentorderFields[9].Descriptor()
+	paymentorderDescCreatedAt := paymentorderFields[12].Descriptor()
 	// paymentorder.DefaultCreatedAt holds the default value on creation for the created_at field.
 	paymentorder.DefaultCreatedAt = paymentorderDescCreatedAt.Default.(func() time.Time)
 	// paymentorderDescUpdatedAt is the schema descriptor for updated_at field.
-	paymentorderDescUpdatedAt := paymentorderFields[10].Descriptor()
+	paymentorderDescUpdatedAt := paymentorderFields[13].Descriptor()
 	// paymentorder.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	paymentorder.DefaultUpdatedAt = paymentorderDescUpdatedAt.Default.(func() time.Time)
 	// paymentorder.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

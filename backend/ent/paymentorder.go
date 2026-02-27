@@ -21,6 +21,10 @@ type PaymentOrder struct {
 	OrderNo string `json:"order_no,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID int64 `json:"user_id,omitempty"`
+	// AmountCny holds the value of the "amount_cny" field.
+	AmountCny float64 `json:"amount_cny,omitempty"`
+	// ExchangeRate holds the value of the "exchange_rate" field.
+	ExchangeRate float64 `json:"exchange_rate,omitempty"`
 	// Amount holds the value of the "amount" field.
 	Amount float64 `json:"amount,omitempty"`
 	// Bonus holds the value of the "bonus" field.
@@ -31,6 +35,8 @@ type PaymentOrder struct {
 	Channel string `json:"channel,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// CommissionStatus holds the value of the "commission_status" field.
+	CommissionStatus string `json:"commission_status,omitempty"`
 	// TradeNo holds the value of the "trade_no" field.
 	TradeNo *string `json:"trade_no,omitempty"`
 	// PaidAt holds the value of the "paid_at" field.
@@ -47,11 +53,11 @@ func (*PaymentOrder) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case paymentorder.FieldAmount, paymentorder.FieldBonus, paymentorder.FieldTotalCredit:
+		case paymentorder.FieldAmountCny, paymentorder.FieldExchangeRate, paymentorder.FieldAmount, paymentorder.FieldBonus, paymentorder.FieldTotalCredit:
 			values[i] = new(sql.NullFloat64)
 		case paymentorder.FieldID, paymentorder.FieldUserID:
 			values[i] = new(sql.NullInt64)
-		case paymentorder.FieldOrderNo, paymentorder.FieldChannel, paymentorder.FieldStatus, paymentorder.FieldTradeNo:
+		case paymentorder.FieldOrderNo, paymentorder.FieldChannel, paymentorder.FieldStatus, paymentorder.FieldCommissionStatus, paymentorder.FieldTradeNo:
 			values[i] = new(sql.NullString)
 		case paymentorder.FieldPaidAt, paymentorder.FieldCreatedAt, paymentorder.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -88,6 +94,18 @@ func (_m *PaymentOrder) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UserID = value.Int64
 			}
+		case paymentorder.FieldAmountCny:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field amount_cny", values[i])
+			} else if value.Valid {
+				_m.AmountCny = value.Float64
+			}
+		case paymentorder.FieldExchangeRate:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field exchange_rate", values[i])
+			} else if value.Valid {
+				_m.ExchangeRate = value.Float64
+			}
 		case paymentorder.FieldAmount:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field amount", values[i])
@@ -117,6 +135,12 @@ func (_m *PaymentOrder) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = value.String
+			}
+		case paymentorder.FieldCommissionStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field commission_status", values[i])
+			} else if value.Valid {
+				_m.CommissionStatus = value.String
 			}
 		case paymentorder.FieldTradeNo:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -186,6 +210,12 @@ func (_m *PaymentOrder) String() string {
 	builder.WriteString("user_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
 	builder.WriteString(", ")
+	builder.WriteString("amount_cny=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AmountCny))
+	builder.WriteString(", ")
+	builder.WriteString("exchange_rate=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ExchangeRate))
+	builder.WriteString(", ")
 	builder.WriteString("amount=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Amount))
 	builder.WriteString(", ")
@@ -200,6 +230,9 @@ func (_m *PaymentOrder) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(_m.Status)
+	builder.WriteString(", ")
+	builder.WriteString("commission_status=")
+	builder.WriteString(_m.CommissionStatus)
 	builder.WriteString(", ")
 	if v := _m.TradeNo; v != nil {
 		builder.WriteString("trade_no=")

@@ -11657,28 +11657,33 @@ func (m *IdempotencyRecordMutation) ResetEdge(name string) error {
 // PaymentOrderMutation represents an operation that mutates the PaymentOrder nodes in the graph.
 type PaymentOrderMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *int64
-	order_no        *string
-	user_id         *int64
-	adduser_id      *int64
-	amount          *float64
-	addamount       *float64
-	bonus           *float64
-	addbonus        *float64
-	total_credit    *float64
-	addtotal_credit *float64
-	channel         *string
-	status          *string
-	trade_no        *string
-	paid_at         *time.Time
-	created_at      *time.Time
-	updated_at      *time.Time
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*PaymentOrder, error)
-	predicates      []predicate.PaymentOrder
+	op                Op
+	typ               string
+	id                *int64
+	order_no          *string
+	user_id           *int64
+	adduser_id        *int64
+	amount_cny        *float64
+	addamount_cny     *float64
+	exchange_rate     *float64
+	addexchange_rate  *float64
+	amount            *float64
+	addamount         *float64
+	bonus             *float64
+	addbonus          *float64
+	total_credit      *float64
+	addtotal_credit   *float64
+	channel           *string
+	status            *string
+	commission_status *string
+	trade_no          *string
+	paid_at           *time.Time
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*PaymentOrder, error)
+	predicates        []predicate.PaymentOrder
 }
 
 var _ ent.Mutation = (*PaymentOrderMutation)(nil)
@@ -11869,6 +11874,118 @@ func (m *PaymentOrderMutation) AddedUserID() (r int64, exists bool) {
 func (m *PaymentOrderMutation) ResetUserID() {
 	m.user_id = nil
 	m.adduser_id = nil
+}
+
+// SetAmountCny sets the "amount_cny" field.
+func (m *PaymentOrderMutation) SetAmountCny(f float64) {
+	m.amount_cny = &f
+	m.addamount_cny = nil
+}
+
+// AmountCny returns the value of the "amount_cny" field in the mutation.
+func (m *PaymentOrderMutation) AmountCny() (r float64, exists bool) {
+	v := m.amount_cny
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmountCny returns the old "amount_cny" field's value of the PaymentOrder entity.
+// If the PaymentOrder object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PaymentOrderMutation) OldAmountCny(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmountCny is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmountCny requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmountCny: %w", err)
+	}
+	return oldValue.AmountCny, nil
+}
+
+// AddAmountCny adds f to the "amount_cny" field.
+func (m *PaymentOrderMutation) AddAmountCny(f float64) {
+	if m.addamount_cny != nil {
+		*m.addamount_cny += f
+	} else {
+		m.addamount_cny = &f
+	}
+}
+
+// AddedAmountCny returns the value that was added to the "amount_cny" field in this mutation.
+func (m *PaymentOrderMutation) AddedAmountCny() (r float64, exists bool) {
+	v := m.addamount_cny
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmountCny resets all changes to the "amount_cny" field.
+func (m *PaymentOrderMutation) ResetAmountCny() {
+	m.amount_cny = nil
+	m.addamount_cny = nil
+}
+
+// SetExchangeRate sets the "exchange_rate" field.
+func (m *PaymentOrderMutation) SetExchangeRate(f float64) {
+	m.exchange_rate = &f
+	m.addexchange_rate = nil
+}
+
+// ExchangeRate returns the value of the "exchange_rate" field in the mutation.
+func (m *PaymentOrderMutation) ExchangeRate() (r float64, exists bool) {
+	v := m.exchange_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExchangeRate returns the old "exchange_rate" field's value of the PaymentOrder entity.
+// If the PaymentOrder object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PaymentOrderMutation) OldExchangeRate(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExchangeRate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExchangeRate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExchangeRate: %w", err)
+	}
+	return oldValue.ExchangeRate, nil
+}
+
+// AddExchangeRate adds f to the "exchange_rate" field.
+func (m *PaymentOrderMutation) AddExchangeRate(f float64) {
+	if m.addexchange_rate != nil {
+		*m.addexchange_rate += f
+	} else {
+		m.addexchange_rate = &f
+	}
+}
+
+// AddedExchangeRate returns the value that was added to the "exchange_rate" field in this mutation.
+func (m *PaymentOrderMutation) AddedExchangeRate() (r float64, exists bool) {
+	v := m.addexchange_rate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetExchangeRate resets all changes to the "exchange_rate" field.
+func (m *PaymentOrderMutation) ResetExchangeRate() {
+	m.exchange_rate = nil
+	m.addexchange_rate = nil
 }
 
 // SetAmount sets the "amount" field.
@@ -12111,6 +12228,42 @@ func (m *PaymentOrderMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetCommissionStatus sets the "commission_status" field.
+func (m *PaymentOrderMutation) SetCommissionStatus(s string) {
+	m.commission_status = &s
+}
+
+// CommissionStatus returns the value of the "commission_status" field in the mutation.
+func (m *PaymentOrderMutation) CommissionStatus() (r string, exists bool) {
+	v := m.commission_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommissionStatus returns the old "commission_status" field's value of the PaymentOrder entity.
+// If the PaymentOrder object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PaymentOrderMutation) OldCommissionStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommissionStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommissionStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommissionStatus: %w", err)
+	}
+	return oldValue.CommissionStatus, nil
+}
+
+// ResetCommissionStatus resets all changes to the "commission_status" field.
+func (m *PaymentOrderMutation) ResetCommissionStatus() {
+	m.commission_status = nil
+}
+
 // SetTradeNo sets the "trade_no" field.
 func (m *PaymentOrderMutation) SetTradeNo(s string) {
 	m.trade_no = &s
@@ -12315,12 +12468,18 @@ func (m *PaymentOrderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PaymentOrderMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 14)
 	if m.order_no != nil {
 		fields = append(fields, paymentorder.FieldOrderNo)
 	}
 	if m.user_id != nil {
 		fields = append(fields, paymentorder.FieldUserID)
+	}
+	if m.amount_cny != nil {
+		fields = append(fields, paymentorder.FieldAmountCny)
+	}
+	if m.exchange_rate != nil {
+		fields = append(fields, paymentorder.FieldExchangeRate)
 	}
 	if m.amount != nil {
 		fields = append(fields, paymentorder.FieldAmount)
@@ -12336,6 +12495,9 @@ func (m *PaymentOrderMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, paymentorder.FieldStatus)
+	}
+	if m.commission_status != nil {
+		fields = append(fields, paymentorder.FieldCommissionStatus)
 	}
 	if m.trade_no != nil {
 		fields = append(fields, paymentorder.FieldTradeNo)
@@ -12361,6 +12523,10 @@ func (m *PaymentOrderMutation) Field(name string) (ent.Value, bool) {
 		return m.OrderNo()
 	case paymentorder.FieldUserID:
 		return m.UserID()
+	case paymentorder.FieldAmountCny:
+		return m.AmountCny()
+	case paymentorder.FieldExchangeRate:
+		return m.ExchangeRate()
 	case paymentorder.FieldAmount:
 		return m.Amount()
 	case paymentorder.FieldBonus:
@@ -12371,6 +12537,8 @@ func (m *PaymentOrderMutation) Field(name string) (ent.Value, bool) {
 		return m.Channel()
 	case paymentorder.FieldStatus:
 		return m.Status()
+	case paymentorder.FieldCommissionStatus:
+		return m.CommissionStatus()
 	case paymentorder.FieldTradeNo:
 		return m.TradeNo()
 	case paymentorder.FieldPaidAt:
@@ -12392,6 +12560,10 @@ func (m *PaymentOrderMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldOrderNo(ctx)
 	case paymentorder.FieldUserID:
 		return m.OldUserID(ctx)
+	case paymentorder.FieldAmountCny:
+		return m.OldAmountCny(ctx)
+	case paymentorder.FieldExchangeRate:
+		return m.OldExchangeRate(ctx)
 	case paymentorder.FieldAmount:
 		return m.OldAmount(ctx)
 	case paymentorder.FieldBonus:
@@ -12402,6 +12574,8 @@ func (m *PaymentOrderMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldChannel(ctx)
 	case paymentorder.FieldStatus:
 		return m.OldStatus(ctx)
+	case paymentorder.FieldCommissionStatus:
+		return m.OldCommissionStatus(ctx)
 	case paymentorder.FieldTradeNo:
 		return m.OldTradeNo(ctx)
 	case paymentorder.FieldPaidAt:
@@ -12432,6 +12606,20 @@ func (m *PaymentOrderMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
+		return nil
+	case paymentorder.FieldAmountCny:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmountCny(v)
+		return nil
+	case paymentorder.FieldExchangeRate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExchangeRate(v)
 		return nil
 	case paymentorder.FieldAmount:
 		v, ok := value.(float64)
@@ -12467,6 +12655,13 @@ func (m *PaymentOrderMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case paymentorder.FieldCommissionStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommissionStatus(v)
 		return nil
 	case paymentorder.FieldTradeNo:
 		v, ok := value.(string)
@@ -12507,6 +12702,12 @@ func (m *PaymentOrderMutation) AddedFields() []string {
 	if m.adduser_id != nil {
 		fields = append(fields, paymentorder.FieldUserID)
 	}
+	if m.addamount_cny != nil {
+		fields = append(fields, paymentorder.FieldAmountCny)
+	}
+	if m.addexchange_rate != nil {
+		fields = append(fields, paymentorder.FieldExchangeRate)
+	}
 	if m.addamount != nil {
 		fields = append(fields, paymentorder.FieldAmount)
 	}
@@ -12526,6 +12727,10 @@ func (m *PaymentOrderMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case paymentorder.FieldUserID:
 		return m.AddedUserID()
+	case paymentorder.FieldAmountCny:
+		return m.AddedAmountCny()
+	case paymentorder.FieldExchangeRate:
+		return m.AddedExchangeRate()
 	case paymentorder.FieldAmount:
 		return m.AddedAmount()
 	case paymentorder.FieldBonus:
@@ -12547,6 +12752,20 @@ func (m *PaymentOrderMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddUserID(v)
+		return nil
+	case paymentorder.FieldAmountCny:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmountCny(v)
+		return nil
+	case paymentorder.FieldExchangeRate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExchangeRate(v)
 		return nil
 	case paymentorder.FieldAmount:
 		v, ok := value.(float64)
@@ -12617,6 +12836,12 @@ func (m *PaymentOrderMutation) ResetField(name string) error {
 	case paymentorder.FieldUserID:
 		m.ResetUserID()
 		return nil
+	case paymentorder.FieldAmountCny:
+		m.ResetAmountCny()
+		return nil
+	case paymentorder.FieldExchangeRate:
+		m.ResetExchangeRate()
+		return nil
 	case paymentorder.FieldAmount:
 		m.ResetAmount()
 		return nil
@@ -12631,6 +12856,9 @@ func (m *PaymentOrderMutation) ResetField(name string) error {
 		return nil
 	case paymentorder.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case paymentorder.FieldCommissionStatus:
+		m.ResetCommissionStatus()
 		return nil
 	case paymentorder.FieldTradeNo:
 		m.ResetTradeNo()
