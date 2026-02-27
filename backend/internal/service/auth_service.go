@@ -196,11 +196,11 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 	if s.referralService != nil {
 		if referralCode != "" {
 			if err := s.referralService.RecordReferral(ctx, user.ID, referralCode); err != nil {
-				log.Printf("[Auth] Failed to record referral for user %d: %v", user.ID, err)
+				logger.LegacyPrintf("service.auth", "[Auth] Failed to record referral for user %d: %v", user.ID, err)
 			}
 		}
 		if _, err := s.referralService.EnsureInviteCode(ctx, user.ID); err != nil {
-			log.Printf("[Auth] Failed to generate invite code for user %d: %v", user.ID, err)
+			logger.LegacyPrintf("service.auth", "[Auth] Failed to generate invite code for user %d: %v", user.ID, err)
 		}
 	}
 
@@ -229,9 +229,9 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 		amount := s.settingService.GetFreeTrialAmount(ctx)
 		if amount > 0 {
 			if err := s.userRepo.UpdateBalance(ctx, user.ID, amount); err != nil {
-				log.Printf("[Auth] Failed to grant free trial credit to user %d: %v", user.ID, err)
+				logger.LegacyPrintf("service.auth", "[Auth] Failed to grant free trial credit to user %d: %v", user.ID, err)
 			} else {
-				log.Printf("[Auth] Free trial credit %.4f USD granted to user %d", amount, user.ID)
+				logger.LegacyPrintf("service.auth", "[Auth] Free trial credit %.4f USD granted to user %d", amount, user.ID)
 			}
 		}
 	}

@@ -28,6 +28,8 @@ type Tx struct {
 	ErrorPassthroughRule *ErrorPassthroughRuleClient
 	// Group is the client for interacting with the Group builders.
 	Group *GroupClient
+	// IdempotencyRecord is the client for interacting with the IdempotencyRecord builders.
+	IdempotencyRecord *IdempotencyRecordClient
 	// PaymentOrder is the client for interacting with the PaymentOrder builders.
 	PaymentOrder *PaymentOrderClient
 	// PromoCode is the client for interacting with the PromoCode builders.
@@ -44,6 +46,8 @@ type Tx struct {
 	Referral *ReferralClient
 	// ReferralCommission is the client for interacting with the ReferralCommission builders.
 	ReferralCommission *ReferralCommissionClient
+	// SecuritySecret is the client for interacting with the SecuritySecret builders.
+	SecuritySecret *SecuritySecretClient
 	// Setting is the client for interacting with the Setting builders.
 	Setting *SettingClient
 	// UsageCleanupTask is the client for interacting with the UsageCleanupTask builders.
@@ -200,6 +204,7 @@ func (tx *Tx) init() {
 	tx.AnnouncementRead = NewAnnouncementReadClient(tx.config)
 	tx.ErrorPassthroughRule = NewErrorPassthroughRuleClient(tx.config)
 	tx.Group = NewGroupClient(tx.config)
+	tx.IdempotencyRecord = NewIdempotencyRecordClient(tx.config)
 	tx.PaymentOrder = NewPaymentOrderClient(tx.config)
 	tx.PromoCode = NewPromoCodeClient(tx.config)
 	tx.PromoCodeUsage = NewPromoCodeUsageClient(tx.config)
@@ -208,6 +213,7 @@ func (tx *Tx) init() {
 	tx.RedeemCode = NewRedeemCodeClient(tx.config)
 	tx.Referral = NewReferralClient(tx.config)
 	tx.ReferralCommission = NewReferralCommissionClient(tx.config)
+	tx.SecuritySecret = NewSecuritySecretClient(tx.config)
 	tx.Setting = NewSettingClient(tx.config)
 	tx.UsageCleanupTask = NewUsageCleanupTaskClient(tx.config)
 	tx.UsageLog = NewUsageLogClient(tx.config)
