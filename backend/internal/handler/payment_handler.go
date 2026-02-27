@@ -168,7 +168,9 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 			return
 		}
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] handle callback failed for order %s: %v", payResult.OutTradeNo, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "PROCESS_FAILED"})
+		// M2: Use standard V3NotifyRsp format (not gin.H) for consistent WeChat protocol compliance.
+		// 5xx triggers WeChat retry, which is desired for transient DB failures.
+		c.JSON(http.StatusInternalServerError, &wechat.V3NotifyRsp{Code: "FAIL", Message: "process failed"})
 		return
 	}
 

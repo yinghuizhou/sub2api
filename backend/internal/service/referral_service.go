@@ -165,6 +165,7 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 
 	if err := s.repo.CreateCommission(txCtx, commission); err != nil {
 		// M2: If order_id unique constraint violation, commission already settled (idempotent).
+		// Safe: Ent's generated Save() wraps sqlgraph constraint errors as *ConstraintError.
 		if dbent.IsConstraintError(err) {
 			return nil
 		}

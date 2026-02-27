@@ -1,7 +1,15 @@
--- Add foreign key constraints for referral tables
--- C1: Use RESTRICT instead of CASCADE to protect financial records from accidental deletion.
--- Deleting a user with commission records must be explicitly handled (soft-delete or manual cleanup).
+-- Add foreign key constraints for payment and referral tables.
+-- Use RESTRICT instead of CASCADE to protect financial records from accidental deletion.
+-- Deleting a user with orders/commission records must be explicitly handled (soft-delete or manual cleanup).
 -- Using DO blocks to make idempotent (skip if constraint already exists).
+
+-- C1: payment_orders.user_id → users(id)
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_payment_orders_user') THEN
+        ALTER TABLE payment_orders ADD CONSTRAINT fk_payment_orders_user
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT;
+    END IF;
+END $$;
 
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_referrals_inviter') THEN
