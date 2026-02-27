@@ -90,7 +90,7 @@ func TestEnsureInviteCode_WithoutRepo(t *testing.T) {
 
 // stubReferralRepo implements service.ReferralRepository for unit tests.
 type stubReferralRepo struct {
-	codeToUser          map[string]int64
+	codeToUser           map[string]int64
 	createReferralCalled bool
 }
 
