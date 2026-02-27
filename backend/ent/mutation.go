@@ -16454,8 +16454,8 @@ type RechargePackageMutation struct {
 	op             Op
 	typ            string
 	id             *int64
-	amount         *float64
-	addamount      *float64
+	amount_cny     *float64
+	addamount_cny  *float64
 	bonus_rate     *float64
 	addbonus_rate  *float64
 	bonus_fixed    *float64
@@ -16570,60 +16570,60 @@ func (m *RechargePackageMutation) IDs(ctx context.Context) ([]int64, error) {
 	}
 }
 
-// SetAmount sets the "amount" field.
-func (m *RechargePackageMutation) SetAmount(f float64) {
-	m.amount = &f
-	m.addamount = nil
+// SetAmountCny sets the "amount_cny" field.
+func (m *RechargePackageMutation) SetAmountCny(f float64) {
+	m.amount_cny = &f
+	m.addamount_cny = nil
 }
 
-// Amount returns the value of the "amount" field in the mutation.
-func (m *RechargePackageMutation) Amount() (r float64, exists bool) {
-	v := m.amount
+// AmountCny returns the value of the "amount_cny" field in the mutation.
+func (m *RechargePackageMutation) AmountCny() (r float64, exists bool) {
+	v := m.amount_cny
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldAmount returns the old "amount" field's value of the RechargePackage entity.
+// OldAmountCny returns the old "amount_cny" field's value of the RechargePackage entity.
 // If the RechargePackage object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RechargePackageMutation) OldAmount(ctx context.Context) (v float64, err error) {
+func (m *RechargePackageMutation) OldAmountCny(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAmount is only allowed on UpdateOne operations")
+		return v, errors.New("OldAmountCny is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAmount requires an ID field in the mutation")
+		return v, errors.New("OldAmountCny requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAmount: %w", err)
+		return v, fmt.Errorf("querying old value for OldAmountCny: %w", err)
 	}
-	return oldValue.Amount, nil
+	return oldValue.AmountCny, nil
 }
 
-// AddAmount adds f to the "amount" field.
-func (m *RechargePackageMutation) AddAmount(f float64) {
-	if m.addamount != nil {
-		*m.addamount += f
+// AddAmountCny adds f to the "amount_cny" field.
+func (m *RechargePackageMutation) AddAmountCny(f float64) {
+	if m.addamount_cny != nil {
+		*m.addamount_cny += f
 	} else {
-		m.addamount = &f
+		m.addamount_cny = &f
 	}
 }
 
-// AddedAmount returns the value that was added to the "amount" field in this mutation.
-func (m *RechargePackageMutation) AddedAmount() (r float64, exists bool) {
-	v := m.addamount
+// AddedAmountCny returns the value that was added to the "amount_cny" field in this mutation.
+func (m *RechargePackageMutation) AddedAmountCny() (r float64, exists bool) {
+	v := m.addamount_cny
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetAmount resets all changes to the "amount" field.
-func (m *RechargePackageMutation) ResetAmount() {
-	m.amount = nil
-	m.addamount = nil
+// ResetAmountCny resets all changes to the "amount_cny" field.
+func (m *RechargePackageMutation) ResetAmountCny() {
+	m.amount_cny = nil
+	m.addamount_cny = nil
 }
 
 // SetBonusRate sets the "bonus_rate" field.
@@ -16986,8 +16986,8 @@ func (m *RechargePackageMutation) Type() string {
 // AddedFields().
 func (m *RechargePackageMutation) Fields() []string {
 	fields := make([]string, 0, 8)
-	if m.amount != nil {
-		fields = append(fields, rechargepackage.FieldAmount)
+	if m.amount_cny != nil {
+		fields = append(fields, rechargepackage.FieldAmountCny)
 	}
 	if m.bonus_rate != nil {
 		fields = append(fields, rechargepackage.FieldBonusRate)
@@ -17018,8 +17018,8 @@ func (m *RechargePackageMutation) Fields() []string {
 // schema.
 func (m *RechargePackageMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case rechargepackage.FieldAmount:
-		return m.Amount()
+	case rechargepackage.FieldAmountCny:
+		return m.AmountCny()
 	case rechargepackage.FieldBonusRate:
 		return m.BonusRate()
 	case rechargepackage.FieldBonusFixed:
@@ -17043,8 +17043,8 @@ func (m *RechargePackageMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *RechargePackageMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case rechargepackage.FieldAmount:
-		return m.OldAmount(ctx)
+	case rechargepackage.FieldAmountCny:
+		return m.OldAmountCny(ctx)
 	case rechargepackage.FieldBonusRate:
 		return m.OldBonusRate(ctx)
 	case rechargepackage.FieldBonusFixed:
@@ -17068,12 +17068,12 @@ func (m *RechargePackageMutation) OldField(ctx context.Context, name string) (en
 // type.
 func (m *RechargePackageMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case rechargepackage.FieldAmount:
+	case rechargepackage.FieldAmountCny:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetAmount(v)
+		m.SetAmountCny(v)
 		return nil
 	case rechargepackage.FieldBonusRate:
 		v, ok := value.(float64)
@@ -17132,8 +17132,8 @@ func (m *RechargePackageMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *RechargePackageMutation) AddedFields() []string {
 	var fields []string
-	if m.addamount != nil {
-		fields = append(fields, rechargepackage.FieldAmount)
+	if m.addamount_cny != nil {
+		fields = append(fields, rechargepackage.FieldAmountCny)
 	}
 	if m.addbonus_rate != nil {
 		fields = append(fields, rechargepackage.FieldBonusRate)
@@ -17152,8 +17152,8 @@ func (m *RechargePackageMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *RechargePackageMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case rechargepackage.FieldAmount:
-		return m.AddedAmount()
+	case rechargepackage.FieldAmountCny:
+		return m.AddedAmountCny()
 	case rechargepackage.FieldBonusRate:
 		return m.AddedBonusRate()
 	case rechargepackage.FieldBonusFixed:
@@ -17169,12 +17169,12 @@ func (m *RechargePackageMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *RechargePackageMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case rechargepackage.FieldAmount:
+	case rechargepackage.FieldAmountCny:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddAmount(v)
+		m.AddAmountCny(v)
 		return nil
 	case rechargepackage.FieldBonusRate:
 		v, ok := value.(float64)
@@ -17233,8 +17233,8 @@ func (m *RechargePackageMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *RechargePackageMutation) ResetField(name string) error {
 	switch name {
-	case rechargepackage.FieldAmount:
-		m.ResetAmount()
+	case rechargepackage.FieldAmountCny:
+		m.ResetAmountCny()
 		return nil
 	case rechargepackage.FieldBonusRate:
 		m.ResetBonusRate()

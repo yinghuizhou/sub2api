@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"math"
+	"sync/atomic"
 	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
@@ -13,8 +15,9 @@ import (
 )
 
 var (
-	ErrPaymentOrderNotFound = infraerrors.NotFound("PAYMENT_ORDER_NOT_FOUND", "payment order not found")
-	ErrPaymentAlreadyPaid   = infraerrors.Conflict("PAYMENT_ALREADY_PAID", "order already paid")
+	ErrPaymentOrderNotFound  = infraerrors.NotFound("PAYMENT_ORDER_NOT_FOUND", "payment order not found")
+	ErrPaymentAlreadyPaid    = infraerrors.Conflict("PAYMENT_ALREADY_PAID", "order already paid")
+	ErrPaymentAmountMismatch = infraerrors.BadRequest("PAYMENT_AMOUNT_MISMATCH", "paid amount does not match order amount")
 )
 
 // PaymentOrderRepository defines data access for payment orders.
@@ -82,7 +85,7 @@ type PaymentService struct {
 	userRepo        UserRepository
 	entClient       *dbent.Client
 	referralService *ReferralService
-	rate            float64 // CNY to USD exchange rate
+	rate            atomic.Value // stores float64, CNY to USD exchange rate
 }
 
 // NewPaymentService creates a new PaymentService.
@@ -98,28 +101,37 @@ func NewPaymentService(
 	if cfg != nil && cfg.Payment.CNYToUSDRate > 0 {
 		rate = cfg.Payment.CNYToUSDRate
 	}
-	return &PaymentService{
+	svc := &PaymentService{
 		orderRepo:       orderRepo,
 		packageRepo:     packageRepo,
 		userRepo:        userRepo,
 		entClient:       entClient,
 		referralService: referralService,
-		rate:            rate,
 	}
+	svc.rate.Store(rate)
+	return svc
 }
 
-// SetRate overrides the CNY→USD exchange rate (used for testing or runtime config).
-func (s *PaymentService) SetRate(rate float64) { s.rate = rate }
+// SetRate overrides the CNY→USD exchange rate (thread-safe).
+func (s *PaymentService) SetRate(rate float64) { s.rate.Store(rate) }
+
+// getRate returns the current exchange rate (thread-safe).
+func (s *PaymentService) getRate() float64 { return s.rate.Load().(float64) }
 
 // CreateOrder creates a new pending payment order.
 func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInput) (*PaymentOrder, error) {
-	amountUSD := input.AmountCNY / s.rate
+	rate := s.getRate()
+	amountUSD := input.AmountCNY / rate
 	bonus := 0.0
 
 	if input.PackageID != nil && s.packageRepo != nil {
 		pkg, err := s.packageRepo.GetByID(ctx, *input.PackageID)
 		if err != nil {
 			return nil, fmt.Errorf("package not found: %w", err)
+		}
+		// C2: Validate amount matches package when package is specified
+		if math.Abs(input.AmountCNY-pkg.AmountCNY) > 0.01 {
+			return nil, infraerrors.BadRequest("AMOUNT_MISMATCH", fmt.Sprintf("amount_cny must match package amount: %.2f", pkg.AmountCNY))
 		}
 		bonus = amountUSD*pkg.BonusRate + pkg.BonusFixed
 	}
@@ -128,7 +140,7 @@ func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInpu
 		OrderNo:      generateOrderNo(),
 		UserID:       input.UserID,
 		AmountCNY:    input.AmountCNY,
-		ExchangeRate: s.rate,
+		ExchangeRate: rate,
 		AmountUSD:    amountUSD,
 		Bonus:        bonus,
 		TotalCredit:  amountUSD + bonus,
@@ -146,8 +158,10 @@ func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInpu
 }
 
 // HandleCallback processes a payment callback (idempotent, transactional).
-// Atomically: update order status → credit user balance → settle referral commission.
-func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo string) error {
+// paidAmountCNY is the actual amount paid (from payment provider), used for amount verification.
+// Atomically: verify amount → update order status → credit user balance.
+// Commission settlement runs in a separate transaction to avoid blocking payment on commission failure.
+func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo string, paidAmountCNY float64) error {
 	tx, err := s.entClient.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
@@ -172,30 +186,46 @@ func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo st
 		return fmt.Errorf("get order: %w", err)
 	}
 
+	// B2: Verify paid amount matches order amount (tolerance: 0.01 CNY)
+	if math.Abs(paidAmountCNY-order.AmountCNY) > 0.01 {
+		// Rollback the status update — mark as failed instead
+		logger.LegacyPrintf("service.payment", "[Payment] AMOUNT MISMATCH for order %s: paid=%.2f expected=%.2f", orderNo, paidAmountCNY, order.AmountCNY)
+		return ErrPaymentAmountMismatch
+	}
+
 	// Credit user balance
 	if err := s.userRepo.UpdateBalance(txCtx, order.UserID, order.TotalCredit); err != nil {
 		return fmt.Errorf("credit balance: %w", err)
 	}
 
-	// Settle referral commission within the same transaction
-	commissionStatus := "none"
-	if s.referralService != nil {
-		if err := s.referralService.SettleCommission(txCtx, order.UserID, order.ID, order.AmountUSD); err != nil {
-			commissionStatus = "failed"
-			logger.LegacyPrintf("service.payment", "[Payment] Failed to settle commission for order %s: %v", orderNo, err)
-		} else {
-			commissionStatus = "settled"
-		}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit payment: %w", err)
 	}
 
-	// Update commission status on the order
-	if commissionStatus != "none" {
-		if _, err := s.orderRepo.UpdateCommissionStatus(txCtx, orderNo, commissionStatus); err != nil {
-			logger.LegacyPrintf("service.payment", "[Payment] Failed to update commission status for order %s: %v", orderNo, err)
-		}
+	// B4: Settle referral commission in a SEPARATE transaction.
+	// This ensures payment is never blocked by commission failure.
+	// Failed commissions are tracked via commission_status for later reconciliation.
+	s.settleCommissionAsync(ctx, orderNo, order.UserID, order.ID, order.AmountUSD)
+
+	return nil
+}
+
+// settleCommissionAsync settles referral commission in its own transaction,
+// separate from the payment transaction to prevent commission failures from blocking payments.
+func (s *PaymentService) settleCommissionAsync(ctx context.Context, orderNo string, userID, orderID int64, amountUSD float64) {
+	if s.referralService == nil {
+		return
 	}
 
-	return tx.Commit()
+	commissionStatus := "settled"
+	if err := s.referralService.SettleCommission(ctx, userID, orderID, amountUSD); err != nil {
+		commissionStatus = "failed"
+		logger.LegacyPrintf("service.payment", "[Payment] Failed to settle commission for order %s: %v (payment already committed)", orderNo, err)
+	}
+
+	if _, err := s.orderRepo.UpdateCommissionStatus(ctx, orderNo, commissionStatus); err != nil {
+		logger.LegacyPrintf("service.payment", "[Payment] Failed to update commission status for order %s: %v", orderNo, err)
+	}
 }
 
 // ListPackages returns recharge packages.

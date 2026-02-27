@@ -1,14 +1,14 @@
 -- 邀请关系
-CREATE TABLE referrals (
+CREATE TABLE IF NOT EXISTS referrals (
     id          BIGSERIAL PRIMARY KEY,
     inviter_id  BIGINT NOT NULL,
     invitee_id  BIGINT NOT NULL UNIQUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_referrals_inviter_id ON referrals(inviter_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_inviter_id ON referrals(inviter_id);
 
 -- 返佣记录
-CREATE TABLE referral_commissions (
+CREATE TABLE IF NOT EXISTS referral_commissions (
     id                BIGSERIAL PRIMARY KEY,
     inviter_id        BIGINT NOT NULL,
     invitee_id        BIGINT NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE referral_commissions (
     settled_at        TIMESTAMPTZ,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_referral_commissions_inviter_id ON referral_commissions(inviter_id);
+CREATE INDEX IF NOT EXISTS idx_referral_commissions_inviter_id ON referral_commissions(inviter_id);
 
 -- users 表新增邀请码字段
 ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_code VARCHAR(16) UNIQUE;

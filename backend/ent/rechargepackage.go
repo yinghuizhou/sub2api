@@ -17,8 +17,8 @@ type RechargePackage struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
-	// Amount holds the value of the "amount" field.
-	Amount float64 `json:"amount,omitempty"`
+	// AmountCny holds the value of the "amount_cny" field.
+	AmountCny float64 `json:"amount_cny,omitempty"`
 	// BonusRate holds the value of the "bonus_rate" field.
 	BonusRate float64 `json:"bonus_rate,omitempty"`
 	// BonusFixed holds the value of the "bonus_fixed" field.
@@ -43,7 +43,7 @@ func (*RechargePackage) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case rechargepackage.FieldIsActive:
 			values[i] = new(sql.NullBool)
-		case rechargepackage.FieldAmount, rechargepackage.FieldBonusRate, rechargepackage.FieldBonusFixed:
+		case rechargepackage.FieldAmountCny, rechargepackage.FieldBonusRate, rechargepackage.FieldBonusFixed:
 			values[i] = new(sql.NullFloat64)
 		case rechargepackage.FieldID, rechargepackage.FieldSortOrder:
 			values[i] = new(sql.NullInt64)
@@ -72,11 +72,11 @@ func (_m *RechargePackage) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
-		case rechargepackage.FieldAmount:
+		case rechargepackage.FieldAmountCny:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
-				return fmt.Errorf("unexpected type %T for field amount", values[i])
+				return fmt.Errorf("unexpected type %T for field amount_cny", values[i])
 			} else if value.Valid {
-				_m.Amount = value.Float64
+				_m.AmountCny = value.Float64
 			}
 		case rechargepackage.FieldBonusRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -157,8 +157,8 @@ func (_m *RechargePackage) String() string {
 	var builder strings.Builder
 	builder.WriteString("RechargePackage(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("amount=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Amount))
+	builder.WriteString("amount_cny=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AmountCny))
 	builder.WriteString(", ")
 	builder.WriteString("bonus_rate=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BonusRate))

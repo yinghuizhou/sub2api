@@ -264,12 +264,12 @@ func (_q *RechargePackageQuery) Clone() *RechargePackageQuery {
 // Example:
 //
 //	var v []struct {
-//		Amount float64 `json:"amount,omitempty"`
+//		AmountCny float64 `json:"amount_cny,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.RechargePackage.Query().
-//		GroupBy(rechargepackage.FieldAmount).
+//		GroupBy(rechargepackage.FieldAmountCny).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *RechargePackageQuery) GroupBy(field string, fields ...string) *RechargePackageGroupBy {
@@ -287,11 +287,11 @@ func (_q *RechargePackageQuery) GroupBy(field string, fields ...string) *Recharg
 // Example:
 //
 //	var v []struct {
-//		Amount float64 `json:"amount,omitempty"`
+//		AmountCny float64 `json:"amount_cny,omitempty"`
 //	}
 //
 //	client.RechargePackage.Query().
-//		Select(rechargepackage.FieldAmount).
+//		Select(rechargepackage.FieldAmountCny).
 //		Scan(ctx, &v)
 func (_q *RechargePackageQuery) Select(fields ...string) *RechargePackageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

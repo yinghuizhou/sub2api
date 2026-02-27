@@ -180,6 +180,7 @@ type WechatPayConfig struct {
 
 // AlipayConfig 支付宝配置
 type AlipayConfig struct {
+	AppID     string `mapstructure:"app_id"`     // 支付宝应用 APPID（用于回调验证）
 	PublicKey string `mapstructure:"public_key"` // 支付宝公钥（RSA2）
 }
 

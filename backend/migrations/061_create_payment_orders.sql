@@ -1,7 +1,7 @@
 -- 充值套餐配置
-CREATE TABLE recharge_packages (
+CREATE TABLE IF NOT EXISTS recharge_packages (
     id          BIGSERIAL PRIMARY KEY,
-    amount      DECIMAL(20,8) NOT NULL,
+    amount_cny  DECIMAL(20,8) NOT NULL,
     bonus_rate  DECIMAL(5,4) NOT NULL DEFAULT 0,
     bonus_fixed DECIMAL(20,8) NOT NULL DEFAULT 0,
     label       VARCHAR(50),
@@ -12,7 +12,7 @@ CREATE TABLE recharge_packages (
 );
 
 -- 支付订单
-CREATE TABLE payment_orders (
+CREATE TABLE IF NOT EXISTS payment_orders (
     id           BIGSERIAL PRIMARY KEY,
     order_no     VARCHAR(64) UNIQUE NOT NULL,
     user_id      BIGINT NOT NULL,
@@ -27,6 +27,6 @@ CREATE TABLE payment_orders (
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_payment_orders_user_id ON payment_orders(user_id);
-CREATE INDEX idx_payment_orders_status ON payment_orders(status);
-CREATE INDEX idx_payment_orders_created_at ON payment_orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_payment_orders_user_id ON payment_orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_orders_status ON payment_orders(status);
+CREATE INDEX IF NOT EXISTS idx_payment_orders_created_at ON payment_orders(created_at);

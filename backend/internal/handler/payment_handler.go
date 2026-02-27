@@ -23,16 +23,34 @@ import (
 type PaymentHandler struct {
 	paymentService *service.PaymentService
 	cfg            *config.Config
+	wxPubKey       *rsa.PublicKey // cached WeChat public key, loaded once at startup
 }
 
 // NewPaymentHandler creates a new PaymentHandler.
+// Loads and caches the WeChat public key at startup to avoid per-request disk I/O.
 func NewPaymentHandler(svc *service.PaymentService, cfg *config.Config) *PaymentHandler {
-	return &PaymentHandler{paymentService: svc, cfg: cfg}
+	h := &PaymentHandler{paymentService: svc, cfg: cfg}
+	// Pre-load WeChat public key if configured
+	if wxCfg := cfg.Payment.Wechat; wxCfg.PublicKeyPath != "" {
+		pemBytes, err := os.ReadFile(wxCfg.PublicKeyPath)
+		if err != nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: failed to read wechat public key: %v", err)
+		} else if block, _ := pem.Decode(pemBytes); block == nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: invalid PEM data in %s", wxCfg.PublicKeyPath)
+		} else if pub, err := x509.ParsePKIXPublicKey(block.Bytes); err != nil {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: parse public key failed: %v", err)
+		} else if rsaPub, ok := pub.(*rsa.PublicKey); !ok {
+			logger.LegacyPrintf("handler.payment", "[PaymentHandler] WARNING: not an RSA public key")
+		} else {
+			h.wxPubKey = rsaPub
+		}
+	}
+	return h
 }
 
 // CreateOrderRequest is the request body for creating a payment order.
 type CreateOrderRequest struct {
-	AmountCNY float64 `json:"amount_cny" binding:"required,gt=0"`
+	AmountCNY float64 `json:"amount_cny" binding:"required,gte=1,lte=100000"`
 	PackageID *int64  `json:"package_id"`
 	Channel   string  `json:"channel" binding:"required,oneof=wechat alipay"`
 }
@@ -100,7 +118,7 @@ func (h *PaymentHandler) ListPackages(c *gin.Context) {
 // WechatCallback handles POST /api/v1/payment/callback/wechat
 func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 	wxCfg := h.cfg.Payment.Wechat
-	if wxCfg.APIV3Key == "" || wxCfg.PublicKeyPath == "" {
+	if wxCfg.APIV3Key == "" || h.wxPubKey == nil {
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] wechat payment not configured")
 		c.JSON(http.StatusServiceUnavailable, gin.H{"code": "NOT_CONFIGURED"})
 		return
@@ -113,32 +131,8 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 		return
 	}
 
-	pemBytes, err := os.ReadFile(wxCfg.PublicKeyPath)
-	if err != nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] read public key failed: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-	block, _ := pem.Decode(pemBytes)
-	if block == nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] invalid PEM data")
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] parse public key failed: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-	rsaPub, ok := pub.(*rsa.PublicKey)
-	if !ok {
-		logger.LegacyPrintf("handler.payment", "[WechatCallback] not an RSA public key")
-		c.JSON(http.StatusInternalServerError, gin.H{"code": "INTERNAL_ERROR"})
-		return
-	}
-
-	if err := notifyReq.VerifySignByPK(rsaPub); err != nil {
+	// Verify signature using cached public key (C4: no disk I/O per request)
+	if err := notifyReq.VerifySignByPK(h.wxPubKey); err != nil {
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] signature verification failed: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"code": "SIGNATURE_INVALID"})
 		return
@@ -151,7 +145,16 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 		return
 	}
 
-	if err := h.paymentService.HandleCallback(c.Request.Context(), payResult.OutTradeNo, payResult.TransactionId); err != nil {
+	// B1: Check trade state — only process successful payments
+	if payResult.TradeState != "SUCCESS" {
+		logger.LegacyPrintf("handler.payment", "[WechatCallback] non-success trade state: %s for order %s", payResult.TradeState, payResult.OutTradeNo)
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: "SUCCESS", Message: "成功"})
+		return
+	}
+
+	// B2: Verify payment amount matches order (WeChat amount is in cents)
+	paidAmountCNY := float64(payResult.Amount.Total) / 100.0
+	if err := h.paymentService.HandleCallback(c.Request.Context(), payResult.OutTradeNo, payResult.TransactionId, paidAmountCNY); err != nil {
 		logger.LegacyPrintf("handler.payment", "[WechatCallback] handle callback failed for order %s: %v", payResult.OutTradeNo, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"code": "PROCESS_FAILED"})
 		return
@@ -163,7 +166,7 @@ func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 // AlipayCallback handles POST /api/v1/payment/callback/alipay
 func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 	aliCfg := h.cfg.Payment.Alipay
-	if aliCfg.PublicKey == "" {
+	if aliCfg.PublicKey == "" || aliCfg.AppID == "" {
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] alipay payment not configured")
 		c.String(http.StatusServiceUnavailable, "not configured")
 		return
@@ -183,6 +186,13 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 		return
 	}
 
+	// B3: Verify app_id to prevent cross-merchant notification replay
+	if notifyReq.Get("app_id") != aliCfg.AppID {
+		logger.LegacyPrintf("handler.payment", "[AlipayCallback] app_id mismatch: got %s, expected %s", notifyReq.Get("app_id"), aliCfg.AppID)
+		c.String(http.StatusUnauthorized, "app_id mismatch")
+		return
+	}
+
 	orderNo := notifyReq.Get("out_trade_no")
 	tradeNo := notifyReq.Get("trade_no")
 	tradeStatus := notifyReq.Get("trade_status")
@@ -192,7 +202,16 @@ func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 		return
 	}
 
-	if err := h.paymentService.HandleCallback(c.Request.Context(), orderNo, tradeNo); err != nil {
+	// B2: Verify payment amount matches order
+	totalAmountStr := notifyReq.Get("total_amount")
+	paidAmountCNY, err := strconv.ParseFloat(totalAmountStr, 64)
+	if err != nil {
+		logger.LegacyPrintf("handler.payment", "[AlipayCallback] invalid total_amount: %s", totalAmountStr)
+		c.String(http.StatusBadRequest, "invalid amount")
+		return
+	}
+
+	if err := h.paymentService.HandleCallback(c.Request.Context(), orderNo, tradeNo, paidAmountCNY); err != nil {
 		logger.LegacyPrintf("handler.payment", "[AlipayCallback] handle callback failed for order %s: %v", orderNo, err)
 		c.String(http.StatusInternalServerError, "process failed")
 		return

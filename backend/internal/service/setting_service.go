@@ -363,10 +363,11 @@ func (s *SettingService) GetDefaultBalance(ctx context.Context) float64 {
 }
 
 // IsFreeTrialEnabled returns whether new user free trial credit is enabled.
+// Defaults to false (disabled) when the setting does not exist in the database.
 func (s *SettingService) IsFreeTrialEnabled(ctx context.Context) bool {
 	value, err := s.settingRepo.GetValue(ctx, "free_trial.enabled")
 	if err != nil {
-		return true // default enabled
+		return false // default disabled — must be explicitly enabled by admin
 	}
 	return value == "true" || value == "1"
 }

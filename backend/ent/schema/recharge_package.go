@@ -19,7 +19,7 @@ func (RechargePackage) Annotations() []schema.Annotation {
 
 func (RechargePackage) Fields() []ent.Field {
 	return []ent.Field{
-		field.Float("amount").SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
+		field.Float("amount_cny").SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
 		field.Float("bonus_rate").SchemaType(map[string]string{dialect.Postgres: "decimal(5,4)"}).Default(0),
 		field.Float("bonus_fixed").SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).Default(0),
 		field.String("label").MaxLen(50).Optional().Nillable(),

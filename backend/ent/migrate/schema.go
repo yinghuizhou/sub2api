@@ -675,7 +675,7 @@ var (
 	// RechargePackagesColumns holds the columns for the "recharge_packages" table.
 	RechargePackagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "amount", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "amount_cny", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "bonus_rate", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(5,4)"}},
 		{Name: "bonus_fixed", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "label", Type: field.TypeString, Nullable: true, Size: 50},

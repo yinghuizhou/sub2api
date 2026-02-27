@@ -2,7 +2,7 @@
 ALTER TABLE users ADD COLUMN IF NOT EXISTS reseller_level INT NOT NULL DEFAULT 0;
 
 -- 代理商批量购码订单
-CREATE TABLE reseller_orders (
+CREATE TABLE IF NOT EXISTS reseller_orders (
     id               BIGSERIAL PRIMARY KEY,
     reseller_id      BIGINT NOT NULL,
     quantity         INT NOT NULL,
@@ -14,4 +14,4 @@ CREATE TABLE reseller_orders (
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_reseller_orders_reseller_id ON reseller_orders(reseller_id);
+CREATE INDEX IF NOT EXISTS idx_reseller_orders_reseller_id ON reseller_orders(reseller_id);

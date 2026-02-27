@@ -22,9 +22,9 @@ type RechargePackageCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetAmount sets the "amount" field.
-func (_c *RechargePackageCreate) SetAmount(v float64) *RechargePackageCreate {
-	_c.mutation.SetAmount(v)
+// SetAmountCny sets the "amount_cny" field.
+func (_c *RechargePackageCreate) SetAmountCny(v float64) *RechargePackageCreate {
+	_c.mutation.SetAmountCny(v)
 	return _c
 }
 
@@ -189,8 +189,8 @@ func (_c *RechargePackageCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *RechargePackageCreate) check() error {
-	if _, ok := _c.mutation.Amount(); !ok {
-		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "RechargePackage.amount"`)}
+	if _, ok := _c.mutation.AmountCny(); !ok {
+		return &ValidationError{Name: "amount_cny", err: errors.New(`ent: missing required field "RechargePackage.amount_cny"`)}
 	}
 	if _, ok := _c.mutation.BonusRate(); !ok {
 		return &ValidationError{Name: "bonus_rate", err: errors.New(`ent: missing required field "RechargePackage.bonus_rate"`)}
@@ -242,9 +242,9 @@ func (_c *RechargePackageCreate) createSpec() (*RechargePackage, *sqlgraph.Creat
 		_spec = sqlgraph.NewCreateSpec(rechargepackage.Table, sqlgraph.NewFieldSpec(rechargepackage.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = _c.conflict
-	if value, ok := _c.mutation.Amount(); ok {
-		_spec.SetField(rechargepackage.FieldAmount, field.TypeFloat64, value)
-		_node.Amount = value
+	if value, ok := _c.mutation.AmountCny(); ok {
+		_spec.SetField(rechargepackage.FieldAmountCny, field.TypeFloat64, value)
+		_node.AmountCny = value
 	}
 	if value, ok := _c.mutation.BonusRate(); ok {
 		_spec.SetField(rechargepackage.FieldBonusRate, field.TypeFloat64, value)
@@ -281,7 +281,7 @@ func (_c *RechargePackageCreate) createSpec() (*RechargePackage, *sqlgraph.Creat
 // of the `INSERT` statement. For example:
 //
 //	client.RechargePackage.Create().
-//		SetAmount(v).
+//		SetAmountCny(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -290,7 +290,7 @@ func (_c *RechargePackageCreate) createSpec() (*RechargePackage, *sqlgraph.Creat
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.RechargePackageUpsert) {
-//			SetAmount(v+v).
+//			SetAmountCny(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *RechargePackageCreate) OnConflict(opts ...sql.ConflictOption) *RechargePackageUpsertOne {
@@ -326,21 +326,21 @@ type (
 	}
 )
 
-// SetAmount sets the "amount" field.
-func (u *RechargePackageUpsert) SetAmount(v float64) *RechargePackageUpsert {
-	u.Set(rechargepackage.FieldAmount, v)
+// SetAmountCny sets the "amount_cny" field.
+func (u *RechargePackageUpsert) SetAmountCny(v float64) *RechargePackageUpsert {
+	u.Set(rechargepackage.FieldAmountCny, v)
 	return u
 }
 
-// UpdateAmount sets the "amount" field to the value that was provided on create.
-func (u *RechargePackageUpsert) UpdateAmount() *RechargePackageUpsert {
-	u.SetExcluded(rechargepackage.FieldAmount)
+// UpdateAmountCny sets the "amount_cny" field to the value that was provided on create.
+func (u *RechargePackageUpsert) UpdateAmountCny() *RechargePackageUpsert {
+	u.SetExcluded(rechargepackage.FieldAmountCny)
 	return u
 }
 
-// AddAmount adds v to the "amount" field.
-func (u *RechargePackageUpsert) AddAmount(v float64) *RechargePackageUpsert {
-	u.Add(rechargepackage.FieldAmount, v)
+// AddAmountCny adds v to the "amount_cny" field.
+func (u *RechargePackageUpsert) AddAmountCny(v float64) *RechargePackageUpsert {
+	u.Add(rechargepackage.FieldAmountCny, v)
 	return u
 }
 
@@ -485,24 +485,24 @@ func (u *RechargePackageUpsertOne) Update(set func(*RechargePackageUpsert)) *Rec
 	return u
 }
 
-// SetAmount sets the "amount" field.
-func (u *RechargePackageUpsertOne) SetAmount(v float64) *RechargePackageUpsertOne {
+// SetAmountCny sets the "amount_cny" field.
+func (u *RechargePackageUpsertOne) SetAmountCny(v float64) *RechargePackageUpsertOne {
 	return u.Update(func(s *RechargePackageUpsert) {
-		s.SetAmount(v)
+		s.SetAmountCny(v)
 	})
 }
 
-// AddAmount adds v to the "amount" field.
-func (u *RechargePackageUpsertOne) AddAmount(v float64) *RechargePackageUpsertOne {
+// AddAmountCny adds v to the "amount_cny" field.
+func (u *RechargePackageUpsertOne) AddAmountCny(v float64) *RechargePackageUpsertOne {
 	return u.Update(func(s *RechargePackageUpsert) {
-		s.AddAmount(v)
+		s.AddAmountCny(v)
 	})
 }
 
-// UpdateAmount sets the "amount" field to the value that was provided on create.
-func (u *RechargePackageUpsertOne) UpdateAmount() *RechargePackageUpsertOne {
+// UpdateAmountCny sets the "amount_cny" field to the value that was provided on create.
+func (u *RechargePackageUpsertOne) UpdateAmountCny() *RechargePackageUpsertOne {
 	return u.Update(func(s *RechargePackageUpsert) {
-		s.UpdateAmount()
+		s.UpdateAmountCny()
 	})
 }
 
@@ -753,7 +753,7 @@ func (_c *RechargePackageCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.RechargePackageUpsert) {
-//			SetAmount(v+v).
+//			SetAmountCny(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *RechargePackageCreateBulk) OnConflict(opts ...sql.ConflictOption) *RechargePackageUpsertBulk {
@@ -829,24 +829,24 @@ func (u *RechargePackageUpsertBulk) Update(set func(*RechargePackageUpsert)) *Re
 	return u
 }
 
-// SetAmount sets the "amount" field.
-func (u *RechargePackageUpsertBulk) SetAmount(v float64) *RechargePackageUpsertBulk {
+// SetAmountCny sets the "amount_cny" field.
+func (u *RechargePackageUpsertBulk) SetAmountCny(v float64) *RechargePackageUpsertBulk {
 	return u.Update(func(s *RechargePackageUpsert) {
-		s.SetAmount(v)
+		s.SetAmountCny(v)
 	})
 }
 
-// AddAmount adds v to the "amount" field.
-func (u *RechargePackageUpsertBulk) AddAmount(v float64) *RechargePackageUpsertBulk {
+// AddAmountCny adds v to the "amount_cny" field.
+func (u *RechargePackageUpsertBulk) AddAmountCny(v float64) *RechargePackageUpsertBulk {
 	return u.Update(func(s *RechargePackageUpsert) {
-		s.AddAmount(v)
+		s.AddAmountCny(v)
 	})
 }
 
-// UpdateAmount sets the "amount" field to the value that was provided on create.
-func (u *RechargePackageUpsertBulk) UpdateAmount() *RechargePackageUpsertBulk {
+// UpdateAmountCny sets the "amount_cny" field to the value that was provided on create.
+func (u *RechargePackageUpsertBulk) UpdateAmountCny() *RechargePackageUpsertBulk {
 	return u.Update(func(s *RechargePackageUpsert) {
-		s.UpdateAmount()
+		s.UpdateAmountCny()
 	})
 }
 

@@ -476,6 +476,10 @@ func (s *AuthService) LoginOrRegisterOAuth(ctx context.Context, email, username 
 			if s.settingService != nil {
 				defaultBalance = s.settingService.GetDefaultBalance(ctx)
 				defaultConcurrency = s.settingService.GetDefaultConcurrency(ctx)
+				// B5: Align with RegisterWithVerification — zero defaultBalance when free trial is active
+				if s.settingService.IsFreeTrialEnabled(ctx) {
+					defaultBalance = 0
+				}
 			}
 
 			newUser := &User{
@@ -488,6 +492,7 @@ func (s *AuthService) LoginOrRegisterOAuth(ctx context.Context, email, username 
 				Status:       StatusActive,
 			}
 
+			isNewUser := false
 			if err := s.userRepo.Create(ctx, newUser); err != nil {
 				if errors.Is(err, ErrEmailExists) {
 					// 并发场景：GetByEmail 与 Create 之间用户被创建。
@@ -502,6 +507,28 @@ func (s *AuthService) LoginOrRegisterOAuth(ctx context.Context, email, username 
 				}
 			} else {
 				user = newUser
+				isNewUser = true
+			}
+
+			// B5: Grant free trial and generate invite code for new OAuth users
+			if isNewUser {
+				if s.referralService != nil {
+					if _, err := s.referralService.EnsureInviteCode(ctx, user.ID); err != nil {
+						logger.LegacyPrintf("service.auth", "[Auth] Failed to generate invite code for oauth user %d: %v", user.ID, err)
+					}
+				}
+				if s.settingService != nil && s.settingService.IsFreeTrialEnabled(ctx) {
+					amount := s.settingService.GetFreeTrialAmount(ctx)
+					if amount > 0 {
+						if err := s.userRepo.UpdateBalance(ctx, user.ID, amount); err != nil {
+							logger.LegacyPrintf("service.auth", "[Auth] Failed to grant free trial credit to oauth user %d: %v", user.ID, err)
+						}
+					}
+				}
+				// Refresh user to get updated balance
+				if updated, err := s.userRepo.GetByID(ctx, user.ID); err == nil {
+					user = updated
+				}
 			}
 		} else {
 			logger.LegacyPrintf("service.auth", "[Auth] Database error during oauth login: %v", err)
@@ -572,6 +599,10 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 			if s.settingService != nil {
 				defaultBalance = s.settingService.GetDefaultBalance(ctx)
 				defaultConcurrency = s.settingService.GetDefaultConcurrency(ctx)
+				// B5: Align with RegisterWithVerification
+				if s.settingService.IsFreeTrialEnabled(ctx) {
+					defaultBalance = 0
+				}
 			}
 
 			newUser := &User{
@@ -584,6 +615,7 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 				Status:       StatusActive,
 			}
 
+			isNewUser := false
 			if err := s.userRepo.Create(ctx, newUser); err != nil {
 				if errors.Is(err, ErrEmailExists) {
 					user, err = s.userRepo.GetByEmail(ctx, email)
@@ -597,6 +629,27 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 				}
 			} else {
 				user = newUser
+				isNewUser = true
+			}
+
+			// B5: Grant free trial and generate invite code for new OAuth users
+			if isNewUser {
+				if s.referralService != nil {
+					if _, err := s.referralService.EnsureInviteCode(ctx, user.ID); err != nil {
+						logger.LegacyPrintf("service.auth", "[Auth] Failed to generate invite code for oauth user %d: %v", user.ID, err)
+					}
+				}
+				if s.settingService != nil && s.settingService.IsFreeTrialEnabled(ctx) {
+					amount := s.settingService.GetFreeTrialAmount(ctx)
+					if amount > 0 {
+						if err := s.userRepo.UpdateBalance(ctx, user.ID, amount); err != nil {
+							logger.LegacyPrintf("service.auth", "[Auth] Failed to grant free trial credit to oauth user %d: %v", user.ID, err)
+						}
+					}
+				}
+				if updated, err := s.userRepo.GetByID(ctx, user.ID); err == nil {
+					user = updated
+				}
 			}
 		} else {
 			logger.LegacyPrintf("service.auth", "[Auth] Database error during oauth login: %v", err)
