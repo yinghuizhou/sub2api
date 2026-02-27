@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const maxAssignCacheSize = 10000 // evict oldest entries when exceeded
+
 // ProxyGroupService manages proxy group selection for accounts.
 // It uses persistent assignments (account_proxy_assignments table) so that
 // once an account is bound to a proxy/region, it never switches.
@@ -19,7 +21,7 @@ type ProxyGroupService struct {
 	cacheTime  map[string]time.Time
 	cacheTTL   time.Duration
 
-	// assignmentCache: accountID -> ProxyAssignment (short-lived)
+	// assignmentCache: accountID -> ProxyAssignment (short-lived, bounded)
 	assignMu    sync.RWMutex
 	assignCache map[int64]*ProxyAssignment
 	assignTime  map[int64]time.Time
@@ -127,21 +129,32 @@ func (s *ProxyGroupService) selectFromGroup(ctx context.Context, groupName strin
 		return nil
 	}
 
-	// 3. Persist the assignment
+	// 3. Persist the assignment (uses ON CONFLICT DO NOTHING for "auto")
 	if err := s.proxyRepo.SetAssignment(ctx, accountID, best.ID, groupName, "auto"); err != nil {
 		slog.Error("failed to persist proxy assignment",
 			"account_id", accountID, "proxy_id", best.ID, "error", err)
-	} else {
-		// Update cache
+	}
+
+	// Re-read from DB to handle race: another goroutine may have won the insert
+	actual, err := s.proxyRepo.GetAssignment(ctx, accountID)
+	if err != nil {
+		slog.Error("failed to re-read assignment after insert", "account_id", accountID, "error", err)
+		return best // fallback to our pick
+	}
+	if actual != nil {
 		s.assignMu.Lock()
-		s.assignCache[accountID] = &ProxyAssignment{
-			AccountID:  accountID,
-			ProxyID:    best.ID,
-			ProxyGroup: groupName,
-			AssignedBy: "auto",
-		}
+		s.assignCache[accountID] = actual
 		s.assignTime[accountID] = time.Now()
 		s.assignMu.Unlock()
+
+		// If another goroutine won with a different proxy, use that one
+		if actual.ProxyID != best.ID {
+			if p, ok := proxyByID[actual.ProxyID]; ok {
+				slog.Info("using existing assignment from concurrent insert",
+					"account_id", accountID, "proxy_id", actual.ProxyID)
+				return p
+			}
+		}
 	}
 
 	slog.Info("new proxy assignment created",
@@ -174,13 +187,33 @@ func (s *ProxyGroupService) getCachedAssignment(ctx context.Context, accountID i
 		return nil
 	}
 
-	// Cache the result (even if nil)
+	// Cache the result (even if nil), with eviction if cache is too large
 	s.assignMu.Lock()
+	if len(s.assignCache) >= maxAssignCacheSize {
+		s.evictExpiredAssignments()
+	}
 	s.assignCache[accountID] = assignment
 	s.assignTime[accountID] = time.Now()
 	s.assignMu.Unlock()
 
 	return assignment
+}
+
+// evictExpiredAssignments removes expired entries from the assignment cache.
+// Must be called with assignMu held (write lock).
+func (s *ProxyGroupService) evictExpiredAssignments() {
+	now := time.Now()
+	for id, t := range s.assignTime {
+		if now.Sub(t) > s.cacheTTL {
+			delete(s.assignCache, id)
+			delete(s.assignTime, id)
+		}
+	}
+	// If still over limit after evicting expired entries, clear everything
+	if len(s.assignCache) >= maxAssignCacheSize {
+		s.assignCache = make(map[int64]*ProxyAssignment)
+		s.assignTime = make(map[int64]time.Time)
+	}
 }
 
 // InvalidateAssignmentCache clears the assignment cache for a specific account.
@@ -227,12 +260,17 @@ func (s *ProxyGroupService) InvalidateGroupCache(groupName string) {
 	s.mu.Unlock()
 }
 
-// InvalidateAllCache clears all group caches.
+// InvalidateAllCache clears all group caches and assignment caches.
 func (s *ProxyGroupService) InvalidateAllCache() {
 	s.mu.Lock()
 	s.groupCache = make(map[string][]Proxy)
 	s.cacheTime = make(map[string]time.Time)
 	s.mu.Unlock()
+
+	s.assignMu.Lock()
+	s.assignCache = make(map[int64]*ProxyAssignment)
+	s.assignTime = make(map[int64]time.Time)
+	s.assignMu.Unlock()
 }
 
 // ListGroupNames returns all distinct proxy group names.

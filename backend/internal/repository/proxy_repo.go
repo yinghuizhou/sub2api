@@ -20,10 +20,11 @@ type sqlQuerier interface {
 type proxyRepository struct {
 	client *dbent.Client
 	sql    sqlQuerier
+	sqlDB  *sql.DB // for transactions
 }
 
 func NewProxyRepository(client *dbent.Client, sqlDB *sql.DB) service.ProxyRepository {
-	return newProxyRepositoryWithSQL(client, sqlDB)
+	return &proxyRepository{client: client, sql: sqlDB, sqlDB: sqlDB}
 }
 
 func newProxyRepositoryWithSQL(client *dbent.Client, sqlq sqlQuerier) *proxyRepository {
@@ -621,6 +622,23 @@ func (r *proxyRepository) GetAssignment(ctx context.Context, accountID int64) (*
 }
 
 func (r *proxyRepository) SetAssignment(ctx context.Context, accountID, proxyID int64, groupName, assignedBy string) error {
+	// Use DO NOTHING for auto-assignments to let the first writer win (prevents TOCTOU race).
+	// Use DO UPDATE for admin-assignments to allow explicit overrides.
+	if assignedBy == "auto" {
+		res, err := r.sql.ExecContext(ctx, `
+			INSERT INTO account_proxy_assignments (account_id, proxy_id, proxy_group, assigned_by)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (account_id) DO NOTHING
+		`, accountID, proxyID, groupName, assignedBy)
+		if err != nil {
+			return err
+		}
+		if rows, _ := res.RowsAffected(); rows == 0 {
+			// Already assigned by another goroutine — this is expected, not an error
+			return nil
+		}
+		return nil
+	}
 	_, err := r.sql.ExecContext(ctx, `
 		INSERT INTO account_proxy_assignments (account_id, proxy_id, proxy_group, assigned_by)
 		VALUES ($1, $2, $3, $4)
@@ -676,12 +694,39 @@ func (r *proxyRepository) CountAssignmentsByProxy(ctx context.Context) (map[int6
 }
 
 func (r *proxyRepository) BulkSetAssignments(ctx context.Context, assignments []service.ProxyAssignment) (int, error) {
+	if r.sqlDB == nil {
+		// Fallback: no transaction support (test stubs)
+		assigned := 0
+		for _, a := range assignments {
+			if err := r.SetAssignment(ctx, a.AccountID, a.ProxyID, a.ProxyGroup, a.AssignedBy); err != nil {
+				return assigned, fmt.Errorf("assign account %d to proxy %d: %w", a.AccountID, a.ProxyID, err)
+			}
+			assigned++
+		}
+		return assigned, nil
+	}
+
+	tx, err := r.sqlDB.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck
+
 	assigned := 0
 	for _, a := range assignments {
-		if err := r.SetAssignment(ctx, a.AccountID, a.ProxyID, a.ProxyGroup, a.AssignedBy); err != nil {
+		_, err := tx.ExecContext(ctx, `
+			INSERT INTO account_proxy_assignments (account_id, proxy_id, proxy_group, assigned_by)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (account_id) DO UPDATE SET proxy_id = $2, proxy_group = $3, assigned_by = $4, assigned_at = NOW()
+		`, a.AccountID, a.ProxyID, a.ProxyGroup, a.AssignedBy)
+		if err != nil {
 			return assigned, fmt.Errorf("assign account %d to proxy %d: %w", a.AccountID, a.ProxyID, err)
 		}
 		assigned++
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit transaction: %w", err)
 	}
 	return assigned, nil
 }

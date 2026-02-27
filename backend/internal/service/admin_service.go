@@ -462,6 +462,7 @@ type adminServiceImpl struct {
 	proxyLatencyCache    ProxyLatencyCache
 	authCacheInvalidator APIKeyAuthCacheInvalidator
 	vendorRepo           VendorRepository
+	proxyGroupService    *ProxyGroupService
 }
 
 // NewAdminService creates a new AdminService
@@ -479,6 +480,7 @@ func NewAdminService(
 	proxyLatencyCache ProxyLatencyCache,
 	authCacheInvalidator APIKeyAuthCacheInvalidator,
 	vendorRepo VendorRepository,
+	proxyGroupService *ProxyGroupService,
 ) AdminService {
 	return &adminServiceImpl{
 		userRepo:             userRepo,
@@ -494,6 +496,7 @@ func NewAdminService(
 		proxyLatencyCache:    proxyLatencyCache,
 		authCacheInvalidator: authCacheInvalidator,
 		vendorRepo:           vendorRepo,
+		proxyGroupService:    proxyGroupService,
 	}
 }
 
@@ -1881,6 +1884,11 @@ func (s *adminServiceImpl) ListProxyAssignments(ctx context.Context, groupName s
 }
 
 func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupName, strategy string) (*DistributeResult, error) {
+	// Only round-robin is supported for now
+	if strategy != "" && strategy != "round-robin" {
+		return nil, infraerrors.BadRequest("INVALID_STRATEGY", "unsupported strategy: "+strategy+", only 'round-robin' is supported")
+	}
+
 	// Get all proxies in the group
 	proxies, err := s.proxyRepo.ListByGroupName(ctx, groupName)
 	if err != nil {
@@ -1927,6 +1935,11 @@ func (s *adminServiceImpl) DistributeAccountsToGroup(ctx context.Context, groupN
 		return nil, fmt.Errorf("bulk assign: %w", err)
 	}
 
+	// Invalidate all assignment caches so the gateway picks up changes immediately
+	if s.proxyGroupService != nil {
+		s.proxyGroupService.InvalidateAllCache()
+	}
+
 	return &DistributeResult{
 		Assigned: assigned,
 		Skipped:  len(accountSummaries) - assigned,
@@ -1950,7 +1963,14 @@ func (s *adminServiceImpl) ReassignAccountProxy(ctx context.Context, accountID, 
 		groupName = proxy.GroupName
 	}
 
-	return s.proxyRepo.SetAssignment(ctx, accountID, newProxyID, groupName, "admin")
+	if err := s.proxyRepo.SetAssignment(ctx, accountID, newProxyID, groupName, "admin"); err != nil {
+		return err
+	}
+	// Invalidate in-memory cache so the gateway picks up the change immediately
+	if s.proxyGroupService != nil {
+		s.proxyGroupService.InvalidateAssignmentCache(accountID)
+	}
+	return nil
 }
 
 // Redeem code management implementations

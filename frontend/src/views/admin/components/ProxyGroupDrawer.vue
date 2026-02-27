@@ -195,9 +195,13 @@ async function handleDistribute() {
   }
 }
 
-async function handleReassign(accountId: number, proxyId: number) {
+async function handleReassign(accountId: number, newProxyId: number) {
+  // Skip if reassigning to the same proxy
+  const current = assignments.value.find(a => a.account_id === accountId)
+  if (current && current.proxy_id === newProxyId) return
+
   try {
-    await reassignAccount(accountId, proxyId)
+    await reassignAccount(accountId, newProxyId)
     appStore.showSuccess(t('admin.proxies.groupDrawer.reassignSuccess'))
     await loadData()
     emit('updated')

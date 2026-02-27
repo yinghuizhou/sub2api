@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+var validGroupName = regexp.MustCompile(`^[a-zA-Z0-9_\-]{1,100}$`)
 
 // ProxyHandler handles admin proxy management
 type ProxyHandler struct {
@@ -433,8 +436,8 @@ func (h *ProxyHandler) HealthCheckAll(c *gin.Context) {
 // GET /api/v1/admin/proxies/groups/:name/summary
 func (h *ProxyHandler) GetGroupSummary(c *gin.Context) {
 	name := c.Param("name")
-	if name == "" {
-		response.BadRequest(c, "Group name is required")
+	if !validGroupName.MatchString(name) {
+		response.BadRequest(c, "Invalid group name")
 		return
 	}
 
@@ -450,8 +453,8 @@ func (h *ProxyHandler) GetGroupSummary(c *gin.Context) {
 // GET /api/v1/admin/proxies/groups/:name/assignments
 func (h *ProxyHandler) GetGroupAssignments(c *gin.Context) {
 	name := c.Param("name")
-	if name == "" {
-		response.BadRequest(c, "Group name is required")
+	if !validGroupName.MatchString(name) {
+		response.BadRequest(c, "Invalid group name")
 		return
 	}
 
@@ -467,8 +470,8 @@ func (h *ProxyHandler) GetGroupAssignments(c *gin.Context) {
 // POST /api/v1/admin/proxies/groups/:name/distribute
 func (h *ProxyHandler) DistributeAccounts(c *gin.Context) {
 	name := c.Param("name")
-	if name == "" {
-		response.BadRequest(c, "Group name is required")
+	if !validGroupName.MatchString(name) {
+		response.BadRequest(c, "Invalid group name")
 		return
 	}
 
