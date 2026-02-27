@@ -64,6 +64,14 @@ export default defineConfig(({ mode }) => {
     outDir: '../backend/internal/web/dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
+    // Use terser for better minification in production
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
     rollupOptions: {
       output: {
         /**
@@ -102,7 +110,27 @@ export default defineConfig(({ mode }) => {
               return 'vendor-i18n'
             }
 
-            // 其他小型第三方库合并
+            // HTTP client (largest misc dependency)
+            if (id.includes('/axios/')) {
+              return 'vendor-http'
+            }
+
+            // Markdown processing
+            if (id.includes('/marked/') || id.includes('/dompurify/')) {
+              return 'vendor-markdown'
+            }
+
+            // QR code (only used in specific views)
+            if (id.includes('/qrcode/')) {
+              return 'vendor-qrcode'
+            }
+
+            // Drag and drop
+            if (id.includes('/vue-draggable-plus/') || id.includes('/sortablejs/')) {
+              return 'vendor-drag'
+            }
+
+            // Other small third-party libs
             return 'vendor-misc'
           }
 

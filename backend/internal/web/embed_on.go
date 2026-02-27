@@ -110,7 +110,16 @@ func (s *FrontendServer) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		// Serve static files normally
+		// Set cache headers before serving static files
+		switch {
+		case strings.HasPrefix(cleanPath, "assets/"):
+			// Vite-hashed assets: cache immutably for 1 year
+			c.Header("Cache-Control", "public, max-age=31536000, immutable")
+		case strings.HasSuffix(cleanPath, ".png") || strings.HasSuffix(cleanPath, ".ico") ||
+			strings.HasSuffix(cleanPath, ".svg") || strings.HasSuffix(cleanPath, ".webp"):
+			// Root-level images (favicon, logo): cache for 1 day
+			c.Header("Cache-Control", "public, max-age=86400")
+		}
 		s.fileServer.ServeHTTP(c.Writer, c.Request)
 		c.Abort()
 	}
