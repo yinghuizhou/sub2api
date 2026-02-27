@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/internal/config"
 )
 
@@ -43,6 +44,7 @@ type ReferralService struct {
 	repo           ReferralRepository
 	userRepo       UserRepository
 	billingCache   *BillingCacheService
+	entClient      *dbent.Client
 	commissionRate float64
 }
 
@@ -52,6 +54,7 @@ func NewReferralService(
 	repo ReferralRepository,
 	userRepo UserRepository,
 	billingCache *BillingCacheService,
+	entClient *dbent.Client,
 	cfg *config.Config,
 ) *ReferralService {
 	rate := 0.10
@@ -62,6 +65,7 @@ func NewReferralService(
 		repo:           repo,
 		userRepo:       userRepo,
 		billingCache:   billingCache,
+		entClient:      entClient,
 		commissionRate: rate,
 	}
 }
@@ -110,6 +114,7 @@ func (s *ReferralService) RecordReferral(ctx context.Context, inviteeID int64, i
 }
 
 // SettleCommission settles commission for the inviter after an invitee's payment.
+// Uses a database transaction to ensure commission record and balance update are atomic.
 func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, orderID int64, orderAmountUSD float64) error {
 	if s.repo == nil {
 		return nil
@@ -118,6 +123,7 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 	if err != nil {
 		return nil // no referral relationship, skip
 	}
+
 	amount := s.CalculateCommission(orderAmountUSD)
 	now := time.Now()
 	commission := &ReferralCommission{
@@ -130,8 +136,21 @@ func (s *ReferralService) SettleCommission(ctx context.Context, inviteeID, order
 		Status:           "settled",
 		SettledAt:        &now,
 	}
-	if err := s.repo.CreateCommission(ctx, commission); err != nil {
-		return err
+
+	tx, err := s.entClient.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
 	}
-	return s.userRepo.UpdateBalance(ctx, inviterID, amount)
+	defer func() { _ = tx.Rollback() }()
+
+	txCtx := dbent.NewTxContext(ctx, tx)
+
+	if err := s.repo.CreateCommission(txCtx, commission); err != nil {
+		return fmt.Errorf("create commission: %w", err)
+	}
+	if err := s.userRepo.UpdateBalance(txCtx, inviterID, amount); err != nil {
+		return fmt.Errorf("credit inviter balance: %w", err)
+	}
+
+	return tx.Commit()
 }

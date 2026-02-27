@@ -54,6 +54,11 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 
 // GetOrder handles GET /api/v1/payment/orders/:id
 func (h *PaymentHandler) GetOrder(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "invalid order id")
@@ -62,6 +67,11 @@ func (h *PaymentHandler) GetOrder(c *gin.Context) {
 	order, err := h.paymentService.GetOrderByID(c.Request.Context(), id)
 	if err != nil {
 		response.ErrorFrom(c, err)
+		return
+	}
+	// Prevent IDOR: ensure the order belongs to the requesting user
+	if order.UserID != subject.UserID {
+		response.NotFound(c, "order not found")
 		return
 	}
 	response.Success(c, order)
@@ -80,11 +90,11 @@ func (h *PaymentHandler) ListPackages(c *gin.Context) {
 // WechatCallback handles POST /api/v1/payment/callback/wechat
 func (h *PaymentHandler) WechatCallback(c *gin.Context) {
 	// TODO: parse wechat V3 notification, verify signature, call HandleCallback
-	c.String(200, "SUCCESS")
+	c.JSON(501, gin.H{"code": "NOT_IMPLEMENTED", "message": "wechat callback not implemented"})
 }
 
 // AlipayCallback handles POST /api/v1/payment/callback/alipay
 func (h *PaymentHandler) AlipayCallback(c *gin.Context) {
 	// TODO: parse alipay notification, verify signature, call HandleCallback
-	c.String(200, "success")
+	c.JSON(501, gin.H{"code": "NOT_IMPLEMENTED", "message": "alipay callback not implemented"})
 }

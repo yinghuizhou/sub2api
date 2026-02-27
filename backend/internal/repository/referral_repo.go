@@ -63,7 +63,8 @@ func (r *ReferralRepository) SetInviteCode(ctx context.Context, userID int64, co
 }
 
 func (r *ReferralRepository) CreateCommission(ctx context.Context, c *service.ReferralCommission) error {
-	builder := r.client.ReferralCommission.Create().
+	client := clientFromContext(ctx, r.client)
+	builder := client.ReferralCommission.Create().
 		SetInviterID(c.InviterID).
 		SetInviteeID(c.InviteeID).
 		SetOrderID(c.OrderID).

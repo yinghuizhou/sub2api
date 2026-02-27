@@ -7,6 +7,7 @@ import (
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 )
 
 var (
@@ -19,7 +20,9 @@ type PaymentOrderRepository interface {
 	Create(ctx context.Context, order *PaymentOrder) error
 	GetByOrderNo(ctx context.Context, orderNo string) (*PaymentOrder, error)
 	GetByID(ctx context.Context, id int64) (*PaymentOrder, error)
-	UpdateStatus(ctx context.Context, orderNo, status, tradeNo string, paidAt *time.Time) error
+	// UpdateStatusAtomically updates order status with WHERE status=fromStatus guard.
+	// Returns number of rows affected (0 means order was already processed).
+	UpdateStatusAtomically(ctx context.Context, orderNo, fromStatus, toStatus, tradeNo string, paidAt *time.Time) (int, error)
 	ListByUser(ctx context.Context, userID int64, limit, offset int) ([]PaymentOrder, int, error)
 }
 
@@ -69,11 +72,12 @@ type CreateOrderInput struct {
 
 // PaymentService handles payment order creation and callback processing.
 type PaymentService struct {
-	orderRepo   PaymentOrderRepository
-	packageRepo RechargePackageRepository
-	userRepo    UserRepository
-	entClient   *dbent.Client
-	rate        float64 // CNY to USD exchange rate
+	orderRepo       PaymentOrderRepository
+	packageRepo     RechargePackageRepository
+	userRepo        UserRepository
+	entClient       *dbent.Client
+	referralService *ReferralService
+	rate            float64 // CNY to USD exchange rate
 }
 
 // NewPaymentService creates a new PaymentService.
@@ -81,12 +85,16 @@ func NewPaymentService(
 	orderRepo PaymentOrderRepository,
 	packageRepo RechargePackageRepository,
 	userRepo UserRepository,
+	entClient *dbent.Client,
+	referralService *ReferralService,
 ) *PaymentService {
 	return &PaymentService{
-		orderRepo:   orderRepo,
-		packageRepo: packageRepo,
-		userRepo:    userRepo,
-		rate:        7.2,
+		orderRepo:       orderRepo,
+		packageRepo:     packageRepo,
+		userRepo:        userRepo,
+		entClient:       entClient,
+		referralService: referralService,
+		rate:            7.2,
 	}
 }
 
@@ -126,20 +134,51 @@ func (s *PaymentService) CreateOrder(ctx context.Context, input *CreateOrderInpu
 	return order, nil
 }
 
-// HandleCallback processes a payment callback (idempotent).
+// HandleCallback processes a payment callback (idempotent, transactional).
+// Atomically: update order status → credit user balance → settle referral commission.
 func (s *PaymentService) HandleCallback(ctx context.Context, orderNo, tradeNo string) error {
-	order, err := s.orderRepo.GetByOrderNo(ctx, orderNo)
+	tx, err := s.entClient.Tx(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("begin transaction: %w", err)
 	}
-	if order.Status == "paid" {
-		return nil // idempotent
-	}
+	defer func() { _ = tx.Rollback() }()
+
+	txCtx := dbent.NewTxContext(ctx, tx)
+
+	// Atomic status update: WHERE status='pending' prevents concurrent double-credit
 	now := time.Now()
-	if err := s.orderRepo.UpdateStatus(ctx, orderNo, "paid", tradeNo, &now); err != nil {
-		return err
+	affected, err := s.orderRepo.UpdateStatusAtomically(txCtx, orderNo, "pending", "paid", tradeNo, &now)
+	if err != nil {
+		return fmt.Errorf("update order status: %w", err)
 	}
-	return s.userRepo.UpdateBalance(ctx, order.UserID, order.TotalCredit)
+	if affected == 0 {
+		return nil // already processed (idempotent)
+	}
+
+	// Fetch order details for balance credit
+	order, err := s.orderRepo.GetByOrderNo(txCtx, orderNo)
+	if err != nil {
+		return fmt.Errorf("get order: %w", err)
+	}
+
+	// Credit user balance
+	if err := s.userRepo.UpdateBalance(txCtx, order.UserID, order.TotalCredit); err != nil {
+		return fmt.Errorf("credit balance: %w", err)
+	}
+
+	// Commit the payment transaction first
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	// Settle referral commission (best-effort, outside transaction)
+	if s.referralService != nil {
+		if err := s.referralService.SettleCommission(ctx, order.UserID, order.ID, order.AmountUSD); err != nil {
+			logger.LegacyPrintf("service.payment", "[Payment] Failed to settle commission for order %s: %v", orderNo, err)
+		}
+	}
+
+	return nil
 }
 
 // ListPackages returns recharge packages.

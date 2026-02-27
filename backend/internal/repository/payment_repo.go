@@ -36,7 +36,8 @@ func (r *PaymentOrderRepository) Create(ctx context.Context, order *service.Paym
 }
 
 func (r *PaymentOrderRepository) GetByOrderNo(ctx context.Context, orderNo string) (*service.PaymentOrder, error) {
-	o, err := r.client.PaymentOrder.Query().
+	client := clientFromContext(ctx, r.client)
+	o, err := client.PaymentOrder.Query().
 		Where(paymentorder.OrderNoEQ(orderNo)).
 		Only(ctx)
 	if err != nil {
@@ -53,16 +54,19 @@ func (r *PaymentOrderRepository) GetByID(ctx context.Context, id int64) (*servic
 	return entToPaymentOrder(o), nil
 }
 
-func (r *PaymentOrderRepository) UpdateStatus(ctx context.Context, orderNo, status, tradeNo string, paidAt *time.Time) error {
-	q := r.client.PaymentOrder.Update().
-		Where(paymentorder.OrderNoEQ(orderNo)).
-		SetStatus(status).
+func (r *PaymentOrderRepository) UpdateStatusAtomically(ctx context.Context, orderNo, fromStatus, toStatus, tradeNo string, paidAt *time.Time) (int, error) {
+	client := clientFromContext(ctx, r.client)
+	q := client.PaymentOrder.Update().
+		Where(
+			paymentorder.OrderNoEQ(orderNo),
+			paymentorder.StatusEQ(fromStatus),
+		).
+		SetStatus(toStatus).
 		SetTradeNo(tradeNo)
 	if paidAt != nil {
 		q = q.SetPaidAt(*paidAt)
 	}
-	_, err := q.Save(ctx)
-	return err
+	return q.Save(ctx)
 }
 
 func (r *PaymentOrderRepository) ListByUser(ctx context.Context, userID int64, limit, offset int) ([]service.PaymentOrder, int, error) {

@@ -22,13 +22,13 @@ func TestGenerateInviteCode_Unique(t *testing.T) {
 
 func TestCalculateCommission(t *testing.T) {
 	cfg := &config.Config{Referral: config.ReferralConfig{CommissionRate: 0.10}}
-	svc := service.NewReferralService(nil, nil, nil, cfg)
+	svc := service.NewReferralService(nil, nil, nil, nil, cfg)
 	commission := svc.CalculateCommission(100.0)
 	assert.Equal(t, 10.0, commission)
 }
 
 func TestCalculateCommission_DefaultRate(t *testing.T) {
-	svc := service.NewReferralService(nil, nil, nil, nil)
+	svc := service.NewReferralService(nil, nil, nil, nil, nil)
 	commission := svc.CalculateCommission(200.0)
 	assert.Equal(t, 20.0, commission) // default 10%
 }

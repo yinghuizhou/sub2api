@@ -12,7 +12,7 @@ import (
 )
 
 func TestCreatePaymentOrder_Success(t *testing.T) {
-	svc := service.NewPaymentService(nil, nil, nil)
+	svc := service.NewPaymentService(nil, nil, nil, nil, nil)
 	order, err := svc.CreateOrder(context.Background(), &service.CreateOrderInput{
 		UserID:    1,
 		AmountCNY: 100,
@@ -28,7 +28,7 @@ func TestCreatePaymentOrder_WithPackage(t *testing.T) {
 	pkgRepo := &stubPackageRepo{pkg: &service.RechargePackage{
 		ID: 1, AmountCNY: 100, BonusRate: 0.10, BonusFixed: 0,
 	}}
-	svc := service.NewPaymentService(nil, pkgRepo, nil)
+	svc := service.NewPaymentService(nil, pkgRepo, nil, nil, nil)
 	pkgID := int64(1)
 	order, err := svc.CreateOrder(context.Background(), &service.CreateOrderInput{
 		UserID:    1,
