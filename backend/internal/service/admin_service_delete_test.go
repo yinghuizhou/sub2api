@@ -389,6 +389,18 @@ func (s *billingCacheStub) InvalidateSubscriptionCache(ctx context.Context, user
 	return nil
 }
 
+func (s *billingCacheStub) GetAccountDailyUsage(ctx context.Context, accountID int64, date string) (float64, error) {
+	panic("unexpected GetAccountDailyUsage call")
+}
+
+func (s *billingCacheStub) IncrementAccountDailyUsage(ctx context.Context, accountID int64, date string, cost float64) error {
+	panic("unexpected IncrementAccountDailyUsage call")
+}
+
+func (s *billingCacheStub) ResetAccountDailyUsage(ctx context.Context, accountID int64, date string) error {
+	panic("unexpected ResetAccountDailyUsage call")
+}
+
 func waitForInvalidations(t *testing.T, ch <-chan subscriptionInvalidateCall, expected int) []subscriptionInvalidateCall {
 	t.Helper()
 	calls := make([]subscriptionInvalidateCall, 0, expected)

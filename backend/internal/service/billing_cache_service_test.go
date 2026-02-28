@@ -52,6 +52,18 @@ func (b *billingCacheWorkerStub) InvalidateSubscriptionCache(ctx context.Context
 	return nil
 }
 
+func (b *billingCacheWorkerStub) GetAccountDailyUsage(ctx context.Context, accountID int64, date string) (float64, error) {
+	return 0, errors.New("not implemented")
+}
+
+func (b *billingCacheWorkerStub) IncrementAccountDailyUsage(ctx context.Context, accountID int64, date string, cost float64) error {
+	return nil
+}
+
+func (b *billingCacheWorkerStub) ResetAccountDailyUsage(ctx context.Context, accountID int64, date string) error {
+	return nil
+}
+
 func TestBillingCacheServiceQueueHighLoad(t *testing.T) {
 	cache := &billingCacheWorkerStub{}
 	svc := NewBillingCacheService(cache, nil, nil, &config.Config{})

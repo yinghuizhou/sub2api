@@ -96,6 +96,15 @@ func (m *mockBillingCache) UpdateSubscriptionUsage(context.Context, int64, int64
 func (m *mockBillingCache) InvalidateSubscriptionCache(context.Context, int64, int64) error {
 	return nil
 }
+func (m *mockBillingCache) GetAccountDailyUsage(context.Context, int64, string) (float64, error) {
+	return 0, nil
+}
+func (m *mockBillingCache) IncrementAccountDailyUsage(context.Context, int64, string, float64) error {
+	return nil
+}
+func (m *mockBillingCache) ResetAccountDailyUsage(context.Context, int64, string) error {
+	return nil
+}
 
 // --- 测试 ---
 
