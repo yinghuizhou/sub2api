@@ -42,83 +42,116 @@ func isNearbyRegion(target, candidate string) bool {
 }
 
 // handleUnhealthy attempts to recover an unhealthy tunnel.
-// Flow: reconnect x2 → switch to same-region backup node.
+// Flow: reconnect x2 → same-region alternatives → cross-region alternatives.
 func (hc *HealthChecker) handleUnhealthy(t *TunnelInfo) {
-	log.Printf("Auto-failover triggered for %q (failures: %d)", t.Name, t.Failures)
+	log.Printf("[failover] Tunnel %q unhealthy (%d failures), starting failover", t.Name, t.Failures)
+	originalConfig := t.ConfigName
 
-	// Step 1 & 2: Try reconnecting (restart) up to maxReconnectAttempts times
+	// Phase 1: Try restart up to maxReconnectAttempts times
 	for i := 0; i < maxReconnectAttempts; i++ {
-		log.Printf("Reconnect attempt %d/%d for %q", i+1, maxReconnectAttempts, t.Name)
+		log.Printf("[failover] %s: restart attempt %d/%d", t.Name, i+1, maxReconnectAttempts)
 		if err := hc.tunnelMgr.Restart(t.Name); err != nil {
-			log.Printf("Reconnect failed for %q: %v", t.Name, err)
+			log.Printf("[failover] %s: restart failed: %v", t.Name, err)
 			continue
 		}
-		// Check if reconnect succeeded
 		if hc.testConnectivity(t.SocksPort) {
-			log.Printf("Reconnect succeeded for %q", t.Name)
+			log.Printf("[failover] %s: restart succeeded", t.Name)
 			hc.tunnelMgr.mu.Lock()
 			if rt, ok := hc.tunnelMgr.tunnels[t.Name]; ok {
 				rt.Failures = 0
 				rt.Health = "healthy"
 			}
 			hc.tunnelMgr.mu.Unlock()
+			hc.clearCooldown(t.ConfigName)
+			hc.scores.RecordSuccess(t.ConfigName)
+			hc.store.RecordSuccess(t.ConfigName)
 			return
 		}
 	}
 
-	// Step 3: Find same-region backup and switch
-	log.Printf("Reconnect failed, trying backup node for %q (region: %s)", t.Name, t.Region)
-	configs, err := hc.store.List()
-	if err != nil {
-		log.Printf("Failed to list configs for failover: %v", err)
-		return
-	}
-
-	// Filter same-region configs, exclude current
-	var candidates []OvpnConfig
-	for _, c := range configs {
-		if c.Region == t.Region && c.Name != t.ConfigName {
-			candidates = append(candidates, c)
+	// Phase 2: Try same-region alternatives using weighted scoring
+	tried := []string{originalConfig}
+	log.Printf("[failover] %s: restart failed, trying same-region alternatives (region=%s)", t.Name, t.Region)
+	for i := 0; i < maxSwitchAttempts; i++ {
+		alt := hc.findBestAlternative(originalConfig, t.Region, tried)
+		if alt == "" {
+			log.Printf("[failover] %s: no more same-region alternatives", t.Name)
+			break
 		}
-	}
+		log.Printf("[failover] %s: switching to %s (same-region, attempt %d)", t.Name, alt, i+1)
+		tried = append(tried, alt)
 
-	if len(candidates) == 0 {
-		log.Printf("No backup configs available for region %q, tunnel %q is dead", t.Region, t.Name)
-		return
-	}
-
-	// Sort by stability score (highest first)
-	sort.Slice(candidates, func(i, j int) bool {
-		si := hc.scores.GetScore(candidates[i].Name)
-		sj := hc.scores.GetScore(candidates[j].Name)
-		return si > sj
-	})
-
-	// Try up to maxSwitchAttempts backup nodes
-	for i := 0; i < maxSwitchAttempts && i < len(candidates); i++ {
-		newCfg := candidates[i].Name
-		log.Printf("Switching %q to backup %q (attempt %d)", t.Name, newCfg, i+1)
-		if err := hc.tunnelMgr.SwitchConfig(t.Name, newCfg); err != nil {
-			log.Printf("Switch failed: %v", err)
+		if err := hc.tunnelMgr.SwitchConfig(t.Name, alt); err != nil {
+			log.Printf("[failover] %s: switch to %s failed: %v", t.Name, alt, err)
+			hc.addCooldown(alt)
+			hc.scores.RecordFailure(alt)
 			continue
 		}
 		if hc.testConnectivity(t.SocksPort) {
-			log.Printf("Failover succeeded: %q now using %q", t.Name, newCfg)
-			hc.tunnelMgr.mu.Lock()
-			if rt, ok := hc.tunnelMgr.tunnels[t.Name]; ok {
-				rt.Failures = 0
-				rt.Health = "healthy"
-			}
-			hc.tunnelMgr.mu.Unlock()
-			// Notify Sub2API of config change
-			if t.ProxyID > 0 {
-				go hc.callback.UpdateProxyStatus(t.ProxyID, "", "connected", "healthy", 0)
-			}
+			log.Printf("[failover] %s: switched to %s successfully", t.Name, alt)
+			hc.updateTunnelAfterSwitch(t, alt)
+			hc.addCooldown(originalConfig)
 			return
 		}
+		hc.addCooldown(alt)
+		hc.scores.RecordFailure(alt)
 	}
 
-	log.Printf("All failover attempts exhausted for %q — tunnel is dead", t.Name)
+	// Phase 3: Try cross-region alternatives (any region)
+	log.Printf("[failover] %s: same-region exhausted, trying cross-region", t.Name)
+	for i := 0; i < maxSwitchAttempts; i++ {
+		alt := hc.findBestAlternative(originalConfig, "", tried) // empty region = any
+		if alt == "" {
+			log.Printf("[failover] %s: no more alternatives available", t.Name)
+			break
+		}
+		log.Printf("[failover] %s: switching to %s (cross-region, attempt %d)", t.Name, alt, i+1)
+		tried = append(tried, alt)
+
+		if err := hc.tunnelMgr.SwitchConfig(t.Name, alt); err != nil {
+			log.Printf("[failover] %s: switch to %s failed: %v", t.Name, alt, err)
+			hc.addCooldown(alt)
+			hc.scores.RecordFailure(alt)
+			continue
+		}
+		if hc.testConnectivity(t.SocksPort) {
+			log.Printf("[failover] %s: switched to %s successfully (cross-region)", t.Name, alt)
+			hc.updateTunnelAfterSwitch(t, alt)
+			hc.addCooldown(originalConfig)
+			return
+		}
+		hc.addCooldown(alt)
+		hc.scores.RecordFailure(alt)
+	}
+
+	log.Printf("[failover] %s: all failover attempts exhausted", t.Name)
+	hc.addCooldown(originalConfig)
+	hc.tunnelMgr.mu.Lock()
+	if rt, ok := hc.tunnelMgr.tunnels[t.Name]; ok {
+		rt.Health = "unhealthy"
+	}
+	hc.tunnelMgr.mu.Unlock()
+}
+
+// updateTunnelAfterSwitch updates tunnel state and notifies Sub2API after a successful config switch.
+func (hc *HealthChecker) updateTunnelAfterSwitch(t *TunnelInfo, newConfig string) {
+	hc.tunnelMgr.mu.Lock()
+	if rt, ok := hc.tunnelMgr.tunnels[t.Name]; ok {
+		rt.ConfigName = newConfig
+		rt.Region = parseRegion(newConfig)
+		rt.Failures = 0
+		rt.Health = "healthy"
+	}
+	hc.tunnelMgr.mu.Unlock()
+
+	hc.clearCooldown(newConfig)
+	hc.scores.RecordSuccess(newConfig)
+	hc.store.RecordSuccess(newConfig)
+
+	// Notify Sub2API of config change
+	if t.ProxyID > 0 {
+		go hc.callback.UpdateProxyStatus(t.ProxyID, "", "connected", "healthy", 0)
+	}
 }
 
 // configFreshness returns a 0.0-1.0 score based on how recently the config was uploaded.
@@ -180,6 +213,10 @@ func (hc *HealthChecker) findBestAlternative(currentConfig, region string, exclu
 
 	for _, cfg := range configs {
 		if excludeSet[cfg.Name] {
+			continue
+		}
+		// Skip configs currently in cooldown
+		if hc.isInCooldown(cfg.Name) {
 			continue
 		}
 		score := hc.weightedScore(cfg.Name, region)
