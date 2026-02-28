@@ -52,6 +52,9 @@ func (s *VpnAgentService) doDelete(ctx context.Context, path string) error {
 
 // doRequest executes the request, checks the envelope, and decodes data.
 func (s *VpnAgentService) doRequest(req *http.Request, out any) error {
+	if s.apiKey != "" {
+		req.Header.Set("X-Api-Key", s.apiKey)
+	}
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("vpn agent request: %w", err)

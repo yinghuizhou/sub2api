@@ -84,6 +84,7 @@ type Config struct {
 type VpnAgentConfig struct {
 	Enabled bool   `mapstructure:"enabled"`
 	URL     string `mapstructure:"url"`
+	APIKey  string `mapstructure:"api_key"`
 }
 
 type LogConfig struct {

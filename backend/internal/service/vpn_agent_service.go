@@ -66,6 +66,7 @@ type agentAPIResponse struct {
 // VpnAgentService communicates with the VPN Agent running on the host.
 type VpnAgentService struct {
 	agentURL   string
+	apiKey     string
 	httpClient *http.Client
 	enabled    bool
 }
@@ -74,6 +75,7 @@ type VpnAgentService struct {
 func NewVpnAgentService(cfg *config.Config) *VpnAgentService {
 	return &VpnAgentService{
 		agentURL: cfg.VpnAgent.URL,
+		apiKey:   cfg.VpnAgent.APIKey,
 		enabled:  cfg.VpnAgent.Enabled,
 		httpClient: &http.Client{
 			Timeout: 60 * time.Second, // long timeout for tunnel creation
@@ -187,6 +189,9 @@ func (s *VpnAgentService) UploadConfigs(ctx context.Context, files map[string][]
 		return nil, err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if s.apiKey != "" {
+		req.Header.Set("X-Api-Key", s.apiKey)
+	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
