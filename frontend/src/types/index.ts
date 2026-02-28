@@ -499,6 +499,8 @@ export interface ClaudeModel {
   created_at: string
 }
 
+export type ProxyType = 'static' | 'wireguard' | 'astrill' | 'other'
+
 export interface Proxy {
   id: number
   name: string
@@ -508,6 +510,8 @@ export interface Proxy {
   username: string | null
   password?: string | null
   status: 'active' | 'inactive'
+  proxy_type?: ProxyType
+  priority?: number
   account_count?: number // Number of accounts using this proxy
   latency_ms?: number
   latency_status?: 'success' | 'failed'
@@ -814,6 +818,8 @@ export interface CreateProxyRequest {
   port: number
   username?: string | null
   password?: string | null
+  proxy_type?: string
+  priority?: number
   region?: string
   group_name?: string
   ovpn_config?: string
@@ -830,6 +836,8 @@ export interface UpdateProxyRequest {
   username?: string | null
   password?: string | null
   status?: 'active' | 'inactive'
+  proxy_type?: string
+  priority?: number
   region?: string | null
   group_name?: string | null
   ovpn_config?: string | null

@@ -155,6 +155,11 @@
             <template #cell-name="{ value }">
               <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
             </template>
+            <template #cell-tunnel_type="{ value }">
+              <span :class="['badge', value === 'wireguard' ? 'badge-primary' : 'badge-gray']">
+                {{ value === 'wireguard' ? 'WireGuard' : 'OpenVPN' }}
+              </span>
+            </template>
             <template #cell-config_name="{ value }">
               <span class="text-sm">{{ value }}</span>
             </template>
@@ -295,6 +300,13 @@
           <input v-model="deployForm.name" type="text" required class="input" placeholder="tunnel-hk-01" />
         </div>
         <div>
+          <label class="input-label">隧道类型</label>
+          <select v-model="deployForm.tunnel_type" class="input">
+            <option value="openvpn">OpenVPN</option>
+            <option value="wireguard">WireGuard</option>
+          </select>
+        </div>
+        <div>
           <label class="input-label">SOCKS 端口（留空自动分配）</label>
           <input v-model.number="deployForm.socks_port" type="number" min="1024" max="65535" class="input" placeholder="自动分配" />
         </div>
@@ -399,6 +411,7 @@ const deployForm = reactive<CreateTunnelInput>({
   name: '',
   config_name: '',
   socks_port: undefined as unknown as number,
+  tunnel_type: 'openvpn',
 })
 const deployLog = ref<{ time: string; text: string; color: string }[]>([])
 const deployPhase = ref('')
@@ -421,6 +434,7 @@ const actionLoading = reactive<Record<string, string>>({})
 const tunnelColumns = computed<Column[]>(() => [
   { key: 'select', label: '', sortable: false },
   { key: 'name', label: '名称', sortable: true },
+  { key: 'tunnel_type', label: '类型', sortable: true },
   { key: 'config_name', label: '配置', sortable: true },
   { key: 'region', label: '地区', sortable: true },
   { key: 'socks_port', label: 'SOCKS 端口', sortable: false },
@@ -575,6 +589,7 @@ const openDeployDialog = (config: VpnOvpnConfig) => {
   deployForm.name = config.name.replace(/\.ovpn$/, '').replace(/[^a-zA-Z0-9_-]/g, '-')
   deployForm.socks_port = undefined as unknown as number
   deployForm.cert_id = ''
+  deployForm.tunnel_type = 'openvpn'
   deployLog.value = []
   deployResult.value = null
   deployPhase.value = ''
@@ -631,6 +646,7 @@ const handleDeploy = async () => {
     const input: CreateTunnelInput = {
       name: deployForm.name,
       config_name: deployForm.config_name,
+      tunnel_type: deployForm.tunnel_type || 'openvpn',
     }
     if (deployForm.socks_port) input.socks_port = deployForm.socks_port
     if (deployForm.cert_id) input.cert_id = deployForm.cert_id

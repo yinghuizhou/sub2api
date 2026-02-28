@@ -2,6 +2,7 @@ import { apiClient } from '../client'
 
 export interface VpnTunnel {
   name: string
+  tunnel_type: 'openvpn' | 'wireguard'
   config_name: string
   region: string
   server_ip: string
@@ -33,6 +34,7 @@ export interface CreateTunnelInput {
   socks_port?: number
   proxy_id?: number
   cert_id?: string
+  tunnel_type?: 'openvpn' | 'wireguard'
 }
 
 export interface AgentHealth {

@@ -140,6 +140,10 @@
             <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
           </template>
 
+          <template #cell-proxy_type="{ value }">
+            <span :class="['badge', proxyTypeBadge(value)]">{{ proxyTypeLabel(value) }}</span>
+          </template>
+
           <template #cell-protocol="{ value }">
             <span
               v-if="value"
@@ -448,6 +452,21 @@
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
+            <label class="input-label">代理类型</label>
+            <select v-model="createForm.proxy_type" class="input">
+              <option value="static">Static ISP</option>
+              <option value="wireguard">WireGuard</option>
+              <option value="astrill">Astrill</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label">优先级</label>
+            <input v-model.number="createForm.priority" type="number" min="1" max="999" class="input" placeholder="越小越优先 (10=ISP, 50=WG, 90=Astrill)" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
             <label class="input-label">{{ t('admin.proxies.host') }}</label>
             <input
               v-model="createForm.host"
@@ -701,6 +720,21 @@
         <div>
           <label class="input-label">{{ t('admin.proxies.protocol') }}</label>
           <Select v-model="editForm.protocol" :options="protocolSelectOptions" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="input-label">代理类型</label>
+            <select v-model="editForm.proxy_type" class="input">
+              <option value="static">Static ISP</option>
+              <option value="wireguard">WireGuard</option>
+              <option value="astrill">Astrill</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label">优先级</label>
+            <input v-model.number="editForm.priority" type="number" min="1" max="999" class="input" placeholder="越小越优先" />
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -1033,6 +1067,7 @@ const appStore = useAppStore()
 const columns = computed<Column[]>(() => [
   { key: 'select', label: '', sortable: false },
   { key: 'name', label: t('admin.proxies.columns.name'), sortable: true },
+  { key: 'proxy_type', label: '类型', sortable: true },
   { key: 'protocol', label: t('admin.proxies.columns.protocol'), sortable: true },
   { key: 'address', label: t('admin.proxies.columns.address'), sortable: false },
   { key: 'group_name', label: t('admin.proxies.columns.group'), sortable: true },
@@ -1071,6 +1106,11 @@ const editStatusOptions = computed(() => [
   { value: 'active', label: t('admin.accounts.status.active') },
   { value: 'inactive', label: t('admin.accounts.status.inactive') }
 ])
+
+const proxyTypeBadge = (v: string) =>
+  ({ static: 'badge-success', wireguard: 'badge-primary', astrill: 'badge-warning' }[v] || 'badge-gray')
+const proxyTypeLabel = (v: string) =>
+  ({ static: 'Static ISP', wireguard: 'WireGuard', astrill: 'Astrill', other: 'Other' }[v] || v || 'static')
 
 const proxies = ref<Proxy[]>([])
 const loading = ref(false)
@@ -1171,6 +1211,8 @@ const createForm = reactive({
   port: 8080,
   username: '',
   password: '',
+  proxy_type: 'static',
+  priority: 100,
   region: '',
   group_name: '',
   is_dedicated: false,
@@ -1187,6 +1229,8 @@ const editForm = reactive({
   username: '',
   password: '',
   status: 'active' as 'active' | 'inactive',
+  proxy_type: 'static',
+  priority: 100,
   region: '',
   group_name: '',
   is_dedicated: false,
@@ -1295,6 +1339,8 @@ const closeCreateModal = () => {
   createForm.port = 8080
   createForm.username = ''
   createForm.password = ''
+  createForm.proxy_type = 'static'
+  createForm.priority = 100
   createForm.region = ''
   createForm.group_name = ''
   createForm.is_dedicated = false
@@ -1425,6 +1471,8 @@ const handleCreateProxy = async () => {
       port: createForm.port,
       username: createForm.username.trim() || null,
       password: createForm.password.trim() || null,
+      proxy_type: createForm.proxy_type,
+      priority: createForm.priority,
       region: createForm.region.trim() || undefined,
       group_name: createForm.group_name.trim() || undefined,
       is_dedicated: createForm.is_dedicated,
@@ -1452,6 +1500,8 @@ const handleEdit = (proxy: Proxy) => {
   editForm.username = proxy.username || ''
   editForm.password = ''
   editForm.status = proxy.status
+  editForm.proxy_type = proxy.proxy_type || 'static'
+  editForm.priority = proxy.priority ?? 100
   editForm.region = proxy.region || ''
   editForm.group_name = proxy.group_name || ''
   editForm.is_dedicated = proxy.is_dedicated || false
@@ -1490,6 +1540,8 @@ const handleUpdateProxy = async () => {
       port: editForm.port,
       username: editForm.username.trim() || null,
       status: editForm.status,
+      proxy_type: editForm.proxy_type,
+      priority: editForm.priority,
       region: editForm.region.trim() || null,
       group_name: editForm.group_name.trim() || null,
       is_dedicated: editForm.is_dedicated,
