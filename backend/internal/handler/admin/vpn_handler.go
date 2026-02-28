@@ -4,7 +4,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -14,12 +16,19 @@ import (
 // VpnHandler handles VPN management admin API endpoints.
 type VpnHandler struct {
 	vpnAgentService *service.VpnAgentService
+	vpnEventService *service.VpnEventService
+	vpnAlertService *service.VpnAlertService
 	adminService    service.AdminService
 }
 
 // NewVpnHandler creates a new VpnHandler.
-func NewVpnHandler(vpnAgentService *service.VpnAgentService, adminService service.AdminService) *VpnHandler {
-	return &VpnHandler{vpnAgentService: vpnAgentService, adminService: adminService}
+func NewVpnHandler(vpnAgentService *service.VpnAgentService, vpnEventService *service.VpnEventService, vpnAlertService *service.VpnAlertService, adminService service.AdminService) *VpnHandler {
+	return &VpnHandler{
+		vpnAgentService: vpnAgentService,
+		vpnEventService: vpnEventService,
+		vpnAlertService: vpnAlertService,
+		adminService:    adminService,
+	}
 }
 
 func (h *VpnHandler) requireEnabled(c *gin.Context) bool {
@@ -305,6 +314,28 @@ func (h *VpnHandler) DeleteCertificate(c *gin.Context) {
 	response.Success(c, nil)
 }
 
+// PushConfigs pushes config files to the VPN Agent.
+func (h *VpnHandler) PushConfigs(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	var input service.PushConfigsInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	if len(input.Configs) == 0 {
+		response.BadRequest(c, "at least one config is required")
+		return
+	}
+	result, err := h.vpnAgentService.PushConfigs(c.Request.Context(), input)
+	if err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Success(c, result)
+}
+
 // SyncTunnelProxies reads tunnel data from the Agent and updates matching proxy records
 // so that each proxy's host:port matches its tunnel's actual SOCKS address.
 // POST /api/v1/admin/vpn/sync-proxies
@@ -359,4 +390,137 @@ func (h *VpnHandler) SyncTunnelProxies(c *gin.Context) {
 		"skipped": skipped,
 		"failed":  failed,
 	})
+}
+
+// ListEvents returns paginated VPN events with optional filters.
+// GET /vpn/events
+func (h *VpnHandler) ListEvents(c *gin.Context) {
+	page, pageSize := response.ParsePagination(c)
+
+	opts := service.ListEventsOpts{
+		TunnelName: c.Query("tunnel_name"),
+		EventType:  c.Query("event_type"),
+		Page:       page,
+		PageSize:   pageSize,
+	}
+
+	if sinceStr := c.Query("since"); sinceStr != "" {
+		t, err := time.Parse(time.RFC3339, sinceStr)
+		if err != nil {
+			response.BadRequest(c, "invalid 'since' format, expected RFC3339")
+			return
+		}
+		opts.Since = &t
+	}
+
+	items, total, err := h.vpnEventService.ListEvents(c.Request.Context(), opts)
+	if err != nil {
+		response.InternalError(c, "failed to list events: "+err.Error())
+		return
+	}
+
+	response.Paginated(c, items, int64(total), opts.Page, opts.PageSize)
+}
+
+// GetDashboard returns aggregated VPN status.
+// GET /vpn/dashboard
+func (h *VpnHandler) GetDashboard(c *gin.Context) {
+	data, err := h.vpnEventService.GetDashboard(c.Request.Context(), h.vpnAgentService)
+	if err != nil {
+		response.InternalError(c, "failed to get dashboard: "+err.Error())
+		return
+	}
+	response.Success(c, data)
+}
+
+// ReportEvent receives an event from the VPN Agent.
+// POST /vpn/events/report
+func (h *VpnHandler) ReportEvent(c *gin.Context) {
+	var req struct {
+		TunnelName string                 `json:"tunnel_name" binding:"required"`
+		EventType  string                 `json:"event_type" binding:"required"`
+		Details    map[string]interface{} `json:"details"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.vpnEventService.RecordEvent(c.Request.Context(), req.TunnelName, req.EventType, req.Details); err != nil {
+		response.InternalError(c, "failed to record event: "+err.Error())
+		return
+	}
+
+	response.Success(c, nil)
+}
+
+// CreateAlertRule creates a new VPN alert rule.
+// POST /vpn/alert-rules
+func (h *VpnHandler) CreateAlertRule(c *gin.Context) {
+	var input service.CreateAlertRuleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	rule, err := h.vpnAlertService.Create(c.Request.Context(), input)
+	if err != nil {
+		response.InternalError(c, "failed to create alert rule: "+err.Error())
+		return
+	}
+
+	response.Created(c, rule)
+}
+
+// ListAlertRules returns all VPN alert rules.
+// GET /vpn/alert-rules
+func (h *VpnHandler) ListAlertRules(c *gin.Context) {
+	rules, err := h.vpnAlertService.List(c.Request.Context())
+	if err != nil {
+		response.InternalError(c, "failed to list alert rules: "+err.Error())
+		return
+	}
+
+	response.Success(c, rules)
+}
+
+// UpdateAlertRule updates a VPN alert rule.
+// PUT /vpn/alert-rules/:id
+func (h *VpnHandler) UpdateAlertRule(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "invalid alert rule ID")
+		return
+	}
+
+	var input service.UpdateAlertRuleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	rule, err := h.vpnAlertService.Update(c.Request.Context(), id, input)
+	if err != nil {
+		response.InternalError(c, "failed to update alert rule: "+err.Error())
+		return
+	}
+
+	response.Success(c, rule)
+}
+
+// DeleteAlertRule deletes a VPN alert rule.
+// DELETE /vpn/alert-rules/:id
+func (h *VpnHandler) DeleteAlertRule(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "invalid alert rule ID")
+		return
+	}
+
+	if err := h.vpnAlertService.Delete(c.Request.Context(), id); err != nil {
+		response.InternalError(c, "failed to delete alert rule: "+err.Error())
+		return
+	}
+
+	response.Success(c, nil)
 }

@@ -65,6 +65,12 @@ type Proxy struct {
 	ProxyType string `json:"proxy_type,omitempty"`
 	// Priority holds the value of the "priority" field.
 	Priority int `json:"priority,omitempty"`
+	// ConfigVersion holds the value of the "config_version" field.
+	ConfigVersion int `json:"config_version,omitempty"`
+	// LastConnectedAt holds the value of the "last_connected_at" field.
+	LastConnectedAt *time.Time `json:"last_connected_at,omitempty"`
+	// ConfigStale holds the value of the "config_stale" field.
+	ConfigStale bool `json:"config_stale,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProxyQuery when eager-loading is set.
 	Edges        ProxyEdges `json:"edges"`
@@ -94,13 +100,13 @@ func (*Proxy) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case proxy.FieldIsDedicated:
+		case proxy.FieldIsDedicated, proxy.FieldConfigStale:
 			values[i] = new(sql.NullBool)
-		case proxy.FieldID, proxy.FieldPort, proxy.FieldLatencyMs, proxy.FieldHealthCheckFailures, proxy.FieldPriority:
+		case proxy.FieldID, proxy.FieldPort, proxy.FieldLatencyMs, proxy.FieldHealthCheckFailures, proxy.FieldPriority, proxy.FieldConfigVersion:
 			values[i] = new(sql.NullInt64)
 		case proxy.FieldName, proxy.FieldProtocol, proxy.FieldHost, proxy.FieldUsername, proxy.FieldPassword, proxy.FieldStatus, proxy.FieldRegion, proxy.FieldGroupName, proxy.FieldOvpnConfig, proxy.FieldOvpnUsername, proxy.FieldOvpnPassword, proxy.FieldVpnStatus, proxy.FieldVpnExitIP, proxy.FieldHealthStatus, proxy.FieldProxyType:
 			values[i] = new(sql.NullString)
-		case proxy.FieldCreatedAt, proxy.FieldUpdatedAt, proxy.FieldDeletedAt, proxy.FieldLastHealthAt:
+		case proxy.FieldCreatedAt, proxy.FieldUpdatedAt, proxy.FieldDeletedAt, proxy.FieldLastHealthAt, proxy.FieldLastConnectedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -280,6 +286,25 @@ func (_m *Proxy) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Priority = int(value.Int64)
 			}
+		case proxy.FieldConfigVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field config_version", values[i])
+			} else if value.Valid {
+				_m.ConfigVersion = int(value.Int64)
+			}
+		case proxy.FieldLastConnectedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_connected_at", values[i])
+			} else if value.Valid {
+				_m.LastConnectedAt = new(time.Time)
+				*_m.LastConnectedAt = value.Time
+			}
+		case proxy.FieldConfigStale:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field config_stale", values[i])
+			} else if value.Valid {
+				_m.ConfigStale = value.Bool
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -418,6 +443,17 @@ func (_m *Proxy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("priority=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Priority))
+	builder.WriteString(", ")
+	builder.WriteString("config_version=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ConfigVersion))
+	builder.WriteString(", ")
+	if v := _m.LastConnectedAt; v != nil {
+		builder.WriteString("last_connected_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("config_stale=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ConfigStale))
 	builder.WriteByte(')')
 	return builder.String()
 }

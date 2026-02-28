@@ -83,3 +83,9 @@ type UserSubscription func(*sql.Selector)
 
 // Vendor is the predicate function for vendor builders.
 type Vendor func(*sql.Selector)
+
+// VpnAlertRule is the predicate function for vpnalertrule builders.
+type VpnAlertRule func(*sql.Selector)
+
+// VpnEvent is the predicate function for vpnevent builders.
+type VpnEvent func(*sql.Selector)

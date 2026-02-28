@@ -2,13 +2,32 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
+
+// ConfigMeta holds metadata for a single .ovpn config file.
+type ConfigMeta struct {
+	UploadedAt    time.Time  `json:"uploaded_at"`
+	ContentHash   string     `json:"content_hash"`
+	Version       int        `json:"version"`
+	LastSuccessAt *time.Time `json:"last_success_at,omitempty"`
+	Stale         bool       `json:"stale"`
+}
+
+// ConfigStoreMeta is the on-disk metadata for all configs.
+type ConfigStoreMeta struct {
+	Configs map[string]*ConfigMeta `json:"configs"`
+}
 
 // OvpnConfig represents a parsed .ovpn configuration file.
 type OvpnConfig struct {
@@ -16,6 +35,15 @@ type OvpnConfig struct {
 	Region   string `json:"region"`
 	ServerIP string `json:"server_ip"`
 	FilePath string `json:"file_path"`
+}
+
+// OvpnConfigWithMeta extends OvpnConfig with metadata fields.
+type OvpnConfigWithMeta struct {
+	OvpnConfig
+	UploadedAt    time.Time  `json:"uploaded_at"`
+	Version       int        `json:"version"`
+	LastSuccessAt *time.Time `json:"last_success_at,omitempty"`
+	Stale         bool       `json:"stale"`
 }
 
 // ConfigStore manages .ovpn configuration files on disk.
@@ -74,17 +102,183 @@ func (s *ConfigStore) Get(name string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(s.dir, name))
 }
 
-// Save writes an .ovpn file to disk.
+// Save writes an .ovpn file to disk and tracks metadata.
 func (s *ConfigStore) Save(fileName string, content []byte) error {
+	_, _, err := s.SaveWithMeta(fileName, content)
+	return err
+}
+
+// SaveWithMeta saves the file, computes sha256 hash, and returns metadata.
+// Returns (meta, isNew, error). isNew=false if content hash matches existing.
+func (s *ConfigStore) SaveWithMeta(fileName string, content []byte) (*ConfigMeta, bool, error) {
 	if err := validateConfigName(fileName); err != nil {
-		return err
+		return nil, false, err
 	}
+
+	// Compute content hash (first 16 chars of sha256).
+	hash := sha256.Sum256(content)
+	contentHash := hex.EncodeToString(hash[:])[:16]
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	meta := s.loadMeta()
+	existing, found := meta.Configs[fileName]
+
+	// If hash matches, skip writing — content is identical.
+	if found && existing.ContentHash == contentHash {
+		return existing, false, nil
+	}
+
+	// Write file to disk.
 	fp := filepath.Join(s.dir, filepath.Base(fileName))
-	return os.WriteFile(fp, content, 0600)
+	if err := os.WriteFile(fp, content, 0600); err != nil {
+		return nil, false, err
+	}
+
+	// Build new metadata entry.
+	now := time.Now()
+	newMeta := &ConfigMeta{
+		UploadedAt:  now,
+		ContentHash: contentHash,
+		Version:     1,
+		Stale:       false,
+	}
+	if found {
+		newMeta.Version = existing.Version + 1
+		newMeta.LastSuccessAt = existing.LastSuccessAt
+	}
+	meta.Configs[fileName] = newMeta
+	s.saveMeta(meta)
+
+	return newMeta, true, nil
+}
+
+// GetMeta returns metadata for a config file, nil if not found.
+func (s *ConfigStore) GetMeta(name string) *ConfigMeta {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	meta := s.loadMeta()
+	return meta.Configs[name]
+}
+
+// ListWithMeta returns all configs with their metadata.
+func (s *ConfigStore) ListWithMeta() ([]OvpnConfigWithMeta, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	entries, err := os.ReadDir(s.dir)
+	if err != nil {
+		return nil, fmt.Errorf("read config dir: %w", err)
+	}
+
+	meta := s.loadMeta()
+	var configs []OvpnConfigWithMeta
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".ovpn") {
+			continue
+		}
+		name := e.Name()
+		fp := filepath.Join(s.dir, name)
+
+		content, err := os.ReadFile(fp)
+		if err != nil {
+			continue
+		}
+
+		cwm := OvpnConfigWithMeta{
+			OvpnConfig: OvpnConfig{
+				Name:     name,
+				Region:   parseRegion(name),
+				ServerIP: parseServerIP(string(content)),
+				FilePath: fp,
+			},
+		}
+
+		if m, ok := meta.Configs[name]; ok {
+			cwm.UploadedAt = m.UploadedAt
+			cwm.Version = m.Version
+			cwm.LastSuccessAt = m.LastSuccessAt
+			cwm.Stale = m.Stale
+		}
+
+		configs = append(configs, cwm)
+	}
+	return configs, nil
+}
+
+// RecordSuccess updates last_success_at for a config.
+func (s *ConfigStore) RecordSuccess(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	meta := s.loadMeta()
+	if m, ok := meta.Configs[name]; ok {
+		now := time.Now()
+		m.LastSuccessAt = &now
+		s.saveMeta(meta)
+	}
+}
+
+const (
+	configsMetaFile = "configs_meta.json"
+	staleThreshold  = 7 * 24 * time.Hour // 7 days
+)
+
+// CheckAndMarkStale marks configs as stale if they haven't succeeded recently.
+func (s *ConfigStore) CheckAndMarkStale() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	meta := s.loadMeta()
+	changed := false
+	for name, m := range meta.Configs {
+		wasStale := m.Stale
+		if m.LastSuccessAt == nil {
+			// Never succeeded — stale if uploaded > 7 days ago
+			m.Stale = time.Since(m.UploadedAt) > staleThreshold
+		} else {
+			m.Stale = time.Since(*m.LastSuccessAt) > staleThreshold
+		}
+		if m.Stale != wasStale {
+			changed = true
+		}
+		meta.Configs[name] = m
+	}
+	if changed {
+		s.saveMeta(meta)
+	}
+}
+
+// loadMeta loads metadata from configs_meta.json. Caller must hold at least RLock.
+func (s *ConfigStore) loadMeta() *ConfigStoreMeta {
+	fp := filepath.Join(s.dir, configsMetaFile)
+	data, err := os.ReadFile(fp)
+	if err != nil {
+		return &ConfigStoreMeta{Configs: make(map[string]*ConfigMeta)}
+	}
+	var meta ConfigStoreMeta
+	if err := json.Unmarshal(data, &meta); err != nil {
+		log.Printf("Warning: failed to parse %s: %v", fp, err)
+		return &ConfigStoreMeta{Configs: make(map[string]*ConfigMeta)}
+	}
+	if meta.Configs == nil {
+		meta.Configs = make(map[string]*ConfigMeta)
+	}
+	return &meta
+}
+
+// saveMeta writes metadata to configs_meta.json. Caller must hold Lock.
+func (s *ConfigStore) saveMeta(meta *ConfigStoreMeta) {
+	fp := filepath.Join(s.dir, configsMetaFile)
+	data, err := json.MarshalIndent(meta, "", "  ")
+	if err != nil {
+		log.Printf("Error marshaling config metadata: %v", err)
+		return
+	}
+	if err := os.WriteFile(fp, data, 0644); err != nil {
+		log.Printf("Error saving config metadata to %s: %v", fp, err)
+	}
 }
 
 // Delete removes an .ovpn file from disk.

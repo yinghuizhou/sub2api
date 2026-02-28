@@ -126,6 +126,30 @@ export async function deleteCertificate(id: string): Promise<void> {
   await apiClient.delete(`/admin/vpn/certificates/${encodeURIComponent(id)}`)
 }
 
+export interface PushConfigItem {
+  filename: string
+  content: string // base64
+  region?: string
+  auto_deploy: boolean
+}
+
+export interface PushConfigsInput {
+  configs: PushConfigItem[]
+  replace_existing: boolean
+}
+
+export interface PushConfigsResult {
+  saved: string[]
+  skipped: string[]
+  deployed: string[]
+  errors: string[]
+}
+
+export async function pushConfigs(input: PushConfigsInput): Promise<PushConfigsResult> {
+  const { data } = await apiClient.post<PushConfigsResult>('/admin/vpn/configs/push', input)
+  return data
+}
+
 export interface SyncProxiesResult {
   updated: number
   skipped: number
@@ -135,6 +159,85 @@ export interface SyncProxiesResult {
 export async function syncTunnelProxies(): Promise<SyncProxiesResult> {
   const { data } = await apiClient.post<SyncProxiesResult>('/admin/vpn/sync-proxies')
   return data
+}
+
+// --- Dashboard & Events & Alert Rules ---
+
+export interface DashboardData {
+  active_tunnels: number
+  offline_tunnels: number
+  degraded_tunnels: number
+  total_configs: number
+  recent_events: VpnEvent[]
+  stale_configs: string[]
+}
+
+export interface VpnEvent {
+  id: number
+  tunnel_name: string
+  event_type: string
+  details: Record<string, unknown>
+  created_at: string
+}
+
+export interface AlertRule {
+  id: number
+  name: string
+  condition: string
+  threshold: number
+  webhook_url: string
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateAlertRuleInput {
+  name: string
+  condition: string
+  threshold: number
+  webhook_url: string
+}
+
+export interface UpdateAlertRuleInput {
+  name?: string
+  condition?: string
+  threshold?: number
+  webhook_url?: string
+  enabled?: boolean
+}
+
+export async function getDashboard(): Promise<DashboardData> {
+  const { data } = await apiClient.get<DashboardData>('/admin/vpn/dashboard')
+  return data
+}
+
+export async function listEvents(params?: {
+  tunnel_name?: string
+  event_type?: string
+  page?: number
+  page_size?: number
+}): Promise<{ items: VpnEvent[]; total: number }> {
+  const { data } = await apiClient.get<{ items: VpnEvent[]; total: number }>('/admin/vpn/events', { params })
+  return data ?? { items: [], total: 0 }
+}
+
+export async function listAlertRules(): Promise<AlertRule[]> {
+  const { data } = await apiClient.get<AlertRule[]>('/admin/vpn/alert-rules')
+  return data ?? []
+}
+
+export async function createAlertRule(input: CreateAlertRuleInput): Promise<AlertRule> {
+  const { data } = await apiClient.post<AlertRule>('/admin/vpn/alert-rules', input)
+  return data
+}
+
+export async function updateAlertRule(id: number, input: UpdateAlertRuleInput): Promise<AlertRule> {
+  const { data } = await apiClient.put<AlertRule>(`/admin/vpn/alert-rules/${id}`, input)
+  return data
+}
+
+export async function deleteAlertRule(id: number): Promise<void> {
+  await apiClient.delete(`/admin/vpn/alert-rules/${id}`)
 }
 
 export const vpnAPI = {
@@ -152,7 +255,14 @@ export const vpnAPI = {
   listCertificates,
   importCertificate,
   deleteCertificate,
-  syncTunnelProxies
+  syncTunnelProxies,
+  pushConfigs,
+  getDashboard,
+  listEvents,
+  listAlertRules,
+  createAlertRule,
+  updateAlertRule,
+  deleteAlertRule
 }
 
 export default vpnAPI

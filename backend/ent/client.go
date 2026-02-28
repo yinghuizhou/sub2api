@@ -41,6 +41,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/ent/vendor"
+	"github.com/Wei-Shaw/sub2api/ent/vpnalertrule"
+	"github.com/Wei-Shaw/sub2api/ent/vpnevent"
 
 	stdsql "database/sql"
 )
@@ -102,6 +104,10 @@ type Client struct {
 	UserSubscription *UserSubscriptionClient
 	// Vendor is the client for interacting with the Vendor builders.
 	Vendor *VendorClient
+	// VpnAlertRule is the client for interacting with the VpnAlertRule builders.
+	VpnAlertRule *VpnAlertRuleClient
+	// VpnEvent is the client for interacting with the VpnEvent builders.
+	VpnEvent *VpnEventClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -139,6 +145,8 @@ func (c *Client) init() {
 	c.UserAttributeValue = NewUserAttributeValueClient(c.config)
 	c.UserSubscription = NewUserSubscriptionClient(c.config)
 	c.Vendor = NewVendorClient(c.config)
+	c.VpnAlertRule = NewVpnAlertRuleClient(c.config)
+	c.VpnEvent = NewVpnEventClient(c.config)
 }
 
 type (
@@ -257,6 +265,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		UserAttributeValue:      NewUserAttributeValueClient(cfg),
 		UserSubscription:        NewUserSubscriptionClient(cfg),
 		Vendor:                  NewVendorClient(cfg),
+		VpnAlertRule:            NewVpnAlertRuleClient(cfg),
+		VpnEvent:                NewVpnEventClient(cfg),
 	}, nil
 }
 
@@ -302,6 +312,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		UserAttributeValue:      NewUserAttributeValueClient(cfg),
 		UserSubscription:        NewUserSubscriptionClient(cfg),
 		Vendor:                  NewVendorClient(cfg),
+		VpnAlertRule:            NewVpnAlertRuleClient(cfg),
+		VpnEvent:                NewVpnEventClient(cfg),
 	}, nil
 }
 
@@ -337,6 +349,7 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Referral, c.ReferralCommission, c.SecuritySecret, c.Setting,
 		c.UsageCleanupTask, c.UsageLog, c.User, c.UserAllowedGroup,
 		c.UserAttributeDefinition, c.UserAttributeValue, c.UserSubscription, c.Vendor,
+		c.VpnAlertRule, c.VpnEvent,
 	} {
 		n.Use(hooks...)
 	}
@@ -352,6 +365,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Referral, c.ReferralCommission, c.SecuritySecret, c.Setting,
 		c.UsageCleanupTask, c.UsageLog, c.User, c.UserAllowedGroup,
 		c.UserAttributeDefinition, c.UserAttributeValue, c.UserSubscription, c.Vendor,
+		c.VpnAlertRule, c.VpnEvent,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -412,6 +426,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.UserSubscription.mutate(ctx, m)
 	case *VendorMutation:
 		return c.Vendor.mutate(ctx, m)
+	case *VpnAlertRuleMutation:
+		return c.VpnAlertRule.mutate(ctx, m)
+	case *VpnEventMutation:
+		return c.VpnEvent.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -4625,6 +4643,272 @@ func (c *VendorClient) mutate(ctx context.Context, m *VendorMutation) (Value, er
 	}
 }
 
+// VpnAlertRuleClient is a client for the VpnAlertRule schema.
+type VpnAlertRuleClient struct {
+	config
+}
+
+// NewVpnAlertRuleClient returns a client for the VpnAlertRule from the given config.
+func NewVpnAlertRuleClient(c config) *VpnAlertRuleClient {
+	return &VpnAlertRuleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `vpnalertrule.Hooks(f(g(h())))`.
+func (c *VpnAlertRuleClient) Use(hooks ...Hook) {
+	c.hooks.VpnAlertRule = append(c.hooks.VpnAlertRule, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `vpnalertrule.Intercept(f(g(h())))`.
+func (c *VpnAlertRuleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.VpnAlertRule = append(c.inters.VpnAlertRule, interceptors...)
+}
+
+// Create returns a builder for creating a VpnAlertRule entity.
+func (c *VpnAlertRuleClient) Create() *VpnAlertRuleCreate {
+	mutation := newVpnAlertRuleMutation(c.config, OpCreate)
+	return &VpnAlertRuleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VpnAlertRule entities.
+func (c *VpnAlertRuleClient) CreateBulk(builders ...*VpnAlertRuleCreate) *VpnAlertRuleCreateBulk {
+	return &VpnAlertRuleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *VpnAlertRuleClient) MapCreateBulk(slice any, setFunc func(*VpnAlertRuleCreate, int)) *VpnAlertRuleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &VpnAlertRuleCreateBulk{err: fmt.Errorf("calling to VpnAlertRuleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*VpnAlertRuleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &VpnAlertRuleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VpnAlertRule.
+func (c *VpnAlertRuleClient) Update() *VpnAlertRuleUpdate {
+	mutation := newVpnAlertRuleMutation(c.config, OpUpdate)
+	return &VpnAlertRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VpnAlertRuleClient) UpdateOne(_m *VpnAlertRule) *VpnAlertRuleUpdateOne {
+	mutation := newVpnAlertRuleMutation(c.config, OpUpdateOne, withVpnAlertRule(_m))
+	return &VpnAlertRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VpnAlertRuleClient) UpdateOneID(id int64) *VpnAlertRuleUpdateOne {
+	mutation := newVpnAlertRuleMutation(c.config, OpUpdateOne, withVpnAlertRuleID(id))
+	return &VpnAlertRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VpnAlertRule.
+func (c *VpnAlertRuleClient) Delete() *VpnAlertRuleDelete {
+	mutation := newVpnAlertRuleMutation(c.config, OpDelete)
+	return &VpnAlertRuleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VpnAlertRuleClient) DeleteOne(_m *VpnAlertRule) *VpnAlertRuleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VpnAlertRuleClient) DeleteOneID(id int64) *VpnAlertRuleDeleteOne {
+	builder := c.Delete().Where(vpnalertrule.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VpnAlertRuleDeleteOne{builder}
+}
+
+// Query returns a query builder for VpnAlertRule.
+func (c *VpnAlertRuleClient) Query() *VpnAlertRuleQuery {
+	return &VpnAlertRuleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVpnAlertRule},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a VpnAlertRule entity by its id.
+func (c *VpnAlertRuleClient) Get(ctx context.Context, id int64) (*VpnAlertRule, error) {
+	return c.Query().Where(vpnalertrule.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VpnAlertRuleClient) GetX(ctx context.Context, id int64) *VpnAlertRule {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *VpnAlertRuleClient) Hooks() []Hook {
+	return c.hooks.VpnAlertRule
+}
+
+// Interceptors returns the client interceptors.
+func (c *VpnAlertRuleClient) Interceptors() []Interceptor {
+	return c.inters.VpnAlertRule
+}
+
+func (c *VpnAlertRuleClient) mutate(ctx context.Context, m *VpnAlertRuleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VpnAlertRuleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VpnAlertRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VpnAlertRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VpnAlertRuleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown VpnAlertRule mutation op: %q", m.Op())
+	}
+}
+
+// VpnEventClient is a client for the VpnEvent schema.
+type VpnEventClient struct {
+	config
+}
+
+// NewVpnEventClient returns a client for the VpnEvent from the given config.
+func NewVpnEventClient(c config) *VpnEventClient {
+	return &VpnEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `vpnevent.Hooks(f(g(h())))`.
+func (c *VpnEventClient) Use(hooks ...Hook) {
+	c.hooks.VpnEvent = append(c.hooks.VpnEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `vpnevent.Intercept(f(g(h())))`.
+func (c *VpnEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.VpnEvent = append(c.inters.VpnEvent, interceptors...)
+}
+
+// Create returns a builder for creating a VpnEvent entity.
+func (c *VpnEventClient) Create() *VpnEventCreate {
+	mutation := newVpnEventMutation(c.config, OpCreate)
+	return &VpnEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VpnEvent entities.
+func (c *VpnEventClient) CreateBulk(builders ...*VpnEventCreate) *VpnEventCreateBulk {
+	return &VpnEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *VpnEventClient) MapCreateBulk(slice any, setFunc func(*VpnEventCreate, int)) *VpnEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &VpnEventCreateBulk{err: fmt.Errorf("calling to VpnEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*VpnEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &VpnEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VpnEvent.
+func (c *VpnEventClient) Update() *VpnEventUpdate {
+	mutation := newVpnEventMutation(c.config, OpUpdate)
+	return &VpnEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VpnEventClient) UpdateOne(_m *VpnEvent) *VpnEventUpdateOne {
+	mutation := newVpnEventMutation(c.config, OpUpdateOne, withVpnEvent(_m))
+	return &VpnEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VpnEventClient) UpdateOneID(id int64) *VpnEventUpdateOne {
+	mutation := newVpnEventMutation(c.config, OpUpdateOne, withVpnEventID(id))
+	return &VpnEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VpnEvent.
+func (c *VpnEventClient) Delete() *VpnEventDelete {
+	mutation := newVpnEventMutation(c.config, OpDelete)
+	return &VpnEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VpnEventClient) DeleteOne(_m *VpnEvent) *VpnEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VpnEventClient) DeleteOneID(id int64) *VpnEventDeleteOne {
+	builder := c.Delete().Where(vpnevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VpnEventDeleteOne{builder}
+}
+
+// Query returns a query builder for VpnEvent.
+func (c *VpnEventClient) Query() *VpnEventQuery {
+	return &VpnEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVpnEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a VpnEvent entity by its id.
+func (c *VpnEventClient) Get(ctx context.Context, id int64) (*VpnEvent, error) {
+	return c.Query().Where(vpnevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VpnEventClient) GetX(ctx context.Context, id int64) *VpnEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *VpnEventClient) Hooks() []Hook {
+	return c.hooks.VpnEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *VpnEventClient) Interceptors() []Interceptor {
+	return c.inters.VpnEvent
+}
+
+func (c *VpnEventClient) mutate(ctx context.Context, m *VpnEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VpnEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VpnEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VpnEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VpnEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown VpnEvent mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
@@ -4633,7 +4917,7 @@ type (
 		PromoCodeUsage, Proxy, RechargePackage, RedeemCode, Referral,
 		ReferralCommission, SecuritySecret, Setting, UsageCleanupTask, UsageLog, User,
 		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
-		UserSubscription, Vendor []ent.Hook
+		UserSubscription, Vendor, VpnAlertRule, VpnEvent []ent.Hook
 	}
 	inters struct {
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
@@ -4641,7 +4925,7 @@ type (
 		PromoCodeUsage, Proxy, RechargePackage, RedeemCode, Referral,
 		ReferralCommission, SecuritySecret, Setting, UsageCleanupTask, UsageLog, User,
 		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
-		UserSubscription, Vendor []ent.Interceptor
+		UserSubscription, Vendor, VpnAlertRule, VpnEvent []ent.Interceptor
 	}
 )
 

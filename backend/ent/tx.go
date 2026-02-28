@@ -66,6 +66,10 @@ type Tx struct {
 	UserSubscription *UserSubscriptionClient
 	// Vendor is the client for interacting with the Vendor builders.
 	Vendor *VendorClient
+	// VpnAlertRule is the client for interacting with the VpnAlertRule builders.
+	VpnAlertRule *VpnAlertRuleClient
+	// VpnEvent is the client for interacting with the VpnEvent builders.
+	VpnEvent *VpnEventClient
 
 	// lazily loaded.
 	client     *Client
@@ -223,6 +227,8 @@ func (tx *Tx) init() {
 	tx.UserAttributeValue = NewUserAttributeValueClient(tx.config)
 	tx.UserSubscription = NewUserSubscriptionClient(tx.config)
 	tx.Vendor = NewVendorClient(tx.config)
+	tx.VpnAlertRule = NewVpnAlertRuleClient(tx.config)
+	tx.VpnEvent = NewVpnEventClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

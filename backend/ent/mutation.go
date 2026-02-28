@@ -39,6 +39,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/ent/vendor"
+	"github.com/Wei-Shaw/sub2api/ent/vpnalertrule"
+	"github.com/Wei-Shaw/sub2api/ent/vpnevent"
 	"github.com/Wei-Shaw/sub2api/internal/domain"
 )
 
@@ -77,6 +79,8 @@ const (
 	TypeUserAttributeValue      = "UserAttributeValue"
 	TypeUserSubscription        = "UserSubscription"
 	TypeVendor                  = "Vendor"
+	TypeVpnAlertRule            = "VpnAlertRule"
+	TypeVpnEvent                = "VpnEvent"
 )
 
 // APIKeyMutation represents an operation that mutates the APIKey nodes in the graph.
@@ -14576,6 +14580,10 @@ type ProxyMutation struct {
 	proxy_type               *string
 	priority                 *int
 	addpriority              *int
+	config_version           *int
+	addconfig_version        *int
+	last_connected_at        *time.Time
+	config_stale             *bool
 	clearedFields            map[string]struct{}
 	accounts                 map[int64]struct{}
 	removedaccounts          map[int64]struct{}
@@ -15797,6 +15805,174 @@ func (m *ProxyMutation) ResetPriority() {
 	m.addpriority = nil
 }
 
+// SetConfigVersion sets the "config_version" field.
+func (m *ProxyMutation) SetConfigVersion(i int) {
+	m.config_version = &i
+	m.addconfig_version = nil
+}
+
+// ConfigVersion returns the value of the "config_version" field in the mutation.
+func (m *ProxyMutation) ConfigVersion() (r int, exists bool) {
+	v := m.config_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigVersion returns the old "config_version" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldConfigVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigVersion: %w", err)
+	}
+	return oldValue.ConfigVersion, nil
+}
+
+// AddConfigVersion adds i to the "config_version" field.
+func (m *ProxyMutation) AddConfigVersion(i int) {
+	if m.addconfig_version != nil {
+		*m.addconfig_version += i
+	} else {
+		m.addconfig_version = &i
+	}
+}
+
+// AddedConfigVersion returns the value that was added to the "config_version" field in this mutation.
+func (m *ProxyMutation) AddedConfigVersion() (r int, exists bool) {
+	v := m.addconfig_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearConfigVersion clears the value of the "config_version" field.
+func (m *ProxyMutation) ClearConfigVersion() {
+	m.config_version = nil
+	m.addconfig_version = nil
+	m.clearedFields[proxy.FieldConfigVersion] = struct{}{}
+}
+
+// ConfigVersionCleared returns if the "config_version" field was cleared in this mutation.
+func (m *ProxyMutation) ConfigVersionCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldConfigVersion]
+	return ok
+}
+
+// ResetConfigVersion resets all changes to the "config_version" field.
+func (m *ProxyMutation) ResetConfigVersion() {
+	m.config_version = nil
+	m.addconfig_version = nil
+	delete(m.clearedFields, proxy.FieldConfigVersion)
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (m *ProxyMutation) SetLastConnectedAt(t time.Time) {
+	m.last_connected_at = &t
+}
+
+// LastConnectedAt returns the value of the "last_connected_at" field in the mutation.
+func (m *ProxyMutation) LastConnectedAt() (r time.Time, exists bool) {
+	v := m.last_connected_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastConnectedAt returns the old "last_connected_at" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldLastConnectedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastConnectedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastConnectedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastConnectedAt: %w", err)
+	}
+	return oldValue.LastConnectedAt, nil
+}
+
+// ClearLastConnectedAt clears the value of the "last_connected_at" field.
+func (m *ProxyMutation) ClearLastConnectedAt() {
+	m.last_connected_at = nil
+	m.clearedFields[proxy.FieldLastConnectedAt] = struct{}{}
+}
+
+// LastConnectedAtCleared returns if the "last_connected_at" field was cleared in this mutation.
+func (m *ProxyMutation) LastConnectedAtCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldLastConnectedAt]
+	return ok
+}
+
+// ResetLastConnectedAt resets all changes to the "last_connected_at" field.
+func (m *ProxyMutation) ResetLastConnectedAt() {
+	m.last_connected_at = nil
+	delete(m.clearedFields, proxy.FieldLastConnectedAt)
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (m *ProxyMutation) SetConfigStale(b bool) {
+	m.config_stale = &b
+}
+
+// ConfigStale returns the value of the "config_stale" field in the mutation.
+func (m *ProxyMutation) ConfigStale() (r bool, exists bool) {
+	v := m.config_stale
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigStale returns the old "config_stale" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldConfigStale(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigStale is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigStale requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigStale: %w", err)
+	}
+	return oldValue.ConfigStale, nil
+}
+
+// ClearConfigStale clears the value of the "config_stale" field.
+func (m *ProxyMutation) ClearConfigStale() {
+	m.config_stale = nil
+	m.clearedFields[proxy.FieldConfigStale] = struct{}{}
+}
+
+// ConfigStaleCleared returns if the "config_stale" field was cleared in this mutation.
+func (m *ProxyMutation) ConfigStaleCleared() bool {
+	_, ok := m.clearedFields[proxy.FieldConfigStale]
+	return ok
+}
+
+// ResetConfigStale resets all changes to the "config_stale" field.
+func (m *ProxyMutation) ResetConfigStale() {
+	m.config_stale = nil
+	delete(m.clearedFields, proxy.FieldConfigStale)
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by ids.
 func (m *ProxyMutation) AddAccountIDs(ids ...int64) {
 	if m.accounts == nil {
@@ -15885,7 +16061,7 @@ func (m *ProxyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProxyMutation) Fields() []string {
-	fields := make([]string, 0, 24)
+	fields := make([]string, 0, 27)
 	if m.created_at != nil {
 		fields = append(fields, proxy.FieldCreatedAt)
 	}
@@ -15958,6 +16134,15 @@ func (m *ProxyMutation) Fields() []string {
 	if m.priority != nil {
 		fields = append(fields, proxy.FieldPriority)
 	}
+	if m.config_version != nil {
+		fields = append(fields, proxy.FieldConfigVersion)
+	}
+	if m.last_connected_at != nil {
+		fields = append(fields, proxy.FieldLastConnectedAt)
+	}
+	if m.config_stale != nil {
+		fields = append(fields, proxy.FieldConfigStale)
+	}
 	return fields
 }
 
@@ -16014,6 +16199,12 @@ func (m *ProxyMutation) Field(name string) (ent.Value, bool) {
 		return m.ProxyType()
 	case proxy.FieldPriority:
 		return m.Priority()
+	case proxy.FieldConfigVersion:
+		return m.ConfigVersion()
+	case proxy.FieldLastConnectedAt:
+		return m.LastConnectedAt()
+	case proxy.FieldConfigStale:
+		return m.ConfigStale()
 	}
 	return nil, false
 }
@@ -16071,6 +16262,12 @@ func (m *ProxyMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldProxyType(ctx)
 	case proxy.FieldPriority:
 		return m.OldPriority(ctx)
+	case proxy.FieldConfigVersion:
+		return m.OldConfigVersion(ctx)
+	case proxy.FieldLastConnectedAt:
+		return m.OldLastConnectedAt(ctx)
+	case proxy.FieldConfigStale:
+		return m.OldConfigStale(ctx)
 	}
 	return nil, fmt.Errorf("unknown Proxy field %s", name)
 }
@@ -16248,6 +16445,27 @@ func (m *ProxyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPriority(v)
 		return nil
+	case proxy.FieldConfigVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigVersion(v)
+		return nil
+	case proxy.FieldLastConnectedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastConnectedAt(v)
+		return nil
+	case proxy.FieldConfigStale:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigStale(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Proxy field %s", name)
 }
@@ -16268,6 +16486,9 @@ func (m *ProxyMutation) AddedFields() []string {
 	if m.addpriority != nil {
 		fields = append(fields, proxy.FieldPriority)
 	}
+	if m.addconfig_version != nil {
+		fields = append(fields, proxy.FieldConfigVersion)
+	}
 	return fields
 }
 
@@ -16284,6 +16505,8 @@ func (m *ProxyMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedHealthCheckFailures()
 	case proxy.FieldPriority:
 		return m.AddedPriority()
+	case proxy.FieldConfigVersion:
+		return m.AddedConfigVersion()
 	}
 	return nil, false
 }
@@ -16320,6 +16543,13 @@ func (m *ProxyMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPriority(v)
+		return nil
+	case proxy.FieldConfigVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfigVersion(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy numeric field %s", name)
@@ -16367,6 +16597,15 @@ func (m *ProxyMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(proxy.FieldLastHealthAt) {
 		fields = append(fields, proxy.FieldLastHealthAt)
+	}
+	if m.FieldCleared(proxy.FieldConfigVersion) {
+		fields = append(fields, proxy.FieldConfigVersion)
+	}
+	if m.FieldCleared(proxy.FieldLastConnectedAt) {
+		fields = append(fields, proxy.FieldLastConnectedAt)
+	}
+	if m.FieldCleared(proxy.FieldConfigStale) {
+		fields = append(fields, proxy.FieldConfigStale)
 	}
 	return fields
 }
@@ -16420,6 +16659,15 @@ func (m *ProxyMutation) ClearField(name string) error {
 		return nil
 	case proxy.FieldLastHealthAt:
 		m.ClearLastHealthAt()
+		return nil
+	case proxy.FieldConfigVersion:
+		m.ClearConfigVersion()
+		return nil
+	case proxy.FieldLastConnectedAt:
+		m.ClearLastConnectedAt()
+		return nil
+	case proxy.FieldConfigStale:
+		m.ClearConfigStale()
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy nullable field %s", name)
@@ -16500,6 +16748,15 @@ func (m *ProxyMutation) ResetField(name string) error {
 		return nil
 	case proxy.FieldPriority:
 		m.ResetPriority()
+		return nil
+	case proxy.FieldConfigVersion:
+		m.ResetConfigVersion()
+		return nil
+	case proxy.FieldLastConnectedAt:
+		m.ResetLastConnectedAt()
+		return nil
+	case proxy.FieldConfigStale:
+		m.ResetConfigStale()
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy field %s", name)
@@ -33506,4 +33763,1200 @@ func (m *VendorMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Vendor edge %s", name)
+}
+
+// VpnAlertRuleMutation represents an operation that mutates the VpnAlertRule nodes in the graph.
+type VpnAlertRuleMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int64
+	created_at    *time.Time
+	updated_at    *time.Time
+	name          *string
+	condition     *string
+	threshold     *int
+	addthreshold  *int
+	webhook_url   *string
+	enabled       *bool
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*VpnAlertRule, error)
+	predicates    []predicate.VpnAlertRule
+}
+
+var _ ent.Mutation = (*VpnAlertRuleMutation)(nil)
+
+// vpnalertruleOption allows management of the mutation configuration using functional options.
+type vpnalertruleOption func(*VpnAlertRuleMutation)
+
+// newVpnAlertRuleMutation creates new mutation for the VpnAlertRule entity.
+func newVpnAlertRuleMutation(c config, op Op, opts ...vpnalertruleOption) *VpnAlertRuleMutation {
+	m := &VpnAlertRuleMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeVpnAlertRule,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withVpnAlertRuleID sets the ID field of the mutation.
+func withVpnAlertRuleID(id int64) vpnalertruleOption {
+	return func(m *VpnAlertRuleMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *VpnAlertRule
+		)
+		m.oldValue = func(ctx context.Context) (*VpnAlertRule, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().VpnAlertRule.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withVpnAlertRule sets the old VpnAlertRule of the mutation.
+func withVpnAlertRule(node *VpnAlertRule) vpnalertruleOption {
+	return func(m *VpnAlertRuleMutation) {
+		m.oldValue = func(context.Context) (*VpnAlertRule, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m VpnAlertRuleMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m VpnAlertRuleMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *VpnAlertRuleMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *VpnAlertRuleMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().VpnAlertRule.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *VpnAlertRuleMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *VpnAlertRuleMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *VpnAlertRuleMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *VpnAlertRuleMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *VpnAlertRuleMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *VpnAlertRuleMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *VpnAlertRuleMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *VpnAlertRuleMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *VpnAlertRuleMutation) ResetName() {
+	m.name = nil
+}
+
+// SetCondition sets the "condition" field.
+func (m *VpnAlertRuleMutation) SetCondition(s string) {
+	m.condition = &s
+}
+
+// Condition returns the value of the "condition" field in the mutation.
+func (m *VpnAlertRuleMutation) Condition() (r string, exists bool) {
+	v := m.condition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCondition returns the old "condition" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldCondition(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCondition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCondition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCondition: %w", err)
+	}
+	return oldValue.Condition, nil
+}
+
+// ResetCondition resets all changes to the "condition" field.
+func (m *VpnAlertRuleMutation) ResetCondition() {
+	m.condition = nil
+}
+
+// SetThreshold sets the "threshold" field.
+func (m *VpnAlertRuleMutation) SetThreshold(i int) {
+	m.threshold = &i
+	m.addthreshold = nil
+}
+
+// Threshold returns the value of the "threshold" field in the mutation.
+func (m *VpnAlertRuleMutation) Threshold() (r int, exists bool) {
+	v := m.threshold
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldThreshold returns the old "threshold" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldThreshold(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldThreshold is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldThreshold requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldThreshold: %w", err)
+	}
+	return oldValue.Threshold, nil
+}
+
+// AddThreshold adds i to the "threshold" field.
+func (m *VpnAlertRuleMutation) AddThreshold(i int) {
+	if m.addthreshold != nil {
+		*m.addthreshold += i
+	} else {
+		m.addthreshold = &i
+	}
+}
+
+// AddedThreshold returns the value that was added to the "threshold" field in this mutation.
+func (m *VpnAlertRuleMutation) AddedThreshold() (r int, exists bool) {
+	v := m.addthreshold
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetThreshold resets all changes to the "threshold" field.
+func (m *VpnAlertRuleMutation) ResetThreshold() {
+	m.threshold = nil
+	m.addthreshold = nil
+}
+
+// SetWebhookURL sets the "webhook_url" field.
+func (m *VpnAlertRuleMutation) SetWebhookURL(s string) {
+	m.webhook_url = &s
+}
+
+// WebhookURL returns the value of the "webhook_url" field in the mutation.
+func (m *VpnAlertRuleMutation) WebhookURL() (r string, exists bool) {
+	v := m.webhook_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWebhookURL returns the old "webhook_url" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldWebhookURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWebhookURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWebhookURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWebhookURL: %w", err)
+	}
+	return oldValue.WebhookURL, nil
+}
+
+// ResetWebhookURL resets all changes to the "webhook_url" field.
+func (m *VpnAlertRuleMutation) ResetWebhookURL() {
+	m.webhook_url = nil
+}
+
+// SetEnabled sets the "enabled" field.
+func (m *VpnAlertRuleMutation) SetEnabled(b bool) {
+	m.enabled = &b
+}
+
+// Enabled returns the value of the "enabled" field in the mutation.
+func (m *VpnAlertRuleMutation) Enabled() (r bool, exists bool) {
+	v := m.enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnabled returns the old "enabled" field's value of the VpnAlertRule entity.
+// If the VpnAlertRule object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnAlertRuleMutation) OldEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnabled: %w", err)
+	}
+	return oldValue.Enabled, nil
+}
+
+// ResetEnabled resets all changes to the "enabled" field.
+func (m *VpnAlertRuleMutation) ResetEnabled() {
+	m.enabled = nil
+}
+
+// Where appends a list predicates to the VpnAlertRuleMutation builder.
+func (m *VpnAlertRuleMutation) Where(ps ...predicate.VpnAlertRule) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the VpnAlertRuleMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *VpnAlertRuleMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.VpnAlertRule, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *VpnAlertRuleMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *VpnAlertRuleMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (VpnAlertRule).
+func (m *VpnAlertRuleMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *VpnAlertRuleMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.created_at != nil {
+		fields = append(fields, vpnalertrule.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, vpnalertrule.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, vpnalertrule.FieldName)
+	}
+	if m.condition != nil {
+		fields = append(fields, vpnalertrule.FieldCondition)
+	}
+	if m.threshold != nil {
+		fields = append(fields, vpnalertrule.FieldThreshold)
+	}
+	if m.webhook_url != nil {
+		fields = append(fields, vpnalertrule.FieldWebhookURL)
+	}
+	if m.enabled != nil {
+		fields = append(fields, vpnalertrule.FieldEnabled)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *VpnAlertRuleMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case vpnalertrule.FieldCreatedAt:
+		return m.CreatedAt()
+	case vpnalertrule.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case vpnalertrule.FieldName:
+		return m.Name()
+	case vpnalertrule.FieldCondition:
+		return m.Condition()
+	case vpnalertrule.FieldThreshold:
+		return m.Threshold()
+	case vpnalertrule.FieldWebhookURL:
+		return m.WebhookURL()
+	case vpnalertrule.FieldEnabled:
+		return m.Enabled()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *VpnAlertRuleMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case vpnalertrule.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case vpnalertrule.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case vpnalertrule.FieldName:
+		return m.OldName(ctx)
+	case vpnalertrule.FieldCondition:
+		return m.OldCondition(ctx)
+	case vpnalertrule.FieldThreshold:
+		return m.OldThreshold(ctx)
+	case vpnalertrule.FieldWebhookURL:
+		return m.OldWebhookURL(ctx)
+	case vpnalertrule.FieldEnabled:
+		return m.OldEnabled(ctx)
+	}
+	return nil, fmt.Errorf("unknown VpnAlertRule field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VpnAlertRuleMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case vpnalertrule.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case vpnalertrule.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case vpnalertrule.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case vpnalertrule.FieldCondition:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCondition(v)
+		return nil
+	case vpnalertrule.FieldThreshold:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetThreshold(v)
+		return nil
+	case vpnalertrule.FieldWebhookURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWebhookURL(v)
+		return nil
+	case vpnalertrule.FieldEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnabled(v)
+		return nil
+	}
+	return fmt.Errorf("unknown VpnAlertRule field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *VpnAlertRuleMutation) AddedFields() []string {
+	var fields []string
+	if m.addthreshold != nil {
+		fields = append(fields, vpnalertrule.FieldThreshold)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *VpnAlertRuleMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case vpnalertrule.FieldThreshold:
+		return m.AddedThreshold()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VpnAlertRuleMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case vpnalertrule.FieldThreshold:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddThreshold(v)
+		return nil
+	}
+	return fmt.Errorf("unknown VpnAlertRule numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *VpnAlertRuleMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *VpnAlertRuleMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *VpnAlertRuleMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown VpnAlertRule nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *VpnAlertRuleMutation) ResetField(name string) error {
+	switch name {
+	case vpnalertrule.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case vpnalertrule.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case vpnalertrule.FieldName:
+		m.ResetName()
+		return nil
+	case vpnalertrule.FieldCondition:
+		m.ResetCondition()
+		return nil
+	case vpnalertrule.FieldThreshold:
+		m.ResetThreshold()
+		return nil
+	case vpnalertrule.FieldWebhookURL:
+		m.ResetWebhookURL()
+		return nil
+	case vpnalertrule.FieldEnabled:
+		m.ResetEnabled()
+		return nil
+	}
+	return fmt.Errorf("unknown VpnAlertRule field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *VpnAlertRuleMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *VpnAlertRuleMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *VpnAlertRuleMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *VpnAlertRuleMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *VpnAlertRuleMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *VpnAlertRuleMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *VpnAlertRuleMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown VpnAlertRule unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *VpnAlertRuleMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown VpnAlertRule edge %s", name)
+}
+
+// VpnEventMutation represents an operation that mutates the VpnEvent nodes in the graph.
+type VpnEventMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int64
+	tunnel_name   *string
+	event_type    *string
+	details       *map[string]interface{}
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*VpnEvent, error)
+	predicates    []predicate.VpnEvent
+}
+
+var _ ent.Mutation = (*VpnEventMutation)(nil)
+
+// vpneventOption allows management of the mutation configuration using functional options.
+type vpneventOption func(*VpnEventMutation)
+
+// newVpnEventMutation creates new mutation for the VpnEvent entity.
+func newVpnEventMutation(c config, op Op, opts ...vpneventOption) *VpnEventMutation {
+	m := &VpnEventMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeVpnEvent,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withVpnEventID sets the ID field of the mutation.
+func withVpnEventID(id int64) vpneventOption {
+	return func(m *VpnEventMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *VpnEvent
+		)
+		m.oldValue = func(ctx context.Context) (*VpnEvent, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().VpnEvent.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withVpnEvent sets the old VpnEvent of the mutation.
+func withVpnEvent(node *VpnEvent) vpneventOption {
+	return func(m *VpnEventMutation) {
+		m.oldValue = func(context.Context) (*VpnEvent, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m VpnEventMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m VpnEventMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *VpnEventMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *VpnEventMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().VpnEvent.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTunnelName sets the "tunnel_name" field.
+func (m *VpnEventMutation) SetTunnelName(s string) {
+	m.tunnel_name = &s
+}
+
+// TunnelName returns the value of the "tunnel_name" field in the mutation.
+func (m *VpnEventMutation) TunnelName() (r string, exists bool) {
+	v := m.tunnel_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTunnelName returns the old "tunnel_name" field's value of the VpnEvent entity.
+// If the VpnEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnEventMutation) OldTunnelName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTunnelName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTunnelName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTunnelName: %w", err)
+	}
+	return oldValue.TunnelName, nil
+}
+
+// ResetTunnelName resets all changes to the "tunnel_name" field.
+func (m *VpnEventMutation) ResetTunnelName() {
+	m.tunnel_name = nil
+}
+
+// SetEventType sets the "event_type" field.
+func (m *VpnEventMutation) SetEventType(s string) {
+	m.event_type = &s
+}
+
+// EventType returns the value of the "event_type" field in the mutation.
+func (m *VpnEventMutation) EventType() (r string, exists bool) {
+	v := m.event_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventType returns the old "event_type" field's value of the VpnEvent entity.
+// If the VpnEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnEventMutation) OldEventType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventType: %w", err)
+	}
+	return oldValue.EventType, nil
+}
+
+// ResetEventType resets all changes to the "event_type" field.
+func (m *VpnEventMutation) ResetEventType() {
+	m.event_type = nil
+}
+
+// SetDetails sets the "details" field.
+func (m *VpnEventMutation) SetDetails(value map[string]interface{}) {
+	m.details = &value
+}
+
+// Details returns the value of the "details" field in the mutation.
+func (m *VpnEventMutation) Details() (r map[string]interface{}, exists bool) {
+	v := m.details
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDetails returns the old "details" field's value of the VpnEvent entity.
+// If the VpnEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnEventMutation) OldDetails(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDetails is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDetails requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDetails: %w", err)
+	}
+	return oldValue.Details, nil
+}
+
+// ClearDetails clears the value of the "details" field.
+func (m *VpnEventMutation) ClearDetails() {
+	m.details = nil
+	m.clearedFields[vpnevent.FieldDetails] = struct{}{}
+}
+
+// DetailsCleared returns if the "details" field was cleared in this mutation.
+func (m *VpnEventMutation) DetailsCleared() bool {
+	_, ok := m.clearedFields[vpnevent.FieldDetails]
+	return ok
+}
+
+// ResetDetails resets all changes to the "details" field.
+func (m *VpnEventMutation) ResetDetails() {
+	m.details = nil
+	delete(m.clearedFields, vpnevent.FieldDetails)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *VpnEventMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *VpnEventMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the VpnEvent entity.
+// If the VpnEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VpnEventMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *VpnEventMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// Where appends a list predicates to the VpnEventMutation builder.
+func (m *VpnEventMutation) Where(ps ...predicate.VpnEvent) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the VpnEventMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *VpnEventMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.VpnEvent, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *VpnEventMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *VpnEventMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (VpnEvent).
+func (m *VpnEventMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *VpnEventMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.tunnel_name != nil {
+		fields = append(fields, vpnevent.FieldTunnelName)
+	}
+	if m.event_type != nil {
+		fields = append(fields, vpnevent.FieldEventType)
+	}
+	if m.details != nil {
+		fields = append(fields, vpnevent.FieldDetails)
+	}
+	if m.created_at != nil {
+		fields = append(fields, vpnevent.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *VpnEventMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case vpnevent.FieldTunnelName:
+		return m.TunnelName()
+	case vpnevent.FieldEventType:
+		return m.EventType()
+	case vpnevent.FieldDetails:
+		return m.Details()
+	case vpnevent.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *VpnEventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case vpnevent.FieldTunnelName:
+		return m.OldTunnelName(ctx)
+	case vpnevent.FieldEventType:
+		return m.OldEventType(ctx)
+	case vpnevent.FieldDetails:
+		return m.OldDetails(ctx)
+	case vpnevent.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown VpnEvent field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VpnEventMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case vpnevent.FieldTunnelName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTunnelName(v)
+		return nil
+	case vpnevent.FieldEventType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventType(v)
+		return nil
+	case vpnevent.FieldDetails:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDetails(v)
+		return nil
+	case vpnevent.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown VpnEvent field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *VpnEventMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *VpnEventMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VpnEventMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown VpnEvent numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *VpnEventMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(vpnevent.FieldDetails) {
+		fields = append(fields, vpnevent.FieldDetails)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *VpnEventMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *VpnEventMutation) ClearField(name string) error {
+	switch name {
+	case vpnevent.FieldDetails:
+		m.ClearDetails()
+		return nil
+	}
+	return fmt.Errorf("unknown VpnEvent nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *VpnEventMutation) ResetField(name string) error {
+	switch name {
+	case vpnevent.FieldTunnelName:
+		m.ResetTunnelName()
+		return nil
+	case vpnevent.FieldEventType:
+		m.ResetEventType()
+		return nil
+	case vpnevent.FieldDetails:
+		m.ResetDetails()
+		return nil
+	case vpnevent.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown VpnEvent field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *VpnEventMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *VpnEventMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *VpnEventMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *VpnEventMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *VpnEventMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *VpnEventMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *VpnEventMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown VpnEvent unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *VpnEventMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown VpnEvent edge %s", name)
 }

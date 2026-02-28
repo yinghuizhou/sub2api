@@ -38,6 +38,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/ent/vendor"
+	"github.com/Wei-Shaw/sub2api/ent/vpnalertrule"
+	"github.com/Wei-Shaw/sub2api/ent/vpnevent"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -124,6 +126,8 @@ func checkColumn(t, c string) error {
 			userattributevalue.Table:      userattributevalue.ValidColumn,
 			usersubscription.Table:        usersubscription.ValidColumn,
 			vendor.Table:                  vendor.ValidColumn,
+			vpnalertrule.Table:            vpnalertrule.ValidColumn,
+			vpnevent.Table:                vpnevent.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

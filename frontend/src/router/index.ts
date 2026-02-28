@@ -350,6 +350,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/admin/vpn-monitor',
+    name: 'AdminVpnMonitor',
+    component: () => import('@/views/admin/VpnMonitorView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'VPN Monitor',
+      titleKey: 'admin.vpnMonitor.title',
+      descriptionKey: 'admin.vpnMonitor.description'
+    }
+  },
+  {
     path: '/admin/redeem',
     name: 'AdminRedeem',
     component: lazyLoad(() => import('@/views/admin/RedeemView.vue')),

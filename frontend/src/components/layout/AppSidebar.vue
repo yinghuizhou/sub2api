@@ -566,6 +566,7 @@ const adminNavItems = computed(() => {
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     { path: '/admin/vendors', label: t('nav.vendors', '供应商'), icon: VendorIcon },
     { path: '/admin/vpn', label: t('nav.vpn', 'VPN管理'), icon: VpnIcon },
+    { path: '/admin/vpn-monitor', label: t('nav.vpnMonitor', 'VPN监控'), icon: ChartIcon },
     { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: TicketIcon, hideInSimpleMode: true },
     { path: '/admin/promo-codes', label: t('nav.promoCodes'), icon: GiftIcon, hideInSimpleMode: true },
     { path: '/admin/usage', label: t('nav.usage'), icon: ChartIcon },

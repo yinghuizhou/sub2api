@@ -131,6 +131,24 @@ func (Proxy) Fields() []ent.Field {
 		// priority: 选择优先级（数值越高越优先）
 		field.Int("priority").
 			Default(100),
+
+		// ========== Config push / 配置追踪字段 ==========
+
+		// config_version: 配置版本号，每次推送递增
+		field.Int("config_version").
+			Default(1).
+			Optional(),
+
+		// last_connected_at: VPN 隧道最后连接成功时间
+		field.Time("last_connected_at").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
+
+		// config_stale: 配置是否过期（代理运行的版本低于最新版本）
+		field.Bool("config_stale").
+			Default(false).
+			Optional(),
 	}
 }
 

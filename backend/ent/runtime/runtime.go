@@ -32,6 +32,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/ent/vendor"
+	"github.com/Wei-Shaw/sub2api/ent/vpnalertrule"
+	"github.com/Wei-Shaw/sub2api/ent/vpnevent"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -710,6 +712,14 @@ func init() {
 	proxyDescPriority := proxyFields[20].Descriptor()
 	// proxy.DefaultPriority holds the default value on creation for the priority field.
 	proxy.DefaultPriority = proxyDescPriority.Default.(int)
+	// proxyDescConfigVersion is the schema descriptor for config_version field.
+	proxyDescConfigVersion := proxyFields[21].Descriptor()
+	// proxy.DefaultConfigVersion holds the default value on creation for the config_version field.
+	proxy.DefaultConfigVersion = proxyDescConfigVersion.Default.(int)
+	// proxyDescConfigStale is the schema descriptor for config_stale field.
+	proxyDescConfigStale := proxyFields[23].Descriptor()
+	// proxy.DefaultConfigStale holds the default value on creation for the config_stale field.
+	proxy.DefaultConfigStale = proxyDescConfigStale.Default.(bool)
 	rechargepackageFields := schema.RechargePackage{}.Fields()
 	_ = rechargepackageFields
 	// rechargepackageDescBonusRate is the schema descriptor for bonus_rate field.
@@ -1461,6 +1471,107 @@ func init() {
 	vendorDescBalanceAlertEnabled := vendorFields[25].Descriptor()
 	// vendor.DefaultBalanceAlertEnabled holds the default value on creation for the balance_alert_enabled field.
 	vendor.DefaultBalanceAlertEnabled = vendorDescBalanceAlertEnabled.Default.(bool)
+	vpnalertruleMixin := schema.VpnAlertRule{}.Mixin()
+	vpnalertruleMixinFields0 := vpnalertruleMixin[0].Fields()
+	_ = vpnalertruleMixinFields0
+	vpnalertruleFields := schema.VpnAlertRule{}.Fields()
+	_ = vpnalertruleFields
+	// vpnalertruleDescCreatedAt is the schema descriptor for created_at field.
+	vpnalertruleDescCreatedAt := vpnalertruleMixinFields0[0].Descriptor()
+	// vpnalertrule.DefaultCreatedAt holds the default value on creation for the created_at field.
+	vpnalertrule.DefaultCreatedAt = vpnalertruleDescCreatedAt.Default.(func() time.Time)
+	// vpnalertruleDescUpdatedAt is the schema descriptor for updated_at field.
+	vpnalertruleDescUpdatedAt := vpnalertruleMixinFields0[1].Descriptor()
+	// vpnalertrule.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	vpnalertrule.DefaultUpdatedAt = vpnalertruleDescUpdatedAt.Default.(func() time.Time)
+	// vpnalertrule.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	vpnalertrule.UpdateDefaultUpdatedAt = vpnalertruleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// vpnalertruleDescName is the schema descriptor for name field.
+	vpnalertruleDescName := vpnalertruleFields[0].Descriptor()
+	// vpnalertrule.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	vpnalertrule.NameValidator = func() func(string) error {
+		validators := vpnalertruleDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vpnalertruleDescCondition is the schema descriptor for condition field.
+	vpnalertruleDescCondition := vpnalertruleFields[1].Descriptor()
+	// vpnalertrule.ConditionValidator is a validator for the "condition" field. It is called by the builders before save.
+	vpnalertrule.ConditionValidator = func() func(string) error {
+		validators := vpnalertruleDescCondition.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(condition string) error {
+			for _, fn := range fns {
+				if err := fn(condition); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vpnalertruleDescWebhookURL is the schema descriptor for webhook_url field.
+	vpnalertruleDescWebhookURL := vpnalertruleFields[3].Descriptor()
+	// vpnalertrule.DefaultWebhookURL holds the default value on creation for the webhook_url field.
+	vpnalertrule.DefaultWebhookURL = vpnalertruleDescWebhookURL.Default.(string)
+	// vpnalertruleDescEnabled is the schema descriptor for enabled field.
+	vpnalertruleDescEnabled := vpnalertruleFields[4].Descriptor()
+	// vpnalertrule.DefaultEnabled holds the default value on creation for the enabled field.
+	vpnalertrule.DefaultEnabled = vpnalertruleDescEnabled.Default.(bool)
+	vpneventFields := schema.VpnEvent{}.Fields()
+	_ = vpneventFields
+	// vpneventDescTunnelName is the schema descriptor for tunnel_name field.
+	vpneventDescTunnelName := vpneventFields[0].Descriptor()
+	// vpnevent.TunnelNameValidator is a validator for the "tunnel_name" field. It is called by the builders before save.
+	vpnevent.TunnelNameValidator = func() func(string) error {
+		validators := vpneventDescTunnelName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(tunnel_name string) error {
+			for _, fn := range fns {
+				if err := fn(tunnel_name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vpneventDescEventType is the schema descriptor for event_type field.
+	vpneventDescEventType := vpneventFields[1].Descriptor()
+	// vpnevent.EventTypeValidator is a validator for the "event_type" field. It is called by the builders before save.
+	vpnevent.EventTypeValidator = func() func(string) error {
+		validators := vpneventDescEventType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(event_type string) error {
+			for _, fn := range fns {
+				if err := fn(event_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// vpneventDescCreatedAt is the schema descriptor for created_at field.
+	vpneventDescCreatedAt := vpneventFields[3].Descriptor()
+	// vpnevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	vpnevent.DefaultCreatedAt = vpneventDescCreatedAt.Default.(func() time.Time)
 }
 
 const (

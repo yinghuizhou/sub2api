@@ -8,10 +8,17 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/net/proxy"
 )
+
+// cooldownEntry tracks when a config was failed-over away from
+type cooldownEntry struct {
+	failedAt         time.Time
+	consecutiveFails int
+}
 
 const (
 	healthCheckInterval  = 30 * time.Second
@@ -26,11 +33,14 @@ const (
 
 // HealthChecker periodically checks tunnel health and triggers auto-failover.
 type HealthChecker struct {
-	tunnelMgr *TunnelManager
-	store     *ConfigStore
-	callback  *CallbackClient
-	cfg       *AgentConfig
-	scores    *StabilityScores
+	tunnelMgr  *TunnelManager
+	store      *ConfigStore
+	callback   *CallbackClient
+	cfg        *AgentConfig
+	scores     *StabilityScores
+	cooldowns  map[string]*cooldownEntry
+	cooldownMu sync.Mutex
+	checkCount int
 }
 
 // NewHealthChecker creates a new HealthChecker.
@@ -42,6 +52,7 @@ func NewHealthChecker(tm *TunnelManager, store *ConfigStore, cb *CallbackClient,
 		callback:  cb,
 		cfg:       cfg,
 		scores:    scores,
+		cooldowns: make(map[string]*cooldownEntry),
 	}
 }
 
@@ -60,6 +71,10 @@ func (hc *HealthChecker) Start(ctx context.Context) {
 
 	for {
 		hc.checkAll()
+		hc.checkCount++
+		if hc.checkCount%120 == 0 { // every ~1 hour (120 * 30s)
+			hc.store.CheckAndMarkStale()
+		}
 		select {
 		case <-ticker.C:
 		case <-ctx.Done():
@@ -96,12 +111,16 @@ func (hc *HealthChecker) checkTunnel(t *TunnelInfo) {
 	rt.LastCheck = time.Now()
 	rt.LatencyMs = latency
 
+	previousHealth := rt.Health
+
 	if reachable {
 		rt.Failures = 0
 		rt.Health = "healthy"
 		// Detect exit IP in background (non-blocking)
 		go hc.detectExitIP(t.Name, t.SocksPort)
 		hc.scores.RecordSuccess(t.ConfigName)
+		// Record success in config store for staleness tracking
+		go hc.store.RecordSuccess(t.ConfigName)
 	} else {
 		rt.Failures++
 		if rt.Failures >= unhealthyThreshold {
@@ -113,9 +132,28 @@ func (hc *HealthChecker) checkTunnel(t *TunnelInfo) {
 		log.Printf("Health check failed for %q (failures: %d)", t.Name, rt.Failures)
 	}
 
+	currentHealth := rt.Health
+
 	// Copy state for callback
 	info := rt.TunnelInfo
 	hc.tunnelMgr.mu.Unlock()
+
+	// Emit events on health transitions
+	if previousHealth != currentHealth {
+		go hc.callback.ReportEvent(t.Name, "health_changed", map[string]interface{}{
+			"previous_health": previousHealth,
+			"current_health":  currentHealth,
+			"failures":        info.Failures,
+			"latency_ms":      info.LatencyMs,
+		})
+		// Emit "connected" event when tunnel recovers from unhealthy/degraded to healthy
+		if currentHealth == "healthy" && (previousHealth == "unhealthy" || previousHealth == "degraded") {
+			go hc.callback.ReportEvent(t.Name, "connected", map[string]interface{}{
+				"exit_ip":    info.ExitIP,
+				"latency_ms": info.LatencyMs,
+			})
+		}
+	}
 
 	// Save scores periodically
 	hc.scores.Save(hc.cfg.StateDir)

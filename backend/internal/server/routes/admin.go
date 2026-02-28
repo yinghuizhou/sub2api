@@ -95,6 +95,7 @@ func registerVpnRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		vpn.POST("/tunnels/:name/stop", h.Admin.Vpn.StopTunnel)
 		vpn.GET("/tunnels/:name/status", h.Admin.Vpn.GetTunnelStatus)
 		vpn.POST("/configs/upload", h.Admin.Vpn.UploadConfigs)
+		vpn.POST("/configs/push", h.Admin.Vpn.PushConfigs)
 		vpn.GET("/configs", h.Admin.Vpn.ListConfigs)
 		vpn.DELETE("/configs/:name", h.Admin.Vpn.DeleteConfig)
 		vpn.GET("/health", h.Admin.Vpn.GetAgentHealth)
@@ -106,6 +107,17 @@ func registerVpnRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		vpn.GET("/certificates", h.Admin.Vpn.ListCertificates)
 		vpn.POST("/certificates/import", h.Admin.Vpn.ImportCertificate)
 		vpn.DELETE("/certificates/:id", h.Admin.Vpn.DeleteCertificate)
+
+		// Events & Dashboard
+		vpn.GET("/events", h.Admin.Vpn.ListEvents)
+		vpn.GET("/dashboard", h.Admin.Vpn.GetDashboard)
+		vpn.POST("/events/report", h.Admin.Vpn.ReportEvent)
+
+		// Alert Rules
+		vpn.POST("/alert-rules", h.Admin.Vpn.CreateAlertRule)
+		vpn.GET("/alert-rules", h.Admin.Vpn.ListAlertRules)
+		vpn.PUT("/alert-rules/:id", h.Admin.Vpn.UpdateAlertRule)
+		vpn.DELETE("/alert-rules/:id", h.Admin.Vpn.DeleteAlertRule)
 	}
 }
 
