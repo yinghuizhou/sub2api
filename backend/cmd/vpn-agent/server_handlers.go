@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -34,7 +35,12 @@ func (s *Server) handleCreateTunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.SocksPort == 0 {
-		req.SocksPort = s.tunnelMgr.NextAvailablePort()
+		port, err := s.tunnelMgr.NextAvailablePort()
+		if err != nil {
+			writeError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		req.SocksPort = port
 	}
 
 	info, err := s.tunnelMgr.Create(req.Name, req.ConfigName, req.Region, req.SocksPort, req.ProxyID)
@@ -48,6 +54,10 @@ func (s *Server) handleCreateTunnel(w http.ResponseWriter, r *http.Request) {
 // handleRemoveTunnel deletes a tunnel by name.
 func (s *Server) handleRemoveTunnel(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if err := validateTunnelName(name); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := s.tunnelMgr.Remove(name); err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
@@ -58,6 +68,10 @@ func (s *Server) handleRemoveTunnel(w http.ResponseWriter, r *http.Request) {
 // handleStartTunnel starts a stopped tunnel.
 func (s *Server) handleStartTunnel(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if err := validateTunnelName(name); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := s.tunnelMgr.Start(name); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -68,6 +82,10 @@ func (s *Server) handleStartTunnel(w http.ResponseWriter, r *http.Request) {
 // handleStopTunnel stops a running tunnel.
 func (s *Server) handleStopTunnel(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if err := validateTunnelName(name); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := s.tunnelMgr.Stop(name); err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
@@ -78,6 +96,10 @@ func (s *Server) handleStopTunnel(w http.ResponseWriter, r *http.Request) {
 // handleRestartTunnel restarts a tunnel.
 func (s *Server) handleRestartTunnel(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if err := validateTunnelName(name); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := s.tunnelMgr.Restart(name); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -88,6 +110,10 @@ func (s *Server) handleRestartTunnel(w http.ResponseWriter, r *http.Request) {
 // handleTunnelStatus returns detailed status for a single tunnel.
 func (s *Server) handleTunnelStatus(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if err := validateTunnelName(name); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	info := s.tunnelMgr.Get(name)
 	if info == nil {
 		writeError(w, http.StatusNotFound, "tunnel not found: "+name)
@@ -125,11 +151,12 @@ func (s *Server) handleUploadConfigs(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "read uploaded file: "+err.Error())
 			return
 		}
-		if err := s.store.Save(fh.Filename, data); err != nil {
+		safeName := filepath.Base(fh.Filename)
+		if err := s.store.Save(safeName, data); err != nil {
 			writeError(w, http.StatusInternalServerError, "save config: "+err.Error())
 			return
 		}
-		saved = append(saved, fh.Filename)
+		saved = append(saved, safeName)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -151,6 +178,10 @@ func (s *Server) handleListConfigs(w http.ResponseWriter, r *http.Request) {
 // handleDeleteConfig deletes an .ovpn config file.
 func (s *Server) handleDeleteConfig(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if err := validateConfigName(name); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := s.store.Delete(name); err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
@@ -160,7 +191,10 @@ func (s *Server) handleDeleteConfig(w http.ResponseWriter, r *http.Request) {
 
 // handleNextPort returns the next available SOCKS port.
 func (s *Server) handleNextPort(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]int{
-		"port": s.tunnelMgr.NextAvailablePort(),
-	})
+	port, err := s.tunnelMgr.NextAvailablePort()
+	if err != nil {
+		writeError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"port": port})
 }

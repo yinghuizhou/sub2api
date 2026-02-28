@@ -91,6 +91,8 @@ func registerVpnRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		vpn.POST("/tunnels", h.Admin.Vpn.CreateTunnel)
 		vpn.DELETE("/tunnels/:name", h.Admin.Vpn.RemoveTunnel)
 		vpn.POST("/tunnels/:name/restart", h.Admin.Vpn.RestartTunnel)
+		vpn.POST("/tunnels/:name/start", h.Admin.Vpn.StartTunnel)
+		vpn.POST("/tunnels/:name/stop", h.Admin.Vpn.StopTunnel)
 		vpn.GET("/tunnels/:name/status", h.Admin.Vpn.GetTunnelStatus)
 		vpn.POST("/configs/upload", h.Admin.Vpn.UploadConfigs)
 		vpn.GET("/configs", h.Admin.Vpn.ListConfigs)

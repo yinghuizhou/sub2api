@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -105,28 +106,28 @@ func (s *VpnAgentService) CreateTunnel(ctx context.Context, input CreateTunnelIn
 
 // RemoveTunnel removes a tunnel by name.
 func (s *VpnAgentService) RemoveTunnel(ctx context.Context, name string) error {
-	return s.doDelete(ctx, "/api/tunnels/"+name)
+	return s.doDelete(ctx, "/api/tunnels/"+url.PathEscape(name))
 }
 
 // RestartTunnel restarts a tunnel by name.
 func (s *VpnAgentService) RestartTunnel(ctx context.Context, name string) error {
-	return s.doPostEmpty(ctx, "/api/tunnels/"+name+"/restart")
+	return s.doPostEmpty(ctx, "/api/tunnels/"+url.PathEscape(name)+"/restart")
 }
 
 // StartTunnel starts a stopped tunnel.
 func (s *VpnAgentService) StartTunnel(ctx context.Context, name string) error {
-	return s.doPostEmpty(ctx, "/api/tunnels/"+name+"/start")
+	return s.doPostEmpty(ctx, "/api/tunnels/"+url.PathEscape(name)+"/start")
 }
 
 // StopTunnel stops a running tunnel.
 func (s *VpnAgentService) StopTunnel(ctx context.Context, name string) error {
-	return s.doPostEmpty(ctx, "/api/tunnels/"+name+"/stop")
+	return s.doPostEmpty(ctx, "/api/tunnels/"+url.PathEscape(name)+"/stop")
 }
 
 // GetTunnelStatus returns detailed status for a single tunnel.
 func (s *VpnAgentService) GetTunnelStatus(ctx context.Context, name string) (*VpnTunnel, error) {
 	var tunnel VpnTunnel
-	if err := s.doGet(ctx, "/api/tunnels/"+name+"/status", &tunnel); err != nil {
+	if err := s.doGet(ctx, "/api/tunnels/"+url.PathEscape(name)+"/status", &tunnel); err != nil {
 		return nil, err
 	}
 	return &tunnel, nil
@@ -143,7 +144,7 @@ func (s *VpnAgentService) ListConfigs(ctx context.Context) ([]VpnOvpnConfig, err
 
 // DeleteConfig deletes an .ovpn config file.
 func (s *VpnAgentService) DeleteConfig(ctx context.Context, name string) error {
-	return s.doDelete(ctx, "/api/configs/"+name)
+	return s.doDelete(ctx, "/api/configs/"+url.PathEscape(name))
 }
 
 // GetAgentHealth returns the Agent's health status.
@@ -204,6 +205,8 @@ func (s *VpnAgentService) UploadConfigs(ctx context.Context, files map[string][]
 	var result struct {
 		Uploaded []string `json:"uploaded"`
 	}
-	json.Unmarshal(apiResp.Data, &result)
+	if err := json.Unmarshal(apiResp.Data, &result); err != nil {
+		return nil, fmt.Errorf("decode upload result: %w", err)
+	}
 	return result.Uploaded, nil
 }

@@ -61,16 +61,25 @@ func NewTunnelManager(cfg *AgentConfig, store *ConfigStore, ss *StateStore, cb *
 
 // Create starts a new tunnel with OpenVPN + 3proxy.
 func (tm *TunnelManager) Create(name, configName, region string, socksPort, proxyID int) (*TunnelInfo, error) {
-	tm.mu.Lock()
-	defer tm.mu.Unlock()
+	// Validate inputs before acquiring lock.
+	if err := validateTunnelName(name); err != nil {
+		return nil, err
+	}
+	if err := validateConfigName(configName); err != nil {
+		return nil, err
+	}
 
+	// Phase 1: Lock, check existence, read config, setup files.
+	tm.mu.Lock()
 	if _, exists := tm.tunnels[name]; exists {
+		tm.mu.Unlock()
 		return nil, fmt.Errorf("tunnel %q already exists", name)
 	}
 
 	// Read base .ovpn content from config store.
 	ovpnData, err := tm.store.Get(configName)
 	if err != nil {
+		tm.mu.Unlock()
 		return nil, fmt.Errorf("read ovpn config %q: %w", configName, err)
 	}
 
@@ -91,6 +100,7 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 		"up /etc/openvpn/scripts/up.sh\n" +
 		"down /etc/openvpn/scripts/down.sh\n"
 	if err := os.WriteFile(confPath, []byte(clientConf), 0600); err != nil {
+		tm.mu.Unlock()
 		return nil, fmt.Errorf("write client config: %w", err)
 	}
 
@@ -98,6 +108,7 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 	logFile := filepath.Join(tm.cfg.LogDir, "openvpn-"+name+".log")
 	lf, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
+		tm.mu.Unlock()
 		return nil, fmt.Errorf("open log file: %w", err)
 	}
 
@@ -106,6 +117,7 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 	vpnCmd.Stderr = lf
 	if err := vpnCmd.Start(); err != nil {
 		lf.Close()
+		tm.mu.Unlock()
 		return nil, fmt.Errorf("start openvpn: %w", err)
 	}
 	// Close log file handle — process owns it now via fd inheritance.
@@ -113,12 +125,40 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 
 	serverIP := parseServerIP(string(ovpnData))
 
-	// Wait for state file to appear (up.sh writes it).
-	localIP, err := tm.waitForStateFile(name, 30*time.Second)
+	// Mark as "connecting" so other goroutines see it.
+	rt := &runningTunnel{
+		TunnelInfo: TunnelInfo{
+			Name: name, ConfigName: configName, Region: region,
+			ServerIP: serverIP, SocksPort: socksPort, Status: "connecting",
+			TunDevice: "tun-" + name, Health: "unknown",
+			Uptime: time.Now(), ProxyID: proxyID,
+		},
+		vpnCmd:   vpnCmd,
+		confPath: confPath,
+	}
+	tm.tunnels[name] = rt
+	tm.mu.Unlock()
+
+	// Phase 2: Wait for state file WITHOUT holding lock.
+	localIP, err := waitForStateFile(name, 30*time.Second, vpnCmd)
 	if err != nil {
+		tm.mu.Lock()
+		delete(tm.tunnels, name)
+		tm.mu.Unlock()
 		killProcess(vpnCmd)
 		os.Remove(confPath)
 		return nil, fmt.Errorf("openvpn failed to connect: %w", err)
+	}
+
+	// Phase 3: Lock again, start 3proxy, update state.
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	// Check tunnel still exists (might have been removed while we waited).
+	if _, exists := tm.tunnels[name]; !exists {
+		killProcess(vpnCmd)
+		os.Remove(confPath)
+		return nil, fmt.Errorf("tunnel %q was removed during creation", name)
 	}
 
 	// Generate and start 3proxy.
@@ -126,26 +166,22 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 	socksConf := fmt.Sprintf(socksConfTpl, name, localIP, socksPort)
 	if err := os.WriteFile(socksConfPath, []byte(socksConf), 0644); err != nil {
 		killProcess(vpnCmd)
+		delete(tm.tunnels, name)
 		return nil, fmt.Errorf("write 3proxy config: %w", err)
 	}
 
 	socksCmd := exec.Command("3proxy", socksConfPath)
 	if err := socksCmd.Start(); err != nil {
 		killProcess(vpnCmd)
+		delete(tm.tunnels, name)
 		return nil, fmt.Errorf("start 3proxy: %w", err)
 	}
 
-	rt := &runningTunnel{
-		TunnelInfo: TunnelInfo{
-			Name: name, ConfigName: configName, Region: region,
-			ServerIP: serverIP, SocksPort: socksPort, Status: "connected",
-			TunDevice: "tun-" + name, LocalIP: localIP, Health: "healthy",
-			Uptime: time.Now(), ProxyID: proxyID,
-		},
-		vpnCmd: vpnCmd, socksCmd: socksCmd,
-		confPath: confPath, socksConfPath: socksConfPath,
-	}
-	tm.tunnels[name] = rt
+	rt.Status = "connected"
+	rt.LocalIP = localIP
+	rt.Health = "healthy"
+	rt.socksCmd = socksCmd
+	rt.socksConfPath = socksConfPath
 
 	tm.persistState()
 	log.Printf("Tunnel %q created (socks:%d, tun:%s, ip:%s)", name, socksPort, rt.TunDevice, localIP)
@@ -181,5 +217,5 @@ nscache 65536
 maxconn 128
 external %s
 auth none
-socks -p%d -i0.0.0.0
+socks -p%d -i127.0.0.1
 `

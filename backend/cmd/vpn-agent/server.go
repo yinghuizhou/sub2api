@@ -40,7 +40,7 @@ func NewServer(cfg *AgentConfig, store *ConfigStore, tm *TunnelManager, hc *Heal
 }
 
 // Router returns the HTTP handler with all routes registered.
-func (s *Server) Router() *http.ServeMux {
+func (s *Server) Router() http.Handler {
 	mux := http.NewServeMux()
 
 	// Health
@@ -63,7 +63,27 @@ func (s *Server) Router() *http.ServeMux {
 	// Ports
 	mux.HandleFunc("GET /api/ports/next", s.handleNextPort)
 
+	// Wrap with auth middleware if API key is configured
+	if s.cfg.APIKey != "" {
+		return s.authMiddleware(mux)
+	}
 	return mux
+}
+
+func (s *Server) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip auth for health endpoint
+		if r.URL.Path == "/api/health" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		key := r.Header.Get("X-Api-Key")
+		if key != s.cfg.APIKey {
+			writeError(w, http.StatusUnauthorized, "invalid or missing API key")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // writeJSON writes a success JSON response.

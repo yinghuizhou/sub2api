@@ -13,6 +13,7 @@ backend/bin/
 backend/server
 backend/sub2api
 backend/main
+backend/vpn-agent
 
 # Go 测试二进制
 *.test

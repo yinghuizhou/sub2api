@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,7 @@ func NewVpnHandler(vpnAgentService *service.VpnAgentService) *VpnHandler {
 
 func (h *VpnHandler) requireEnabled(c *gin.Context) bool {
 	if !h.vpnAgentService.IsEnabled() {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"code": 1, "message": "VPN Agent integration is not enabled"})
+		response.Error(c, http.StatusServiceUnavailable, "VPN Agent integration is not enabled")
 		return false
 	}
 	return true
@@ -34,10 +35,10 @@ func (h *VpnHandler) ListTunnels(c *gin.Context) {
 	}
 	tunnels, err := h.vpnAgentService.ListTunnels(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": "Agent error: " + err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": tunnels})
+	response.Success(c, tunnels)
 }
 
 // CreateTunnel deploys a new VPN tunnel.
@@ -47,15 +48,15 @@ func (h *VpnHandler) CreateTunnel(c *gin.Context) {
 	}
 	var req service.CreateTunnelInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	tunnel, err := h.vpnAgentService.CreateTunnel(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": "Agent error: " + err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"code": 0, "message": "success", "data": tunnel})
+	response.Created(c, tunnel)
 }
 
 // RemoveTunnel deletes a VPN tunnel.
@@ -65,10 +66,10 @@ func (h *VpnHandler) RemoveTunnel(c *gin.Context) {
 	}
 	name := c.Param("name")
 	if err := h.vpnAgentService.RemoveTunnel(c.Request.Context(), name); err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
+	response.Success(c, nil)
 }
 
 // RestartTunnel restarts a VPN tunnel.
@@ -78,10 +79,36 @@ func (h *VpnHandler) RestartTunnel(c *gin.Context) {
 	}
 	name := c.Param("name")
 	if err := h.vpnAgentService.RestartTunnel(c.Request.Context(), name); err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
+	response.Success(c, nil)
+}
+
+// StartTunnel starts a stopped VPN tunnel.
+func (h *VpnHandler) StartTunnel(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	name := c.Param("name")
+	if err := h.vpnAgentService.StartTunnel(c.Request.Context(), name); err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Success(c, nil)
+}
+
+// StopTunnel stops a running VPN tunnel.
+func (h *VpnHandler) StopTunnel(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	name := c.Param("name")
+	if err := h.vpnAgentService.StopTunnel(c.Request.Context(), name); err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Success(c, nil)
 }
 
 // GetTunnelStatus returns detailed status for a tunnel.
@@ -92,10 +119,10 @@ func (h *VpnHandler) GetTunnelStatus(c *gin.Context) {
 	name := c.Param("name")
 	tunnel, err := h.vpnAgentService.GetTunnelStatus(c.Request.Context(), name)
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": tunnel})
+	response.Success(c, tunnel)
 }
 
 // UploadConfigs handles multipart upload of .ovpn files.
@@ -105,12 +132,12 @@ func (h *VpnHandler) UploadConfigs(c *gin.Context) {
 	}
 	form, err := c.MultipartForm()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "parse form: " + err.Error()})
+		response.BadRequest(c, "parse form: "+err.Error())
 		return
 	}
 	fileHeaders := form.File["files"]
 	if len(fileHeaders) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "no files provided"})
+		response.BadRequest(c, "no files provided")
 		return
 	}
 
@@ -121,13 +148,13 @@ func (h *VpnHandler) UploadConfigs(c *gin.Context) {
 		}
 		f, err := fh.Open()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "open file: " + err.Error()})
+			response.Error(c, http.StatusInternalServerError, "open file: "+err.Error())
 			return
 		}
 		data, err := io.ReadAll(f)
 		f.Close()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "read file: " + err.Error()})
+			response.Error(c, http.StatusInternalServerError, "read file: "+err.Error())
 			return
 		}
 		files[fh.Filename] = data
@@ -135,10 +162,10 @@ func (h *VpnHandler) UploadConfigs(c *gin.Context) {
 
 	uploaded, err := h.vpnAgentService.UploadConfigs(c.Request.Context(), files)
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": "Agent error: " + err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": gin.H{"uploaded": uploaded, "count": len(uploaded)}})
+	response.Success(c, map[string]any{"uploaded": uploaded, "count": len(uploaded)})
 }
 
 // ListConfigs returns all .ovpn config files.
@@ -148,10 +175,10 @@ func (h *VpnHandler) ListConfigs(c *gin.Context) {
 	}
 	configs, err := h.vpnAgentService.ListConfigs(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": configs})
+	response.Success(c, configs)
 }
 
 // DeleteConfig deletes an .ovpn config file.
@@ -161,10 +188,10 @@ func (h *VpnHandler) DeleteConfig(c *gin.Context) {
 	}
 	name := c.Param("name")
 	if err := h.vpnAgentService.DeleteConfig(c.Request.Context(), name); err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success"})
+	response.Success(c, nil)
 }
 
 // GetAgentHealth returns the VPN Agent's health status.
@@ -174,8 +201,8 @@ func (h *VpnHandler) GetAgentHealth(c *gin.Context) {
 	}
 	health, err := h.vpnAgentService.GetAgentHealth(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"code": 1, "message": err.Error()})
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": health})
+	response.Success(c, health)
 }

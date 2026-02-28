@@ -63,7 +63,12 @@ func (s *VpnAgentService) doRequest(req *http.Request, out any) error {
 		return fmt.Errorf("read response: %w", err)
 	}
 
-	if resp.StatusCode >= 500 {
+	// For non-2xx responses, try to parse the JSON envelope for a better error message
+	if resp.StatusCode >= 400 {
+		var apiResp agentAPIResponse
+		if err := json.Unmarshal(body, &apiResp); err == nil && apiResp.Message != "" {
+			return fmt.Errorf("agent: %s", apiResp.Message)
+		}
 		return fmt.Errorf("vpn agent error (%d): %s", resp.StatusCode, string(body))
 	}
 

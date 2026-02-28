@@ -37,21 +37,26 @@ func (tm *TunnelManager) Get(name string) *TunnelInfo {
 
 // Restart stops and re-creates a tunnel with the same config.
 func (tm *TunnelManager) Restart(name string) error {
-	tm.mu.RLock()
+	tm.mu.Lock()
 	rt, ok := tm.tunnels[name]
 	if !ok {
-		tm.mu.RUnlock()
+		tm.mu.Unlock()
 		return fmt.Errorf("tunnel %q not found", name)
 	}
 	cfg := rt.ConfigName
 	region := rt.Region
 	port := rt.SocksPort
 	pid := rt.ProxyID
-	tm.mu.RUnlock()
 
-	if err := tm.Remove(name); err != nil {
-		return fmt.Errorf("restart remove: %w", err)
-	}
+	// Stop and remove under lock
+	stopTunnel(rt)
+	os.Remove(rt.confPath)
+	os.Remove(rt.socksConfPath)
+	delete(tm.tunnels, name)
+	tm.persistState()
+	tm.mu.Unlock()
+
+	// Re-create (Create handles its own locking)
 	_, err := tm.Create(name, cfg, region, port, pid)
 	return err
 }
@@ -75,24 +80,20 @@ func (tm *TunnelManager) Stop(name string) error {
 
 // Start restarts a stopped tunnel from its saved config.
 func (tm *TunnelManager) Start(name string) error {
-	tm.mu.RLock()
+	tm.mu.Lock()
 	rt, ok := tm.tunnels[name]
 	if !ok {
-		tm.mu.RUnlock()
+		tm.mu.Unlock()
 		return fmt.Errorf("tunnel %q not found", name)
 	}
 	if rt.Status == "connected" {
-		tm.mu.RUnlock()
+		tm.mu.Unlock()
 		return nil
 	}
 	cfg := rt.ConfigName
 	region := rt.Region
 	port := rt.SocksPort
 	pid := rt.ProxyID
-	tm.mu.RUnlock()
-
-	// Remove the stopped entry then re-create.
-	tm.mu.Lock()
 	delete(tm.tunnels, name)
 	tm.mu.Unlock()
 
@@ -128,26 +129,29 @@ func (tm *TunnelManager) RestoreFromState() error {
 
 // SwitchConfig stops a tunnel and restarts it with a new .ovpn config.
 func (tm *TunnelManager) SwitchConfig(name, newConfigName string) error {
-	tm.mu.RLock()
+	tm.mu.Lock()
 	rt, ok := tm.tunnels[name]
 	if !ok {
-		tm.mu.RUnlock()
+		tm.mu.Unlock()
 		return fmt.Errorf("tunnel %q not found", name)
 	}
 	region := rt.Region
 	port := rt.SocksPort
 	pid := rt.ProxyID
-	tm.mu.RUnlock()
 
-	if err := tm.Remove(name); err != nil {
-		return err
-	}
+	stopTunnel(rt)
+	os.Remove(rt.confPath)
+	os.Remove(rt.socksConfPath)
+	delete(tm.tunnels, name)
+	tm.persistState()
+	tm.mu.Unlock()
+
 	_, err := tm.Create(name, newConfigName, region, port, pid)
 	return err
 }
 
 // NextAvailablePort finds the next unused SOCKS port starting from 10801.
-func (tm *TunnelManager) NextAvailablePort() int {
+func (tm *TunnelManager) NextAvailablePort() (int, error) {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 
@@ -157,10 +161,10 @@ func (tm *TunnelManager) NextAvailablePort() int {
 	}
 	for port := 10801; port < 10900; port++ {
 		if !used[port] {
-			return port
+			return port, nil
 		}
 	}
-	return 10801
+	return 0, fmt.Errorf("no available ports in range 10801-10899")
 }
 
 // persistState saves current tunnels to state.json. Caller must hold lock.
@@ -179,10 +183,21 @@ func (tm *TunnelManager) persistState() {
 }
 
 // waitForStateFile polls for the up.sh state file and reads LOCAL_IP.
-func (tm *TunnelManager) waitForStateFile(name string, timeout time.Duration) (string, error) {
+// It also checks if the VPN process has exited early.
+func waitForStateFile(name string, timeout time.Duration, vpnCmd *exec.Cmd) (string, error) {
 	stateFile := "/run/sub2api-vpn/" + name + ".state"
 	deadline := time.Now().Add(timeout)
+
+	// Channel to detect early process exit
+	exited := make(chan error, 1)
+	go func() { exited <- vpnCmd.Wait() }()
+
 	for time.Now().Before(deadline) {
+		select {
+		case err := <-exited:
+			return "", fmt.Errorf("openvpn process exited early: %v", err)
+		default:
+		}
 		ip, err := readStateFile(stateFile)
 		if err == nil && ip != "" {
 			return ip, nil

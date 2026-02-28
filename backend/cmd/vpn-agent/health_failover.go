@@ -109,7 +109,9 @@ func loadScores(stateDir string) *StabilityScores {
 	if err != nil {
 		return s
 	}
-	json.Unmarshal(data, s)
+	if err := json.Unmarshal(data, s); err != nil {
+		log.Printf("Warning: failed to parse scores.json: %v", err)
+	}
 	if s.Configs == nil {
 		s.Configs = make(map[string]*ConfigScore)
 	}
@@ -125,7 +127,9 @@ func (s *StabilityScores) Save(stateDir string) {
 		return
 	}
 	path := filepath.Join(stateDir, "scores.json")
-	os.WriteFile(path, data, 0644)
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		log.Printf("Warning: failed to save scores.json: %v", err)
+	}
 }
 
 // RecordSuccess records a successful health check for a config.

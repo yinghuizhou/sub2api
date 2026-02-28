@@ -64,6 +64,10 @@ func (s *ConfigStore) List() ([]OvpnConfig, error) {
 
 // Get reads and returns the content of a named .ovpn file.
 func (s *ConfigStore) Get(name string) ([]byte, error) {
+	if err := validateConfigName(name); err != nil {
+		return nil, err
+	}
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -72,15 +76,23 @@ func (s *ConfigStore) Get(name string) ([]byte, error) {
 
 // Save writes an .ovpn file to disk.
 func (s *ConfigStore) Save(fileName string, content []byte) error {
+	if err := validateConfigName(fileName); err != nil {
+		return err
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	fp := filepath.Join(s.dir, fileName)
+	fp := filepath.Join(s.dir, filepath.Base(fileName))
 	return os.WriteFile(fp, content, 0600)
 }
 
 // Delete removes an .ovpn file from disk.
 func (s *ConfigStore) Delete(name string) error {
+	if err := validateConfigName(name); err != nil {
+		return err
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
