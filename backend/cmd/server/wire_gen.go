@@ -200,7 +200,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	paymentService := service.NewPaymentService(paymentOrderRepository, rechargePackageRepository, userRepository, client, referralService, configConfig)
 	paymentHandler := admin.NewAdminPaymentHandler(paymentService)
 	vpnAgentService := service.NewVpnAgentService(configConfig)
-	vpnHandler := admin.NewVpnHandler(vpnAgentService)
+	vpnHandler := admin.NewVpnHandler(vpnAgentService, adminService)
 	adminHandlers := handler.ProvideAdminHandlers(dashboardHandler, adminUserHandler, groupHandler, accountHandler, adminAnnouncementHandler, oAuthHandler, openAIOAuthHandler, geminiOAuthHandler, antigravityOAuthHandler, proxyHandler, adminRedeemHandler, promoHandler, settingHandler, opsHandler, systemHandler, adminSubscriptionHandler, adminUsageHandler, userAttributeHandler, errorPassthroughHandler, vendorHandler, paymentHandler, vpnHandler)
 	usageRecordWorkerPool := service.NewUsageRecordWorkerPool(configConfig)
 	gatewayHandler := handler.NewGatewayHandler(gatewayService, geminiMessagesCompatService, antigravityGatewayService, userService, concurrencyService, billingCacheService, usageService, apiKeyService, usageRecordWorkerPool, errorPassthroughService, configConfig)

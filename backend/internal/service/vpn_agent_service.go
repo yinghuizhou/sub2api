@@ -30,6 +30,7 @@ type VpnTunnel struct {
 	Failures   int       `json:"consecutive_failures"`
 	LastCheck  time.Time `json:"last_check"`
 	ProxyID    int       `json:"proxy_id,omitempty"`
+	CertID     string    `json:"cert_id,omitempty"`
 }
 
 // VpnOvpnConfig represents an .ovpn config file from the Agent.
@@ -47,6 +48,7 @@ type CreateTunnelInput struct {
 	Region     string `json:"region"`
 	SocksPort  int    `json:"socks_port"`
 	ProxyID    int    `json:"proxy_id"`
+	CertID     string `json:"cert_id,omitempty"`
 }
 
 // AgentHealth represents the Agent's health status.
@@ -54,6 +56,21 @@ type AgentHealth struct {
 	Status  string `json:"status"`
 	Uptime  string `json:"uptime"`
 	Tunnels int    `json:"tunnels"`
+}
+
+// VpnCertificate represents a client certificate from the Agent.
+type VpnCertificate struct {
+	ID           string    `json:"id"`
+	Label        string    `json:"label"`
+	CreatedAt    time.Time `json:"created_at"`
+	InUse        bool      `json:"in_use"`
+	ActiveTunnel string    `json:"active_tunnel,omitempty"`
+}
+
+// ImportCertInput is the request body for importing a certificate.
+type ImportCertInput struct {
+	Label    string `json:"label"`
+	OvpnData string `json:"ovpn_data"`
 }
 
 // agentAPIResponse is the envelope returned by the VPN Agent API.
@@ -67,20 +84,33 @@ type agentAPIResponse struct {
 type VpnAgentService struct {
 	agentURL   string
 	apiKey     string
+	proxyHost  string
 	httpClient *http.Client
 	enabled    bool
 }
 
 // NewVpnAgentService creates a new VpnAgentService.
 func NewVpnAgentService(cfg *config.Config) *VpnAgentService {
+	proxyHost := cfg.VpnAgent.ProxyHost
+	if proxyHost == "" {
+		if u, err := url.Parse(cfg.VpnAgent.URL); err == nil {
+			proxyHost = u.Hostname()
+		}
+	}
 	return &VpnAgentService{
-		agentURL: cfg.VpnAgent.URL,
-		apiKey:   cfg.VpnAgent.APIKey,
-		enabled:  cfg.VpnAgent.Enabled,
+		agentURL:  cfg.VpnAgent.URL,
+		apiKey:    cfg.VpnAgent.APIKey,
+		proxyHost: proxyHost,
+		enabled:   cfg.VpnAgent.Enabled,
 		httpClient: &http.Client{
 			Timeout: 60 * time.Second, // long timeout for tunnel creation
 		},
 	}
+}
+
+// GetAgentHost returns the external host/IP for the VPN Agent, used in proxy records.
+func (s *VpnAgentService) GetAgentHost() string {
+	return s.proxyHost
 }
 
 // IsEnabled returns whether VPN Agent integration is enabled.
@@ -214,4 +244,27 @@ func (s *VpnAgentService) UploadConfigs(ctx context.Context, files map[string][]
 		return nil, fmt.Errorf("decode upload result: %w", err)
 	}
 	return result.Uploaded, nil
+}
+
+// ListCertificates returns all certificates from the Agent.
+func (s *VpnAgentService) ListCertificates(ctx context.Context) ([]VpnCertificate, error) {
+	var certs []VpnCertificate
+	if err := s.doGet(ctx, "/api/certs", &certs); err != nil {
+		return nil, err
+	}
+	return certs, nil
+}
+
+// ImportCertificate imports a certificate via the Agent.
+func (s *VpnAgentService) ImportCertificate(ctx context.Context, input ImportCertInput) (*VpnCertificate, error) {
+	var cert VpnCertificate
+	if err := s.doPost(ctx, "/api/certs/import", input, &cert); err != nil {
+		return nil, err
+	}
+	return &cert, nil
+}
+
+// DeleteCertificate deletes a certificate by ID.
+func (s *VpnAgentService) DeleteCertificate(ctx context.Context, id string) error {
+	return s.doDelete(ctx, "/api/certs/"+url.PathEscape(id))
 }

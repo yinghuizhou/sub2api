@@ -82,9 +82,10 @@ type Config struct {
 
 // VpnAgentConfig configures the VPN Agent integration.
 type VpnAgentConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	URL     string `mapstructure:"url"`
-	APIKey  string `mapstructure:"api_key"`
+	Enabled   bool   `mapstructure:"enabled"`
+	URL       string `mapstructure:"url"`
+	APIKey    string `mapstructure:"api_key"`
+	ProxyHost string `mapstructure:"proxy_host"` // External IP for proxy records; defaults to URL host
 }
 
 type LogConfig struct {

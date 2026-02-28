@@ -2,6 +2,7 @@ package admin
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -13,11 +14,12 @@ import (
 // VpnHandler handles VPN management admin API endpoints.
 type VpnHandler struct {
 	vpnAgentService *service.VpnAgentService
+	adminService    service.AdminService
 }
 
 // NewVpnHandler creates a new VpnHandler.
-func NewVpnHandler(vpnAgentService *service.VpnAgentService) *VpnHandler {
-	return &VpnHandler{vpnAgentService: vpnAgentService}
+func NewVpnHandler(vpnAgentService *service.VpnAgentService, adminService service.AdminService) *VpnHandler {
+	return &VpnHandler{vpnAgentService: vpnAgentService, adminService: adminService}
 }
 
 func (h *VpnHandler) requireEnabled(c *gin.Context) bool {
@@ -41,7 +43,7 @@ func (h *VpnHandler) ListTunnels(c *gin.Context) {
 	response.Success(c, tunnels)
 }
 
-// CreateTunnel deploys a new VPN tunnel.
+// CreateTunnel deploys a new VPN tunnel and auto-creates a matching SOCKS5 proxy.
 func (h *VpnHandler) CreateTunnel(c *gin.Context) {
 	if !h.requireEnabled(c) {
 		return
@@ -51,24 +53,76 @@ func (h *VpnHandler) CreateTunnel(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	tunnel, err := h.vpnAgentService.CreateTunnel(c.Request.Context(), req)
+
+	ctx := c.Request.Context()
+
+	// Auto-create proxy if no proxy_id was provided.
+	if req.ProxyID == 0 {
+		// Pre-assign socks port if not specified.
+		if req.SocksPort == 0 {
+			port, err := h.vpnAgentService.GetNextPort(ctx)
+			if err != nil {
+				response.Error(c, http.StatusBadGateway, "Agent error (get port): "+err.Error())
+				return
+			}
+			req.SocksPort = port
+		}
+
+		proxy, err := h.adminService.CreateProxy(ctx, &service.CreateProxyInput{
+			Name:      "vpn-" + req.Name,
+			Protocol:  "socks5",
+			Host:      h.vpnAgentService.GetAgentHost(),
+			Port:      req.SocksPort,
+			Region:    req.Region,
+			GroupName: "vpn-auto",
+		})
+		if err != nil {
+			log.Printf("Warning: auto-create proxy for tunnel %q failed: %v", req.Name, err)
+		} else {
+			req.ProxyID = int(proxy.ID)
+		}
+	}
+
+	tunnel, err := h.vpnAgentService.CreateTunnel(ctx, req)
 	if err != nil {
+		// Clean up auto-created proxy on tunnel failure.
+		if req.ProxyID > 0 {
+			if delErr := h.adminService.DeleteProxy(ctx, int64(req.ProxyID)); delErr != nil {
+				log.Printf("Warning: cleanup proxy %d after tunnel failure: %v", req.ProxyID, delErr)
+			}
+		}
 		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
 	response.Created(c, tunnel)
 }
 
-// RemoveTunnel deletes a VPN tunnel.
+// RemoveTunnel deletes a VPN tunnel and its auto-created proxy.
 func (h *VpnHandler) RemoveTunnel(c *gin.Context) {
 	if !h.requireEnabled(c) {
 		return
 	}
+	ctx := c.Request.Context()
 	name := c.Param("name")
-	if err := h.vpnAgentService.RemoveTunnel(c.Request.Context(), name); err != nil {
+
+	// Fetch proxy_id before deletion.
+	var proxyID int
+	if tunnel, err := h.vpnAgentService.GetTunnelStatus(ctx, name); err == nil {
+		proxyID = tunnel.ProxyID
+	}
+
+	if err := h.vpnAgentService.RemoveTunnel(ctx, name); err != nil {
 		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
 		return
 	}
+
+	// Auto-delete the linked proxy.
+	if proxyID > 0 {
+		if err := h.adminService.DeleteProxy(ctx, int64(proxyID)); err != nil {
+			log.Printf("Warning: auto-delete proxy %d for tunnel %q failed: %v", proxyID, name, err)
+		}
+	}
+
 	response.Success(c, nil)
 }
 
@@ -205,4 +259,48 @@ func (h *VpnHandler) GetAgentHealth(c *gin.Context) {
 		return
 	}
 	response.Success(c, health)
+}
+
+// ListCertificates returns all VPN certificates.
+func (h *VpnHandler) ListCertificates(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	certs, err := h.vpnAgentService.ListCertificates(c.Request.Context())
+	if err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Success(c, certs)
+}
+
+// ImportCertificate imports a certificate from .ovpn data.
+func (h *VpnHandler) ImportCertificate(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	var req service.ImportCertInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	cert, err := h.vpnAgentService.ImportCertificate(c.Request.Context(), req)
+	if err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Created(c, cert)
+}
+
+// DeleteCertificate deletes a certificate by ID.
+func (h *VpnHandler) DeleteCertificate(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	id := c.Param("id")
+	if err := h.vpnAgentService.DeleteCertificate(c.Request.Context(), id); err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Success(c, nil)
 }
