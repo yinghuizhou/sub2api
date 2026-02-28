@@ -11,6 +11,19 @@ import { useRoutePrefetch } from '@/composables/useRoutePrefetch'
 import { resolveDocumentTitle } from './title'
 
 /**
+ * Lazy import with retry — handles stale chunks after deployment.
+ * On first failure, retries once. On second failure, lets router.onError handle reload
+ * (which has sessionStorage-based loop prevention).
+ */
+function lazyLoad(loader: () => Promise<any>) {
+  return () =>
+    loader().catch((e) => {
+      console.warn('[lazyLoad] Chunk load failed, retrying:', e)
+      return loader()
+    })
+}
+
+/**
  * Route definitions with lazy loading
  */
 const routes: RouteRecordRaw[] = [
@@ -18,7 +31,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/setup',
     name: 'Setup',
-    component: () => import('@/views/setup/SetupWizardView.vue'),
+    component: lazyLoad(() => import('@/views/setup/SetupWizardView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Setup'
@@ -29,7 +42,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/home',
     name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
+    component: lazyLoad(() => import('@/views/HomeView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Home'
@@ -38,7 +51,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/LoginView.vue'),
+    component: lazyLoad(() => import('@/views/auth/LoginView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Login'
@@ -47,7 +60,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/auth/RegisterView.vue'),
+    component: lazyLoad(() => import('@/views/auth/RegisterView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Register'
@@ -56,7 +69,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/email-verify',
     name: 'EmailVerify',
-    component: () => import('@/views/auth/EmailVerifyView.vue'),
+    component: lazyLoad(() => import('@/views/auth/EmailVerifyView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Verify Email'
@@ -65,7 +78,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/callback',
     name: 'OAuthCallback',
-    component: () => import('@/views/auth/OAuthCallbackView.vue'),
+    component: lazyLoad(() => import('@/views/auth/OAuthCallbackView.vue')),
     meta: {
       requiresAuth: false,
       title: 'OAuth Callback'
@@ -74,7 +87,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/linuxdo/callback',
     name: 'LinuxDoOAuthCallback',
-    component: () => import('@/views/auth/LinuxDoCallbackView.vue'),
+    component: lazyLoad(() => import('@/views/auth/LinuxDoCallbackView.vue')),
     meta: {
       requiresAuth: false,
       title: 'LinuxDo OAuth Callback'
@@ -83,7 +96,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
-    component: () => import('@/views/auth/ForgotPasswordView.vue'),
+    component: lazyLoad(() => import('@/views/auth/ForgotPasswordView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Forgot Password'
@@ -92,7 +105,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/reset-password',
     name: 'ResetPassword',
-    component: () => import('@/views/auth/ResetPasswordView.vue'),
+    component: lazyLoad(() => import('@/views/auth/ResetPasswordView.vue')),
     meta: {
       requiresAuth: false,
       title: 'Reset Password'
@@ -107,7 +120,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import('@/views/user/DashboardView.vue'),
+    component: lazyLoad(() => import('@/views/user/DashboardView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -119,7 +132,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/keys',
     name: 'Keys',
-    component: () => import('@/views/user/KeysView.vue'),
+    component: lazyLoad(() => import('@/views/user/KeysView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -131,7 +144,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/usage',
     name: 'Usage',
-    component: () => import('@/views/user/UsageView.vue'),
+    component: lazyLoad(() => import('@/views/user/UsageView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -143,7 +156,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/redeem',
     name: 'Redeem',
-    component: () => import('@/views/user/RedeemView.vue'),
+    component: lazyLoad(() => import('@/views/user/RedeemView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -155,7 +168,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/recharge',
     name: 'Recharge',
-    component: () => import('@/views/user/RechargeView.vue'),
+    component: lazyLoad(() => import('@/views/user/RechargeView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -166,7 +179,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/referral',
     name: 'Referral',
-    component: () => import('@/views/user/ReferralView.vue'),
+    component: lazyLoad(() => import('@/views/user/ReferralView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -177,7 +190,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('@/views/user/ProfileView.vue'),
+    component: lazyLoad(() => import('@/views/user/ProfileView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -189,7 +202,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/subscriptions',
     name: 'Subscriptions',
-    component: () => import('@/views/user/SubscriptionsView.vue'),
+    component: lazyLoad(() => import('@/views/user/SubscriptionsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -201,7 +214,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/purchase',
     name: 'PurchaseSubscription',
-    component: () => import('@/views/user/PurchaseSubscriptionView.vue'),
+    component: lazyLoad(() => import('@/views/user/PurchaseSubscriptionView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -219,7 +232,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/dashboard',
     name: 'AdminDashboard',
-    component: () => import('@/views/admin/DashboardView.vue'),
+    component: lazyLoad(() => import('@/views/admin/DashboardView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -231,7 +244,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/ops',
     name: 'AdminOps',
-    component: () => import('@/views/admin/ops/OpsDashboard.vue'),
+    component: lazyLoad(() => import('@/views/admin/ops/OpsDashboard.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -243,7 +256,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/users',
     name: 'AdminUsers',
-    component: () => import('@/views/admin/UsersView.vue'),
+    component: lazyLoad(() => import('@/views/admin/UsersView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -255,7 +268,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/groups',
     name: 'AdminGroups',
-    component: () => import('@/views/admin/GroupsView.vue'),
+    component: lazyLoad(() => import('@/views/admin/GroupsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -267,7 +280,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/subscriptions',
     name: 'AdminSubscriptions',
-    component: () => import('@/views/admin/SubscriptionsView.vue'),
+    component: lazyLoad(() => import('@/views/admin/SubscriptionsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -279,7 +292,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/accounts',
     name: 'AdminAccounts',
-    component: () => import('@/views/admin/AccountsView.vue'),
+    component: lazyLoad(() => import('@/views/admin/AccountsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -291,7 +304,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/announcements',
     name: 'AdminAnnouncements',
-    component: () => import('@/views/admin/AnnouncementsView.vue'),
+    component: lazyLoad(() => import('@/views/admin/AnnouncementsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -303,7 +316,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/proxies',
     name: 'AdminProxies',
-    component: () => import('@/views/admin/ProxiesView.vue'),
+    component: lazyLoad(() => import('@/views/admin/ProxiesView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -315,7 +328,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/vendors',
     name: 'AdminVendors',
-    component: () => import('@/views/admin/VendorsView.vue'),
+    component: lazyLoad(() => import('@/views/admin/VendorsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -327,7 +340,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/vpn',
     name: 'AdminVpn',
-    component: () => import('@/views/admin/VpnView.vue'),
+    component: lazyLoad(() => import('@/views/admin/VpnView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -339,7 +352,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/redeem',
     name: 'AdminRedeem',
-    component: () => import('@/views/admin/RedeemView.vue'),
+    component: lazyLoad(() => import('@/views/admin/RedeemView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -351,7 +364,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/promo-codes',
     name: 'AdminPromoCodes',
-    component: () => import('@/views/admin/PromoCodesView.vue'),
+    component: lazyLoad(() => import('@/views/admin/PromoCodesView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -363,7 +376,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/settings',
     name: 'AdminSettings',
-    component: () => import('@/views/admin/SettingsView.vue'),
+    component: lazyLoad(() => import('@/views/admin/SettingsView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -375,7 +388,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/usage',
     name: 'AdminUsage',
-    component: () => import('@/views/admin/UsageView.vue'),
+    component: lazyLoad(() => import('@/views/admin/UsageView.vue')),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -389,7 +402,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/views/NotFoundView.vue'),
+    component: lazyLoad(() => import('@/views/NotFoundView.vue')),
     meta: {
       title: '404 Not Found'
     }

@@ -1291,9 +1291,9 @@ const loadProxies = async () => {
     if (currentAbortController.signal.aborted || abortController !== currentAbortController) {
       return
     }
-    proxies.value = response.items
-    pagination.total = response.total
-    pagination.pages = response.pages
+    proxies.value = Array.isArray(response?.items) ? response.items : []
+    pagination.total = response?.total ?? 0
+    pagination.pages = response?.pages ?? 1
   } catch (error) {
     if (isAbortError(error)) {
       return
