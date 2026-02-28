@@ -66,33 +66,32 @@
             </div>
           </div>
 
-          <!-- Config List Table -->
-          <DataTable :columns="configColumns" :data="configs" :loading="loading" row-key="name">
-            <template #cell-name="{ value }">
-              <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
-            </template>
-            <template #cell-region="{ value }">
-              <span class="badge badge-gray">{{ value || '-' }}</span>
-            </template>
-            <template #cell-server_ip="{ value }">
-              <span class="text-sm font-mono">{{ value || '-' }}</span>
-            </template>
-            <template #cell-actions="{ row }">
-              <div class="flex items-center gap-1">
-                <button @click="openDeployDialog(row)"
-                  class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
-                  <Icon name="play" size="sm" /><span class="text-xs">部署</span>
+          <!-- Config List (compact) -->
+          <div v-if="loading" class="flex items-center justify-center py-8 text-gray-400">
+            <Icon name="refresh" size="md" class="animate-spin" />
+          </div>
+          <div v-else-if="configs.length === 0" class="py-8">
+            <EmptyState title="暂无配置文件" description="上传 .ovpn 配置文件以开始使用" />
+          </div>
+          <div v-else class="divide-y divide-gray-100 dark:divide-dark-700">
+            <div v-for="c in configs" :key="c.name"
+              class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-dark-800/50">
+              <Icon name="document" size="sm" class="shrink-0 text-gray-400" />
+              <span class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-white" :title="c.name">{{ c.name }}</span>
+              <span v-if="c.region" class="badge badge-gray shrink-0 text-xs">{{ c.region }}</span>
+              <span class="hidden shrink-0 font-mono text-xs text-gray-500 sm:inline">{{ c.server_ip || '' }}</span>
+              <div class="flex shrink-0 items-center gap-0.5">
+                <button @click="openDeployDialog(c)" title="部署"
+                  class="rounded p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
+                  <Icon name="play" size="sm" />
                 </button>
-                <button @click="handleDeleteConfig(row)"
-                  class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
-                  <Icon name="trash" size="sm" /><span class="text-xs">删除</span>
+                <button @click="handleDeleteConfig(c)" title="删除"
+                  class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                  <Icon name="trash" size="sm" />
                 </button>
               </div>
-            </template>
-            <template #empty>
-              <EmptyState title="暂无配置文件" description="上传 .ovpn 配置文件以开始使用" />
-            </template>
-          </DataTable>
+            </div>
+          </div>
         </div>
 
         <!-- ======= Tab: Tunnel Management ======= -->
@@ -230,13 +229,6 @@ const deployForm = reactive<CreateTunnelInput>({
 const actionLoading = reactive<Record<string, string>>({})
 
 // --- Columns ---
-const configColumns = computed<Column[]>(() => [
-  { key: 'name', label: '文件名', sortable: true },
-  { key: 'region', label: '地区', sortable: true },
-  { key: 'server_ip', label: '服务器 IP', sortable: false },
-  { key: 'actions', label: '操作', sortable: false },
-])
-
 const tunnelColumns = computed<Column[]>(() => [
   { key: 'name', label: '名称', sortable: true },
   { key: 'config_name', label: '配置', sortable: true },
