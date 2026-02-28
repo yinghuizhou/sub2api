@@ -8,10 +8,17 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/net/proxy"
 )
+
+// cooldownEntry tracks when a config was failed-over away from
+type cooldownEntry struct {
+	failedAt         time.Time
+	consecutiveFails int
+}
 
 const (
 	healthCheckInterval  = 30 * time.Second
@@ -26,11 +33,13 @@ const (
 
 // HealthChecker periodically checks tunnel health and triggers auto-failover.
 type HealthChecker struct {
-	tunnelMgr *TunnelManager
-	store     *ConfigStore
-	callback  *CallbackClient
-	cfg       *AgentConfig
-	scores    *StabilityScores
+	tunnelMgr  *TunnelManager
+	store      *ConfigStore
+	callback   *CallbackClient
+	cfg        *AgentConfig
+	scores     *StabilityScores
+	cooldowns  map[string]*cooldownEntry
+	cooldownMu sync.Mutex
 }
 
 // NewHealthChecker creates a new HealthChecker.
@@ -42,6 +51,7 @@ func NewHealthChecker(tm *TunnelManager, store *ConfigStore, cb *CallbackClient,
 		callback:  cb,
 		cfg:       cfg,
 		scores:    scores,
+		cooldowns: make(map[string]*cooldownEntry),
 	}
 }
 

@@ -203,6 +203,50 @@ func (hc *HealthChecker) findBestAlternative(currentConfig, region string, exclu
 	return candidates[0].name
 }
 
+// addCooldown records a failover event for a config, increasing its cooldown period.
+func (hc *HealthChecker) addCooldown(configName string) {
+	hc.cooldownMu.Lock()
+	defer hc.cooldownMu.Unlock()
+	entry, exists := hc.cooldowns[configName]
+	if exists {
+		entry.failedAt = time.Now()
+		entry.consecutiveFails++
+	} else {
+		hc.cooldowns[configName] = &cooldownEntry{
+			failedAt:         time.Now(),
+			consecutiveFails: 1,
+		}
+	}
+}
+
+// isInCooldown checks if a config is still in its cooldown period after a failover.
+// Cooldown duration = min(30min * consecutiveFails, 6h).
+func (hc *HealthChecker) isInCooldown(configName string) bool {
+	hc.cooldownMu.Lock()
+	defer hc.cooldownMu.Unlock()
+	entry, exists := hc.cooldowns[configName]
+	if !exists {
+		return false
+	}
+	cooldownDuration := time.Duration(entry.consecutiveFails) * 30 * time.Minute
+	maxCooldown := 6 * time.Hour
+	if cooldownDuration > maxCooldown {
+		cooldownDuration = maxCooldown
+	}
+	if time.Since(entry.failedAt) > cooldownDuration {
+		delete(hc.cooldowns, configName)
+		return false
+	}
+	return true
+}
+
+// clearCooldown removes the cooldown entry for a config (e.g., after successful recovery).
+func (hc *HealthChecker) clearCooldown(configName string) {
+	hc.cooldownMu.Lock()
+	defer hc.cooldownMu.Unlock()
+	delete(hc.cooldowns, configName)
+}
+
 // StabilityScores tracks historical performance of .ovpn configs.
 type StabilityScores struct {
 	Configs map[string]*ConfigScore `json:"configs"`
