@@ -50,13 +50,17 @@ type TunnelManager struct {
 
 // NewTunnelManager creates a new TunnelManager.
 func NewTunnelManager(cfg *AgentConfig, store *ConfigStore, ss *StateStore, cb *CallbackClient) *TunnelManager {
-	return &TunnelManager{
+	tm := &TunnelManager{
 		cfg:        cfg,
 		store:      store,
 		stateStore: ss,
 		callback:   cb,
 		tunnels:    make(map[string]*runningTunnel),
 	}
+	if err := tm.initScripts(); err != nil {
+		log.Printf("Warning: failed to initialize scripts: %v", err)
+	}
+	return tm
 }
 
 // Create starts a new tunnel with OpenVPN + 3proxy.
@@ -92,13 +96,15 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 
 	// Generate client config with routing directives.
 	confPath := filepath.Join(clientDir, name+".conf")
+	upScriptPath := filepath.Join(tm.cfg.ScriptsDir, "up.sh")
+	downScriptPath := filepath.Join(tm.cfg.ScriptsDir, "down.sh")
 	clientConf := string(ovpnData) + "\n" +
 		"route-nopull\n" +
 		"dev tun-" + name + "\n" +
 		"dev-type tun\n" +
 		"script-security 2\n" +
-		"up /etc/openvpn/scripts/up.sh\n" +
-		"down /etc/openvpn/scripts/down.sh\n"
+		"up " + upScriptPath + "\n" +
+		"down " + downScriptPath + "\n"
 	if err := os.WriteFile(confPath, []byte(clientConf), 0600); err != nil {
 		tm.mu.Unlock()
 		return nil, fmt.Errorf("write client config: %w", err)
@@ -207,6 +213,64 @@ func (tm *TunnelManager) Remove(name string) error {
 	log.Printf("Tunnel %q removed", name)
 	return nil
 }
+
+// initScripts generates OpenVPN up/down scripts in ScriptsDir.
+func (tm *TunnelManager) initScripts() error {
+	if err := os.MkdirAll(tm.cfg.ScriptsDir, 0755); err != nil {
+		return fmt.Errorf("create scripts dir: %w", err)
+	}
+
+	upScript := filepath.Join(tm.cfg.ScriptsDir, "up.sh")
+	if err := os.WriteFile(upScript, []byte(upScriptContent), 0755); err != nil {
+		return fmt.Errorf("write up.sh: %w", err)
+	}
+
+	downScript := filepath.Join(tm.cfg.ScriptsDir, "down.sh")
+	if err := os.WriteFile(downScript, []byte(downScriptContent), 0755); err != nil {
+		return fmt.Errorf("write down.sh: %w", err)
+	}
+
+	log.Printf("OpenVPN scripts initialized in %s", tm.cfg.ScriptsDir)
+	return nil
+}
+
+const upScriptContent = `#!/bin/bash
+# OpenVPN up script - called when VPN connection is established
+set -e
+
+TUNNEL_NAME=$(basename "$dev" | sed 's/^tun-//')
+STATE_DIR="/run/sub2api-vpn"
+STATE_FILE="$STATE_DIR/$TUNNEL_NAME.state"
+
+mkdir -p "$STATE_DIR"
+
+# Get local IP from the tun device
+LOCAL_IP=$(ip addr show "$dev" 2>/dev/null | grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+' | head -1)
+if [ -z "$LOCAL_IP" ]; then
+  LOCAL_IP=$(ifconfig "$dev" 2>/dev/null | grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+' | head -1)
+fi
+
+if [ -n "$LOCAL_IP" ]; then
+  echo "LOCAL_IP=$LOCAL_IP" > "$STATE_FILE"
+  chmod 644 "$STATE_FILE"
+  logger -t "sub2api-vpn" "Tunnel $TUNNEL_NAME connected with IP $LOCAL_IP"
+else
+  logger -t "sub2api-vpn" "Tunnel $TUNNEL_NAME: failed to get IP from $dev"
+  exit 1
+fi
+`
+
+const downScriptContent = `#!/bin/bash
+# OpenVPN down script - called when VPN connection is closed
+set -e
+
+TUNNEL_NAME=$(basename "$dev" | sed 's/^tun-//')
+STATE_DIR="/run/sub2api-vpn"
+STATE_FILE="$STATE_DIR/$TUNNEL_NAME.state"
+
+rm -f "$STATE_FILE"
+logger -t "sub2api-vpn" "Tunnel $TUNNEL_NAME disconnected"
+`
 
 const socksConfTpl = `log /var/log/sub2api-vpn/3proxy-%s.log D
 rotate 7

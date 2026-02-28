@@ -158,8 +158,8 @@
     </TablePageLayout>
 
     <!-- Deploy Dialog -->
-    <BaseDialog :show="showDeployDialog" title="部署隧道" width="normal" @close="showDeployDialog = false">
-      <form id="deploy-form" @submit.prevent="handleDeploy" class="space-y-4">
+    <BaseDialog :show="showDeployDialog" title="部署隧道" width="normal" @close="!deploying && (showDeployDialog = false)">
+      <form v-if="!deploying && !deployResult" id="deploy-form" @submit.prevent="handleDeploy" class="space-y-4">
         <div>
           <label class="input-label">配置文件</label>
           <input type="text" :value="deployForm.config_name" disabled class="input bg-gray-50 dark:bg-dark-800" />
@@ -173,11 +173,40 @@
           <input v-model.number="deployForm.socks_port" type="number" min="1024" max="65535" class="input" placeholder="自动分配" />
         </div>
       </form>
+      <!-- Deploy Progress Log -->
+      <div v-if="deploying || deployResult" class="space-y-3">
+        <div class="rounded-lg bg-gray-900 p-3 font-mono text-xs text-gray-300 dark:bg-dark-900">
+          <div v-for="(line, i) in deployLog" :key="i" class="flex gap-2">
+            <span class="shrink-0 text-gray-600">{{ line.time }}</span>
+            <span :class="line.color">{{ line.text }}</span>
+          </div>
+          <div v-if="deploying" class="mt-1 flex items-center gap-2 text-yellow-400">
+            <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-400" />
+            <span>{{ deployPhase }}</span>
+          </div>
+        </div>
+        <!-- Result summary -->
+        <div v-if="deployResult" :class="['rounded-lg border p-3 text-sm',
+          deployResult.ok
+            ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
+            : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300']">
+          <template v-if="deployResult.ok">
+            <div class="font-medium">部署成功</div>
+            <div class="mt-1 text-xs opacity-80">SOCKS5: 127.0.0.1:{{ deployResult.port }} · IP: {{ deployResult.localIp }}</div>
+          </template>
+          <template v-else>
+            <div class="font-medium">部署失败</div>
+            <div class="mt-1 text-xs opacity-80">{{ deployResult.error }}</div>
+          </template>
+        </div>
+      </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button @click="showDeployDialog = false" type="button" class="btn btn-secondary">取消</button>
-          <button type="submit" form="deploy-form" :disabled="deploying" class="btn btn-primary">
-            {{ deploying ? '部署中...' : '部署' }}
+          <button v-if="!deploying" @click="closeDeploy" type="button" class="btn btn-secondary">
+            {{ deployResult ? '关闭' : '取消' }}
+          </button>
+          <button v-if="!deploying && !deployResult" type="submit" form="deploy-form" class="btn btn-primary">
+            部署
           </button>
         </div>
       </template>
@@ -224,6 +253,16 @@ const deployForm = reactive<CreateTunnelInput>({
   config_name: '',
   socks_port: undefined as unknown as number,
 })
+const deployLog = ref<{ time: string; text: string; color: string }[]>([])
+const deployPhase = ref('')
+const deployResult = ref<{ ok: boolean; port?: number; localIp?: string; error?: string } | null>(null)
+const deployTimer = ref<ReturnType<typeof setInterval> | null>(null)
+const deployStartTime = ref(0)
+
+const logLine = (text: string, color = 'text-gray-300') => {
+  const elapsed = ((Date.now() - deployStartTime.value) / 1000).toFixed(1)
+  deployLog.value.push({ time: `[${elapsed}s]`, text, color })
+}
 
 // Tunnel action loading
 const actionLoading = reactive<Record<string, string>>({})
@@ -342,8 +381,32 @@ const openDeployDialog = (config: VpnOvpnConfig) => {
   deployForm.config_name = config.name
   deployForm.name = config.name.replace(/\.ovpn$/, '').replace(/[^a-zA-Z0-9_-]/g, '-')
   deployForm.socks_port = undefined as unknown as number
+  deployLog.value = []
+  deployResult.value = null
+  deployPhase.value = ''
   showDeployDialog.value = true
 }
+
+const closeDeploy = () => {
+  if (deployTimer.value) { clearInterval(deployTimer.value); deployTimer.value = null }
+  showDeployDialog.value = false
+  if (deployResult.value?.ok) {
+    activeTab.value = 'tunnels'
+    loadTunnels()
+    loadHealth()
+  }
+}
+
+const phases = [
+  { at: 0, text: '正在读取配置文件...' },
+  { at: 2, text: '正在启动 OpenVPN 进程...' },
+  { at: 4, text: '正在建立 TCP 连接...' },
+  { at: 8, text: '正在进行 TLS 握手...' },
+  { at: 15, text: '正在等待服务器推送路由...' },
+  { at: 25, text: '正在初始化隧道设备...' },
+  { at: 40, text: '正在启动 SOCKS5 代理...' },
+  { at: 60, text: '仍在等待，某些服务器较慢...' },
+]
 
 const handleDeploy = async () => {
   if (!deployForm.name.trim()) {
@@ -351,22 +414,43 @@ const handleDeploy = async () => {
     return
   }
   deploying.value = true
+  deployLog.value = []
+  deployResult.value = null
+  deployStartTime.value = Date.now()
+
+  logLine(`开始部署隧道 "${deployForm.name}"`, 'text-blue-400')
+  logLine(`配置: ${deployForm.config_name}`, 'text-gray-400')
+
+  // Animated phase updates
+  let phaseIdx = 0
+  deployPhase.value = phases[0].text
+  deployTimer.value = setInterval(() => {
+    const elapsed = (Date.now() - deployStartTime.value) / 1000
+    while (phaseIdx < phases.length - 1 && elapsed >= phases[phaseIdx + 1].at) {
+      phaseIdx++
+      logLine(phases[phaseIdx].text, 'text-gray-400')
+      deployPhase.value = phases[phaseIdx].text
+    }
+  }, 1000)
+
   try {
     const input: CreateTunnelInput = {
       name: deployForm.name,
       config_name: deployForm.config_name,
     }
     if (deployForm.socks_port) input.socks_port = deployForm.socks_port
-    await createTunnel(input)
-    appStore.showSuccess('隧道已部署')
-    showDeployDialog.value = false
-    activeTab.value = 'tunnels'
-    await loadTunnels()
-    await loadHealth()
+    const tunnel = await createTunnel(input)
+    logLine('隧道连接成功!', 'text-green-400')
+    logLine(`分配端口: ${tunnel.socks_port}, 本地 IP: ${tunnel.local_ip}`, 'text-green-300')
+    deployResult.value = { ok: true, port: tunnel.socks_port, localIp: tunnel.local_ip }
   } catch (e: any) {
-    appStore.showError(e?.message || '部署失败')
+    const msg = e?.message || '部署失败'
+    logLine(`错误: ${msg}`, 'text-red-400')
+    deployResult.value = { ok: false, error: msg }
   } finally {
+    if (deployTimer.value) { clearInterval(deployTimer.value); deployTimer.value = null }
     deploying.value = false
+    deployPhase.value = ''
   }
 }
 

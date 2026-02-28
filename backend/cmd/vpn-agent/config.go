@@ -11,6 +11,7 @@ type AgentConfig struct {
 	Port          int
 	OvpnConfigDir string
 	StateDir      string
+	ScriptsDir    string
 	Sub2APIURL    string
 	Sub2APIKey    string
 	LogDir        string
@@ -23,6 +24,7 @@ func loadConfig() *AgentConfig {
 		Port:          envIntOrDefault("VPN_AGENT_PORT", 9090),
 		OvpnConfigDir: envOrDefault("OVPN_CONFIG_DIR", "/etc/vpn-agent/configs"),
 		StateDir:      envOrDefault("STATE_DIR", "/etc/vpn-agent"),
+		ScriptsDir:    envOrDefault("SCRIPTS_DIR", "/var/lib/sub2api-vpn/scripts"),
 		Sub2APIURL:    envOrDefault("SUB2API_URL", "http://localhost:8080"),
 		Sub2APIKey:    os.Getenv("SUB2API_API_KEY"),
 		LogDir:        envOrDefault("LOG_DIR", "/var/log/vpn-agent"),
