@@ -126,6 +126,30 @@ export async function deleteCertificate(id: string): Promise<void> {
   await apiClient.delete(`/admin/vpn/certificates/${encodeURIComponent(id)}`)
 }
 
+export interface PushConfigItem {
+  filename: string
+  content: string // base64
+  region?: string
+  auto_deploy: boolean
+}
+
+export interface PushConfigsInput {
+  configs: PushConfigItem[]
+  replace_existing: boolean
+}
+
+export interface PushConfigsResult {
+  saved: string[]
+  skipped: string[]
+  deployed: string[]
+  errors: string[]
+}
+
+export async function pushConfigs(input: PushConfigsInput): Promise<PushConfigsResult> {
+  const { data } = await apiClient.post<PushConfigsResult>('/admin/vpn/configs/push', input)
+  return data
+}
+
 export interface SyncProxiesResult {
   updated: number
   skipped: number
@@ -152,7 +176,8 @@ export const vpnAPI = {
   listCertificates,
   importCertificate,
   deleteCertificate,
-  syncTunnelProxies
+  syncTunnelProxies,
+  pushConfigs
 }
 
 export default vpnAPI
