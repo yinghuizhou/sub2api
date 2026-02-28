@@ -9,15 +9,17 @@ import (
 
 // TunnelState represents the persisted state of a single tunnel.
 type TunnelState struct {
+	Name       string `json:"name"`
 	ConfigName string `json:"config_name"`
 	SocksPort  int    `json:"socks_port"`
 	Region     string `json:"region"`
 	ServerIP   string `json:"server_ip"`
+	ProxyID    int    `json:"proxy_id,omitempty"`
 }
 
 // AgentState is the top-level persisted state.
 type AgentState struct {
-	Tunnels []TunnelState `json:"tunnels"`
+	Tunnels map[string]TunnelState `json:"tunnels"`
 }
 
 // StateStore manages persisting and loading agent state to/from disk.
@@ -44,7 +46,7 @@ func (s *StateStore) Load() (*AgentState, error) {
 	data, err := os.ReadFile(s.file)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &AgentState{}, nil
+			return &AgentState{Tunnels: make(map[string]TunnelState)}, nil
 		}
 		return nil, err
 	}
@@ -52,6 +54,9 @@ func (s *StateStore) Load() (*AgentState, error) {
 	var state AgentState
 	if err := json.Unmarshal(data, &state); err != nil {
 		return nil, err
+	}
+	if state.Tunnels == nil {
+		state.Tunnels = make(map[string]TunnelState)
 	}
 	return &state, nil
 }

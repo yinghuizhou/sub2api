@@ -1,58 +1,185 @@
 package main
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sync"
+	"time"
+)
 
 // TunnelInfo represents the runtime state of a tunnel.
 type TunnelInfo struct {
-	ConfigName string `json:"config_name"`
-	Region     string `json:"region"`
-	ServerIP   string `json:"server_ip"`
-	SocksPort  int    `json:"socks_port"`
-	Status     string `json:"status"` // "running", "stopped", "error"
-	PID        int    `json:"pid,omitempty"`
+	Name       string    `json:"name"`
+	ConfigName string    `json:"config_name"`
+	Region     string    `json:"region"`
+	ServerIP   string    `json:"server_ip"`
+	SocksPort  int       `json:"socks_port"`
+	Status     string    `json:"status"`
+	TunDevice  string    `json:"tun_device"`
+	LocalIP    string    `json:"local_ip"`
+	ExitIP     string    `json:"exit_ip"`
+	Health     string    `json:"health"`
+	LatencyMs  int       `json:"latency_ms"`
+	Uptime     time.Time `json:"uptime"`
+	Failures   int       `json:"consecutive_failures"`
+	LastCheck  time.Time `json:"last_check"`
+	ProxyID    int       `json:"proxy_id,omitempty"`
+}
+
+// runningTunnel holds runtime process handles for a tunnel.
+type runningTunnel struct {
+	TunnelInfo
+	vpnCmd        *exec.Cmd
+	socksCmd      *exec.Cmd
+	confPath      string
+	socksConfPath string
 }
 
 // TunnelManager manages OpenVPN tunnels and 3proxy SOCKS5 proxies.
-// This is a stub implementation; full logic will be added in a later task.
 type TunnelManager struct {
 	cfg        *AgentConfig
 	store      *ConfigStore
 	stateStore *StateStore
 	callback   *CallbackClient
+	tunnels    map[string]*runningTunnel
+	mu         sync.RWMutex
 }
 
 // NewTunnelManager creates a new TunnelManager.
-func NewTunnelManager(cfg *AgentConfig, store *ConfigStore, stateStore *StateStore, callback *CallbackClient) *TunnelManager {
+func NewTunnelManager(cfg *AgentConfig, store *ConfigStore, ss *StateStore, cb *CallbackClient) *TunnelManager {
 	return &TunnelManager{
 		cfg:        cfg,
 		store:      store,
-		stateStore: stateStore,
-		callback:   callback,
+		stateStore: ss,
+		callback:   cb,
+		tunnels:    make(map[string]*runningTunnel),
 	}
 }
 
-// RestoreFromState restores tunnels from persisted state. Stub.
-func (tm *TunnelManager) RestoreFromState() error {
-	log.Println("TunnelManager.RestoreFromState: stub, no-op")
+// Create starts a new tunnel with OpenVPN + 3proxy.
+func (tm *TunnelManager) Create(name, configName, region string, socksPort, proxyID int) (*TunnelInfo, error) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	if _, exists := tm.tunnels[name]; exists {
+		return nil, fmt.Errorf("tunnel %q already exists", name)
+	}
+
+	// Read base .ovpn content from config store.
+	ovpnData, err := tm.store.Get(configName)
+	if err != nil {
+		return nil, fmt.Errorf("read ovpn config %q: %w", configName, err)
+	}
+
+	// Ensure directories exist.
+	clientDir := filepath.Join(tm.cfg.StateDir, "clients")
+	socksDir := filepath.Join(tm.cfg.StateDir, "3proxy")
+	for _, d := range []string{clientDir, socksDir, "/run/sub2api-vpn"} {
+		os.MkdirAll(d, 0755)
+	}
+
+	// Generate client config with routing directives.
+	confPath := filepath.Join(clientDir, name+".conf")
+	clientConf := string(ovpnData) + "\n" +
+		"route-nopull\n" +
+		"dev tun-" + name + "\n" +
+		"dev-type tun\n" +
+		"script-security 2\n" +
+		"up /etc/openvpn/scripts/up.sh\n" +
+		"down /etc/openvpn/scripts/down.sh\n"
+	if err := os.WriteFile(confPath, []byte(clientConf), 0600); err != nil {
+		return nil, fmt.Errorf("write client config: %w", err)
+	}
+
+	// Start OpenVPN process.
+	logFile := filepath.Join(tm.cfg.LogDir, "openvpn-"+name+".log")
+	lf, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("open log file: %w", err)
+	}
+
+	vpnCmd := exec.Command("openvpn", "--config", confPath)
+	vpnCmd.Stdout = lf
+	vpnCmd.Stderr = lf
+	if err := vpnCmd.Start(); err != nil {
+		lf.Close()
+		return nil, fmt.Errorf("start openvpn: %w", err)
+	}
+	// Close log file handle — process owns it now via fd inheritance.
+	lf.Close()
+
+	serverIP := parseServerIP(string(ovpnData))
+
+	// Wait for state file to appear (up.sh writes it).
+	localIP, err := tm.waitForStateFile(name, 30*time.Second)
+	if err != nil {
+		killProcess(vpnCmd)
+		os.Remove(confPath)
+		return nil, fmt.Errorf("openvpn failed to connect: %w", err)
+	}
+
+	// Generate and start 3proxy.
+	socksConfPath := filepath.Join(socksDir, name+".cfg")
+	socksConf := fmt.Sprintf(socksConfTpl, name, localIP, socksPort)
+	if err := os.WriteFile(socksConfPath, []byte(socksConf), 0644); err != nil {
+		killProcess(vpnCmd)
+		return nil, fmt.Errorf("write 3proxy config: %w", err)
+	}
+
+	socksCmd := exec.Command("3proxy", socksConfPath)
+	if err := socksCmd.Start(); err != nil {
+		killProcess(vpnCmd)
+		return nil, fmt.Errorf("start 3proxy: %w", err)
+	}
+
+	rt := &runningTunnel{
+		TunnelInfo: TunnelInfo{
+			Name: name, ConfigName: configName, Region: region,
+			ServerIP: serverIP, SocksPort: socksPort, Status: "connected",
+			TunDevice: "tun-" + name, LocalIP: localIP, Health: "healthy",
+			Uptime: time.Now(), ProxyID: proxyID,
+		},
+		vpnCmd: vpnCmd, socksCmd: socksCmd,
+		confPath: confPath, socksConfPath: socksConfPath,
+	}
+	tm.tunnels[name] = rt
+
+	tm.persistState()
+	log.Printf("Tunnel %q created (socks:%d, tun:%s, ip:%s)", name, socksPort, rt.TunDevice, localIP)
+	info := rt.TunnelInfo
+	return &info, nil
+}
+
+// Remove stops and cleans up a tunnel completely.
+func (tm *TunnelManager) Remove(name string) error {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	rt, ok := tm.tunnels[name]
+	if !ok {
+		return fmt.Errorf("tunnel %q not found", name)
+	}
+
+	stopTunnel(rt)
+	os.Remove(rt.confPath)
+	os.Remove(rt.socksConfPath)
+	delete(tm.tunnels, name)
+	tm.persistState()
+	log.Printf("Tunnel %q removed", name)
 	return nil
 }
 
-// StopAll stops all running tunnels. Stub.
-func (tm *TunnelManager) StopAll() {
-	log.Println("TunnelManager.StopAll: stub, no-op")
-}
-
-// List returns all tunnel info. Stub.
-func (tm *TunnelManager) List() []TunnelInfo {
-	return nil
-}
-
-// Start starts a tunnel for the given config. Stub.
-func (tm *TunnelManager) Start(configName string, socksPort int) (*TunnelInfo, error) {
-	return nil, nil
-}
-
-// Stop stops a tunnel by config name. Stub.
-func (tm *TunnelManager) Stop(configName string) error {
-	return nil
-}
+const socksConfTpl = `log /var/log/sub2api-vpn/3proxy-%s.log D
+rotate 7
+timeouts 1 5 30 60 180 1800 15 60
+nserver 8.8.8.8
+nserver 1.1.1.1
+nscache 65536
+maxconn 128
+external %s
+auth none
+socks -p%d -i0.0.0.0
+`
