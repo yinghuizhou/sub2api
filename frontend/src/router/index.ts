@@ -325,6 +325,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/admin/vpn',
+    name: 'AdminVpn',
+    component: () => import('@/views/admin/VpnView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'VPN Management',
+      titleKey: 'admin.vpn.title',
+      descriptionKey: 'admin.vpn.description'
+    }
+  },
+  {
     path: '/admin/redeem',
     name: 'AdminRedeem',
     component: () => import('@/views/admin/RedeemView.vue'),

@@ -271,6 +271,7 @@ export default {
     subscriptions: 'Subscriptions',
     accounts: 'Accounts',
     proxies: 'Proxies',
+    vpn: 'VPN',
     redeemCodes: 'Redeem Codes',
     ops: 'Ops',
     promoCodes: 'Promo Codes',
@@ -2290,6 +2291,12 @@ export default {
       },
       filterByGroup: 'Filter by Group',
       allGroups: 'All Groups'
+    },
+
+    // VPN Management
+    vpn: {
+      title: 'VPN Management',
+      description: 'Manage VPN tunnels and OpenVPN configuration files'
     },
 
     // Redeem Codes
