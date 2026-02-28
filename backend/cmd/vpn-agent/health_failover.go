@@ -7,7 +7,39 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+	"time"
 )
+
+// regionProximity defines nearby regions for cross-region failover.
+var regionProximity = map[string][]string{
+	"us": {"ca", "uk", "de"},
+	"uk": {"de", "fr", "nl", "us"},
+	"de": {"nl", "fr", "uk"},
+	"fr": {"de", "nl", "uk"},
+	"nl": {"de", "fr", "uk"},
+	"ca": {"us", "uk"},
+	"au": {"sg", "jp"},
+	"jp": {"sg", "kr", "hk", "tw"},
+	"sg": {"hk", "jp", "au", "tw"},
+	"hk": {"sg", "tw", "jp", "kr"},
+	"kr": {"jp", "hk", "sg"},
+	"tw": {"hk", "sg", "jp"},
+	"in": {"sg", "hk"},
+}
+
+// isNearbyRegion checks if candidate is a nearby region to target.
+func isNearbyRegion(target, candidate string) bool {
+	nearby, ok := regionProximity[target]
+	if !ok {
+		return false
+	}
+	for _, r := range nearby {
+		if r == candidate {
+			return true
+		}
+	}
+	return false
+}
 
 // handleUnhealthy attempts to recover an unhealthy tunnel.
 // Flow: reconnect x2 → switch to same-region backup node.
@@ -87,6 +119,88 @@ func (hc *HealthChecker) handleUnhealthy(t *TunnelInfo) {
 	}
 
 	log.Printf("All failover attempts exhausted for %q — tunnel is dead", t.Name)
+}
+
+// configFreshness returns a 0.0-1.0 score based on how recently the config was uploaded.
+func (hc *HealthChecker) configFreshness(configName string) float64 {
+	meta := hc.store.GetMeta(configName)
+	if meta == nil {
+		return 0.5 // unknown = neutral
+	}
+	age := time.Since(meta.UploadedAt)
+	switch {
+	case age < 24*time.Hour:
+		return 1.0
+	case age < 7*24*time.Hour:
+		return 0.8
+	case age < 30*24*time.Hour:
+		return 0.5
+	default:
+		return 0.2
+	}
+}
+
+// weightedScore calculates failover priority for a config.
+// score = successRate*0.4 + latencyFactor*0.3 + freshness*0.2 + regionBonus*0.1
+func (hc *HealthChecker) weightedScore(configName, targetRegion string) float64 {
+	successRate := hc.scores.GetScore(configName)
+	latencyFactor := successRate // simplified: good success ≈ good latency
+	freshness := hc.configFreshness(configName)
+
+	configRegion := parseRegion(configName)
+	regionBonus := 0.0
+	if configRegion == targetRegion {
+		regionBonus = 1.0
+	} else if isNearbyRegion(targetRegion, configRegion) {
+		regionBonus = 0.5
+	}
+
+	return successRate*0.4 + latencyFactor*0.3 + freshness*0.2 + regionBonus*0.1
+}
+
+// findBestAlternative finds the best failover config using weighted scoring.
+// It considers success rate, latency, config freshness, and region proximity.
+func (hc *HealthChecker) findBestAlternative(currentConfig, region string, exclude []string) string {
+	configs, err := hc.store.List()
+	if err != nil {
+		return ""
+	}
+
+	type candidate struct {
+		name  string
+		score float64
+	}
+	var candidates []candidate
+
+	excludeSet := make(map[string]bool)
+	for _, e := range exclude {
+		excludeSet[e] = true
+	}
+	excludeSet[currentConfig] = true
+
+	for _, cfg := range configs {
+		if excludeSet[cfg.Name] {
+			continue
+		}
+		score := hc.weightedScore(cfg.Name, region)
+
+		// Deprioritize stale configs
+		meta := hc.store.GetMeta(cfg.Name)
+		if meta != nil && meta.Stale {
+			score *= 0.3
+		}
+
+		candidates = append(candidates, candidate{cfg.Name, score})
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].score > candidates[j].score
+	})
+
+	if len(candidates) == 0 {
+		return ""
+	}
+	return candidates[0].name
 }
 
 // StabilityScores tracks historical performance of .ovpn configs.
