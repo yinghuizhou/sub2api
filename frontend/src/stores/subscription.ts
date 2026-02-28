@@ -16,6 +16,9 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   // 缓存 TTL (5 分钟)
   const CACHE_TTL = 5 * 60 * 1000
 
+  // 最大缓存数量 (LRU)
+  const MAX_CACHE_SIZE = 100
+
   // 告警规则
   const alertRule = ref<AlertRule>({
     threshold: 80,
@@ -39,8 +42,17 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       return cached.data
     }
 
-    // 缓存过期或不存在，从 API 获取
-    return await refreshStatus(accountId)
+    // 尝试刷新，失败时返回过期缓存
+    try {
+      return await refreshStatus(accountId)
+    } catch (error) {
+      // 如果有过期缓存，返回过期缓存
+      if (cached) {
+        console.warn(`Using stale cache for account ${accountId} due to API error`)
+        return cached.data
+      }
+      throw error
+    }
   }
 
   /**
@@ -56,6 +68,14 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
       // 计算状态
       const status = calculateStatus(config, usage)
+
+      // LRU: 如果缓存已满，删除最旧的项
+      if (statusCache.value.size >= MAX_CACHE_SIZE && !statusCache.value.has(accountId)) {
+        const oldestKey = statusCache.value.keys().next().value
+        if (oldestKey !== undefined) {
+          statusCache.value.delete(oldestKey)
+        }
+      }
 
       // 更新缓存
       statusCache.value.set(accountId, {
@@ -146,7 +166,6 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   return {
-    statusCache,
     alertRule,
     getStatus,
     refreshStatus,
