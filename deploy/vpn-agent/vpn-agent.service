@@ -1,0 +1,33 @@
+[Unit]
+Description=Sub2API VPN Agent
+Documentation=https://gitee.com/xixi_24/sub2api
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/vpn-agent
+Restart=always
+RestartSec=5
+
+# Configuration via environment variables
+Environment=VPN_AGENT_PORT=9090
+Environment=VPN_AGENT_LISTEN=127.0.0.1
+Environment=OVPN_CONFIG_DIR=/etc/vpn-agent/configs
+Environment=STATE_DIR=/etc/vpn-agent
+Environment=LOG_DIR=/var/log/vpn-agent
+Environment=SUB2API_URL=http://localhost:8080
+
+# Load API key from separate file (create /etc/vpn-agent/env with SUB2API_API_KEY=xxx)
+EnvironmentFile=-/etc/vpn-agent/env
+
+# Security hardening
+NoNewPrivileges=no
+ProtectSystem=false
+
+# Needs root for OpenVPN and network management
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

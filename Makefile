@@ -202,6 +202,10 @@ build-backend:
 	@echo "$(BOLD)构建后端 (v$(VERSION) $(COMMIT))...$(RESET)"
 	cd backend && go build -ldflags="$(LDFLAGS)" -o bin/server ./cmd/server
 
+build-vpn-agent:
+	@echo "$(BOLD)构建 VPN Agent ($(COMMIT))...$(RESET)"
+	cd backend && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/vpn-agent ./cmd/vpn-agent
+
 build-frontend:
 	@pnpm --dir frontend run build
 
