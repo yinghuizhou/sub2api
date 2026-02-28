@@ -272,6 +272,7 @@ export default {
     accounts: 'Accounts',
     proxies: 'Proxies',
     vpn: 'VPN',
+    vpnMonitor: 'VPN Monitor',
     redeemCodes: 'Redeem Codes',
     ops: 'Ops',
     promoCodes: 'Promo Codes',
@@ -2297,6 +2298,10 @@ export default {
     vpn: {
       title: 'VPN Management',
       description: 'Manage VPN tunnels and OpenVPN configuration files'
+    },
+    vpnMonitor: {
+      title: 'VPN Monitor',
+      description: 'Monitor VPN tunnel status, event logs, and alert rules'
     },
 
     // Redeem Codes

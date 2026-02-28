@@ -272,6 +272,7 @@ export default {
     accounts: '账号管理',
     proxies: 'IP管理',
     vpn: 'VPN管理',
+    vpnMonitor: 'VPN监控',
     redeemCodes: '兑换码',
     ops: '运维监控',
     promoCodes: '优惠码',
@@ -2436,6 +2437,10 @@ export default {
     vpn: {
       title: 'VPN 管理',
       description: '管理 VPN 隧道和 OpenVPN 配置文件'
+    },
+    vpnMonitor: {
+      title: 'VPN 监控',
+      description: '监控 VPN 隧道状态、事件日志和告警规则'
     },
 
     // Redeem Codes Management
