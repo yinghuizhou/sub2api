@@ -43,7 +43,7 @@ func (s *Server) handleCreateTunnel(w http.ResponseWriter, r *http.Request) {
 		req.SocksPort = port
 	}
 
-	info, err := s.tunnelMgr.Create(req.Name, req.ConfigName, req.Region, req.SocksPort, req.ProxyID)
+	info, err := s.tunnelMgr.Create(req.Name, req.ConfigName, req.Region, req.SocksPort, req.ProxyID, req.CertID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -197,4 +197,45 @@ func (s *Server) handleNextPort(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]int{"port": port})
+}
+
+// handleListCerts returns all certificates.
+func (s *Server) handleListCerts(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, s.certStore.List())
+}
+
+// handleImportCert imports a certificate from uploaded .ovpn data.
+func (s *Server) handleImportCert(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Label    string `json:"label"`
+		OvpnData string `json:"ovpn_data"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+		return
+	}
+	if req.Label == "" || req.OvpnData == "" {
+		writeError(w, http.StatusBadRequest, "label and ovpn_data are required")
+		return
+	}
+	cert, err := s.certStore.Import(req.Label, []byte(req.OvpnData))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusCreated, cert)
+}
+
+// handleDeleteCert deletes a certificate by ID.
+func (s *Server) handleDeleteCert(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+	if err := s.certStore.Delete(id); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, nil)
 }

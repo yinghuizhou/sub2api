@@ -30,6 +30,13 @@
                   : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200']">
               <Icon name="server" size="sm" class="mr-1 inline" />隧道管理
             </button>
+            <button @click="activeTab = 'certs'"
+              :class="['rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                activeTab === 'certs'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-700 dark:text-white'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200']">
+              <Icon name="key" size="sm" class="mr-1 inline" />证书管理
+            </button>
           </div>
 
           <div class="flex flex-1 items-center justify-end gap-2">
@@ -73,22 +80,42 @@
           <div v-else-if="configs.length === 0" class="py-8">
             <EmptyState title="暂无配置文件" description="上传 .ovpn 配置文件以开始使用" />
           </div>
-          <div v-else class="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto dark:divide-dark-700">
-            <div v-for="c in configs" :key="c.name"
-              class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-dark-800/50">
-              <Icon name="document" size="sm" class="shrink-0 text-gray-400" />
-              <span class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-white" :title="c.name">{{ c.name }}</span>
-              <span v-if="c.region" class="badge badge-gray shrink-0 text-xs">{{ c.region }}</span>
-              <span class="hidden shrink-0 font-mono text-xs text-gray-500 sm:inline">{{ c.server_ip || '' }}</span>
-              <div class="flex shrink-0 items-center gap-0.5">
-                <button @click="openDeployDialog(c)" title="部署"
-                  class="rounded p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
-                  <Icon name="play" size="sm" />
-                </button>
-                <button @click="handleDeleteConfig(c)" title="删除"
-                  class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
-                  <Icon name="trash" size="sm" />
-                </button>
+          <div v-else class="max-h-[60vh] overflow-y-auto">
+            <div class="sticky top-0 z-10 flex items-center gap-2 border-b px-4 py-2"
+              :class="selectedConfigs.size > 0
+                ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
+                : 'border-gray-200 bg-gray-50 dark:border-dark-700 dark:bg-dark-800'">
+              <input type="checkbox" :checked="allConfigsSelected" @change="toggleAllConfigs"
+                class="h-4 w-4 shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600" />
+              <span v-if="selectedConfigs.size > 0" class="text-sm font-medium text-blue-700 dark:text-blue-300">
+                已选 {{ selectedConfigs.size }} 项
+              </span>
+              <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ configs.length }} 个配置</span>
+              <div class="flex-1" />
+              <button v-if="selectedConfigs.size > 0" @click="batchDeleteConfigs" :disabled="batchLoading"
+                class="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20">
+                批量删除
+              </button>
+            </div>
+            <div class="divide-y divide-gray-100 dark:divide-dark-700">
+              <div v-for="c in configs" :key="c.name"
+                class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-dark-800/50">
+                <input type="checkbox" :checked="selectedConfigs.has(c.name)" @change="toggleConfigSel(c.name)"
+                  class="h-4 w-4 shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600" />
+                <Icon name="document" size="sm" class="shrink-0 text-gray-400" />
+                <span class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-white" :title="c.name">{{ c.name }}</span>
+                <span v-if="c.region" class="badge badge-gray shrink-0 text-xs">{{ c.region }}</span>
+                <span class="hidden shrink-0 font-mono text-xs text-gray-500 sm:inline">{{ c.server_ip || '' }}</span>
+                <div class="flex shrink-0 items-center gap-0.5">
+                  <button @click="openDeployDialog(c)" title="部署"
+                    class="rounded p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
+                    <Icon name="play" size="sm" />
+                  </button>
+                  <button @click="handleDeleteConfig(c)" title="删除"
+                    class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                    <Icon name="trash" size="sm" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -96,7 +123,31 @@
 
         <!-- ======= Tab: Tunnel Management ======= -->
         <div v-if="activeTab === 'tunnels'">
+          <div v-if="selectedTunnels.size > 0" class="flex items-center gap-2 border-b border-blue-200 bg-blue-50 px-4 py-2 dark:border-blue-800 dark:bg-blue-900/20">
+            <span class="text-sm font-medium text-blue-700 dark:text-blue-300">已选 {{ selectedTunnels.size }} 项</span>
+            <div class="flex-1" />
+            <button @click="batchRestartTunnels" :disabled="batchLoading"
+              class="rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-800/30">
+              批量重启
+            </button>
+            <button @click="batchStopTunnels" :disabled="batchLoading"
+              class="rounded px-2 py-1 text-xs font-medium text-yellow-600 hover:bg-yellow-100 disabled:opacity-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20">
+              批量停止
+            </button>
+            <button @click="batchDeleteTunnels" :disabled="batchLoading"
+              class="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20">
+              批量删除
+            </button>
+          </div>
           <DataTable :columns="tunnelColumns" :data="tunnels" :loading="loading" row-key="name">
+            <template #header-select>
+              <input type="checkbox" :checked="allTunnelsSelected" @change="toggleAllTunnels"
+                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600" />
+            </template>
+            <template #cell-select="{ row }">
+              <input type="checkbox" :checked="selectedTunnels.has(row.name)" @change="toggleTunnelSel(row.name)"
+                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600" />
+            </template>
             <template #cell-name="{ value }">
               <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
             </template>
@@ -121,6 +172,10 @@
                 {{ value }}ms
               </span>
               <span v-else class="text-sm text-gray-400">-</span>
+            </template>
+            <template #cell-cert_id="{ row }">
+              <span v-if="row.cert_id" class="badge badge-blue text-xs">{{ certLabel(row.cert_id) }}</span>
+              <span v-else class="text-xs text-gray-400">内嵌</span>
             </template>
             <template #cell-exit_ip="{ value }">
               <span class="font-mono text-sm">{{ value || '-' }}</span>
@@ -154,6 +209,73 @@
             </template>
           </DataTable>
         </div>
+
+        <!-- ======= Tab: Certificate Management ======= -->
+        <div v-if="activeTab === 'certs'">
+          <!-- Import Area -->
+          <div class="border-b border-gray-200 p-4 dark:border-dark-700">
+            <div class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 dark:border-dark-600"
+              :class="{ 'border-primary-400 bg-primary-50 dark:border-primary-500 dark:bg-primary-900/10': isCertDragging }"
+              @dragover.prevent="isCertDragging = true" @dragleave.prevent="isCertDragging = false"
+              @drop.prevent="handleCertDrop">
+              <Icon name="key" size="lg" class="mb-2 text-gray-400" />
+              <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                拖拽 .ovpn 文件提取证书，或
+                <label class="cursor-pointer font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
+                  点击选择
+                  <input ref="certFileRef" type="file" accept=".ovpn" class="hidden" @change="handleCertFileSelect" />
+                </label>
+              </p>
+              <p v-if="certImportStatus" :class="['text-sm', certImportStatus.ok ? 'text-green-600' : 'text-red-600']">
+                {{ certImportStatus.message }}
+              </p>
+              <p v-if="certImporting" class="text-sm text-gray-500">导入中...</p>
+            </div>
+          </div>
+          <!-- Cert List -->
+          <div v-if="loading" class="flex items-center justify-center py-8 text-gray-400">
+            <Icon name="refresh" size="md" class="animate-spin" />
+          </div>
+          <div v-else-if="certs.length === 0" class="py-8">
+            <EmptyState title="暂无证书" description="上传 .ovpn 文件提取客户端证书" />
+          </div>
+          <div v-else>
+            <div class="sticky top-0 z-10 flex items-center gap-2 border-b px-4 py-2"
+              :class="selectedCerts.size > 0
+                ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
+                : 'border-gray-200 bg-gray-50 dark:border-dark-700 dark:bg-dark-800'">
+              <input type="checkbox" :checked="allCertsSelected" @change="toggleAllCerts"
+                class="h-4 w-4 shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600" />
+              <span v-if="selectedCerts.size > 0" class="text-sm font-medium text-blue-700 dark:text-blue-300">
+                已选 {{ selectedCerts.size }} 项
+              </span>
+              <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ certs.length }} 个证书</span>
+              <div class="flex-1" />
+              <button v-if="selectedCerts.size > 0" @click="batchDeleteCerts" :disabled="batchLoading"
+                class="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20">
+                批量删除
+              </button>
+            </div>
+            <div class="divide-y divide-gray-100 dark:divide-dark-700">
+              <div v-for="cert in certs" :key="cert.id"
+                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-800/50">
+                <input type="checkbox" :checked="selectedCerts.has(cert.id)" @change="toggleCertSel(cert.id)"
+                  class="h-4 w-4 shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600" />
+                <Icon name="key" size="sm" class="shrink-0 text-gray-400" />
+                <div class="min-w-0 flex-1">
+                  <div class="truncate text-sm font-medium text-gray-900 dark:text-white">{{ cert.label }}</div>
+                  <div class="truncate font-mono text-xs text-gray-400">{{ cert.id }}</div>
+                </div>
+                <span v-if="cert.in_use" class="badge badge-blue shrink-0 text-xs">{{ cert.active_tunnel }}</span>
+                <span v-else class="badge badge-gray shrink-0 text-xs">空闲</span>
+                <button @click="handleDeleteCert(cert)" :disabled="cert.in_use" title="删除"
+                  class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                  <Icon name="trash" size="sm" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </template>
     </TablePageLayout>
 
@@ -171,6 +293,13 @@
         <div>
           <label class="input-label">SOCKS 端口（留空自动分配）</label>
           <input v-model.number="deployForm.socks_port" type="number" min="1024" max="65535" class="input" placeholder="自动分配" />
+        </div>
+        <div v-if="freeCerts.length > 0">
+          <label class="input-label">证书（可选，多隧道需不同证书）</label>
+          <select v-model="deployForm.cert_id" class="input">
+            <option value="">使用配置内嵌证书</option>
+            <option v-for="c in freeCerts" :key="c.id" :value="c.id">{{ c.label }}</option>
+          </select>
         </div>
       </form>
       <!-- Deploy Progress Log -->
@@ -215,12 +344,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import {
   getAgentHealth, listTunnels, createTunnel, removeTunnel,
   restartTunnel, startTunnel, stopTunnel, uploadConfigs, listConfigs, deleteConfig,
-  type VpnTunnel, type VpnOvpnConfig, type AgentHealth, type CreateTunnelInput,
+  listCertificates, importCertificate, deleteCertificate,
+  type VpnTunnel, type VpnOvpnConfig, type AgentHealth, type CreateTunnelInput, type VpnCertificate,
 } from '@/api/admin/vpn'
 import type { Column } from '@/components/common/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -233,17 +363,30 @@ import Icon from '@/components/icons/Icon.vue'
 const appStore = useAppStore()
 
 // --- State ---
-const activeTab = ref<'configs' | 'tunnels'>('configs')
+const activeTab = ref<'configs' | 'tunnels' | 'certs'>('configs')
 const loading = ref(false)
 const agentHealth = ref<AgentHealth | null>(null)
 const configs = ref<VpnOvpnConfig[]>([])
 const tunnels = ref<VpnTunnel[]>([])
+const certs = ref<VpnCertificate[]>([])
+
+// Selection
+const selectedConfigs = ref(new Set<string>())
+const selectedTunnels = ref(new Set<string>())
+const selectedCerts = ref(new Set<string>())
+const batchLoading = ref(false)
 
 // Upload
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)
 const uploading = ref(false)
 const uploadStatus = ref<{ ok: boolean; message: string } | null>(null)
+
+// Cert import
+const certFileRef = ref<HTMLInputElement | null>(null)
+const isCertDragging = ref(false)
+const certImporting = ref(false)
+const certImportStatus = ref<{ ok: boolean; message: string } | null>(null)
 
 // Deploy dialog
 const showDeployDialog = ref(false)
@@ -269,10 +412,12 @@ const actionLoading = reactive<Record<string, string>>({})
 
 // --- Columns ---
 const tunnelColumns = computed<Column[]>(() => [
+  { key: 'select', label: '', sortable: false },
   { key: 'name', label: '名称', sortable: true },
   { key: 'config_name', label: '配置', sortable: true },
   { key: 'region', label: '地区', sortable: true },
   { key: 'socks_port', label: 'SOCKS 端口', sortable: false },
+  { key: 'cert_id', label: '证书', sortable: false },
   { key: 'status', label: '状态', sortable: true },
   { key: 'health', label: '健康', sortable: false },
   { key: 'latency_ms', label: '延迟', sortable: false },
@@ -294,6 +439,39 @@ const tunnelStatusLabel = (v: string) =>
   ({ running: '运行中', stopped: '已停止', error: '错误' }[v] || v)
 const tunnelHealthDot = (v: string) =>
   ({ healthy: 'bg-green-500', unhealthy: 'bg-red-500' }[v] || 'bg-gray-300')
+
+const freeCerts = computed(() => certs.value.filter(c => !c.in_use))
+const certLabel = (id: string) => certs.value.find(c => c.id === id)?.label || id.slice(0, 8)
+
+// --- Selection ---
+const allConfigsSelected = computed(() => configs.value.length > 0 && selectedConfigs.value.size === configs.value.length)
+const allTunnelsSelected = computed(() => tunnels.value.length > 0 && selectedTunnels.value.size === tunnels.value.length)
+const allCertsSelected = computed(() => certs.value.length > 0 && selectedCerts.value.size === certs.value.length)
+
+const toggleConfigSel = (name: string) => {
+  const s = new Set(selectedConfigs.value)
+  s.has(name) ? s.delete(name) : s.add(name)
+  selectedConfigs.value = s
+}
+const toggleAllConfigs = () => {
+  selectedConfigs.value = allConfigsSelected.value ? new Set() : new Set(configs.value.map(c => c.name))
+}
+const toggleTunnelSel = (name: string) => {
+  const s = new Set(selectedTunnels.value)
+  s.has(name) ? s.delete(name) : s.add(name)
+  selectedTunnels.value = s
+}
+const toggleAllTunnels = () => {
+  selectedTunnels.value = allTunnelsSelected.value ? new Set() : new Set(tunnels.value.map(t => t.name))
+}
+const toggleCertSel = (id: string) => {
+  const s = new Set(selectedCerts.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  selectedCerts.value = s
+}
+const toggleAllCerts = () => {
+  selectedCerts.value = allCertsSelected.value ? new Set() : new Set(certs.value.map(c => c.id))
+}
 
 // --- Data Loading ---
 const loadHealth = async () => {
@@ -320,9 +498,17 @@ const loadTunnels = async () => {
   }
 }
 
+const loadCerts = async () => {
+  try {
+    certs.value = await listCertificates()
+  } catch (e: any) {
+    appStore.showError(e?.message || '加载证书列表失败')
+  }
+}
+
 const refreshAll = async () => {
   loading.value = true
-  await Promise.all([loadHealth(), loadConfigs(), loadTunnels()])
+  await Promise.all([loadHealth(), loadConfigs(), loadTunnels(), loadCerts()])
   loading.value = false
 }
 
@@ -381,6 +567,7 @@ const openDeployDialog = (config: VpnOvpnConfig) => {
   deployForm.config_name = config.name
   deployForm.name = config.name.replace(/\.ovpn$/, '').replace(/[^a-zA-Z0-9_-]/g, '-')
   deployForm.socks_port = undefined as unknown as number
+  deployForm.cert_id = ''
   deployLog.value = []
   deployResult.value = null
   deployPhase.value = ''
@@ -439,6 +626,7 @@ const handleDeploy = async () => {
       config_name: deployForm.config_name,
     }
     if (deployForm.socks_port) input.socks_port = deployForm.socks_port
+    if (deployForm.cert_id) input.cert_id = deployForm.cert_id
     const tunnel = await createTunnel(input)
     logLine('隧道连接成功!', 'text-green-400')
     logLine(`分配端口: ${tunnel.socks_port}, 本地 IP: ${tunnel.local_ip}`, 'text-green-300')
@@ -497,6 +685,131 @@ const handleDeleteTunnel = async (tunnel: VpnTunnel) => {
   }
 }
 
+// --- Certificate Actions ---
+const handleCertFileSelect = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (input.files?.[0]) { doCertImport(input.files[0]); input.value = '' }
+}
+
+const handleCertDrop = (e: DragEvent) => {
+  isCertDragging.value = false
+  const file = Array.from(e.dataTransfer?.files || []).find(f => f.name.endsWith('.ovpn'))
+  if (file) doCertImport(file)
+  else certImportStatus.value = { ok: false, message: '请选择 .ovpn 文件' }
+}
+
+const doCertImport = async (file: File) => {
+  certImporting.value = true
+  certImportStatus.value = null
+  try {
+    const text = await file.text()
+    await importCertificate({ label: file.name.replace(/\.ovpn$/, ''), ovpn_data: text })
+    certImportStatus.value = { ok: true, message: '证书导入成功' }
+    await loadCerts()
+  } catch (e: any) {
+    certImportStatus.value = { ok: false, message: e?.message || '导入失败' }
+  } finally {
+    certImporting.value = false
+  }
+}
+
+const handleDeleteCert = async (cert: VpnCertificate) => {
+  if (!confirm(`确定要删除证书「${cert.label}」吗？`)) return
+  try {
+    await deleteCertificate(cert.id)
+    appStore.showSuccess('证书已删除')
+    await loadCerts()
+  } catch (e: any) {
+    appStore.showError(e?.message || '删除失败')
+  }
+}
+
 // --- Init ---
 onMounted(refreshAll)
+
+// Clear selections on data reload
+watch(configs, () => { selectedConfigs.value = new Set() })
+watch(tunnels, () => { selectedTunnels.value = new Set() })
+watch(certs, () => { selectedCerts.value = new Set() })
+
+// --- Batch Actions ---
+const batchDeleteConfigs = async () => {
+  const names = [...selectedConfigs.value]
+  if (!confirm(`确定要删除选中的 ${names.length} 个配置文件吗？`)) return
+  batchLoading.value = true
+  let ok = 0, fail = 0
+  for (const name of names) {
+    try { await deleteConfig(name); ok++ } catch { fail++ }
+  }
+  batchLoading.value = false
+  selectedConfigs.value = new Set()
+  if (ok) appStore.showSuccess(`成功删除 ${ok} 个配置`)
+  if (fail) appStore.showError(`${fail} 个删除失败`)
+  await loadConfigs()
+}
+
+const batchRestartTunnels = async () => {
+  const names = [...selectedTunnels.value]
+  if (!confirm(`确定要重启选中的 ${names.length} 个隧道吗？`)) return
+  batchLoading.value = true
+  let ok = 0, fail = 0
+  for (const name of names) {
+    try { await restartTunnel(name); ok++ } catch { fail++ }
+  }
+  batchLoading.value = false
+  selectedTunnels.value = new Set()
+  if (ok) appStore.showSuccess(`成功重启 ${ok} 个隧道`)
+  if (fail) appStore.showError(`${fail} 个重启失败`)
+  await loadTunnels()
+}
+
+const batchStopTunnels = async () => {
+  const names = [...selectedTunnels.value]
+  if (!confirm(`确定要停止选中的 ${names.length} 个隧道吗？`)) return
+  batchLoading.value = true
+  let ok = 0, fail = 0
+  for (const name of names) {
+    try { await stopTunnel(name); ok++ } catch { fail++ }
+  }
+  batchLoading.value = false
+  selectedTunnels.value = new Set()
+  if (ok) appStore.showSuccess(`成功停止 ${ok} 个隧道`)
+  if (fail) appStore.showError(`${fail} 个停止失败`)
+  await loadTunnels()
+}
+
+const batchDeleteTunnels = async () => {
+  const names = [...selectedTunnels.value]
+  if (!confirm(`确定要删除选中的 ${names.length} 个隧道吗？此操作将终止所有选中隧道的 VPN 连接。`)) return
+  batchLoading.value = true
+  let ok = 0, fail = 0
+  for (const name of names) {
+    try { await removeTunnel(name); ok++ } catch { fail++ }
+  }
+  batchLoading.value = false
+  selectedTunnels.value = new Set()
+  if (ok) appStore.showSuccess(`成功删除 ${ok} 个隧道`)
+  if (fail) appStore.showError(`${fail} 个删除失败`)
+  await Promise.all([loadTunnels(), loadHealth()])
+}
+
+const batchDeleteCerts = async () => {
+  const ids = [...selectedCerts.value]
+  const inUse = ids.filter(id => certs.value.find(c => c.id === id)?.in_use)
+  if (inUse.length > 0) {
+    appStore.showError(`${inUse.length} 个证书正在使用中，无法删除`)
+    return
+  }
+  if (!confirm(`确定要删除选中的 ${ids.length} 个证书吗？`)) return
+  batchLoading.value = true
+  let ok = 0, fail = 0
+  for (const id of ids) {
+    try { await deleteCertificate(id); ok++ } catch { fail++ }
+  }
+  batchLoading.value = false
+  selectedCerts.value = new Set()
+  if (ok) appStore.showSuccess(`成功删除 ${ok} 个证书`)
+  if (fail) appStore.showError(`${fail} 个删除失败`)
+  await loadCerts()
+}
 </script>

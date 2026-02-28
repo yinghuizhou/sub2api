@@ -19,21 +19,24 @@ type createTunnelRequest struct {
 	Region     string `json:"region"`
 	SocksPort  int    `json:"socks_port"`
 	ProxyID    int    `json:"proxy_id"`
+	CertID     string `json:"cert_id"`
 }
 
 // Server handles HTTP requests for the VPN Agent API.
 type Server struct {
 	cfg           *AgentConfig
 	store         *ConfigStore
+	certStore     *CertStore
 	tunnelMgr     *TunnelManager
 	healthChecker *HealthChecker
 }
 
 // NewServer creates a new Server.
-func NewServer(cfg *AgentConfig, store *ConfigStore, tm *TunnelManager, hc *HealthChecker) *Server {
+func NewServer(cfg *AgentConfig, store *ConfigStore, cs *CertStore, tm *TunnelManager, hc *HealthChecker) *Server {
 	return &Server{
 		cfg:           cfg,
 		store:         store,
+		certStore:     cs,
 		tunnelMgr:     tm,
 		healthChecker: hc,
 	}
@@ -59,6 +62,11 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("POST /api/configs/upload", s.handleUploadConfigs)
 	mux.HandleFunc("GET /api/configs", s.handleListConfigs)
 	mux.HandleFunc("DELETE /api/configs/{name}", s.handleDeleteConfig)
+
+	// Certificates
+	mux.HandleFunc("GET /api/certs", s.handleListCerts)
+	mux.HandleFunc("POST /api/certs/import", s.handleImportCert)
+	mux.HandleFunc("DELETE /api/certs/{id}", s.handleDeleteCert)
 
 	// Ports
 	mux.HandleFunc("GET /api/ports/next", s.handleNextPort)

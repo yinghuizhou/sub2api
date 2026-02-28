@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 )
@@ -15,7 +16,8 @@ func main() {
 	cfg := loadConfig()
 
 	// Ensure required directories exist.
-	for _, dir := range []string{cfg.OvpnConfigDir, cfg.StateDir, cfg.LogDir} {
+	certDir := filepath.Join(cfg.StateDir, "certificates")
+	for _, dir := range []string{cfg.OvpnConfigDir, cfg.StateDir, cfg.LogDir, certDir} {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			log.Fatalf("Failed to create directory %s: %v", dir, err)
 		}
@@ -24,10 +26,11 @@ func main() {
 	// Initialize components.
 	store := NewConfigStore(cfg.OvpnConfigDir)
 	stateStore := NewStateStore(cfg.StateDir)
+	certStore := NewCertStore(certDir)
 	callback := NewCallbackClient(cfg.Sub2APIURL, cfg.Sub2APIKey)
-	tunnelMgr := NewTunnelManager(cfg, store, stateStore, callback)
+	tunnelMgr := NewTunnelManager(cfg, store, stateStore, callback, certStore)
 	healthChecker := NewHealthChecker(tunnelMgr, store, callback, cfg)
-	server := NewServer(cfg, store, tunnelMgr, healthChecker)
+	server := NewServer(cfg, store, certStore, tunnelMgr, healthChecker)
 
 	// Restore previous tunnel state.
 	if err := tunnelMgr.RestoreFromState(); err != nil {

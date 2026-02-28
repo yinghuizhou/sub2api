@@ -15,6 +15,7 @@ type TunnelState struct {
 	Region     string `json:"region"`
 	ServerIP   string `json:"server_ip"`
 	ProxyID    int    `json:"proxy_id,omitempty"`
+	CertID     string `json:"cert_id,omitempty"`
 }
 
 // AgentState is the top-level persisted state.

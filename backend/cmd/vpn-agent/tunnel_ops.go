@@ -47,9 +47,13 @@ func (tm *TunnelManager) Restart(name string) error {
 	region := rt.Region
 	port := rt.SocksPort
 	pid := rt.ProxyID
+	certID := rt.CertID
 
 	// Stop and remove under lock
 	stopTunnel(rt)
+	if certID != "" {
+		tm.certStore.MarkFree(certID)
+	}
 	os.Remove(rt.confPath)
 	os.Remove(rt.socksConfPath)
 	delete(tm.tunnels, name)
@@ -57,7 +61,7 @@ func (tm *TunnelManager) Restart(name string) error {
 	tm.mu.Unlock()
 
 	// Re-create (Create handles its own locking)
-	_, err := tm.Create(name, cfg, region, port, pid)
+	_, err := tm.Create(name, cfg, region, port, pid, certID)
 	return err
 }
 
@@ -94,10 +98,14 @@ func (tm *TunnelManager) Start(name string) error {
 	region := rt.Region
 	port := rt.SocksPort
 	pid := rt.ProxyID
+	certID := rt.CertID
+	if certID != "" {
+		tm.certStore.MarkFree(certID)
+	}
 	delete(tm.tunnels, name)
 	tm.mu.Unlock()
 
-	_, err := tm.Create(name, cfg, region, port, pid)
+	_, err := tm.Create(name, cfg, region, port, pid, certID)
 	return err
 }
 
@@ -120,7 +128,7 @@ func (tm *TunnelManager) RestoreFromState() error {
 	}
 	for _, ts := range state.Tunnels {
 		log.Printf("Restoring tunnel %q (%s port %d)", ts.Name, ts.ConfigName, ts.SocksPort)
-		if _, err := tm.Create(ts.Name, ts.ConfigName, ts.Region, ts.SocksPort, ts.ProxyID); err != nil {
+		if _, err := tm.Create(ts.Name, ts.ConfigName, ts.Region, ts.SocksPort, ts.ProxyID, ts.CertID); err != nil {
 			log.Printf("Warning: failed to restore tunnel %q: %v", ts.Name, err)
 		}
 	}
@@ -138,15 +146,19 @@ func (tm *TunnelManager) SwitchConfig(name, newConfigName string) error {
 	region := rt.Region
 	port := rt.SocksPort
 	pid := rt.ProxyID
+	certID := rt.CertID
 
 	stopTunnel(rt)
+	if certID != "" {
+		tm.certStore.MarkFree(certID)
+	}
 	os.Remove(rt.confPath)
 	os.Remove(rt.socksConfPath)
 	delete(tm.tunnels, name)
 	tm.persistState()
 	tm.mu.Unlock()
 
-	_, err := tm.Create(name, newConfigName, region, port, pid)
+	_, err := tm.Create(name, newConfigName, region, port, pid, certID)
 	return err
 }
 
@@ -175,6 +187,7 @@ func (tm *TunnelManager) persistState() {
 			Name: name, ConfigName: rt.ConfigName,
 			SocksPort: rt.SocksPort, Region: rt.Region,
 			ServerIP: rt.ServerIP, ProxyID: rt.ProxyID,
+			CertID: rt.CertID,
 		}
 	}
 	if err := tm.stateStore.Save(state); err != nil {

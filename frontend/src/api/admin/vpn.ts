@@ -16,6 +16,7 @@ export interface VpnTunnel {
   consecutive_failures: number
   last_check: string
   proxy_id?: number
+  cert_id?: string
 }
 
 export interface VpnOvpnConfig {
@@ -31,12 +32,26 @@ export interface CreateTunnelInput {
   region?: string
   socks_port?: number
   proxy_id?: number
+  cert_id?: string
 }
 
 export interface AgentHealth {
   status: string
   uptime: string
   tunnels: number
+}
+
+export interface VpnCertificate {
+  id: string
+  label: string
+  created_at: string
+  in_use: boolean
+  active_tunnel?: string
+}
+
+export interface ImportCertInput {
+  label: string
+  ovpn_data: string
 }
 
 export async function getAgentHealth(): Promise<AgentHealth> {
@@ -46,7 +61,7 @@ export async function getAgentHealth(): Promise<AgentHealth> {
 
 export async function listTunnels(): Promise<VpnTunnel[]> {
   const { data } = await apiClient.get<VpnTunnel[]>('/admin/vpn/tunnels')
-  return data
+  return data ?? []
 }
 
 export async function createTunnel(input: CreateTunnelInput): Promise<VpnTunnel> {
@@ -88,11 +103,25 @@ export async function uploadConfigs(files: File[]): Promise<{ uploaded: string[]
 
 export async function listConfigs(): Promise<VpnOvpnConfig[]> {
   const { data } = await apiClient.get<VpnOvpnConfig[]>('/admin/vpn/configs')
-  return data
+  return data ?? []
 }
 
 export async function deleteConfig(name: string): Promise<void> {
   await apiClient.delete(`/admin/vpn/configs/${encodeURIComponent(name)}`)
+}
+
+export async function listCertificates(): Promise<VpnCertificate[]> {
+  const { data } = await apiClient.get<VpnCertificate[]>('/admin/vpn/certificates')
+  return data ?? []
+}
+
+export async function importCertificate(input: ImportCertInput): Promise<VpnCertificate> {
+  const { data } = await apiClient.post<VpnCertificate>('/admin/vpn/certificates/import', input)
+  return data
+}
+
+export async function deleteCertificate(id: string): Promise<void> {
+  await apiClient.delete(`/admin/vpn/certificates/${encodeURIComponent(id)}`)
 }
 
 export const vpnAPI = {
@@ -106,7 +135,10 @@ export const vpnAPI = {
   getTunnelStatus,
   uploadConfigs,
   listConfigs,
-  deleteConfig
+  deleteConfig,
+  listCertificates,
+  importCertificate,
+  deleteCertificate
 }
 
 export default vpnAPI
