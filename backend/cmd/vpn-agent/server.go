@@ -1,9 +1,27 @@
 package main
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
+
+// apiResponse is the standard JSON response envelope.
+type apiResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
+}
+
+// createTunnelRequest is the JSON body for POST /api/tunnels.
+type createTunnelRequest struct {
+	Name       string `json:"name"`
+	ConfigName string `json:"config_name"`
+	Region     string `json:"region"`
+	SocksPort  int    `json:"socks_port"`
+	ProxyID    int    `json:"proxy_id"`
+}
 
 // Server handles HTTP requests for the VPN Agent API.
-// This is a stub implementation; full routes will be added in a later task.
 type Server struct {
 	cfg           *AgentConfig
 	store         *ConfigStore
@@ -21,12 +39,50 @@ func NewServer(cfg *AgentConfig, store *ConfigStore, tm *TunnelManager, hc *Heal
 	}
 }
 
-// Router returns the HTTP handler with all routes registered. Stub.
+// Router returns the HTTP handler with all routes registered.
 func (s *Server) Router() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
-	})
+
+	// Health
+	mux.HandleFunc("GET /api/health", s.handleHealth)
+
+	// Tunnels
+	mux.HandleFunc("GET /api/tunnels", s.handleListTunnels)
+	mux.HandleFunc("POST /api/tunnels", s.handleCreateTunnel)
+	mux.HandleFunc("DELETE /api/tunnels/{name}", s.handleRemoveTunnel)
+	mux.HandleFunc("POST /api/tunnels/{name}/start", s.handleStartTunnel)
+	mux.HandleFunc("POST /api/tunnels/{name}/stop", s.handleStopTunnel)
+	mux.HandleFunc("POST /api/tunnels/{name}/restart", s.handleRestartTunnel)
+	mux.HandleFunc("GET /api/tunnels/{name}/status", s.handleTunnelStatus)
+
+	// Configs
+	mux.HandleFunc("POST /api/configs/upload", s.handleUploadConfigs)
+	mux.HandleFunc("GET /api/configs", s.handleListConfigs)
+	mux.HandleFunc("DELETE /api/configs/{name}", s.handleDeleteConfig)
+
+	// Ports
+	mux.HandleFunc("GET /api/ports/next", s.handleNextPort)
+
 	return mux
+}
+
+// writeJSON writes a success JSON response.
+func writeJSON(w http.ResponseWriter, httpCode int, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpCode)
+	json.NewEncoder(w).Encode(apiResponse{
+		Code:    0,
+		Message: "success",
+		Data:    data,
+	})
+}
+
+// writeError writes an error JSON response.
+func writeError(w http.ResponseWriter, httpCode int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpCode)
+	json.NewEncoder(w).Encode(apiResponse{
+		Code:    1,
+		Message: msg,
+	})
 }
