@@ -40,6 +40,7 @@ type HealthChecker struct {
 	scores     *StabilityScores
 	cooldowns  map[string]*cooldownEntry
 	cooldownMu sync.Mutex
+	checkCount int
 }
 
 // NewHealthChecker creates a new HealthChecker.
@@ -70,6 +71,10 @@ func (hc *HealthChecker) Start(ctx context.Context) {
 
 	for {
 		hc.checkAll()
+		hc.checkCount++
+		if hc.checkCount%120 == 0 { // every ~1 hour (120 * 30s)
+			hc.store.CheckAndMarkStale()
+		}
 		select {
 		case <-ticker.C:
 		case <-ctx.Done():
@@ -112,6 +117,8 @@ func (hc *HealthChecker) checkTunnel(t *TunnelInfo) {
 		// Detect exit IP in background (non-blocking)
 		go hc.detectExitIP(t.Name, t.SocksPort)
 		hc.scores.RecordSuccess(t.ConfigName)
+		// Record success in config store for staleness tracking
+		go hc.store.RecordSuccess(t.ConfigName)
 	} else {
 		rt.Failures++
 		if rt.Failures >= unhealthyThreshold {

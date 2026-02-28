@@ -221,7 +221,34 @@ func (s *ConfigStore) RecordSuccess(name string) {
 	}
 }
 
-const configsMetaFile = "configs_meta.json"
+const (
+	configsMetaFile = "configs_meta.json"
+	staleThreshold  = 7 * 24 * time.Hour // 7 days
+)
+
+// CheckAndMarkStale marks configs as stale if they haven't succeeded recently.
+func (s *ConfigStore) CheckAndMarkStale() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	meta := s.loadMeta()
+	changed := false
+	for name, m := range meta.Configs {
+		wasStale := m.Stale
+		if m.LastSuccessAt == nil {
+			// Never succeeded — stale if uploaded > 7 days ago
+			m.Stale = time.Since(m.UploadedAt) > staleThreshold
+		} else {
+			m.Stale = time.Since(*m.LastSuccessAt) > staleThreshold
+		}
+		if m.Stale != wasStale {
+			changed = true
+		}
+		meta.Configs[name] = m
+	}
+	if changed {
+		s.saveMeta(meta)
+	}
+}
 
 // loadMeta loads metadata from configs_meta.json. Caller must hold at least RLock.
 func (s *ConfigStore) loadMeta() *ConfigStoreMeta {
