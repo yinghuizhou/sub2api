@@ -20,7 +20,7 @@ type AgentConfig struct {
 
 func loadConfig() *AgentConfig {
 	return &AgentConfig{
-		ListenAddr:    envOrDefault("VPN_AGENT_LISTEN", "127.0.0.1"),
+		ListenAddr:    envOrDefault("VPN_AGENT_LISTEN", "0.0.0.0"),
 		Port:          envIntOrDefault("VPN_AGENT_PORT", 9090),
 		OvpnConfigDir: envOrDefault("OVPN_CONFIG_DIR", "/etc/vpn-agent/configs"),
 		StateDir:      envOrDefault("STATE_DIR", "/etc/vpn-agent"),
