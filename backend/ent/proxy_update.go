@@ -449,6 +449,73 @@ func (_u *ProxyUpdate) AddPriority(v int) *ProxyUpdate {
 	return _u
 }
 
+// SetConfigVersion sets the "config_version" field.
+func (_u *ProxyUpdate) SetConfigVersion(v int) *ProxyUpdate {
+	_u.mutation.ResetConfigVersion()
+	_u.mutation.SetConfigVersion(v)
+	return _u
+}
+
+// SetNillableConfigVersion sets the "config_version" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableConfigVersion(v *int) *ProxyUpdate {
+	if v != nil {
+		_u.SetConfigVersion(*v)
+	}
+	return _u
+}
+
+// AddConfigVersion adds value to the "config_version" field.
+func (_u *ProxyUpdate) AddConfigVersion(v int) *ProxyUpdate {
+	_u.mutation.AddConfigVersion(v)
+	return _u
+}
+
+// ClearConfigVersion clears the value of the "config_version" field.
+func (_u *ProxyUpdate) ClearConfigVersion() *ProxyUpdate {
+	_u.mutation.ClearConfigVersion()
+	return _u
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (_u *ProxyUpdate) SetLastConnectedAt(v time.Time) *ProxyUpdate {
+	_u.mutation.SetLastConnectedAt(v)
+	return _u
+}
+
+// SetNillableLastConnectedAt sets the "last_connected_at" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableLastConnectedAt(v *time.Time) *ProxyUpdate {
+	if v != nil {
+		_u.SetLastConnectedAt(*v)
+	}
+	return _u
+}
+
+// ClearLastConnectedAt clears the value of the "last_connected_at" field.
+func (_u *ProxyUpdate) ClearLastConnectedAt() *ProxyUpdate {
+	_u.mutation.ClearLastConnectedAt()
+	return _u
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (_u *ProxyUpdate) SetConfigStale(v bool) *ProxyUpdate {
+	_u.mutation.SetConfigStale(v)
+	return _u
+}
+
+// SetNillableConfigStale sets the "config_stale" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableConfigStale(v *bool) *ProxyUpdate {
+	if v != nil {
+		_u.SetConfigStale(*v)
+	}
+	return _u
+}
+
+// ClearConfigStale clears the value of the "config_stale" field.
+func (_u *ProxyUpdate) ClearConfigStale() *ProxyUpdate {
+	_u.mutation.ClearConfigStale()
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *ProxyUpdate) AddAccountIDs(ids ...int64) *ProxyUpdate {
 	_u.mutation.AddAccountIDs(ids...)
@@ -738,6 +805,27 @@ func (_u *ProxyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedPriority(); ok {
 		_spec.AddField(proxy.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ConfigVersion(); ok {
+		_spec.SetField(proxy.FieldConfigVersion, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedConfigVersion(); ok {
+		_spec.AddField(proxy.FieldConfigVersion, field.TypeInt, value)
+	}
+	if _u.mutation.ConfigVersionCleared() {
+		_spec.ClearField(proxy.FieldConfigVersion, field.TypeInt)
+	}
+	if value, ok := _u.mutation.LastConnectedAt(); ok {
+		_spec.SetField(proxy.FieldLastConnectedAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastConnectedAtCleared() {
+		_spec.ClearField(proxy.FieldLastConnectedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ConfigStale(); ok {
+		_spec.SetField(proxy.FieldConfigStale, field.TypeBool, value)
+	}
+	if _u.mutation.ConfigStaleCleared() {
+		_spec.ClearField(proxy.FieldConfigStale, field.TypeBool)
 	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1224,6 +1312,73 @@ func (_u *ProxyUpdateOne) AddPriority(v int) *ProxyUpdateOne {
 	return _u
 }
 
+// SetConfigVersion sets the "config_version" field.
+func (_u *ProxyUpdateOne) SetConfigVersion(v int) *ProxyUpdateOne {
+	_u.mutation.ResetConfigVersion()
+	_u.mutation.SetConfigVersion(v)
+	return _u
+}
+
+// SetNillableConfigVersion sets the "config_version" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableConfigVersion(v *int) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetConfigVersion(*v)
+	}
+	return _u
+}
+
+// AddConfigVersion adds value to the "config_version" field.
+func (_u *ProxyUpdateOne) AddConfigVersion(v int) *ProxyUpdateOne {
+	_u.mutation.AddConfigVersion(v)
+	return _u
+}
+
+// ClearConfigVersion clears the value of the "config_version" field.
+func (_u *ProxyUpdateOne) ClearConfigVersion() *ProxyUpdateOne {
+	_u.mutation.ClearConfigVersion()
+	return _u
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (_u *ProxyUpdateOne) SetLastConnectedAt(v time.Time) *ProxyUpdateOne {
+	_u.mutation.SetLastConnectedAt(v)
+	return _u
+}
+
+// SetNillableLastConnectedAt sets the "last_connected_at" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableLastConnectedAt(v *time.Time) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetLastConnectedAt(*v)
+	}
+	return _u
+}
+
+// ClearLastConnectedAt clears the value of the "last_connected_at" field.
+func (_u *ProxyUpdateOne) ClearLastConnectedAt() *ProxyUpdateOne {
+	_u.mutation.ClearLastConnectedAt()
+	return _u
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (_u *ProxyUpdateOne) SetConfigStale(v bool) *ProxyUpdateOne {
+	_u.mutation.SetConfigStale(v)
+	return _u
+}
+
+// SetNillableConfigStale sets the "config_stale" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableConfigStale(v *bool) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetConfigStale(*v)
+	}
+	return _u
+}
+
+// ClearConfigStale clears the value of the "config_stale" field.
+func (_u *ProxyUpdateOne) ClearConfigStale() *ProxyUpdateOne {
+	_u.mutation.ClearConfigStale()
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *ProxyUpdateOne) AddAccountIDs(ids ...int64) *ProxyUpdateOne {
 	_u.mutation.AddAccountIDs(ids...)
@@ -1543,6 +1698,27 @@ func (_u *ProxyUpdateOne) sqlSave(ctx context.Context) (_node *Proxy, err error)
 	}
 	if value, ok := _u.mutation.AddedPriority(); ok {
 		_spec.AddField(proxy.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ConfigVersion(); ok {
+		_spec.SetField(proxy.FieldConfigVersion, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedConfigVersion(); ok {
+		_spec.AddField(proxy.FieldConfigVersion, field.TypeInt, value)
+	}
+	if _u.mutation.ConfigVersionCleared() {
+		_spec.ClearField(proxy.FieldConfigVersion, field.TypeInt)
+	}
+	if value, ok := _u.mutation.LastConnectedAt(); ok {
+		_spec.SetField(proxy.FieldLastConnectedAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastConnectedAtCleared() {
+		_spec.ClearField(proxy.FieldLastConnectedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ConfigStale(); ok {
+		_spec.SetField(proxy.FieldConfigStale, field.TypeBool, value)
+	}
+	if _u.mutation.ConfigStaleCleared() {
+		_spec.ClearField(proxy.FieldConfigStale, field.TypeBool)
 	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{

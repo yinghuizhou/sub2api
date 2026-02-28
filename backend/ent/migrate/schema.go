@@ -635,6 +635,9 @@ var (
 		{Name: "health_check_failures", Type: field.TypeInt, Default: 0},
 		{Name: "proxy_type", Type: field.TypeString, Size: 20, Default: "static"},
 		{Name: "priority", Type: field.TypeInt, Default: 100},
+		{Name: "config_version", Type: field.TypeInt, Nullable: true, Default: 1},
+		{Name: "last_connected_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "config_stale", Type: field.TypeBool, Nullable: true, Default: false},
 	}
 	// ProxiesTable holds the schema information for the "proxies" table.
 	ProxiesTable = &schema.Table{
@@ -1298,6 +1301,54 @@ var (
 			},
 		},
 	}
+	// VpnAlertRulesColumns holds the columns for the "vpn_alert_rules" table.
+	VpnAlertRulesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "condition", Type: field.TypeString, Size: 50},
+		{Name: "threshold", Type: field.TypeInt},
+		{Name: "webhook_url", Type: field.TypeString, Default: ""},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+	}
+	// VpnAlertRulesTable holds the schema information for the "vpn_alert_rules" table.
+	VpnAlertRulesTable = &schema.Table{
+		Name:       "vpn_alert_rules",
+		Columns:    VpnAlertRulesColumns,
+		PrimaryKey: []*schema.Column{VpnAlertRulesColumns[0]},
+	}
+	// VpnEventsColumns holds the columns for the "vpn_events" table.
+	VpnEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "tunnel_name", Type: field.TypeString, Size: 100},
+		{Name: "event_type", Type: field.TypeString, Size: 50},
+		{Name: "details", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+	}
+	// VpnEventsTable holds the schema information for the "vpn_events" table.
+	VpnEventsTable = &schema.Table{
+		Name:       "vpn_events",
+		Columns:    VpnEventsColumns,
+		PrimaryKey: []*schema.Column{VpnEventsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "vpnevent_tunnel_name",
+				Unique:  false,
+				Columns: []*schema.Column{VpnEventsColumns[1]},
+			},
+			{
+				Name:    "vpnevent_event_type",
+				Unique:  false,
+				Columns: []*schema.Column{VpnEventsColumns[2]},
+			},
+			{
+				Name:    "vpnevent_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{VpnEventsColumns[4]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APIKeysTable,
@@ -1326,6 +1377,8 @@ var (
 		UserAttributeValuesTable,
 		UserSubscriptionsTable,
 		VendorsTable,
+		VpnAlertRulesTable,
+		VpnEventsTable,
 	}
 )
 
@@ -1431,5 +1484,11 @@ func init() {
 	}
 	VendorsTable.Annotation = &entsql.Annotation{
 		Table: "vendors",
+	}
+	VpnAlertRulesTable.Annotation = &entsql.Annotation{
+		Table: "vpn_alert_rules",
+	}
+	VpnEventsTable.Annotation = &entsql.Annotation{
+		Table: "vpn_events",
 	}
 }

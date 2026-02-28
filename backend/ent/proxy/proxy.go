@@ -63,6 +63,12 @@ const (
 	FieldProxyType = "proxy_type"
 	// FieldPriority holds the string denoting the priority field in the database.
 	FieldPriority = "priority"
+	// FieldConfigVersion holds the string denoting the config_version field in the database.
+	FieldConfigVersion = "config_version"
+	// FieldLastConnectedAt holds the string denoting the last_connected_at field in the database.
+	FieldLastConnectedAt = "last_connected_at"
+	// FieldConfigStale holds the string denoting the config_stale field in the database.
+	FieldConfigStale = "config_stale"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
 	// Table holds the table name of the proxy in the database.
@@ -103,6 +109,9 @@ var Columns = []string{
 	FieldHealthCheckFailures,
 	FieldProxyType,
 	FieldPriority,
+	FieldConfigVersion,
+	FieldLastConnectedAt,
+	FieldConfigStale,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -167,6 +176,10 @@ var (
 	ProxyTypeValidator func(string) error
 	// DefaultPriority holds the default value on creation for the "priority" field.
 	DefaultPriority int
+	// DefaultConfigVersion holds the default value on creation for the "config_version" field.
+	DefaultConfigVersion int
+	// DefaultConfigStale holds the default value on creation for the "config_stale" field.
+	DefaultConfigStale bool
 )
 
 // OrderOption defines the ordering options for the Proxy queries.
@@ -295,6 +308,21 @@ func ByProxyType(opts ...sql.OrderTermOption) OrderOption {
 // ByPriority orders the results by the priority field.
 func ByPriority(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPriority, opts...).ToFunc()
+}
+
+// ByConfigVersion orders the results by the config_version field.
+func ByConfigVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldConfigVersion, opts...).ToFunc()
+}
+
+// ByLastConnectedAt orders the results by the last_connected_at field.
+func ByLastConnectedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastConnectedAt, opts...).ToFunc()
+}
+
+// ByConfigStale orders the results by the config_stale field.
+func ByConfigStale(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldConfigStale, opts...).ToFunc()
 }
 
 // ByAccountsCount orders the results by accounts count.

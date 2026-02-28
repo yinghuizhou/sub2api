@@ -327,6 +327,48 @@ func (_c *ProxyCreate) SetNillablePriority(v *int) *ProxyCreate {
 	return _c
 }
 
+// SetConfigVersion sets the "config_version" field.
+func (_c *ProxyCreate) SetConfigVersion(v int) *ProxyCreate {
+	_c.mutation.SetConfigVersion(v)
+	return _c
+}
+
+// SetNillableConfigVersion sets the "config_version" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableConfigVersion(v *int) *ProxyCreate {
+	if v != nil {
+		_c.SetConfigVersion(*v)
+	}
+	return _c
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (_c *ProxyCreate) SetLastConnectedAt(v time.Time) *ProxyCreate {
+	_c.mutation.SetLastConnectedAt(v)
+	return _c
+}
+
+// SetNillableLastConnectedAt sets the "last_connected_at" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableLastConnectedAt(v *time.Time) *ProxyCreate {
+	if v != nil {
+		_c.SetLastConnectedAt(*v)
+	}
+	return _c
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (_c *ProxyCreate) SetConfigStale(v bool) *ProxyCreate {
+	_c.mutation.SetConfigStale(v)
+	return _c
+}
+
+// SetNillableConfigStale sets the "config_stale" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableConfigStale(v *bool) *ProxyCreate {
+	if v != nil {
+		_c.SetConfigStale(*v)
+	}
+	return _c
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_c *ProxyCreate) AddAccountIDs(ids ...int64) *ProxyCreate {
 	_c.mutation.AddAccountIDs(ids...)
@@ -412,6 +454,14 @@ func (_c *ProxyCreate) defaults() error {
 	if _, ok := _c.mutation.Priority(); !ok {
 		v := proxy.DefaultPriority
 		_c.mutation.SetPriority(v)
+	}
+	if _, ok := _c.mutation.ConfigVersion(); !ok {
+		v := proxy.DefaultConfigVersion
+		_c.mutation.SetConfigVersion(v)
+	}
+	if _, ok := _c.mutation.ConfigStale(); !ok {
+		v := proxy.DefaultConfigStale
+		_c.mutation.SetConfigStale(v)
 	}
 	return nil
 }
@@ -643,6 +693,18 @@ func (_c *ProxyCreate) createSpec() (*Proxy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Priority(); ok {
 		_spec.SetField(proxy.FieldPriority, field.TypeInt, value)
 		_node.Priority = value
+	}
+	if value, ok := _c.mutation.ConfigVersion(); ok {
+		_spec.SetField(proxy.FieldConfigVersion, field.TypeInt, value)
+		_node.ConfigVersion = value
+	}
+	if value, ok := _c.mutation.LastConnectedAt(); ok {
+		_spec.SetField(proxy.FieldLastConnectedAt, field.TypeTime, value)
+		_node.LastConnectedAt = &value
+	}
+	if value, ok := _c.mutation.ConfigStale(); ok {
+		_spec.SetField(proxy.FieldConfigStale, field.TypeBool, value)
+		_node.ConfigStale = value
 	}
 	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1087,6 +1149,66 @@ func (u *ProxyUpsert) UpdatePriority() *ProxyUpsert {
 // AddPriority adds v to the "priority" field.
 func (u *ProxyUpsert) AddPriority(v int) *ProxyUpsert {
 	u.Add(proxy.FieldPriority, v)
+	return u
+}
+
+// SetConfigVersion sets the "config_version" field.
+func (u *ProxyUpsert) SetConfigVersion(v int) *ProxyUpsert {
+	u.Set(proxy.FieldConfigVersion, v)
+	return u
+}
+
+// UpdateConfigVersion sets the "config_version" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateConfigVersion() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldConfigVersion)
+	return u
+}
+
+// AddConfigVersion adds v to the "config_version" field.
+func (u *ProxyUpsert) AddConfigVersion(v int) *ProxyUpsert {
+	u.Add(proxy.FieldConfigVersion, v)
+	return u
+}
+
+// ClearConfigVersion clears the value of the "config_version" field.
+func (u *ProxyUpsert) ClearConfigVersion() *ProxyUpsert {
+	u.SetNull(proxy.FieldConfigVersion)
+	return u
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (u *ProxyUpsert) SetLastConnectedAt(v time.Time) *ProxyUpsert {
+	u.Set(proxy.FieldLastConnectedAt, v)
+	return u
+}
+
+// UpdateLastConnectedAt sets the "last_connected_at" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateLastConnectedAt() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldLastConnectedAt)
+	return u
+}
+
+// ClearLastConnectedAt clears the value of the "last_connected_at" field.
+func (u *ProxyUpsert) ClearLastConnectedAt() *ProxyUpsert {
+	u.SetNull(proxy.FieldLastConnectedAt)
+	return u
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (u *ProxyUpsert) SetConfigStale(v bool) *ProxyUpsert {
+	u.Set(proxy.FieldConfigStale, v)
+	return u
+}
+
+// UpdateConfigStale sets the "config_stale" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateConfigStale() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldConfigStale)
+	return u
+}
+
+// ClearConfigStale clears the value of the "config_stale" field.
+func (u *ProxyUpsert) ClearConfigStale() *ProxyUpsert {
+	u.SetNull(proxy.FieldConfigStale)
 	return u
 }
 
@@ -1573,6 +1695,76 @@ func (u *ProxyUpsertOne) AddPriority(v int) *ProxyUpsertOne {
 func (u *ProxyUpsertOne) UpdatePriority() *ProxyUpsertOne {
 	return u.Update(func(s *ProxyUpsert) {
 		s.UpdatePriority()
+	})
+}
+
+// SetConfigVersion sets the "config_version" field.
+func (u *ProxyUpsertOne) SetConfigVersion(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetConfigVersion(v)
+	})
+}
+
+// AddConfigVersion adds v to the "config_version" field.
+func (u *ProxyUpsertOne) AddConfigVersion(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddConfigVersion(v)
+	})
+}
+
+// UpdateConfigVersion sets the "config_version" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateConfigVersion() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateConfigVersion()
+	})
+}
+
+// ClearConfigVersion clears the value of the "config_version" field.
+func (u *ProxyUpsertOne) ClearConfigVersion() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearConfigVersion()
+	})
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (u *ProxyUpsertOne) SetLastConnectedAt(v time.Time) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetLastConnectedAt(v)
+	})
+}
+
+// UpdateLastConnectedAt sets the "last_connected_at" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateLastConnectedAt() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateLastConnectedAt()
+	})
+}
+
+// ClearLastConnectedAt clears the value of the "last_connected_at" field.
+func (u *ProxyUpsertOne) ClearLastConnectedAt() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearLastConnectedAt()
+	})
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (u *ProxyUpsertOne) SetConfigStale(v bool) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetConfigStale(v)
+	})
+}
+
+// UpdateConfigStale sets the "config_stale" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateConfigStale() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateConfigStale()
+	})
+}
+
+// ClearConfigStale clears the value of the "config_stale" field.
+func (u *ProxyUpsertOne) ClearConfigStale() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearConfigStale()
 	})
 }
 
@@ -2225,6 +2417,76 @@ func (u *ProxyUpsertBulk) AddPriority(v int) *ProxyUpsertBulk {
 func (u *ProxyUpsertBulk) UpdatePriority() *ProxyUpsertBulk {
 	return u.Update(func(s *ProxyUpsert) {
 		s.UpdatePriority()
+	})
+}
+
+// SetConfigVersion sets the "config_version" field.
+func (u *ProxyUpsertBulk) SetConfigVersion(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetConfigVersion(v)
+	})
+}
+
+// AddConfigVersion adds v to the "config_version" field.
+func (u *ProxyUpsertBulk) AddConfigVersion(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddConfigVersion(v)
+	})
+}
+
+// UpdateConfigVersion sets the "config_version" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateConfigVersion() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateConfigVersion()
+	})
+}
+
+// ClearConfigVersion clears the value of the "config_version" field.
+func (u *ProxyUpsertBulk) ClearConfigVersion() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearConfigVersion()
+	})
+}
+
+// SetLastConnectedAt sets the "last_connected_at" field.
+func (u *ProxyUpsertBulk) SetLastConnectedAt(v time.Time) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetLastConnectedAt(v)
+	})
+}
+
+// UpdateLastConnectedAt sets the "last_connected_at" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateLastConnectedAt() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateLastConnectedAt()
+	})
+}
+
+// ClearLastConnectedAt clears the value of the "last_connected_at" field.
+func (u *ProxyUpsertBulk) ClearLastConnectedAt() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearLastConnectedAt()
+	})
+}
+
+// SetConfigStale sets the "config_stale" field.
+func (u *ProxyUpsertBulk) SetConfigStale(v bool) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetConfigStale(v)
+	})
+}
+
+// UpdateConfigStale sets the "config_stale" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateConfigStale() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateConfigStale()
+	})
+}
+
+// ClearConfigStale clears the value of the "config_stale" field.
+func (u *ProxyUpsertBulk) ClearConfigStale() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.ClearConfigStale()
 	})
 }
 

@@ -175,6 +175,21 @@ func Priority(v int) predicate.Proxy {
 	return predicate.Proxy(sql.FieldEQ(FieldPriority, v))
 }
 
+// ConfigVersion applies equality check predicate on the "config_version" field. It's identical to ConfigVersionEQ.
+func ConfigVersion(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldConfigVersion, v))
+}
+
+// LastConnectedAt applies equality check predicate on the "last_connected_at" field. It's identical to LastConnectedAtEQ.
+func LastConnectedAt(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldLastConnectedAt, v))
+}
+
+// ConfigStale applies equality check predicate on the "config_stale" field. It's identical to ConfigStaleEQ.
+func ConfigStale(v bool) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldConfigStale, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Proxy {
 	return predicate.Proxy(sql.FieldEQ(FieldCreatedAt, v))
@@ -1608,6 +1623,126 @@ func PriorityLT(v int) predicate.Proxy {
 // PriorityLTE applies the LTE predicate on the "priority" field.
 func PriorityLTE(v int) predicate.Proxy {
 	return predicate.Proxy(sql.FieldLTE(FieldPriority, v))
+}
+
+// ConfigVersionEQ applies the EQ predicate on the "config_version" field.
+func ConfigVersionEQ(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldConfigVersion, v))
+}
+
+// ConfigVersionNEQ applies the NEQ predicate on the "config_version" field.
+func ConfigVersionNEQ(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNEQ(FieldConfigVersion, v))
+}
+
+// ConfigVersionIn applies the In predicate on the "config_version" field.
+func ConfigVersionIn(vs ...int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldIn(FieldConfigVersion, vs...))
+}
+
+// ConfigVersionNotIn applies the NotIn predicate on the "config_version" field.
+func ConfigVersionNotIn(vs ...int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotIn(FieldConfigVersion, vs...))
+}
+
+// ConfigVersionGT applies the GT predicate on the "config_version" field.
+func ConfigVersionGT(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGT(FieldConfigVersion, v))
+}
+
+// ConfigVersionGTE applies the GTE predicate on the "config_version" field.
+func ConfigVersionGTE(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGTE(FieldConfigVersion, v))
+}
+
+// ConfigVersionLT applies the LT predicate on the "config_version" field.
+func ConfigVersionLT(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLT(FieldConfigVersion, v))
+}
+
+// ConfigVersionLTE applies the LTE predicate on the "config_version" field.
+func ConfigVersionLTE(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLTE(FieldConfigVersion, v))
+}
+
+// ConfigVersionIsNil applies the IsNil predicate on the "config_version" field.
+func ConfigVersionIsNil() predicate.Proxy {
+	return predicate.Proxy(sql.FieldIsNull(FieldConfigVersion))
+}
+
+// ConfigVersionNotNil applies the NotNil predicate on the "config_version" field.
+func ConfigVersionNotNil() predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotNull(FieldConfigVersion))
+}
+
+// LastConnectedAtEQ applies the EQ predicate on the "last_connected_at" field.
+func LastConnectedAtEQ(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldLastConnectedAt, v))
+}
+
+// LastConnectedAtNEQ applies the NEQ predicate on the "last_connected_at" field.
+func LastConnectedAtNEQ(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNEQ(FieldLastConnectedAt, v))
+}
+
+// LastConnectedAtIn applies the In predicate on the "last_connected_at" field.
+func LastConnectedAtIn(vs ...time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldIn(FieldLastConnectedAt, vs...))
+}
+
+// LastConnectedAtNotIn applies the NotIn predicate on the "last_connected_at" field.
+func LastConnectedAtNotIn(vs ...time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotIn(FieldLastConnectedAt, vs...))
+}
+
+// LastConnectedAtGT applies the GT predicate on the "last_connected_at" field.
+func LastConnectedAtGT(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGT(FieldLastConnectedAt, v))
+}
+
+// LastConnectedAtGTE applies the GTE predicate on the "last_connected_at" field.
+func LastConnectedAtGTE(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGTE(FieldLastConnectedAt, v))
+}
+
+// LastConnectedAtLT applies the LT predicate on the "last_connected_at" field.
+func LastConnectedAtLT(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLT(FieldLastConnectedAt, v))
+}
+
+// LastConnectedAtLTE applies the LTE predicate on the "last_connected_at" field.
+func LastConnectedAtLTE(v time.Time) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLTE(FieldLastConnectedAt, v))
+}
+
+// LastConnectedAtIsNil applies the IsNil predicate on the "last_connected_at" field.
+func LastConnectedAtIsNil() predicate.Proxy {
+	return predicate.Proxy(sql.FieldIsNull(FieldLastConnectedAt))
+}
+
+// LastConnectedAtNotNil applies the NotNil predicate on the "last_connected_at" field.
+func LastConnectedAtNotNil() predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotNull(FieldLastConnectedAt))
+}
+
+// ConfigStaleEQ applies the EQ predicate on the "config_stale" field.
+func ConfigStaleEQ(v bool) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldConfigStale, v))
+}
+
+// ConfigStaleNEQ applies the NEQ predicate on the "config_stale" field.
+func ConfigStaleNEQ(v bool) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNEQ(FieldConfigStale, v))
+}
+
+// ConfigStaleIsNil applies the IsNil predicate on the "config_stale" field.
+func ConfigStaleIsNil() predicate.Proxy {
+	return predicate.Proxy(sql.FieldIsNull(FieldConfigStale))
+}
+
+// ConfigStaleNotNil applies the NotNil predicate on the "config_stale" field.
+func ConfigStaleNotNil() predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotNull(FieldConfigStale))
 }
 
 // HasAccounts applies the HasEdge predicate on the "accounts" edge.

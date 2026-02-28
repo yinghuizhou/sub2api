@@ -321,6 +321,30 @@ func (f VendorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VendorMutation", m)
 }
 
+// The VpnAlertRuleFunc type is an adapter to allow the use of ordinary
+// function as VpnAlertRule mutator.
+type VpnAlertRuleFunc func(context.Context, *ent.VpnAlertRuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VpnAlertRuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.VpnAlertRuleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VpnAlertRuleMutation", m)
+}
+
+// The VpnEventFunc type is an adapter to allow the use of ordinary
+// function as VpnEvent mutator.
+type VpnEventFunc func(context.Context, *ent.VpnEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VpnEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.VpnEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VpnEventMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 
