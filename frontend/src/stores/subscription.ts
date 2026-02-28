@@ -7,6 +7,7 @@ import { accountsAPI } from '@/api/admin/accounts'
 interface CacheItem {
   data: SubscriptionStatus
   timestamp: number
+  lastAccess: number  // 最后访问时间
 }
 
 export const useSubscriptionStore = defineStore('subscription', () => {
@@ -39,6 +40,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     // 检查缓存
     const cached = statusCache.value.get(accountId)
     if (cached && !isCacheExpired(cached.timestamp)) {
+      // 更新最后访问时间
+      cached.lastAccess = Date.now()
       return cached.data
     }
 
@@ -69,18 +72,29 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       // 计算状态
       const status = calculateStatus(config, usage)
 
-      // LRU: 如果缓存已满，删除最旧的项
+      // LRU: 如果缓存已满，删除最久未访问的项
       if (statusCache.value.size >= MAX_CACHE_SIZE && !statusCache.value.has(accountId)) {
-        const oldestKey = statusCache.value.keys().next().value
+        let oldestKey: number | undefined
+        let oldestAccess = Infinity
+
+        for (const [key, item] of statusCache.value.entries()) {
+          if (item.lastAccess < oldestAccess) {
+            oldestAccess = item.lastAccess
+            oldestKey = key
+          }
+        }
+
         if (oldestKey !== undefined) {
           statusCache.value.delete(oldestKey)
         }
       }
 
       // 更新缓存
+      const now = Date.now()
       statusCache.value.set(accountId, {
         data: status,
-        timestamp: Date.now()
+        timestamp: now,
+        lastAccess: now  // 初始化最后访问时间
       })
 
       return status
