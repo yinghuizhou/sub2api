@@ -2162,7 +2162,7 @@ function openGroupDrawer(name: string) {
 
 async function loadGroupNames() {
   try {
-    groupNames.value = await adminAPI.proxies.getGroupNames()
+    groupNames.value = (await adminAPI.proxies.getGroupNames()) ?? []
   } catch {
     // ignore
   }
