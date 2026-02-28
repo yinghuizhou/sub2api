@@ -140,7 +140,7 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 	tm.mu.Unlock()
 
 	// Phase 2: Wait for state file WITHOUT holding lock.
-	localIP, err := waitForStateFile(name, 30*time.Second, vpnCmd)
+	localIP, err := waitForStateFile(name, 90*time.Second, vpnCmd)
 	if err != nil {
 		tm.mu.Lock()
 		delete(tm.tunnels, name)
