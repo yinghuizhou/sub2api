@@ -75,6 +75,28 @@ type ImportCertInput struct {
 	OvpnData string `json:"ovpn_data"`
 }
 
+// PushConfigItem represents a single config file to push to the Agent.
+type PushConfigItem struct {
+	Filename   string `json:"filename"`
+	Content    string `json:"content"`
+	Region     string `json:"region,omitempty"`
+	AutoDeploy bool   `json:"auto_deploy"`
+}
+
+// PushConfigsInput is the request body for pushing configs to the Agent.
+type PushConfigsInput struct {
+	Configs         []PushConfigItem `json:"configs"`
+	ReplaceExisting bool             `json:"replace_existing"`
+}
+
+// PushConfigsResult is the response from pushing configs.
+type PushConfigsResult struct {
+	Saved    []string `json:"saved"`
+	Skipped  []string `json:"skipped"`
+	Deployed []string `json:"deployed"`
+	Errors   []string `json:"errors"`
+}
+
 // agentAPIResponse is the envelope returned by the VPN Agent API.
 type agentAPIResponse struct {
 	Code    int             `json:"code"`
@@ -269,4 +291,13 @@ func (s *VpnAgentService) ImportCertificate(ctx context.Context, input ImportCer
 // DeleteCertificate deletes a certificate by ID.
 func (s *VpnAgentService) DeleteCertificate(ctx context.Context, id string) error {
 	return s.doDelete(ctx, "/api/certs/"+url.PathEscape(id))
+}
+
+// PushConfigs pushes config files to the Agent for saving and optional deployment.
+func (s *VpnAgentService) PushConfigs(ctx context.Context, input PushConfigsInput) (*PushConfigsResult, error) {
+	var result PushConfigsResult
+	if err := s.doPost(ctx, "/api/configs/push", input, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }

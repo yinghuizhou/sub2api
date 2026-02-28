@@ -305,6 +305,28 @@ func (h *VpnHandler) DeleteCertificate(c *gin.Context) {
 	response.Success(c, nil)
 }
 
+// PushConfigs pushes config files to the VPN Agent.
+func (h *VpnHandler) PushConfigs(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	var input service.PushConfigsInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	if len(input.Configs) == 0 {
+		response.BadRequest(c, "at least one config is required")
+		return
+	}
+	result, err := h.vpnAgentService.PushConfigs(c.Request.Context(), input)
+	if err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+	response.Success(c, result)
+}
+
 // SyncTunnelProxies reads tunnel data from the Agent and updates matching proxy records
 // so that each proxy's host:port matches its tunnel's actual SOCKS address.
 // POST /api/v1/admin/vpn/sync-proxies
