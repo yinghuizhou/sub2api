@@ -111,6 +111,8 @@ func (hc *HealthChecker) checkTunnel(t *TunnelInfo) {
 	rt.LastCheck = time.Now()
 	rt.LatencyMs = latency
 
+	previousHealth := rt.Health
+
 	if reachable {
 		rt.Failures = 0
 		rt.Health = "healthy"
@@ -130,9 +132,28 @@ func (hc *HealthChecker) checkTunnel(t *TunnelInfo) {
 		log.Printf("Health check failed for %q (failures: %d)", t.Name, rt.Failures)
 	}
 
+	currentHealth := rt.Health
+
 	// Copy state for callback
 	info := rt.TunnelInfo
 	hc.tunnelMgr.mu.Unlock()
+
+	// Emit events on health transitions
+	if previousHealth != currentHealth {
+		go hc.callback.ReportEvent(t.Name, "health_changed", map[string]interface{}{
+			"previous_health": previousHealth,
+			"current_health":  currentHealth,
+			"failures":        info.Failures,
+			"latency_ms":      info.LatencyMs,
+		})
+		// Emit "connected" event when tunnel recovers from unhealthy/degraded to healthy
+		if currentHealth == "healthy" && (previousHealth == "unhealthy" || previousHealth == "degraded") {
+			go hc.callback.ReportEvent(t.Name, "connected", map[string]interface{}{
+				"exit_ip":    info.ExitIP,
+				"latency_ms": info.LatencyMs,
+			})
+		}
+	}
 
 	// Save scores periodically
 	hc.scores.Save(hc.cfg.StateDir)

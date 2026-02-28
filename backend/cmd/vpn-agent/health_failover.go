@@ -47,6 +47,13 @@ func (hc *HealthChecker) handleUnhealthy(t *TunnelInfo) {
 	log.Printf("[failover] Tunnel %q unhealthy (%d failures), starting failover", t.Name, t.Failures)
 	originalConfig := t.ConfigName
 
+	// Emit failover start event
+	go hc.callback.ReportEvent(t.Name, "failover", map[string]interface{}{
+		"reason":      "unhealthy",
+		"failures":    t.Failures,
+		"config_name": t.ConfigName,
+	})
+
 	// Phase 1: Try restart up to maxReconnectAttempts times
 	for i := 0; i < maxReconnectAttempts; i++ {
 		log.Printf("[failover] %s: restart attempt %d/%d", t.Name, i+1, maxReconnectAttempts)
@@ -91,6 +98,11 @@ func (hc *HealthChecker) handleUnhealthy(t *TunnelInfo) {
 			log.Printf("[failover] %s: switched to %s successfully", t.Name, alt)
 			hc.updateTunnelAfterSwitch(t, alt)
 			hc.addCooldown(originalConfig)
+			go hc.callback.ReportEvent(t.Name, "config_switch", map[string]interface{}{
+				"from_config": originalConfig,
+				"to_config":   alt,
+				"phase":       "same_region",
+			})
 			return
 		}
 		hc.addCooldown(alt)
@@ -118,6 +130,11 @@ func (hc *HealthChecker) handleUnhealthy(t *TunnelInfo) {
 			log.Printf("[failover] %s: switched to %s successfully (cross-region)", t.Name, alt)
 			hc.updateTunnelAfterSwitch(t, alt)
 			hc.addCooldown(originalConfig)
+			go hc.callback.ReportEvent(t.Name, "config_switch", map[string]interface{}{
+				"from_config": originalConfig,
+				"to_config":   alt,
+				"phase":       "cross_region",
+			})
 			return
 		}
 		hc.addCooldown(alt)
@@ -126,6 +143,10 @@ func (hc *HealthChecker) handleUnhealthy(t *TunnelInfo) {
 
 	log.Printf("[failover] %s: all failover attempts exhausted", t.Name)
 	hc.addCooldown(originalConfig)
+	go hc.callback.ReportEvent(t.Name, "failover_exhausted", map[string]interface{}{
+		"config_name": originalConfig,
+		"tried":       tried,
+	})
 	hc.tunnelMgr.mu.Lock()
 	if rt, ok := hc.tunnelMgr.tunnels[t.Name]; ok {
 		rt.Health = "unhealthy"

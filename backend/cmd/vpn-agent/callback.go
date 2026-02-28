@@ -76,6 +76,46 @@ func (c *CallbackClient) UpdateProxyStatus(proxyID int, exitIP, vpnStatus, healt
 	return nil
 }
 
+// ReportEvent sends a VPN event to the Sub2API backend.
+// This is fire-and-forget — call it with `go` from health check code.
+func (c *CallbackClient) ReportEvent(tunnelName, eventType string, details map[string]interface{}) {
+	if c.baseURL == "" || c.apiKey == "" {
+		return
+	}
+
+	payload := map[string]interface{}{
+		"tunnel_name": tunnelName,
+		"event_type":  eventType,
+		"details":     details,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("[callback] failed to marshal event: %v", err)
+		return
+	}
+
+	url := c.baseURL + "/api/v1/admin/vpn/events/report"
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		log.Printf("[callback] failed to create event request: %v", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", c.apiKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		log.Printf("[callback] failed to send event: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		log.Printf("[callback] event report returned status %d", resp.StatusCode)
+	}
+}
+
 // ReportStatus sends tunnel status updates to Sub2API for all tunnels with a ProxyID.
 func (c *CallbackClient) ReportStatus(tunnels []TunnelInfo) error {
 	for _, t := range tunnels {
