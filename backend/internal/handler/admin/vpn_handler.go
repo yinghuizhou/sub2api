@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -14,12 +15,17 @@ import (
 // VpnHandler handles VPN management admin API endpoints.
 type VpnHandler struct {
 	vpnAgentService *service.VpnAgentService
+	vpnEventService *service.VpnEventService
 	adminService    service.AdminService
 }
 
 // NewVpnHandler creates a new VpnHandler.
-func NewVpnHandler(vpnAgentService *service.VpnAgentService, adminService service.AdminService) *VpnHandler {
-	return &VpnHandler{vpnAgentService: vpnAgentService, adminService: adminService}
+func NewVpnHandler(vpnAgentService *service.VpnAgentService, vpnEventService *service.VpnEventService, adminService service.AdminService) *VpnHandler {
+	return &VpnHandler{
+		vpnAgentService: vpnAgentService,
+		vpnEventService: vpnEventService,
+		adminService:    adminService,
+	}
 }
 
 func (h *VpnHandler) requireEnabled(c *gin.Context) bool {
@@ -381,4 +387,66 @@ func (h *VpnHandler) SyncTunnelProxies(c *gin.Context) {
 		"skipped": skipped,
 		"failed":  failed,
 	})
+}
+
+// ListEvents returns paginated VPN events with optional filters.
+// GET /vpn/events
+func (h *VpnHandler) ListEvents(c *gin.Context) {
+	page, pageSize := response.ParsePagination(c)
+
+	opts := service.ListEventsOpts{
+		TunnelName: c.Query("tunnel_name"),
+		EventType:  c.Query("event_type"),
+		Page:       page,
+		PageSize:   pageSize,
+	}
+
+	if sinceStr := c.Query("since"); sinceStr != "" {
+		t, err := time.Parse(time.RFC3339, sinceStr)
+		if err != nil {
+			response.BadRequest(c, "invalid 'since' format, expected RFC3339")
+			return
+		}
+		opts.Since = &t
+	}
+
+	items, total, err := h.vpnEventService.ListEvents(c.Request.Context(), opts)
+	if err != nil {
+		response.InternalError(c, "failed to list events: "+err.Error())
+		return
+	}
+
+	response.Paginated(c, items, int64(total), opts.Page, opts.PageSize)
+}
+
+// GetDashboard returns aggregated VPN status.
+// GET /vpn/dashboard
+func (h *VpnHandler) GetDashboard(c *gin.Context) {
+	data, err := h.vpnEventService.GetDashboard(c.Request.Context(), h.vpnAgentService)
+	if err != nil {
+		response.InternalError(c, "failed to get dashboard: "+err.Error())
+		return
+	}
+	response.Success(c, data)
+}
+
+// ReportEvent receives an event from the VPN Agent.
+// POST /vpn/events/report
+func (h *VpnHandler) ReportEvent(c *gin.Context) {
+	var req struct {
+		TunnelName string                 `json:"tunnel_name" binding:"required"`
+		EventType  string                 `json:"event_type" binding:"required"`
+		Details    map[string]interface{} `json:"details"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.vpnEventService.RecordEvent(c.Request.Context(), req.TunnelName, req.EventType, req.Details); err != nil {
+		response.InternalError(c, "failed to record event: "+err.Error())
+		return
+	}
+
+	response.Success(c, nil)
 }

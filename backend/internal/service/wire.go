@@ -383,4 +383,5 @@ var ProviderSet = wire.NewSet(
 	NewPaymentService,
 	NewReferralService,
 	NewVpnAgentService,
+	NewVpnEventService,
 )
