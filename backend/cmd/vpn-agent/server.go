@@ -61,6 +61,7 @@ func (s *Server) Router() http.Handler {
 
 	// Configs
 	mux.HandleFunc("POST /api/configs/upload", s.handleUploadConfigs)
+	mux.HandleFunc("POST /api/configs/push", s.handlePushConfigs)
 	mux.HandleFunc("GET /api/configs", s.handleListConfigs)
 	mux.HandleFunc("DELETE /api/configs/{name}", s.handleDeleteConfig)
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -246,4 +247,89 @@ func (s *Server) handleDeleteCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, nil)
+}
+
+// pushConfigRequest is the JSON body for POST /api/configs/push.
+type pushConfigRequest struct {
+	Configs         []pushConfigItem `json:"configs"`
+	ReplaceExisting bool             `json:"replace_existing"`
+}
+
+type pushConfigItem struct {
+	Filename   string `json:"filename"`
+	Content    string `json:"content"`     // base64 encoded
+	Region     string `json:"region"`      // optional
+	AutoDeploy bool   `json:"auto_deploy"`
+}
+
+type pushConfigResult struct {
+	Saved    []string `json:"saved"`
+	Skipped  []string `json:"skipped"`
+	Deployed []string `json:"deployed"`
+	Errors   []string `json:"errors"`
+}
+
+// handlePushConfigs accepts base64-encoded configs via JSON and optionally restarts tunnels.
+func (s *Server) handlePushConfigs(w http.ResponseWriter, r *http.Request) {
+	var req pushConfigRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+		return
+	}
+	if len(req.Configs) == 0 {
+		writeError(w, http.StatusBadRequest, "configs array is required and must not be empty")
+		return
+	}
+
+	result := pushConfigResult{
+		Saved:    []string{},
+		Skipped:  []string{},
+		Deployed: []string{},
+		Errors:   []string{},
+	}
+
+	for _, item := range req.Configs {
+		// Validate filename.
+		if !strings.HasSuffix(item.Filename, ".ovpn") {
+			result.Errors = append(result.Errors, item.Filename+": must end with .ovpn")
+			continue
+		}
+
+		// Base64 decode content.
+		decoded, err := base64.StdEncoding.DecodeString(item.Content)
+		if err != nil {
+			result.Errors = append(result.Errors, item.Filename+": base64 decode failed: "+err.Error())
+			continue
+		}
+
+		// Save with metadata tracking.
+		safeName := filepath.Base(item.Filename)
+		_, isNew, err := s.store.SaveWithMeta(safeName, decoded)
+		if err != nil {
+			result.Errors = append(result.Errors, safeName+": save failed: "+err.Error())
+			continue
+		}
+
+		if !isNew {
+			result.Skipped = append(result.Skipped, safeName)
+			continue
+		}
+
+		result.Saved = append(result.Saved, safeName)
+
+		// Auto-deploy: restart tunnels using this config.
+		if item.AutoDeploy {
+			for _, t := range s.tunnelMgr.List() {
+				if t.ConfigName == safeName {
+					if err := s.tunnelMgr.Restart(t.Name); err != nil {
+						result.Errors = append(result.Errors, t.Name+": restart failed: "+err.Error())
+					} else {
+						result.Deployed = append(result.Deployed, t.Name)
+					}
+				}
+			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, result)
 }
