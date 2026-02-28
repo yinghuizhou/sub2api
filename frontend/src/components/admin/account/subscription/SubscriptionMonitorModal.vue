@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { saveAs } from 'file-saver'
 import SubscriptionOverviewCards from './SubscriptionOverviewCards.vue'
 import SubscriptionUsageTrendChart from './SubscriptionUsageTrendChart.vue'
 import SubscriptionAccountComparison from './SubscriptionAccountComparison.vue'
@@ -46,7 +47,22 @@ const comparisonData = ref<Array<{
   limit: number
 }>>([])
 
-// 加载数据
+// 导出报表对话框
+const exportDialogVisible = ref(false)
+const exportStartDate = ref('')
+const exportEndDate = ref('')
+const exportFormat = ref<'csv' | 'excel'>('csv')
+const exporting = ref(false)
+
+// 初始化日期范围（默认最近 30 天）
+const initExportDates = () => {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 30)
+
+  exportEndDate.value = end.toISOString().split('T')[0]
+  exportStartDate.value = start.toISOString().split('T')[0]
+}
 const loadData = async () => {
   if (!props.visible || !props.accounts.length) return
 
@@ -151,7 +167,42 @@ const handleClose = () => {
 
 // 导出报表
 const handleExport = () => {
-  emit('export')
+  initExportDates()
+  exportDialogVisible.value = true
+}
+
+// 执行导出
+const executeExport = async () => {
+  if (!exportStartDate.value || !exportEndDate.value) {
+    alert('请选择日期范围')
+    return
+  }
+
+  // 验证日期范围
+  if (new Date(exportStartDate.value) > new Date(exportEndDate.value)) {
+    alert('开始日期不能晚于结束日期')
+    return
+  }
+
+  exporting.value = true
+  try {
+    const blob = await accountsAPI.exportUsageReport({
+      account_ids: props.accounts.map(a => a.id),
+      start_date: exportStartDate.value,
+      end_date: exportEndDate.value,
+      format: exportFormat.value
+    })
+
+    const filename = `subscription-usage-report-${exportStartDate.value}-to-${exportEndDate.value}.${exportFormat.value === 'csv' ? 'csv' : 'xlsx'}`
+    saveAs(blob, filename)
+
+    exportDialogVisible.value = false
+  } catch (error) {
+    console.error('Failed to export usage report:', error)
+    alert('导出失败，请重试')
+  } finally {
+    exporting.value = false
+  }
 }
 
 // 批量配置
@@ -249,6 +300,74 @@ const handleRefresh = () => {
             关闭
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出报表对话框 -->
+  <div
+    v-if="exportDialogVisible"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50"
+    @click.self="exportDialogVisible = false"
+  >
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">导出用量报表</h3>
+
+      <div class="space-y-4">
+        <!-- 开始日期 -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            开始日期
+          </label>
+          <input
+            v-model="exportStartDate"
+            type="date"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <!-- 结束日期 -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            结束日期
+          </label>
+          <input
+            v-model="exportEndDate"
+            type="date"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <!-- 格式选择 -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            导出格式
+          </label>
+          <select
+            v-model="exportFormat"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="csv">CSV</option>
+            <option value="excel">Excel</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 按钮 -->
+      <div class="flex items-center justify-end gap-3 mt-6">
+        <button
+          @click="exportDialogVisible = false"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          取消
+        </button>
+        <button
+          @click="executeExport"
+          :disabled="exporting"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ exporting ? '导出中...' : '导出' }}
+        </button>
       </div>
     </div>
   </div>
