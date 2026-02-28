@@ -122,6 +122,15 @@ func (Proxy) Fields() []ent.Field {
 		// health_check_failures: 连续健康检查失败次数（用于故障转移判断）
 		field.Int("health_check_failures").
 			Default(0),
+
+		// proxy_type: 代理类型 static / wireguard / astrill / other
+		field.String("proxy_type").
+			MaxLen(20).
+			Default("static"),
+
+		// priority: 选择优先级（数值越高越优先）
+		field.Int("priority").
+			Default(100),
 	}
 }
 
@@ -142,5 +151,7 @@ func (Proxy) Indexes() []ent.Index {
 		index.Fields("region"),
 		index.Fields("health_status"),
 		index.Fields("is_dedicated"),
+		index.Fields("proxy_type"),
+		index.Fields("priority"),
 	}
 }

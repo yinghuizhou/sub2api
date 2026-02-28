@@ -274,6 +274,8 @@ type CreateProxyInput struct {
 	OvpnUsername string
 	OvpnPassword string
 	IsDedicated  bool
+	ProxyType    string
+	Priority     int
 }
 
 type UpdateProxyInput struct {
@@ -290,6 +292,8 @@ type UpdateProxyInput struct {
 	OvpnUsername *string
 	OvpnPassword *string
 	IsDedicated  *bool
+	ProxyType    *string
+	Priority     *int
 }
 
 // ProxyGroupSummary contains summary info for a proxy group.
@@ -1655,6 +1659,10 @@ func (s *adminServiceImpl) GetProxiesByIDs(ctx context.Context, ids []int64) ([]
 }
 
 func (s *adminServiceImpl) CreateProxy(ctx context.Context, input *CreateProxyInput) (*Proxy, error) {
+	proxyType := input.ProxyType
+	if proxyType == "" {
+		proxyType = "static"
+	}
 	proxy := &Proxy{
 		Name:         input.Name,
 		Protocol:     input.Protocol,
@@ -1669,6 +1677,8 @@ func (s *adminServiceImpl) CreateProxy(ctx context.Context, input *CreateProxyIn
 		OvpnUsername: input.OvpnUsername,
 		OvpnPassword: input.OvpnPassword,
 		IsDedicated:  input.IsDedicated,
+		ProxyType:    proxyType,
+		Priority:     input.Priority,
 	}
 	if err := s.proxyRepo.Create(ctx, proxy); err != nil {
 		return nil, err
@@ -1722,6 +1732,12 @@ func (s *adminServiceImpl) UpdateProxy(ctx context.Context, id int64, input *Upd
 	}
 	if input.IsDedicated != nil {
 		proxy.IsDedicated = *input.IsDedicated
+	}
+	if input.ProxyType != nil {
+		proxy.ProxyType = *input.ProxyType
+	}
+	if input.Priority != nil {
+		proxy.Priority = *input.Priority
 	}
 
 	if err := s.proxyRepo.Update(ctx, proxy); err != nil {

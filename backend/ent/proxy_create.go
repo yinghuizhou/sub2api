@@ -299,6 +299,34 @@ func (_c *ProxyCreate) SetNillableHealthCheckFailures(v *int) *ProxyCreate {
 	return _c
 }
 
+// SetProxyType sets the "proxy_type" field.
+func (_c *ProxyCreate) SetProxyType(v string) *ProxyCreate {
+	_c.mutation.SetProxyType(v)
+	return _c
+}
+
+// SetNillableProxyType sets the "proxy_type" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillableProxyType(v *string) *ProxyCreate {
+	if v != nil {
+		_c.SetProxyType(*v)
+	}
+	return _c
+}
+
+// SetPriority sets the "priority" field.
+func (_c *ProxyCreate) SetPriority(v int) *ProxyCreate {
+	_c.mutation.SetPriority(v)
+	return _c
+}
+
+// SetNillablePriority sets the "priority" field if the given value is not nil.
+func (_c *ProxyCreate) SetNillablePriority(v *int) *ProxyCreate {
+	if v != nil {
+		_c.SetPriority(*v)
+	}
+	return _c
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_c *ProxyCreate) AddAccountIDs(ids ...int64) *ProxyCreate {
 	_c.mutation.AddAccountIDs(ids...)
@@ -376,6 +404,14 @@ func (_c *ProxyCreate) defaults() error {
 	if _, ok := _c.mutation.HealthCheckFailures(); !ok {
 		v := proxy.DefaultHealthCheckFailures
 		_c.mutation.SetHealthCheckFailures(v)
+	}
+	if _, ok := _c.mutation.ProxyType(); !ok {
+		v := proxy.DefaultProxyType
+		_c.mutation.SetProxyType(v)
+	}
+	if _, ok := _c.mutation.Priority(); !ok {
+		v := proxy.DefaultPriority
+		_c.mutation.SetPriority(v)
 	}
 	return nil
 }
@@ -473,6 +509,17 @@ func (_c *ProxyCreate) check() error {
 	}
 	if _, ok := _c.mutation.HealthCheckFailures(); !ok {
 		return &ValidationError{Name: "health_check_failures", err: errors.New(`ent: missing required field "Proxy.health_check_failures"`)}
+	}
+	if _, ok := _c.mutation.ProxyType(); !ok {
+		return &ValidationError{Name: "proxy_type", err: errors.New(`ent: missing required field "Proxy.proxy_type"`)}
+	}
+	if v, ok := _c.mutation.ProxyType(); ok {
+		if err := proxy.ProxyTypeValidator(v); err != nil {
+			return &ValidationError{Name: "proxy_type", err: fmt.Errorf(`ent: validator failed for field "Proxy.proxy_type": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Priority(); !ok {
+		return &ValidationError{Name: "priority", err: errors.New(`ent: missing required field "Proxy.priority"`)}
 	}
 	return nil
 }
@@ -588,6 +635,14 @@ func (_c *ProxyCreate) createSpec() (*Proxy, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.HealthCheckFailures(); ok {
 		_spec.SetField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
 		_node.HealthCheckFailures = value
+	}
+	if value, ok := _c.mutation.ProxyType(); ok {
+		_spec.SetField(proxy.FieldProxyType, field.TypeString, value)
+		_node.ProxyType = value
+	}
+	if value, ok := _c.mutation.Priority(); ok {
+		_spec.SetField(proxy.FieldPriority, field.TypeInt, value)
+		_node.Priority = value
 	}
 	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1002,6 +1057,36 @@ func (u *ProxyUpsert) UpdateHealthCheckFailures() *ProxyUpsert {
 // AddHealthCheckFailures adds v to the "health_check_failures" field.
 func (u *ProxyUpsert) AddHealthCheckFailures(v int) *ProxyUpsert {
 	u.Add(proxy.FieldHealthCheckFailures, v)
+	return u
+}
+
+// SetProxyType sets the "proxy_type" field.
+func (u *ProxyUpsert) SetProxyType(v string) *ProxyUpsert {
+	u.Set(proxy.FieldProxyType, v)
+	return u
+}
+
+// UpdateProxyType sets the "proxy_type" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdateProxyType() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldProxyType)
+	return u
+}
+
+// SetPriority sets the "priority" field.
+func (u *ProxyUpsert) SetPriority(v int) *ProxyUpsert {
+	u.Set(proxy.FieldPriority, v)
+	return u
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *ProxyUpsert) UpdatePriority() *ProxyUpsert {
+	u.SetExcluded(proxy.FieldPriority)
+	return u
+}
+
+// AddPriority adds v to the "priority" field.
+func (u *ProxyUpsert) AddPriority(v int) *ProxyUpsert {
+	u.Add(proxy.FieldPriority, v)
 	return u
 }
 
@@ -1453,6 +1538,41 @@ func (u *ProxyUpsertOne) AddHealthCheckFailures(v int) *ProxyUpsertOne {
 func (u *ProxyUpsertOne) UpdateHealthCheckFailures() *ProxyUpsertOne {
 	return u.Update(func(s *ProxyUpsert) {
 		s.UpdateHealthCheckFailures()
+	})
+}
+
+// SetProxyType sets the "proxy_type" field.
+func (u *ProxyUpsertOne) SetProxyType(v string) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetProxyType(v)
+	})
+}
+
+// UpdateProxyType sets the "proxy_type" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdateProxyType() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateProxyType()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *ProxyUpsertOne) SetPriority(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// AddPriority adds v to the "priority" field.
+func (u *ProxyUpsertOne) AddPriority(v int) *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *ProxyUpsertOne) UpdatePriority() *ProxyUpsertOne {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdatePriority()
 	})
 }
 
@@ -2070,6 +2190,41 @@ func (u *ProxyUpsertBulk) AddHealthCheckFailures(v int) *ProxyUpsertBulk {
 func (u *ProxyUpsertBulk) UpdateHealthCheckFailures() *ProxyUpsertBulk {
 	return u.Update(func(s *ProxyUpsert) {
 		s.UpdateHealthCheckFailures()
+	})
+}
+
+// SetProxyType sets the "proxy_type" field.
+func (u *ProxyUpsertBulk) SetProxyType(v string) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetProxyType(v)
+	})
+}
+
+// UpdateProxyType sets the "proxy_type" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdateProxyType() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdateProxyType()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *ProxyUpsertBulk) SetPriority(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// AddPriority adds v to the "priority" field.
+func (u *ProxyUpsertBulk) AddPriority(v int) *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.AddPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *ProxyUpsertBulk) UpdatePriority() *ProxyUpsertBulk {
+	return u.Update(func(s *ProxyUpsert) {
+		s.UpdatePriority()
 	})
 }
 

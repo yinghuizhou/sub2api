@@ -40,7 +40,9 @@ func (r *proxyRepository) Create(ctx context.Context, proxyIn *service.Proxy) er
 		SetPort(proxyIn.Port).
 		SetStatus(proxyIn.Status).
 		SetIsDedicated(proxyIn.IsDedicated).
-		SetHealthCheckFailures(proxyIn.HealthCheckFailures)
+		SetHealthCheckFailures(proxyIn.HealthCheckFailures).
+		SetProxyType(proxyIn.ProxyType).
+		SetPriority(proxyIn.Priority)
 	if proxyIn.Username != "" {
 		builder.SetUsername(proxyIn.Username)
 	}
@@ -123,7 +125,9 @@ func (r *proxyRepository) Update(ctx context.Context, proxyIn *service.Proxy) er
 		SetPort(proxyIn.Port).
 		SetStatus(proxyIn.Status).
 		SetIsDedicated(proxyIn.IsDedicated).
-		SetHealthCheckFailures(proxyIn.HealthCheckFailures)
+		SetHealthCheckFailures(proxyIn.HealthCheckFailures).
+		SetProxyType(proxyIn.ProxyType).
+		SetPriority(proxyIn.Priority)
 	if proxyIn.Username != "" {
 		builder.SetUsername(proxyIn.Username)
 	} else {
@@ -559,6 +563,8 @@ func proxyEntityToService(m *dbent.Proxy) *service.Proxy {
 	if m.LastHealthAt != nil {
 		out.LastHealthAt = m.LastHealthAt
 	}
+	out.ProxyType = m.ProxyType
+	out.Priority = m.Priority
 	return out
 }
 

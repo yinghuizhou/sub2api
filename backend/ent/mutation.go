@@ -14573,6 +14573,9 @@ type ProxyMutation struct {
 	last_health_at           *time.Time
 	health_check_failures    *int
 	addhealth_check_failures *int
+	proxy_type               *string
+	priority                 *int
+	addpriority              *int
 	clearedFields            map[string]struct{}
 	accounts                 map[int64]struct{}
 	removedaccounts          map[int64]struct{}
@@ -15702,6 +15705,98 @@ func (m *ProxyMutation) ResetHealthCheckFailures() {
 	m.addhealth_check_failures = nil
 }
 
+// SetProxyType sets the "proxy_type" field.
+func (m *ProxyMutation) SetProxyType(s string) {
+	m.proxy_type = &s
+}
+
+// ProxyType returns the value of the "proxy_type" field in the mutation.
+func (m *ProxyMutation) ProxyType() (r string, exists bool) {
+	v := m.proxy_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProxyType returns the old "proxy_type" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldProxyType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProxyType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProxyType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProxyType: %w", err)
+	}
+	return oldValue.ProxyType, nil
+}
+
+// ResetProxyType resets all changes to the "proxy_type" field.
+func (m *ProxyMutation) ResetProxyType() {
+	m.proxy_type = nil
+}
+
+// SetPriority sets the "priority" field.
+func (m *ProxyMutation) SetPriority(i int) {
+	m.priority = &i
+	m.addpriority = nil
+}
+
+// Priority returns the value of the "priority" field in the mutation.
+func (m *ProxyMutation) Priority() (r int, exists bool) {
+	v := m.priority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPriority returns the old "priority" field's value of the Proxy entity.
+// If the Proxy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProxyMutation) OldPriority(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPriority is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPriority requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPriority: %w", err)
+	}
+	return oldValue.Priority, nil
+}
+
+// AddPriority adds i to the "priority" field.
+func (m *ProxyMutation) AddPriority(i int) {
+	if m.addpriority != nil {
+		*m.addpriority += i
+	} else {
+		m.addpriority = &i
+	}
+}
+
+// AddedPriority returns the value that was added to the "priority" field in this mutation.
+func (m *ProxyMutation) AddedPriority() (r int, exists bool) {
+	v := m.addpriority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPriority resets all changes to the "priority" field.
+func (m *ProxyMutation) ResetPriority() {
+	m.priority = nil
+	m.addpriority = nil
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by ids.
 func (m *ProxyMutation) AddAccountIDs(ids ...int64) {
 	if m.accounts == nil {
@@ -15790,7 +15885,7 @@ func (m *ProxyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProxyMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 24)
 	if m.created_at != nil {
 		fields = append(fields, proxy.FieldCreatedAt)
 	}
@@ -15857,6 +15952,12 @@ func (m *ProxyMutation) Fields() []string {
 	if m.health_check_failures != nil {
 		fields = append(fields, proxy.FieldHealthCheckFailures)
 	}
+	if m.proxy_type != nil {
+		fields = append(fields, proxy.FieldProxyType)
+	}
+	if m.priority != nil {
+		fields = append(fields, proxy.FieldPriority)
+	}
 	return fields
 }
 
@@ -15909,6 +16010,10 @@ func (m *ProxyMutation) Field(name string) (ent.Value, bool) {
 		return m.LastHealthAt()
 	case proxy.FieldHealthCheckFailures:
 		return m.HealthCheckFailures()
+	case proxy.FieldProxyType:
+		return m.ProxyType()
+	case proxy.FieldPriority:
+		return m.Priority()
 	}
 	return nil, false
 }
@@ -15962,6 +16067,10 @@ func (m *ProxyMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLastHealthAt(ctx)
 	case proxy.FieldHealthCheckFailures:
 		return m.OldHealthCheckFailures(ctx)
+	case proxy.FieldProxyType:
+		return m.OldProxyType(ctx)
+	case proxy.FieldPriority:
+		return m.OldPriority(ctx)
 	}
 	return nil, fmt.Errorf("unknown Proxy field %s", name)
 }
@@ -16125,6 +16234,20 @@ func (m *ProxyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetHealthCheckFailures(v)
 		return nil
+	case proxy.FieldProxyType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProxyType(v)
+		return nil
+	case proxy.FieldPriority:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPriority(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Proxy field %s", name)
 }
@@ -16142,6 +16265,9 @@ func (m *ProxyMutation) AddedFields() []string {
 	if m.addhealth_check_failures != nil {
 		fields = append(fields, proxy.FieldHealthCheckFailures)
 	}
+	if m.addpriority != nil {
+		fields = append(fields, proxy.FieldPriority)
+	}
 	return fields
 }
 
@@ -16156,6 +16282,8 @@ func (m *ProxyMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedLatencyMs()
 	case proxy.FieldHealthCheckFailures:
 		return m.AddedHealthCheckFailures()
+	case proxy.FieldPriority:
+		return m.AddedPriority()
 	}
 	return nil, false
 }
@@ -16185,6 +16313,13 @@ func (m *ProxyMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddHealthCheckFailures(v)
+		return nil
+	case proxy.FieldPriority:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPriority(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy numeric field %s", name)
@@ -16359,6 +16494,12 @@ func (m *ProxyMutation) ResetField(name string) error {
 		return nil
 	case proxy.FieldHealthCheckFailures:
 		m.ResetHealthCheckFailures()
+		return nil
+	case proxy.FieldProxyType:
+		m.ResetProxyType()
+		return nil
+	case proxy.FieldPriority:
+		m.ResetPriority()
 		return nil
 	}
 	return fmt.Errorf("unknown Proxy field %s", name)

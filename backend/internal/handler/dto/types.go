@@ -192,6 +192,8 @@ type Proxy struct {
 	Username  string    `json:"username"`
 	Password  string    `json:"-"`
 	Status    string    `json:"status"`
+	ProxyType string    `json:"proxy_type"`
+	Priority  int       `json:"priority"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -414,6 +414,41 @@ func (_u *ProxyUpdate) AddHealthCheckFailures(v int) *ProxyUpdate {
 	return _u
 }
 
+// SetProxyType sets the "proxy_type" field.
+func (_u *ProxyUpdate) SetProxyType(v string) *ProxyUpdate {
+	_u.mutation.SetProxyType(v)
+	return _u
+}
+
+// SetNillableProxyType sets the "proxy_type" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillableProxyType(v *string) *ProxyUpdate {
+	if v != nil {
+		_u.SetProxyType(*v)
+	}
+	return _u
+}
+
+// SetPriority sets the "priority" field.
+func (_u *ProxyUpdate) SetPriority(v int) *ProxyUpdate {
+	_u.mutation.ResetPriority()
+	_u.mutation.SetPriority(v)
+	return _u
+}
+
+// SetNillablePriority sets the "priority" field if the given value is not nil.
+func (_u *ProxyUpdate) SetNillablePriority(v *int) *ProxyUpdate {
+	if v != nil {
+		_u.SetPriority(*v)
+	}
+	return _u
+}
+
+// AddPriority adds value to the "priority" field.
+func (_u *ProxyUpdate) AddPriority(v int) *ProxyUpdate {
+	_u.mutation.AddPriority(v)
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *ProxyUpdate) AddAccountIDs(ids ...int64) *ProxyUpdate {
 	_u.mutation.AddAccountIDs(ids...)
@@ -564,6 +599,11 @@ func (_u *ProxyUpdate) check() error {
 			return &ValidationError{Name: "health_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.health_status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ProxyType(); ok {
+		if err := proxy.ProxyTypeValidator(v); err != nil {
+			return &ValidationError{Name: "proxy_type", err: fmt.Errorf(`ent: validator failed for field "Proxy.proxy_type": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -689,6 +729,15 @@ func (_u *ProxyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedHealthCheckFailures(); ok {
 		_spec.AddField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ProxyType(); ok {
+		_spec.SetField(proxy.FieldProxyType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Priority(); ok {
+		_spec.SetField(proxy.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPriority(); ok {
+		_spec.AddField(proxy.FieldPriority, field.TypeInt, value)
 	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1140,6 +1189,41 @@ func (_u *ProxyUpdateOne) AddHealthCheckFailures(v int) *ProxyUpdateOne {
 	return _u
 }
 
+// SetProxyType sets the "proxy_type" field.
+func (_u *ProxyUpdateOne) SetProxyType(v string) *ProxyUpdateOne {
+	_u.mutation.SetProxyType(v)
+	return _u
+}
+
+// SetNillableProxyType sets the "proxy_type" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillableProxyType(v *string) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetProxyType(*v)
+	}
+	return _u
+}
+
+// SetPriority sets the "priority" field.
+func (_u *ProxyUpdateOne) SetPriority(v int) *ProxyUpdateOne {
+	_u.mutation.ResetPriority()
+	_u.mutation.SetPriority(v)
+	return _u
+}
+
+// SetNillablePriority sets the "priority" field if the given value is not nil.
+func (_u *ProxyUpdateOne) SetNillablePriority(v *int) *ProxyUpdateOne {
+	if v != nil {
+		_u.SetPriority(*v)
+	}
+	return _u
+}
+
+// AddPriority adds value to the "priority" field.
+func (_u *ProxyUpdateOne) AddPriority(v int) *ProxyUpdateOne {
+	_u.mutation.AddPriority(v)
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *ProxyUpdateOne) AddAccountIDs(ids ...int64) *ProxyUpdateOne {
 	_u.mutation.AddAccountIDs(ids...)
@@ -1303,6 +1387,11 @@ func (_u *ProxyUpdateOne) check() error {
 			return &ValidationError{Name: "health_status", err: fmt.Errorf(`ent: validator failed for field "Proxy.health_status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ProxyType(); ok {
+		if err := proxy.ProxyTypeValidator(v); err != nil {
+			return &ValidationError{Name: "proxy_type", err: fmt.Errorf(`ent: validator failed for field "Proxy.proxy_type": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -1445,6 +1534,15 @@ func (_u *ProxyUpdateOne) sqlSave(ctx context.Context) (_node *Proxy, err error)
 	}
 	if value, ok := _u.mutation.AddedHealthCheckFailures(); ok {
 		_spec.AddField(proxy.FieldHealthCheckFailures, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ProxyType(); ok {
+		_spec.SetField(proxy.FieldProxyType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Priority(); ok {
+		_spec.SetField(proxy.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPriority(); ok {
+		_spec.AddField(proxy.FieldPriority, field.TypeInt, value)
 	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -62,6 +62,8 @@ type CreateProxyRequest struct {
 	OvpnUsername string `json:"ovpn_username"`
 	OvpnPassword string `json:"ovpn_password"`
 	IsDedicated  bool   `json:"is_dedicated"`
+	ProxyType    string `json:"proxy_type"`
+	Priority     int    `json:"priority"`
 }
 
 // UpdateProxyRequest 更新代理请求
@@ -79,6 +81,8 @@ type UpdateProxyRequest struct {
 	OvpnUsername *string `json:"ovpn_username"`
 	OvpnPassword *string `json:"ovpn_password"`
 	IsDedicated  *bool   `json:"is_dedicated"`
+	ProxyType    *string `json:"proxy_type"`
+	Priority     *int    `json:"priority"`
 }
 
 // ProxyService 代理管理服务
@@ -95,6 +99,10 @@ func NewProxyService(proxyRepo ProxyRepository) *ProxyService {
 
 // Create 创建代理
 func (s *ProxyService) Create(ctx context.Context, req CreateProxyRequest) (*Proxy, error) {
+	proxyType := req.ProxyType
+	if proxyType == "" {
+		proxyType = "static"
+	}
 	proxy := &Proxy{
 		Name:         req.Name,
 		Protocol:     req.Protocol,
@@ -109,6 +117,8 @@ func (s *ProxyService) Create(ctx context.Context, req CreateProxyRequest) (*Pro
 		OvpnUsername: req.OvpnUsername,
 		OvpnPassword: req.OvpnPassword,
 		IsDedicated:  req.IsDedicated,
+		ProxyType:    proxyType,
+		Priority:     req.Priority,
 	}
 
 	if err := s.proxyRepo.Create(ctx, proxy); err != nil {
@@ -190,6 +200,12 @@ func (s *ProxyService) Update(ctx context.Context, id int64, req UpdateProxyRequ
 	}
 	if req.IsDedicated != nil {
 		proxy.IsDedicated = *req.IsDedicated
+	}
+	if req.ProxyType != nil {
+		proxy.ProxyType = *req.ProxyType
+	}
+	if req.Priority != nil {
+		proxy.Priority = *req.Priority
 	}
 
 	if err := s.proxyRepo.Update(ctx, proxy); err != nil {

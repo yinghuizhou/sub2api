@@ -59,6 +59,10 @@ const (
 	FieldLastHealthAt = "last_health_at"
 	// FieldHealthCheckFailures holds the string denoting the health_check_failures field in the database.
 	FieldHealthCheckFailures = "health_check_failures"
+	// FieldProxyType holds the string denoting the proxy_type field in the database.
+	FieldProxyType = "proxy_type"
+	// FieldPriority holds the string denoting the priority field in the database.
+	FieldPriority = "priority"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
 	// Table holds the table name of the proxy in the database.
@@ -97,6 +101,8 @@ var Columns = []string{
 	FieldLatencyMs,
 	FieldLastHealthAt,
 	FieldHealthCheckFailures,
+	FieldProxyType,
+	FieldPriority,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -155,6 +161,12 @@ var (
 	HealthStatusValidator func(string) error
 	// DefaultHealthCheckFailures holds the default value on creation for the "health_check_failures" field.
 	DefaultHealthCheckFailures int
+	// DefaultProxyType holds the default value on creation for the "proxy_type" field.
+	DefaultProxyType string
+	// ProxyTypeValidator is a validator for the "proxy_type" field. It is called by the builders before save.
+	ProxyTypeValidator func(string) error
+	// DefaultPriority holds the default value on creation for the "priority" field.
+	DefaultPriority int
 )
 
 // OrderOption defines the ordering options for the Proxy queries.
@@ -273,6 +285,16 @@ func ByLastHealthAt(opts ...sql.OrderTermOption) OrderOption {
 // ByHealthCheckFailures orders the results by the health_check_failures field.
 func ByHealthCheckFailures(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHealthCheckFailures, opts...).ToFunc()
+}
+
+// ByProxyType orders the results by the proxy_type field.
+func ByProxyType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProxyType, opts...).ToFunc()
+}
+
+// ByPriority orders the results by the priority field.
+func ByPriority(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPriority, opts...).ToFunc()
 }
 
 // ByAccountsCount orders the results by accounts count.

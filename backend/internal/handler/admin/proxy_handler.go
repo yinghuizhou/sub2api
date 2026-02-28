@@ -43,6 +43,8 @@ type CreateProxyRequest struct {
 	OvpnUsername string `json:"ovpn_username"`
 	OvpnPassword string `json:"ovpn_password"`
 	IsDedicated  bool   `json:"is_dedicated"`
+	ProxyType    string `json:"proxy_type"`
+	Priority     int    `json:"priority"`
 }
 
 // UpdateProxyRequest represents update proxy request
@@ -60,6 +62,8 @@ type UpdateProxyRequest struct {
 	OvpnUsername *string `json:"ovpn_username"`
 	OvpnPassword *string `json:"ovpn_password"`
 	IsDedicated  *bool   `json:"is_dedicated"`
+	ProxyType    *string `json:"proxy_type"`
+	Priority     *int    `json:"priority"`
 }
 
 // List handles listing all proxies with pagination
@@ -167,6 +171,8 @@ func (h *ProxyHandler) Create(c *gin.Context) {
 			OvpnUsername: strings.TrimSpace(req.OvpnUsername),
 			OvpnPassword: strings.TrimSpace(req.OvpnPassword),
 			IsDedicated:  req.IsDedicated,
+			ProxyType:    strings.TrimSpace(req.ProxyType),
+			Priority:     req.Priority,
 		})
 		if err != nil {
 			return nil, err
@@ -204,6 +210,8 @@ func (h *ProxyHandler) Update(c *gin.Context) {
 		OvpnUsername: req.OvpnUsername,
 		OvpnPassword: req.OvpnPassword,
 		IsDedicated:  req.IsDedicated,
+		ProxyType:    req.ProxyType,
+		Priority:     req.Priority,
 	}
 	proxy, err := h.adminService.UpdateProxy(c.Request.Context(), proxyID, updateInput)
 	if err != nil {

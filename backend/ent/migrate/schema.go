@@ -633,6 +633,8 @@ var (
 		{Name: "latency_ms", Type: field.TypeInt, Nullable: true},
 		{Name: "last_health_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "health_check_failures", Type: field.TypeInt, Default: 0},
+		{Name: "proxy_type", Type: field.TypeString, Size: 20, Default: "static"},
+		{Name: "priority", Type: field.TypeInt, Default: 100},
 	}
 	// ProxiesTable holds the schema information for the "proxies" table.
 	ProxiesTable = &schema.Table{
@@ -669,6 +671,16 @@ var (
 				Name:    "proxy_is_dedicated",
 				Unique:  false,
 				Columns: []*schema.Column{ProxiesColumns[16]},
+			},
+			{
+				Name:    "proxy_proxy_type",
+				Unique:  false,
+				Columns: []*schema.Column{ProxiesColumns[23]},
+			},
+			{
+				Name:    "proxy_priority",
+				Unique:  false,
+				Columns: []*schema.Column{ProxiesColumns[24]},
 			},
 		},
 	}

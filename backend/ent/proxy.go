@@ -61,6 +61,10 @@ type Proxy struct {
 	LastHealthAt *time.Time `json:"last_health_at,omitempty"`
 	// HealthCheckFailures holds the value of the "health_check_failures" field.
 	HealthCheckFailures int `json:"health_check_failures,omitempty"`
+	// ProxyType holds the value of the "proxy_type" field.
+	ProxyType string `json:"proxy_type,omitempty"`
+	// Priority holds the value of the "priority" field.
+	Priority int `json:"priority,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProxyQuery when eager-loading is set.
 	Edges        ProxyEdges `json:"edges"`
@@ -92,9 +96,9 @@ func (*Proxy) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case proxy.FieldIsDedicated:
 			values[i] = new(sql.NullBool)
-		case proxy.FieldID, proxy.FieldPort, proxy.FieldLatencyMs, proxy.FieldHealthCheckFailures:
+		case proxy.FieldID, proxy.FieldPort, proxy.FieldLatencyMs, proxy.FieldHealthCheckFailures, proxy.FieldPriority:
 			values[i] = new(sql.NullInt64)
-		case proxy.FieldName, proxy.FieldProtocol, proxy.FieldHost, proxy.FieldUsername, proxy.FieldPassword, proxy.FieldStatus, proxy.FieldRegion, proxy.FieldGroupName, proxy.FieldOvpnConfig, proxy.FieldOvpnUsername, proxy.FieldOvpnPassword, proxy.FieldVpnStatus, proxy.FieldVpnExitIP, proxy.FieldHealthStatus:
+		case proxy.FieldName, proxy.FieldProtocol, proxy.FieldHost, proxy.FieldUsername, proxy.FieldPassword, proxy.FieldStatus, proxy.FieldRegion, proxy.FieldGroupName, proxy.FieldOvpnConfig, proxy.FieldOvpnUsername, proxy.FieldOvpnPassword, proxy.FieldVpnStatus, proxy.FieldVpnExitIP, proxy.FieldHealthStatus, proxy.FieldProxyType:
 			values[i] = new(sql.NullString)
 		case proxy.FieldCreatedAt, proxy.FieldUpdatedAt, proxy.FieldDeletedAt, proxy.FieldLastHealthAt:
 			values[i] = new(sql.NullTime)
@@ -264,6 +268,18 @@ func (_m *Proxy) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.HealthCheckFailures = int(value.Int64)
 			}
+		case proxy.FieldProxyType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field proxy_type", values[i])
+			} else if value.Valid {
+				_m.ProxyType = value.String
+			}
+		case proxy.FieldPriority:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field priority", values[i])
+			} else if value.Valid {
+				_m.Priority = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -396,6 +412,12 @@ func (_m *Proxy) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("health_check_failures=")
 	builder.WriteString(fmt.Sprintf("%v", _m.HealthCheckFailures))
+	builder.WriteString(", ")
+	builder.WriteString("proxy_type=")
+	builder.WriteString(_m.ProxyType)
+	builder.WriteString(", ")
+	builder.WriteString("priority=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Priority))
 	builder.WriteByte(')')
 	return builder.String()
 }

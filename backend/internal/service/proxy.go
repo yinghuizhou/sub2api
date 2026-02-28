@@ -30,6 +30,8 @@ type Proxy struct {
 	LatencyMs           *int
 	LastHealthAt        *time.Time
 	HealthCheckFailures int
+	ProxyType           string
+	Priority            int
 }
 
 func (p *Proxy) IsActive() bool {

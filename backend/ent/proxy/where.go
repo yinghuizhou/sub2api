@@ -165,6 +165,16 @@ func HealthCheckFailures(v int) predicate.Proxy {
 	return predicate.Proxy(sql.FieldEQ(FieldHealthCheckFailures, v))
 }
 
+// ProxyType applies equality check predicate on the "proxy_type" field. It's identical to ProxyTypeEQ.
+func ProxyType(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldProxyType, v))
+}
+
+// Priority applies equality check predicate on the "priority" field. It's identical to PriorityEQ.
+func Priority(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldPriority, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Proxy {
 	return predicate.Proxy(sql.FieldEQ(FieldCreatedAt, v))
@@ -1493,6 +1503,111 @@ func HealthCheckFailuresLT(v int) predicate.Proxy {
 // HealthCheckFailuresLTE applies the LTE predicate on the "health_check_failures" field.
 func HealthCheckFailuresLTE(v int) predicate.Proxy {
 	return predicate.Proxy(sql.FieldLTE(FieldHealthCheckFailures, v))
+}
+
+// ProxyTypeEQ applies the EQ predicate on the "proxy_type" field.
+func ProxyTypeEQ(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldProxyType, v))
+}
+
+// ProxyTypeNEQ applies the NEQ predicate on the "proxy_type" field.
+func ProxyTypeNEQ(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNEQ(FieldProxyType, v))
+}
+
+// ProxyTypeIn applies the In predicate on the "proxy_type" field.
+func ProxyTypeIn(vs ...string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldIn(FieldProxyType, vs...))
+}
+
+// ProxyTypeNotIn applies the NotIn predicate on the "proxy_type" field.
+func ProxyTypeNotIn(vs ...string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotIn(FieldProxyType, vs...))
+}
+
+// ProxyTypeGT applies the GT predicate on the "proxy_type" field.
+func ProxyTypeGT(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGT(FieldProxyType, v))
+}
+
+// ProxyTypeGTE applies the GTE predicate on the "proxy_type" field.
+func ProxyTypeGTE(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGTE(FieldProxyType, v))
+}
+
+// ProxyTypeLT applies the LT predicate on the "proxy_type" field.
+func ProxyTypeLT(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLT(FieldProxyType, v))
+}
+
+// ProxyTypeLTE applies the LTE predicate on the "proxy_type" field.
+func ProxyTypeLTE(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLTE(FieldProxyType, v))
+}
+
+// ProxyTypeContains applies the Contains predicate on the "proxy_type" field.
+func ProxyTypeContains(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldContains(FieldProxyType, v))
+}
+
+// ProxyTypeHasPrefix applies the HasPrefix predicate on the "proxy_type" field.
+func ProxyTypeHasPrefix(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldHasPrefix(FieldProxyType, v))
+}
+
+// ProxyTypeHasSuffix applies the HasSuffix predicate on the "proxy_type" field.
+func ProxyTypeHasSuffix(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldHasSuffix(FieldProxyType, v))
+}
+
+// ProxyTypeEqualFold applies the EqualFold predicate on the "proxy_type" field.
+func ProxyTypeEqualFold(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEqualFold(FieldProxyType, v))
+}
+
+// ProxyTypeContainsFold applies the ContainsFold predicate on the "proxy_type" field.
+func ProxyTypeContainsFold(v string) predicate.Proxy {
+	return predicate.Proxy(sql.FieldContainsFold(FieldProxyType, v))
+}
+
+// PriorityEQ applies the EQ predicate on the "priority" field.
+func PriorityEQ(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldEQ(FieldPriority, v))
+}
+
+// PriorityNEQ applies the NEQ predicate on the "priority" field.
+func PriorityNEQ(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNEQ(FieldPriority, v))
+}
+
+// PriorityIn applies the In predicate on the "priority" field.
+func PriorityIn(vs ...int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldIn(FieldPriority, vs...))
+}
+
+// PriorityNotIn applies the NotIn predicate on the "priority" field.
+func PriorityNotIn(vs ...int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldNotIn(FieldPriority, vs...))
+}
+
+// PriorityGT applies the GT predicate on the "priority" field.
+func PriorityGT(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGT(FieldPriority, v))
+}
+
+// PriorityGTE applies the GTE predicate on the "priority" field.
+func PriorityGTE(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldGTE(FieldPriority, v))
+}
+
+// PriorityLT applies the LT predicate on the "priority" field.
+func PriorityLT(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLT(FieldPriority, v))
+}
+
+// PriorityLTE applies the LTE predicate on the "priority" field.
+func PriorityLTE(v int) predicate.Proxy {
+	return predicate.Proxy(sql.FieldLTE(FieldPriority, v))
 }
 
 // HasAccounts applies the HasEdge predicate on the "accounts" edge.

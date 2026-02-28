@@ -287,6 +287,8 @@ func ProxyFromService(p *service.Proxy) *Proxy {
 		Username:  p.Username,
 		Password:  p.Password,
 		Status:    p.Status,
+		ProxyType: p.ProxyType,
+		Priority:  p.Priority,
 		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
 	}

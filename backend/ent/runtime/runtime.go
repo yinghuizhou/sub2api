@@ -700,6 +700,16 @@ func init() {
 	proxyDescHealthCheckFailures := proxyFields[18].Descriptor()
 	// proxy.DefaultHealthCheckFailures holds the default value on creation for the health_check_failures field.
 	proxy.DefaultHealthCheckFailures = proxyDescHealthCheckFailures.Default.(int)
+	// proxyDescProxyType is the schema descriptor for proxy_type field.
+	proxyDescProxyType := proxyFields[19].Descriptor()
+	// proxy.DefaultProxyType holds the default value on creation for the proxy_type field.
+	proxy.DefaultProxyType = proxyDescProxyType.Default.(string)
+	// proxy.ProxyTypeValidator is a validator for the "proxy_type" field. It is called by the builders before save.
+	proxy.ProxyTypeValidator = proxyDescProxyType.Validators[0].(func(string) error)
+	// proxyDescPriority is the schema descriptor for priority field.
+	proxyDescPriority := proxyFields[20].Descriptor()
+	// proxy.DefaultPriority holds the default value on creation for the priority field.
+	proxy.DefaultPriority = proxyDescPriority.Default.(int)
 	rechargepackageFields := schema.RechargePackage{}.Fields()
 	_ = rechargepackageFields
 	// rechargepackageDescBonusRate is the schema descriptor for bonus_rate field.
