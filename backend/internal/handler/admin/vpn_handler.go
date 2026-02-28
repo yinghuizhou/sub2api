@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,14 +17,16 @@ import (
 type VpnHandler struct {
 	vpnAgentService *service.VpnAgentService
 	vpnEventService *service.VpnEventService
+	vpnAlertService *service.VpnAlertService
 	adminService    service.AdminService
 }
 
 // NewVpnHandler creates a new VpnHandler.
-func NewVpnHandler(vpnAgentService *service.VpnAgentService, vpnEventService *service.VpnEventService, adminService service.AdminService) *VpnHandler {
+func NewVpnHandler(vpnAgentService *service.VpnAgentService, vpnEventService *service.VpnEventService, vpnAlertService *service.VpnAlertService, adminService service.AdminService) *VpnHandler {
 	return &VpnHandler{
 		vpnAgentService: vpnAgentService,
 		vpnEventService: vpnEventService,
+		vpnAlertService: vpnAlertService,
 		adminService:    adminService,
 	}
 }
@@ -445,6 +448,77 @@ func (h *VpnHandler) ReportEvent(c *gin.Context) {
 
 	if err := h.vpnEventService.RecordEvent(c.Request.Context(), req.TunnelName, req.EventType, req.Details); err != nil {
 		response.InternalError(c, "failed to record event: "+err.Error())
+		return
+	}
+
+	response.Success(c, nil)
+}
+
+// CreateAlertRule creates a new VPN alert rule.
+// POST /vpn/alert-rules
+func (h *VpnHandler) CreateAlertRule(c *gin.Context) {
+	var input service.CreateAlertRuleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	rule, err := h.vpnAlertService.Create(c.Request.Context(), input)
+	if err != nil {
+		response.InternalError(c, "failed to create alert rule: "+err.Error())
+		return
+	}
+
+	response.Created(c, rule)
+}
+
+// ListAlertRules returns all VPN alert rules.
+// GET /vpn/alert-rules
+func (h *VpnHandler) ListAlertRules(c *gin.Context) {
+	rules, err := h.vpnAlertService.List(c.Request.Context())
+	if err != nil {
+		response.InternalError(c, "failed to list alert rules: "+err.Error())
+		return
+	}
+
+	response.Success(c, rules)
+}
+
+// UpdateAlertRule updates a VPN alert rule.
+// PUT /vpn/alert-rules/:id
+func (h *VpnHandler) UpdateAlertRule(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "invalid alert rule ID")
+		return
+	}
+
+	var input service.UpdateAlertRuleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	rule, err := h.vpnAlertService.Update(c.Request.Context(), id, input)
+	if err != nil {
+		response.InternalError(c, "failed to update alert rule: "+err.Error())
+		return
+	}
+
+	response.Success(c, rule)
+}
+
+// DeleteAlertRule deletes a VPN alert rule.
+// DELETE /vpn/alert-rules/:id
+func (h *VpnHandler) DeleteAlertRule(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "invalid alert rule ID")
+		return
+	}
+
+	if err := h.vpnAlertService.Delete(c.Request.Context(), id); err != nil {
+		response.InternalError(c, "failed to delete alert rule: "+err.Error())
 		return
 	}
 

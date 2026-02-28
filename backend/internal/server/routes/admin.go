@@ -112,6 +112,12 @@ func registerVpnRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		vpn.GET("/events", h.Admin.Vpn.ListEvents)
 		vpn.GET("/dashboard", h.Admin.Vpn.GetDashboard)
 		vpn.POST("/events/report", h.Admin.Vpn.ReportEvent)
+
+		// Alert Rules
+		vpn.POST("/alert-rules", h.Admin.Vpn.CreateAlertRule)
+		vpn.GET("/alert-rules", h.Admin.Vpn.ListAlertRules)
+		vpn.PUT("/alert-rules/:id", h.Admin.Vpn.UpdateAlertRule)
+		vpn.DELETE("/alert-rules/:id", h.Admin.Vpn.DeleteAlertRule)
 	}
 }
 
