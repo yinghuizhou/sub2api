@@ -124,6 +124,17 @@ export async function deleteCertificate(id: string): Promise<void> {
   await apiClient.delete(`/admin/vpn/certificates/${encodeURIComponent(id)}`)
 }
 
+export interface SyncProxiesResult {
+  updated: number
+  skipped: number
+  failed: number
+}
+
+export async function syncTunnelProxies(): Promise<SyncProxiesResult> {
+  const { data } = await apiClient.post<SyncProxiesResult>('/admin/vpn/sync-proxies')
+  return data
+}
+
 export const vpnAPI = {
   getAgentHealth,
   listTunnels,
@@ -138,7 +149,8 @@ export const vpnAPI = {
   deleteConfig,
   listCertificates,
   importCertificate,
-  deleteCertificate
+  deleteCertificate,
+  syncTunnelProxies
 }
 
 export default vpnAPI

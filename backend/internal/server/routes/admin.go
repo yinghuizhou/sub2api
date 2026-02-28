@@ -99,6 +99,9 @@ func registerVpnRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		vpn.DELETE("/configs/:name", h.Admin.Vpn.DeleteConfig)
 		vpn.GET("/health", h.Admin.Vpn.GetAgentHealth)
 
+		// Proxy sync
+		vpn.POST("/sync-proxies", h.Admin.Vpn.SyncTunnelProxies)
+
 		// Certificates
 		vpn.GET("/certificates", h.Admin.Vpn.ListCertificates)
 		vpn.POST("/certificates/import", h.Admin.Vpn.ImportCertificate)

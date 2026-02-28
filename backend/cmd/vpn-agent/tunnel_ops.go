@@ -48,6 +48,7 @@ func (tm *TunnelManager) Restart(name string) error {
 	port := rt.SocksPort
 	pid := rt.ProxyID
 	certID := rt.CertID
+	tunnelType := rt.TunnelType
 
 	// Stop and remove under lock
 	stopTunnel(rt)
@@ -60,7 +61,11 @@ func (tm *TunnelManager) Restart(name string) error {
 	tm.persistState()
 	tm.mu.Unlock()
 
-	// Re-create (Create handles its own locking)
+	// Re-create based on tunnel type (Create/CreateWireGuard handle their own locking)
+	if tunnelType == TunnelTypeWireGuard {
+		_, err := tm.CreateWireGuard(name, cfg, region, port, pid)
+		return err
+	}
 	_, err := tm.Create(name, cfg, region, port, pid, certID)
 	return err
 }
@@ -99,12 +104,17 @@ func (tm *TunnelManager) Start(name string) error {
 	port := rt.SocksPort
 	pid := rt.ProxyID
 	certID := rt.CertID
+	tunnelType := rt.TunnelType
 	if certID != "" {
 		tm.certStore.MarkFree(certID)
 	}
 	delete(tm.tunnels, name)
 	tm.mu.Unlock()
 
+	if tunnelType == TunnelTypeWireGuard {
+		_, err := tm.CreateWireGuard(name, cfg, region, port, pid)
+		return err
+	}
 	_, err := tm.Create(name, cfg, region, port, pid, certID)
 	return err
 }
@@ -127,15 +137,21 @@ func (tm *TunnelManager) RestoreFromState() error {
 		return err
 	}
 	for _, ts := range state.Tunnels {
-		log.Printf("Restoring tunnel %q (%s port %d)", ts.Name, ts.ConfigName, ts.SocksPort)
-		if _, err := tm.Create(ts.Name, ts.ConfigName, ts.Region, ts.SocksPort, ts.ProxyID, ts.CertID); err != nil {
-			log.Printf("Warning: failed to restore tunnel %q: %v", ts.Name, err)
+		log.Printf("Restoring tunnel %q (%s port %d type %s)", ts.Name, ts.ConfigName, ts.SocksPort, ts.TunnelType)
+		if ts.TunnelType == string(TunnelTypeWireGuard) {
+			if _, err := tm.CreateWireGuard(ts.Name, ts.ConfigName, ts.Region, ts.SocksPort, ts.ProxyID); err != nil {
+				log.Printf("Warning: failed to restore WireGuard tunnel %q: %v", ts.Name, err)
+			}
+		} else {
+			if _, err := tm.Create(ts.Name, ts.ConfigName, ts.Region, ts.SocksPort, ts.ProxyID, ts.CertID); err != nil {
+				log.Printf("Warning: failed to restore tunnel %q: %v", ts.Name, err)
+			}
 		}
 	}
 	return nil
 }
 
-// SwitchConfig stops a tunnel and restarts it with a new .ovpn config.
+// SwitchConfig stops a tunnel and restarts it with a new config.
 func (tm *TunnelManager) SwitchConfig(name, newConfigName string) error {
 	tm.mu.Lock()
 	rt, ok := tm.tunnels[name]
@@ -147,6 +163,7 @@ func (tm *TunnelManager) SwitchConfig(name, newConfigName string) error {
 	port := rt.SocksPort
 	pid := rt.ProxyID
 	certID := rt.CertID
+	tunnelType := rt.TunnelType
 
 	stopTunnel(rt)
 	if certID != "" {
@@ -158,6 +175,10 @@ func (tm *TunnelManager) SwitchConfig(name, newConfigName string) error {
 	tm.persistState()
 	tm.mu.Unlock()
 
+	if tunnelType == TunnelTypeWireGuard {
+		_, err := tm.CreateWireGuard(name, newConfigName, region, port, pid)
+		return err
+	}
 	_, err := tm.Create(name, newConfigName, region, port, pid, certID)
 	return err
 }
@@ -184,7 +205,8 @@ func (tm *TunnelManager) persistState() {
 	state := &AgentState{Tunnels: make(map[string]TunnelState)}
 	for name, rt := range tm.tunnels {
 		state.Tunnels[name] = TunnelState{
-			Name: name, ConfigName: rt.ConfigName,
+			Name: name, TunnelType: string(rt.TunnelType),
+			ConfigName: rt.ConfigName,
 			SocksPort: rt.SocksPort, Region: rt.Region,
 			ServerIP: rt.ServerIP, ProxyID: rt.ProxyID,
 			CertID: rt.CertID,
@@ -238,23 +260,38 @@ func readStateFile(path string) (string, error) {
 	return "", fmt.Errorf("LOCAL_IP not found in %s", path)
 }
 
-// stopTunnel sends SIGTERM to both processes, with SIGKILL fallback.
+// stopTunnel stops both the VPN/WireGuard tunnel and the 3proxy SOCKS5 process.
 func stopTunnel(rt *runningTunnel) {
-	for _, label := range []struct {
-		name string
-		cmd  *exec.Cmd
-	}{{"openvpn", rt.vpnCmd}, {"3proxy", rt.socksCmd}} {
-		if label.cmd == nil || label.cmd.Process == nil {
-			continue
-		}
-		_ = label.cmd.Process.Signal(syscall.SIGTERM)
+	// Stop 3proxy first
+	if rt.socksCmd != nil && rt.socksCmd.Process != nil {
+		_ = rt.socksCmd.Process.Signal(syscall.SIGTERM)
 		done := make(chan error, 1)
-		go func(c *exec.Cmd) { done <- c.Wait() }(label.cmd)
+		go func(c *exec.Cmd) { done <- c.Wait() }(rt.socksCmd)
 		select {
 		case <-done:
 		case <-time.After(5 * time.Second):
-			_ = label.cmd.Process.Signal(syscall.SIGKILL)
+			_ = rt.socksCmd.Process.Signal(syscall.SIGKILL)
 			<-done
+		}
+	}
+
+	if rt.TunnelType == TunnelTypeWireGuard {
+		// WireGuard: use wg-quick down
+		if rt.confPath != "" {
+			exec.Command("wg-quick", "down", rt.confPath).Run()
+		}
+	} else {
+		// OpenVPN: signal process
+		if rt.vpnCmd != nil && rt.vpnCmd.Process != nil {
+			_ = rt.vpnCmd.Process.Signal(syscall.SIGTERM)
+			done := make(chan error, 1)
+			go func(c *exec.Cmd) { done <- c.Wait() }(rt.vpnCmd)
+			select {
+			case <-done:
+			case <-time.After(5 * time.Second):
+				_ = rt.vpnCmd.Process.Signal(syscall.SIGKILL)
+				<-done
+			}
 		}
 	}
 }

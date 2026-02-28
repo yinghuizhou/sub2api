@@ -16,6 +16,7 @@ import (
 // VpnTunnel represents a VPN tunnel from the Agent API.
 type VpnTunnel struct {
 	Name       string    `json:"name"`
+	TunnelType string    `json:"tunnel_type"`
 	ConfigName string    `json:"config_name"`
 	Region     string    `json:"region"`
 	ServerIP   string    `json:"server_ip"`
@@ -49,6 +50,7 @@ type CreateTunnelInput struct {
 	SocksPort  int    `json:"socks_port"`
 	ProxyID    int    `json:"proxy_id"`
 	CertID     string `json:"cert_id,omitempty"`
+	TunnelType string `json:"tunnel_type,omitempty"` // "openvpn" (default) or "wireguard"
 }
 
 // AgentHealth represents the Agent's health status.

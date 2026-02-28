@@ -20,6 +20,7 @@ type createTunnelRequest struct {
 	SocksPort  int    `json:"socks_port"`
 	ProxyID    int    `json:"proxy_id"`
 	CertID     string `json:"cert_id"`
+	TunnelType string `json:"tunnel_type"` // "openvpn" (default) or "wireguard"
 }
 
 // Server handles HTTP requests for the VPN Agent API.

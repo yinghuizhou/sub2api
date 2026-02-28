@@ -43,7 +43,15 @@ func (s *Server) handleCreateTunnel(w http.ResponseWriter, r *http.Request) {
 		req.SocksPort = port
 	}
 
-	info, err := s.tunnelMgr.Create(req.Name, req.ConfigName, req.Region, req.SocksPort, req.ProxyID, req.CertID)
+	var info *TunnelInfo
+	var err error
+
+	if req.TunnelType == string(TunnelTypeWireGuard) {
+		info, err = s.tunnelMgr.CreateWireGuard(req.Name, req.ConfigName, req.Region, req.SocksPort, req.ProxyID)
+	} else {
+		info, err = s.tunnelMgr.Create(req.Name, req.ConfigName, req.Region, req.SocksPort, req.ProxyID, req.CertID)
+	}
+
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

@@ -304,3 +304,59 @@ func (h *VpnHandler) DeleteCertificate(c *gin.Context) {
 	}
 	response.Success(c, nil)
 }
+
+// SyncTunnelProxies reads tunnel data from the Agent and updates matching proxy records
+// so that each proxy's host:port matches its tunnel's actual SOCKS address.
+// POST /api/v1/admin/vpn/sync-proxies
+func (h *VpnHandler) SyncTunnelProxies(c *gin.Context) {
+	if !h.requireEnabled(c) {
+		return
+	}
+	ctx := c.Request.Context()
+
+	tunnels, err := h.vpnAgentService.ListTunnels(ctx)
+	if err != nil {
+		response.Error(c, http.StatusBadGateway, "Agent error: "+err.Error())
+		return
+	}
+
+	agentHost := h.vpnAgentService.GetAgentHost()
+	var updated, skipped, failed int
+
+	for _, t := range tunnels {
+		if t.ProxyID == 0 || t.SocksPort == 0 {
+			skipped++
+			continue
+		}
+
+		proxy, err := h.adminService.GetProxy(ctx, int64(t.ProxyID))
+		if err != nil {
+			log.Printf("sync-proxies: proxy %d not found for tunnel %q: %v", t.ProxyID, t.Name, err)
+			failed++
+			continue
+		}
+
+		// Check if update is needed.
+		if proxy.Host == agentHost && proxy.Port == t.SocksPort {
+			skipped++
+			continue
+		}
+
+		_, err = h.adminService.UpdateProxy(ctx, int64(t.ProxyID), &service.UpdateProxyInput{
+			Host: agentHost,
+			Port: t.SocksPort,
+		})
+		if err != nil {
+			log.Printf("sync-proxies: failed to update proxy %d: %v", t.ProxyID, err)
+			failed++
+			continue
+		}
+		updated++
+	}
+
+	response.Success(c, map[string]int{
+		"updated": updated,
+		"skipped": skipped,
+		"failed":  failed,
+	})
+}

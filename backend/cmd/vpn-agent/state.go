@@ -10,6 +10,7 @@ import (
 // TunnelState represents the persisted state of a single tunnel.
 type TunnelState struct {
 	Name       string `json:"name"`
+	TunnelType string `json:"tunnel_type,omitempty"`
 	ConfigName string `json:"config_name"`
 	SocksPort  int    `json:"socks_port"`
 	Region     string `json:"region"`

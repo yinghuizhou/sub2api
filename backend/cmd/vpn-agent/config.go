@@ -15,6 +15,7 @@ type AgentConfig struct {
 	Sub2APIURL    string
 	Sub2APIKey    string
 	LogDir        string
+	WgConfigDir   string
 	APIKey        string
 }
 
@@ -28,6 +29,7 @@ func loadConfig() *AgentConfig {
 		Sub2APIURL:    envOrDefault("SUB2API_URL", "http://localhost:8080"),
 		Sub2APIKey:    os.Getenv("SUB2API_API_KEY"),
 		LogDir:        envOrDefault("LOG_DIR", "/var/log/vpn-agent"),
+		WgConfigDir:   envOrDefault("WG_CONFIG_DIR", "/etc/wireguard"),
 		APIKey:        os.Getenv("VPN_AGENT_API_KEY"),
 	}
 }

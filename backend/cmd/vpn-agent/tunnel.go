@@ -14,9 +14,18 @@ import (
 	"time"
 )
 
+// TunnelType distinguishes between VPN tunnel implementations.
+type TunnelType string
+
+const (
+	TunnelTypeOpenVPN   TunnelType = "openvpn"
+	TunnelTypeWireGuard TunnelType = "wireguard"
+)
+
 // TunnelInfo represents the runtime state of a tunnel.
 type TunnelInfo struct {
-	Name       string    `json:"name"`
+	Name       string     `json:"name"`
+	TunnelType TunnelType `json:"tunnel_type"`
 	ConfigName string    `json:"config_name"`
 	Region     string    `json:"region"`
 	ServerIP   string    `json:"server_ip"`
@@ -161,7 +170,7 @@ func (tm *TunnelManager) Create(name, configName, region string, socksPort, prox
 	// Mark as "connecting" so other goroutines see it.
 	rt := &runningTunnel{
 		TunnelInfo: TunnelInfo{
-			Name: name, ConfigName: configName, Region: region,
+			Name: name, TunnelType: TunnelTypeOpenVPN, ConfigName: configName, Region: region,
 			ServerIP: serverIP, SocksPort: socksPort, Status: "connecting",
 			TunDevice: "tun-" + name, Health: "unknown",
 			Uptime: time.Now(), ProxyID: proxyID, CertID: certID,

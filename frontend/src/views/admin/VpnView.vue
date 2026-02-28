@@ -40,6 +40,10 @@
           </div>
 
           <div class="flex flex-1 items-center justify-end gap-2">
+            <button @click="handleSyncProxies" :disabled="syncing" class="btn btn-secondary" title="同步代理端口">
+              <Icon name="sync" size="md" :class="syncing ? 'animate-spin' : ''" />
+              <span class="ml-1 text-sm">同步代理</span>
+            </button>
             <button @click="refreshAll" :disabled="loading" class="btn btn-secondary" title="刷新">
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
             </button>
@@ -349,7 +353,7 @@ import { useAppStore } from '@/stores/app'
 import {
   getAgentHealth, listTunnels, createTunnel, removeTunnel,
   restartTunnel, startTunnel, stopTunnel, uploadConfigs, listConfigs, deleteConfig,
-  listCertificates, importCertificate, deleteCertificate,
+  listCertificates, importCertificate, deleteCertificate, syncTunnelProxies,
   type VpnTunnel, type VpnOvpnConfig, type AgentHealth, type CreateTunnelInput, type VpnCertificate,
 } from '@/api/admin/vpn'
 import type { Column } from '@/components/common/types'
@@ -406,6 +410,9 @@ const logLine = (text: string, color = 'text-gray-300') => {
   const elapsed = ((Date.now() - deployStartTime.value) / 1000).toFixed(1)
   deployLog.value.push({ time: `[${elapsed}s]`, text, color })
 }
+
+// Sync
+const syncing = ref(false)
 
 // Tunnel action loading
 const actionLoading = reactive<Record<string, string>>({})
@@ -721,6 +728,26 @@ const handleDeleteCert = async (cert: VpnCertificate) => {
     await loadCerts()
   } catch (e: any) {
     appStore.showError(e?.message || '删除失败')
+  }
+}
+
+// --- Sync Proxies ---
+const handleSyncProxies = async () => {
+  syncing.value = true
+  try {
+    const result = await syncTunnelProxies()
+    if (result.updated > 0) {
+      appStore.showSuccess(`已同步 ${result.updated} 个代理端口`)
+    } else {
+      appStore.showInfo('所有代理端口已是最新')
+    }
+    if (result.failed > 0) {
+      appStore.showError(`${result.failed} 个代理同步失败`)
+    }
+  } catch (e: any) {
+    appStore.showError(e?.message || '同步代理失败')
+  } finally {
+    syncing.value = false
   }
 }
 
