@@ -65,6 +65,15 @@ type TempUnschedulableRule struct {
 	Description     string   `json:"description"`
 }
 
+type AccountSubscriptionConfig struct {
+	Enabled            bool      `json:"enabled"`
+	DailyLimitUSD      float64   `json:"daily_limit_usd"`
+	SubscriptionPeriod string    `json:"subscription_period"` // daily/weekly/monthly
+	SubscriptionStart  time.Time `json:"subscription_start"`
+	SubscriptionEnd    time.Time `json:"subscription_end"`
+}
+
+
 func (a *Account) IsActive() bool {
 	return a.Status == StatusActive
 }
@@ -83,6 +92,74 @@ func (a *Account) BillingRateMultiplier() float64 {
 	return *a.RateMultiplier
 }
 
+// GetSubscriptionConfig 从 extra.subscription_config 解析订阅配置
+func (a *Account) GetSubscriptionConfig() *AccountSubscriptionConfig {
+	if a.Extra == nil {
+		return nil
+	}
+	subConfigRaw, ok := a.Extra["subscription_config"]
+	if !ok {
+		return nil
+	}
+	
+	// 处理 map[string]any 类型
+	subConfigMap, ok := subConfigRaw.(map[string]any)
+	if !ok {
+		return nil
+	}
+	
+	cfg := &AccountSubscriptionConfig{}
+	
+	// 解析 enabled
+	if v, ok := subConfigMap["enabled"].(bool); ok {
+		cfg.Enabled = v
+	}
+	
+	// 解析 daily_limit_usd
+	if v, ok := subConfigMap["daily_limit_usd"].(float64); ok {
+		cfg.DailyLimitUSD = v
+	}
+	
+	// 解析 subscription_period
+	if v, ok := subConfigMap["subscription_period"].(string); ok {
+		cfg.SubscriptionPeriod = v
+	}
+	
+	// 解析时间字段（支持 string 和 time.Time）
+	if v, ok := subConfigMap["subscription_start"].(string); ok {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			cfg.SubscriptionStart = t
+		}
+	} else if v, ok := subConfigMap["subscription_start"].(time.Time); ok {
+		cfg.SubscriptionStart = v
+	}
+	
+	if v, ok := subConfigMap["subscription_end"].(string); ok {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			cfg.SubscriptionEnd = t
+		}
+	} else if v, ok := subConfigMap["subscription_end"].(time.Time); ok {
+		cfg.SubscriptionEnd = v
+	}
+	
+	return cfg
+}
+
+// HasDailyLimit 判断账户是否启用了日限额
+func (a *Account) HasDailyLimit() bool {
+	cfg := a.GetSubscriptionConfig()
+	return cfg != nil && cfg.Enabled && cfg.DailyLimitUSD > 0
+}
+
+// IsSubscriptionExpired 判断订阅是否已过期
+func (a *Account) IsSubscriptionExpired() bool {
+	cfg := a.GetSubscriptionConfig()
+	if cfg == nil || !cfg.Enabled {
+		return false
+	}
+	return time.Now().After(cfg.SubscriptionEnd)
+}
+
 func (a *Account) IsSchedulable() bool {
 	if !a.IsActive() || !a.Schedulable {
 		return false
@@ -98,6 +175,9 @@ func (a *Account) IsSchedulable() bool {
 		return false
 	}
 	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) {
+		return false
+	}
+	if a.IsSubscriptionExpired() {
 		return false
 	}
 	return true
@@ -123,6 +203,10 @@ func (a *Account) unschedulableReason() string {
 	}
 	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) {
 		return fmt.Sprintf("id=%d:temp_unsched(until=%s,remaining=%v,reason=%s)", a.ID, a.TempUnschedulableUntil.Format(time.RFC3339), time.Until(*a.TempUnschedulableUntil).Round(time.Second), a.TempUnschedulableReason)
+	}
+	if a.IsSubscriptionExpired() {
+		cfg := a.GetSubscriptionConfig()
+		return fmt.Sprintf("id=%d:subscription_expired(end=%s)", a.ID, cfg.SubscriptionEnd.Format(time.RFC3339))
 	}
 	return fmt.Sprintf("id=%d:unknown", a.ID)
 }
