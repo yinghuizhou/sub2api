@@ -292,6 +292,11 @@ func registerAccountRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		// Auto-assign proxy group
 		accounts.POST("/:id/auto-assign-proxy", h.Admin.Account.AutoAssignProxy)
 
+		// Subscription configuration
+		accounts.POST("/:id/subscription", h.Admin.Account.SetSubscriptionConfig)
+		accounts.GET("/:id/subscription", h.Admin.Account.GetSubscriptionConfig)
+		accounts.GET("/:id/daily-usage", h.Admin.Account.GetDailyUsage)
+
 		// Antigravity 默认模型映射
 		accounts.GET("/antigravity/default-model-mapping", h.Admin.Account.GetAntigravityDefaultModelMapping)
 

@@ -54,6 +54,7 @@ type AccountHandler struct {
 	sessionLimitCache       service.SessionLimitCache
 	tokenCacheInvalidator   service.TokenCacheInvalidator
 	proxyAssignmentService  *service.ProxyAssignmentService
+	billingCacheService     *service.BillingCacheService
 }
 
 // NewAccountHandler creates a new admin account handler
@@ -71,6 +72,7 @@ func NewAccountHandler(
 	sessionLimitCache service.SessionLimitCache,
 	tokenCacheInvalidator service.TokenCacheInvalidator,
 	proxyAssignmentService *service.ProxyAssignmentService,
+	billingCacheService *service.BillingCacheService,
 ) *AccountHandler {
 	return &AccountHandler{
 		adminService:            adminService,
@@ -86,6 +88,7 @@ func NewAccountHandler(
 		sessionLimitCache:       sessionLimitCache,
 		tokenCacheInvalidator:   tokenCacheInvalidator,
 		proxyAssignmentService:  proxyAssignmentService,
+		billingCacheService:     billingCacheService,
 	}
 }
 
@@ -1752,4 +1755,152 @@ func (h *AccountHandler) AutoAssignProxy(c *gin.Context) {
 	}
 
 	response.Success(c, dto.AccountFromService(updated))
+}
+
+// SetSubscriptionConfigRequest represents the request to set account subscription config
+type SetSubscriptionConfigRequest struct {
+	Enabled            bool      `json:"enabled"`
+	DailyLimitUSD      float64   `json:"daily_limit_usd"`
+	SubscriptionPeriod string    `json:"subscription_period" binding:"omitempty,oneof=daily weekly monthly"`
+	SubscriptionStart  time.Time `json:"subscription_start"`
+	SubscriptionEnd    time.Time `json:"subscription_end"`
+}
+
+// SetSubscriptionConfig sets the subscription configuration for an account
+// POST /admin/accounts/:id/subscription
+func (h *AccountHandler) SetSubscriptionConfig(c *gin.Context) {
+	ctx := c.Request.Context()
+	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid account ID")
+		return
+	}
+
+	var req SetSubscriptionConfigRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Validate dates
+	if req.Enabled {
+		if req.DailyLimitUSD <= 0 {
+			response.Error(c, http.StatusBadRequest, "daily_limit_usd must be greater than 0 when enabled")
+			return
+		}
+		if req.SubscriptionEnd.Before(req.SubscriptionStart) {
+			response.Error(c, http.StatusBadRequest, "subscription_end must be after subscription_start")
+			return
+		}
+		if req.SubscriptionPeriod == "" {
+			req.SubscriptionPeriod = "monthly" // default
+		}
+	}
+
+	// Get account
+	account, err := h.adminService.GetAccount(ctx, accountID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	// Update extra field
+	if account.Extra == nil {
+		account.Extra = make(map[string]any)
+	}
+
+	subscriptionConfig := map[string]any{
+		"enabled":             req.Enabled,
+		"daily_limit_usd":     req.DailyLimitUSD,
+		"subscription_period": req.SubscriptionPeriod,
+		"subscription_start":  req.SubscriptionStart.Format(time.RFC3339),
+		"subscription_end":    req.SubscriptionEnd.Format(time.RFC3339),
+	}
+	account.Extra["subscription_config"] = subscriptionConfig
+
+	// Update account
+	updated, err := h.adminService.UpdateAccount(ctx, accountID, &service.UpdateAccountInput{
+		Extra: account.Extra,
+	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, dto.AccountFromService(updated))
+}
+
+// GetSubscriptionConfig gets the subscription configuration for an account
+// GET /admin/accounts/:id/subscription
+func (h *AccountHandler) GetSubscriptionConfig(c *gin.Context) {
+	ctx := c.Request.Context()
+	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid account ID")
+		return
+	}
+
+	account, err := h.adminService.GetAccount(ctx, accountID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	// Convert to service.Account to use GetSubscriptionConfig method
+	svcAccount := &service.Account{
+		ID:    account.ID,
+		Extra: account.Extra,
+	}
+
+	cfg := svcAccount.GetSubscriptionConfig()
+	if cfg == nil {
+		response.Success(c, gin.H{
+			"enabled": false,
+		})
+		return
+	}
+
+	response.Success(c, gin.H{
+		"enabled":             cfg.Enabled,
+		"daily_limit_usd":     cfg.DailyLimitUSD,
+		"subscription_period": cfg.SubscriptionPeriod,
+		"subscription_start":  cfg.SubscriptionStart,
+		"subscription_end":    cfg.SubscriptionEnd,
+	})
+}
+
+// GetDailyUsage gets the daily usage for an account
+// GET /admin/accounts/:id/daily-usage?date=2026-03-01
+func (h *AccountHandler) GetDailyUsage(c *gin.Context) {
+	ctx := c.Request.Context()
+	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid account ID")
+		return
+	}
+
+	date := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
+
+	// Validate date format
+	if _, err := time.Parse("2006-01-02", date); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid date format, expected YYYY-MM-DD")
+		return
+	}
+
+	if h.billingCacheService == nil {
+		response.Error(c, http.StatusServiceUnavailable, "billing cache service not available")
+		return
+	}
+
+	usage, err := h.billingCacheService.GetAccountDailyUsage(ctx, accountID, date)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, fmt.Sprintf("failed to get daily usage: %v", err))
+		return
+	}
+
+	response.Success(c, gin.H{
+		"account_id": accountID,
+		"date":       date,
+		"usage_usd":  usage,
+	})
 }
