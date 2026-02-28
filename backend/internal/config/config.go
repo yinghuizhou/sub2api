@@ -77,6 +77,13 @@ type Config struct {
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
 	Referral                ReferralConfig                `mapstructure:"referral"`
 	Payment                 PaymentConfig                 `mapstructure:"payment"`
+	VpnAgent                VpnAgentConfig                `mapstructure:"vpn_agent"`
+}
+
+// VpnAgentConfig configures the VPN Agent integration.
+type VpnAgentConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	URL     string `mapstructure:"url"`
 }
 
 type LogConfig struct {
@@ -1308,6 +1315,9 @@ func setDefaults() {
 	viper.SetDefault("subscription_maintenance.worker_count", 2)
 	viper.SetDefault("subscription_maintenance.queue_size", 1024)
 
+	// VPN Agent
+	viper.SetDefault("vpn_agent.enabled", false)
+	viper.SetDefault("vpn_agent.url", "http://host.docker.internal:9090")
 }
 
 func (c *Config) Validate() error {
