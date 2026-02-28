@@ -27,6 +27,7 @@ type AdminHandlers struct {
 	ErrorPassthrough *admin.ErrorPassthroughHandler
 	Vendor           *admin.VendorHandler
 	Payment          *admin.PaymentHandler
+	Vpn              *admin.VpnHandler
 }
 
 // Handlers contains all HTTP handlers

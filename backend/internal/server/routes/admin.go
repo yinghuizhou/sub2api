@@ -78,6 +78,24 @@ func RegisterAdminRoutes(
 
 		// 支付管理
 		registerAdminPaymentRoutes(admin, h)
+
+		// VPN 管理
+		registerVpnRoutes(admin, h)
+	}
+}
+
+func registerVpnRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	vpn := admin.Group("/vpn")
+	{
+		vpn.GET("/tunnels", h.Admin.Vpn.ListTunnels)
+		vpn.POST("/tunnels", h.Admin.Vpn.CreateTunnel)
+		vpn.DELETE("/tunnels/:name", h.Admin.Vpn.RemoveTunnel)
+		vpn.POST("/tunnels/:name/restart", h.Admin.Vpn.RestartTunnel)
+		vpn.GET("/tunnels/:name/status", h.Admin.Vpn.GetTunnelStatus)
+		vpn.POST("/configs/upload", h.Admin.Vpn.UploadConfigs)
+		vpn.GET("/configs", h.Admin.Vpn.ListConfigs)
+		vpn.DELETE("/configs/:name", h.Admin.Vpn.DeleteConfig)
+		vpn.GET("/health", h.Admin.Vpn.GetAgentHealth)
 	}
 }
 
