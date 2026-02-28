@@ -73,7 +73,7 @@
           <div v-else-if="configs.length === 0" class="py-8">
             <EmptyState title="暂无配置文件" description="上传 .ovpn 配置文件以开始使用" />
           </div>
-          <div v-else class="divide-y divide-gray-100 dark:divide-dark-700">
+          <div v-else class="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto dark:divide-dark-700">
             <div v-for="c in configs" :key="c.name"
               class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-dark-800/50">
               <Icon name="document" size="sm" class="shrink-0 text-gray-400" />
