@@ -1814,6 +1814,8 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 					"status", acc.Status,
 					"tls_fingerprint", acc.IsTLSFingerprintEnabled())
 			}
+			// 过滤超限账户
+			accounts = s.filterAccountsByDailyLimit(ctx, accounts, groupID, platform)
 		}
 		return accounts, useMixed, err
 	}
@@ -1855,6 +1857,8 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 				"status", acc.Status,
 				"tls_fingerprint", acc.IsTLSFingerprintEnabled())
 		}
+		// 过滤超限账户
+		filtered = s.filterAccountsByDailyLimit(ctx, filtered, groupID, platform)
 		return filtered, useMixed, nil
 	}
 
@@ -1888,7 +1892,71 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 			"status", acc.Status,
 			"tls_fingerprint", acc.IsTLSFingerprintEnabled())
 	}
+	// 过滤超限账户
+	accounts = s.filterAccountsByDailyLimit(ctx, accounts, groupID, platform)
 	return accounts, useMixed, nil
+}
+
+// filterAccountsByDailyLimit 过滤超出日用量限额的账户
+func (s *GatewayService) filterAccountsByDailyLimit(ctx context.Context, accounts []Account, groupID *int64, platform string) []Account {
+	if s.billingCacheService == nil || len(accounts) == 0 {
+		return accounts
+	}
+
+	today := time.Now().Format("2006-01-02")
+
+	// 收集需要检查日限额的账户
+	accountsWithLimit := make([]Account, 0)
+	for _, acc := range accounts {
+		if acc.HasDailyLimit() {
+			accountsWithLimit = append(accountsWithLimit, acc)
+		}
+	}
+
+	if len(accountsWithLimit) == 0 {
+		return accounts
+	}
+
+	// 批量查询日用量
+	dailyUsageMap := make(map[int64]float64)
+	for _, acc := range accountsWithLimit {
+		usage, err := s.billingCacheService.GetAccountDailyUsage(ctx, acc.ID, today)
+		if err == nil {
+			dailyUsageMap[acc.ID] = usage
+		}
+	}
+
+	// 过滤超限账户
+	filtered := make([]Account, 0, len(accounts))
+	filteredCount := 0
+	for _, acc := range accounts {
+		if acc.HasDailyLimit() {
+			cfg := acc.GetSubscriptionConfig()
+			usage := dailyUsageMap[acc.ID]
+			if usage >= cfg.DailyLimitUSD {
+				slog.Debug("account_daily_limit_exceeded",
+					"account_id", acc.ID,
+					"name", acc.Name,
+					"usage", usage,
+					"limit", cfg.DailyLimitUSD,
+					"date", today)
+				filteredCount++
+				continue
+			}
+		}
+		filtered = append(filtered, acc)
+	}
+
+	if filteredCount > 0 {
+		slog.Debug("account_scheduling_daily_limit_filter",
+			"group_id", derefGroupID(groupID),
+			"platform", platform,
+			"before_count", len(accounts),
+			"after_count", len(filtered),
+			"filtered_count", filteredCount)
+	}
+
+	return filtered
 }
 
 // IsSingleAntigravityAccountGroup 检查指定分组是否只有一个 antigravity 平台的可调度账号。
@@ -5930,6 +5998,19 @@ func (s *GatewayService) RecordUsage(ctx context.Context, input *RecordUsageInpu
 		}
 	}
 
+	// 更新账户日用量（如果账户启用了订阅限额）
+	if account.HasDailyLimit() && s.billingCacheService != nil {
+		today := time.Now().Format("2006-01-02")
+		if err := s.billingCacheService.IncrementAccountDailyUsage(ctx, account.ID, today, cost.TotalCost); err != nil {
+			slog.Warn("failed to increment account daily usage",
+				"account_id", account.ID,
+				"date", today,
+				"cost", cost.TotalCost,
+				"error", err)
+			// 不阻塞主流程，仅记录日志
+		}
+	}
+
 	// Schedule batch update for account last_used_at
 	s.deferredService.ScheduleLastUsedUpdate(account.ID)
 
@@ -6116,6 +6197,19 @@ func (s *GatewayService) RecordUsageWithLongContext(ctx context.Context, input *
 					logger.LegacyPrintf("service.gateway", "Add API key quota used failed: %v", err)
 				}
 			}
+		}
+	}
+
+	// 更新账户日用量（如果账户启用了订阅限额）
+	if account.HasDailyLimit() && s.billingCacheService != nil {
+		today := time.Now().Format("2006-01-02")
+		if err := s.billingCacheService.IncrementAccountDailyUsage(ctx, account.ID, today, cost.TotalCost); err != nil {
+			slog.Warn("failed to increment account daily usage",
+				"account_id", account.ID,
+				"date", today,
+				"cost", cost.TotalCost,
+				"error", err)
+			// 不阻塞主流程，仅记录日志
 		}
 	}
 

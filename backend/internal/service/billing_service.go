@@ -24,6 +24,11 @@ type BillingCache interface {
 	SetSubscriptionCache(ctx context.Context, userID, groupID int64, data *SubscriptionCacheData) error
 	UpdateSubscriptionUsage(ctx context.Context, userID, groupID int64, cost float64) error
 	InvalidateSubscriptionCache(ctx context.Context, userID, groupID int64) error
+
+	// Account daily usage operations
+	GetAccountDailyUsage(ctx context.Context, accountID int64, date string) (float64, error)
+	IncrementAccountDailyUsage(ctx context.Context, accountID int64, date string, cost float64) error
+	ResetAccountDailyUsage(ctx context.Context, accountID int64, date string) error
 }
 
 // ModelPricing 模型价格配置（per-token价格，与LiteLLM格式一致）

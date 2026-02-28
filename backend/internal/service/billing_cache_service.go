@@ -441,6 +441,22 @@ func (s *BillingCacheService) InvalidateSubscription(ctx context.Context, userID
 	return nil
 }
 
+// IncrementAccountDailyUsage 增加账户日用量
+func (s *BillingCacheService) IncrementAccountDailyUsage(ctx context.Context, accountID int64, date string, cost float64) error {
+	if s.cache == nil {
+		return nil
+	}
+	return s.cache.IncrementAccountDailyUsage(ctx, accountID, date, cost)
+}
+
+// GetAccountDailyUsage 获取账户日用量
+func (s *BillingCacheService) GetAccountDailyUsage(ctx context.Context, accountID int64, date string) (float64, error) {
+	if s.cache == nil {
+		return 0, nil
+	}
+	return s.cache.GetAccountDailyUsage(ctx, accountID, date)
+}
+
 // ============================================
 // 统一检查方法
 // ============================================

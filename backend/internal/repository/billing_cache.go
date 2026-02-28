@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	billingBalanceKeyPrefix = "billing:balance:"
-	billingSubKeyPrefix     = "billing:sub:"
-	billingCacheTTL         = 5 * time.Minute
-	billingCacheJitter      = 30 * time.Second
+	billingBalanceKeyPrefix      = "billing:balance:"
+	billingSubKeyPrefix          = "billing:sub:"
+	billingAccountDailyKeyPrefix = "billing:account_daily:"
+	billingCacheTTL              = 5 * time.Minute
+	billingCacheJitter           = 30 * time.Second
 )
 
 // jitteredTTL 返回带随机抖动的 TTL，防止缓存雪崩
@@ -38,6 +39,13 @@ func billingBalanceKey(userID int64) string {
 // billingSubKey generates the Redis key for subscription cache.
 func billingSubKey(userID, groupID int64) string {
 	return fmt.Sprintf("%s%d:%d", billingSubKeyPrefix, userID, groupID)
+}
+
+// billingAccountDailyKey generates the Redis key for account daily usage.
+// Format: billing:account_daily:{accountID}:{date}
+// Example: billing:account_daily:123:2026-03-01
+func billingAccountDailyKey(accountID int64, date string) string {
+	return fmt.Sprintf("%s%d:%s", billingAccountDailyKeyPrefix, accountID, date)
 }
 
 const (
@@ -72,6 +80,24 @@ var (
 		redis.call('HINCRBYFLOAT', KEYS[1], 'monthly_usage', cost)
 		redis.call('EXPIRE', KEYS[1], ARGV[2])
 		return 1
+	`)
+
+	incrementAccountDailyUsageScript = redis.NewScript(`
+		local key = KEYS[1]
+		local cost = tonumber(ARGV[1])
+		local ttl = tonumber(ARGV[2])
+
+		local current = redis.call('GET', key)
+		if current == false then
+			current = 0
+		else
+			current = tonumber(current)
+		end
+
+		local newVal = current + cost
+		redis.call('SET', key, newVal)
+		redis.call('EXPIRE', key, ttl)
+		return newVal
 	`)
 )
 
@@ -193,5 +219,37 @@ func (c *billingCache) UpdateSubscriptionUsage(ctx context.Context, userID, grou
 
 func (c *billingCache) InvalidateSubscriptionCache(ctx context.Context, userID, groupID int64) error {
 	key := billingSubKey(userID, groupID)
+	return c.rdb.Del(ctx, key).Err()
+}
+
+// GetAccountDailyUsage 获取账户指定日期的用量
+func (c *billingCache) GetAccountDailyUsage(ctx context.Context, accountID int64, date string) (float64, error) {
+	key := billingAccountDailyKey(accountID, date)
+	val, err := c.rdb.Get(ctx, key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return 0, nil // Key 不存在返回 0
+		}
+		return 0, err
+	}
+	return strconv.ParseFloat(val, 64)
+}
+
+// IncrementAccountDailyUsage 原子增加账户日用量
+func (c *billingCache) IncrementAccountDailyUsage(ctx context.Context, accountID int64, date string, cost float64) error {
+	key := billingAccountDailyKey(accountID, date)
+	ttl := 48 * time.Hour // 保留 48 小时
+
+	_, err := incrementAccountDailyUsageScript.Run(ctx, c.rdb, []string{key}, cost, int(ttl.Seconds())).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		log.Printf("Warning: increment account daily usage failed for account %d date %s: %v", accountID, date, err)
+		return err
+	}
+	return nil
+}
+
+// ResetAccountDailyUsage 重置账户日用量（用于手动重置或测试）
+func (c *billingCache) ResetAccountDailyUsage(ctx context.Context, accountID int64, date string) error {
+	key := billingAccountDailyKey(accountID, date)
 	return c.rdb.Del(ctx, key).Err()
 }
