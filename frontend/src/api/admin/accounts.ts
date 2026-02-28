@@ -19,6 +19,12 @@ import type {
   CheckMixedChannelRequest,
   CheckMixedChannelResponse
 } from '@/types'
+import type {
+  SubscriptionConfig,
+  DailyUsage,
+  BatchSubscriptionConfigRequest,
+  ExportUsageReportRequest
+} from '@/types/subscription'
 
 /**
  * List all accounts with pagination
@@ -541,6 +547,84 @@ export async function validateSoraSessionToken(
   return data
 }
 
+/**
+ * 获取账户订阅配置
+ */
+export async function getSubscriptionConfig(
+  accountId: number
+): Promise<SubscriptionConfig | null> {
+  const { data } = await apiClient.get(
+    `/admin/accounts/${accountId}/subscription`
+  )
+  return data.data
+}
+
+/**
+ * 设置账户订阅配置
+ */
+export async function setSubscriptionConfig(
+  accountId: number,
+  config: SubscriptionConfig
+): Promise<void> {
+  await apiClient.post(
+    `/admin/accounts/${accountId}/subscription`,
+    config
+  )
+}
+
+/**
+ * 获取账户日用量
+ */
+export async function getDailyUsage(
+  accountId: number,
+  date?: string
+): Promise<DailyUsage> {
+  const { data } = await apiClient.get(
+    `/admin/accounts/${accountId}/daily-usage`,
+    { params: { date } }
+  )
+  return data.data
+}
+
+/**
+ * 重置账户日用量
+ */
+export async function resetDailyUsage(
+  accountId: number,
+  date: string
+): Promise<void> {
+  await apiClient.delete(
+    `/admin/accounts/${accountId}/daily-usage`,
+    { params: { date } }
+  )
+}
+
+/**
+ * 批量设置订阅配置
+ */
+export async function batchSetSubscriptionConfig(
+  request: BatchSubscriptionConfigRequest
+): Promise<void> {
+  await apiClient.post(
+    '/admin/accounts/batch-subscription',
+    request
+  )
+}
+
+/**
+ * 导出用量报表
+ */
+export async function exportUsageReport(
+  request: ExportUsageReportRequest
+): Promise<Blob> {
+  const { data } = await apiClient.post(
+    '/admin/accounts/export-usage',
+    request,
+    { responseType: 'blob' }
+  )
+  return data
+}
+
 export const accountsAPI = {
   list,
   listWithEtag,
@@ -572,7 +656,13 @@ export const accountsAPI = {
   syncFromCrs,
   exportData,
   importData,
-  getAntigravityDefaultModelMapping
+  getAntigravityDefaultModelMapping,
+  getSubscriptionConfig,
+  setSubscriptionConfig,
+  getDailyUsage,
+  resetDailyUsage,
+  batchSetSubscriptionConfig,
+  exportUsageReport
 }
 
 export default accountsAPI
