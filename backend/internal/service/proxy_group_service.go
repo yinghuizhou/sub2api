@@ -95,7 +95,7 @@ func (s *ProxyGroupService) selectFromGroup(ctx context.Context, groupName strin
 			"account_id", accountID, "proxy_id", assignment.ProxyID, "group", groupName)
 	}
 
-	// 2. No assignment → pick least-loaded healthy proxy
+	// 2. No assignment → pick best proxy (priority + load balancing)
 	healthy := make([]Proxy, 0, len(proxies))
 	for i := range proxies {
 		if proxies[i].IsHealthy() {
@@ -108,23 +108,13 @@ func (s *ProxyGroupService) selectFromGroup(ctx context.Context, groupName strin
 		healthy = proxies
 	}
 
-	// Get current assignment counts per proxy (scoped to this group)
 	counts, err := s.proxyRepo.CountAssignmentsByProxyInGroup(ctx, groupName)
 	if err != nil {
 		slog.Error("failed to count assignments", "error", err, "group", groupName)
 		counts = make(map[int64]int64)
 	}
 
-	// Pick the proxy with fewest assignments
-	var best *Proxy
-	var bestCount int64 = -1
-	for i := range healthy {
-		c := counts[healthy[i].ID]
-		if bestCount < 0 || c < bestCount {
-			bestCount = c
-			best = &healthy[i]
-		}
-	}
+	best := selectBestProxy(healthy, counts)
 
 	if best == nil {
 		return nil
@@ -296,4 +286,72 @@ func (s *ProxyGroupService) ListGroupNames(ctx context.Context) ([]string, error
 		return nil, fmt.Errorf("list group names: %w", err)
 	}
 	return names, nil
+}
+
+// MigrateAssignments reassigns all accounts from a removed proxy to the best available
+// proxy in the same group. Prefers same proxy_type for IP consistency.
+func (s *ProxyGroupService) MigrateAssignments(ctx context.Context, removedProxyID int64, groupName, proxyType string) (int, error) {
+	// Get all assignments in the group
+	assignments, err := s.proxyRepo.ListAssignmentsByGroup(ctx, groupName)
+	if err != nil {
+		return 0, fmt.Errorf("list assignments: %w", err)
+	}
+
+	// Filter to only assignments for the removed proxy
+	var toMigrate []ProxyAssignment
+	for _, a := range assignments {
+		if a.ProxyID == removedProxyID {
+			toMigrate = append(toMigrate, a)
+		}
+	}
+
+	if len(toMigrate) == 0 {
+		return 0, nil
+	}
+
+	// Get remaining proxies in group
+	proxies := s.getGroupProxies(ctx, groupName)
+	if len(proxies) == 0 {
+		return 0, fmt.Errorf("no remaining proxies in group %q", groupName)
+	}
+
+	// Get assignment counts
+	counts, err := s.proxyRepo.CountAssignmentsByProxyInGroup(ctx, groupName)
+	if err != nil {
+		counts = make(map[int64]int64)
+	}
+
+	// For each assignment, pick best replacement
+	migrated := 0
+	for _, a := range toMigrate {
+		replacement := selectBestProxyForMigration(proxies, proxyType, counts)
+		if replacement == nil {
+			slog.Error("no replacement proxy available",
+				"account_id", a.AccountID, "group", groupName)
+			continue
+		}
+
+		if err := s.proxyRepo.SetAssignment(ctx, a.AccountID, replacement.ID, groupName, "migration"); err != nil {
+			slog.Error("failed to migrate assignment",
+				"account_id", a.AccountID, "from_proxy", removedProxyID,
+				"to_proxy", replacement.ID, "error", err)
+			continue
+		}
+
+		// Update count to keep load balanced
+		counts[replacement.ID]++
+		migrated++
+
+		slog.Info("migrated proxy assignment",
+			"account_id", a.AccountID,
+			"from_proxy", removedProxyID,
+			"to_proxy", replacement.ID,
+			"to_name", replacement.Name,
+		)
+	}
+
+	// Invalidate caches
+	s.InvalidateGroupCache(groupName)
+
+	return migrated, nil
 }
