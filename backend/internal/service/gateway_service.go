@@ -2435,9 +2435,20 @@ func selectByLRU(accounts []accountWithLoad, preferOAuth bool) *accountWithLoad 
 func sortAccountsByPriorityAndLastUsed(accounts []*Account, preferOAuth bool) {
 	sort.SliceStable(accounts, func(i, j int) bool {
 		a, b := accounts[i], accounts[j]
+
+		// 1. 有 Vendor 的优先于无 Vendor 的
+		aHasVendor := a.VendorID != nil
+		bHasVendor := b.VendorID != nil
+		if aHasVendor != bHasVendor {
+			return aHasVendor
+		}
+
+		// 2. 账户优先级
 		if a.Priority != b.Priority {
 			return a.Priority < b.Priority
 		}
+
+		// 3. 最后使用时间
 		switch {
 		case a.LastUsedAt == nil && b.LastUsedAt != nil:
 			return true
@@ -2569,9 +2580,20 @@ func (s *GatewayService) sortCandidatesForFallback(accounts []*Account, preferOA
 func sortAccountsByPriorityOnly(accounts []*Account, preferOAuth bool) {
 	sort.SliceStable(accounts, func(i, j int) bool {
 		a, b := accounts[i], accounts[j]
+
+		// 1. 有 Vendor 的优先于无 Vendor 的
+		aHasVendor := a.VendorID != nil
+		bHasVendor := b.VendorID != nil
+		if aHasVendor != bHasVendor {
+			return aHasVendor
+		}
+
+		// 2. 账户优先级
 		if a.Priority != b.Priority {
 			return a.Priority < b.Priority
 		}
+
+		// 3. OAuth 偏好
 		if preferOAuth && a.Type != b.Type {
 			return a.Type == AccountTypeOAuth
 		}
