@@ -3,6 +3,43 @@
     <TablePageLayout>
       <template #filters>
         <div class="flex flex-wrap items-center gap-3">
+          <!-- Vendor Type Filter -->
+          <div class="flex gap-2">
+            <button
+              @click="filterType = 'all'"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                filterType === 'all'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600'
+              ]"
+            >
+              {{ t('admin.vendors.filterAll') }}
+            </button>
+            <button
+              @click="filterType = 'official'"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                filterType === 'official'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600'
+              ]"
+            >
+              {{ t('admin.vendors.filterOfficial') }}
+            </button>
+            <button
+              @click="filterType = 'reseller'"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                filterType === 'reseller'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600'
+              ]"
+            >
+              {{ t('admin.vendors.filterReseller') }}
+            </button>
+          </div>
+
           <div class="relative w-full sm:w-64">
             <Icon name="search" size="md" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input v-model="searchQuery" type="text" placeholder="搜索供应商..." class="input pl-10" @input="handleSearch" />
@@ -25,9 +62,12 @@
       </template>
 
       <template #table>
-        <DataTable :columns="columns" :data="vendors" :loading="loading">
+        <DataTable :columns="columns" :data="filteredVendors" :loading="loading">
           <template #cell-name="{ value }">
             <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
+          </template>
+          <template #cell-vendor_type="{ row }">
+            <VendorTypeBadge :vendor-type="row.vendor_type" />
           </template>
           <template #cell-api_format="{ value }">
             <span :class="['badge', value === 'anthropic' ? 'badge-primary' : 'badge-gray']">
@@ -266,6 +306,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { vendorApi, type Vendor, type CreateVendorRequest, type VendorProbeResult } from '@/api/vendor'
 import type { Column } from '@/components/common/types'
@@ -278,11 +319,16 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
+import VendorTypeBadge from '@/components/admin/vendor/VendorTypeBadge.vue'
 
+const { t } = useI18n()
 const appStore = useAppStore()
+
+const filterType = ref<'all' | 'official' | 'reseller'>('all')
 
 const columns = computed<Column[]>(() => [
   { key: 'name', label: '名称', sortable: true },
+  { key: 'vendor_type', label: t('admin.vendors.vendorType'), sortable: true },
   { key: 'api_format', label: 'API 格式', sortable: true },
   { key: 'billing_type', label: '计费模式', sortable: false },
   { key: 'balance', label: '余额/额度', sortable: false },
@@ -330,6 +376,12 @@ const loading = ref(false)
 const searchQuery = ref('')
 const filters = reactive({ status: '', api_format: '' })
 const pagination = reactive({ page: 1, page_size: 20, total: 0 })
+
+const filteredVendors = computed(() => {
+  if (filterType.value === 'all') return vendors.value
+  return vendors.value.filter(v => v.vendor_type === filterType.value)
+})
+
 const showModal = ref(false)
 const showDeleteDialog = ref(false)
 const submitting = ref(false)
@@ -344,7 +396,7 @@ const detectForm = reactive({ url: '', api_key: '' })
 const detectResult = ref<VendorProbeResult | null>(null)
 
 const defaultForm = (): CreateVendorRequest & { status?: string; health_check_enabled: boolean; health_check_interval: number; health_check_model: string; balance_alert_enabled: boolean; balance_alert_threshold?: number } => ({
-  name: '', description: '', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
+  name: '', description: '', vendor_type: 'official', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
   api_path_override: '', billing_type: 'token', cost_per_1k_input: 0, cost_per_1k_output: 0,
   total_quota_usd: 0, balance_usd: 0, expires_at: '', health_check_enabled: false,
   health_check_interval: 300, health_check_model: 'claude-sonnet-4-20250514',
