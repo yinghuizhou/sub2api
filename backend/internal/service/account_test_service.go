@@ -57,6 +57,7 @@ type TestEvent struct {
 // AccountTestService handles account testing operations
 type AccountTestService struct {
 	accountRepo               AccountRepository
+	vendorRepo                VendorRepository
 	geminiTokenProvider       *GeminiTokenProvider
 	antigravityGatewayService *AntigravityGatewayService
 	httpUpstream              HTTPUpstream
@@ -71,6 +72,7 @@ const defaultSoraTestCooldown = 10 * time.Second
 // NewAccountTestService creates a new AccountTestService
 func NewAccountTestService(
 	accountRepo AccountRepository,
+	vendorRepo VendorRepository,
 	geminiTokenProvider *GeminiTokenProvider,
 	antigravityGatewayService *AntigravityGatewayService,
 	httpUpstream HTTPUpstream,
@@ -78,6 +80,7 @@ func NewAccountTestService(
 ) *AccountTestService {
 	return &AccountTestService{
 		accountRepo:               accountRepo,
+		vendorRepo:                vendorRepo,
 		geminiTokenProvider:       geminiTokenProvider,
 		antigravityGatewayService: antigravityGatewayService,
 		httpUpstream:              httpUpstream,
@@ -226,20 +229,68 @@ func (s *AccountTestService) testClaudeAccountConnection(c *gin.Context, account
 	} else if account.Type == "apikey" {
 		// API Key - use x-api-key header
 		useBearer = false
-		authToken = account.GetCredential("api_key")
-		if authToken == "" {
-			return s.sendErrorAndEnd(c, "No API key available")
-		}
 
-		baseURL := account.GetBaseURL()
-		if baseURL == "" {
-			baseURL = "https://api.anthropic.com"
+		// Check if this is a vendor proxy account
+		if account.IsVendorProxy && account.VendorProxyID != nil {
+			// Get vendor configuration
+			vendor, err := s.vendorRepo.GetByID(ctx, *account.VendorProxyID)
+			if err != nil {
+				return s.sendErrorAndEnd(c, fmt.Sprintf("Failed to get vendor: %s", err.Error()))
+			}
+
+			// Use vendor's base URL
+			baseURL := vendor.BaseURL
+			normalizedBaseURL, err := s.validateUpstreamBaseURL(baseURL)
+			if err != nil {
+				return s.sendErrorAndEnd(c, fmt.Sprintf("Invalid vendor base URL: %s", err.Error()))
+			}
+			apiURL = strings.TrimSuffix(normalizedBaseURL, "/") + "/v1/messages"
+
+			// Get auth token from vendor
+			// Priority: extra_headers > reseller_api_key
+			authToken = ""
+			for k, v := range vendor.ExtraHeaders {
+				lowerKey := strings.ToLower(k)
+				if lowerKey == "x-api-key" {
+					authToken = v
+					break
+				} else if lowerKey == "authorization" && strings.HasPrefix(v, "Bearer ") {
+					// For Bearer token, extract the token part
+					authToken = strings.TrimPrefix(v, "Bearer ")
+					useBearer = true
+					break
+				}
+			}
+
+			// If no auth in extra_headers, try reseller_api_key
+			if authToken == "" && vendor.VendorType == "reseller" && vendor.ResellerAPIKey != nil && *vendor.ResellerAPIKey != "" {
+				authToken = *vendor.ResellerAPIKey
+				// Determine auth type based on API format
+				if vendor.APIFormat == VendorAPIFormatOpenAI {
+					useBearer = true
+				}
+			}
+
+			if authToken == "" {
+				return s.sendErrorAndEnd(c, "No authentication configured for vendor")
+			}
+		} else {
+			// Regular API key account
+			authToken = account.GetCredential("api_key")
+			if authToken == "" {
+				return s.sendErrorAndEnd(c, "No API key available")
+			}
+
+			baseURL := account.GetBaseURL()
+			if baseURL == "" {
+				baseURL = "https://api.anthropic.com"
+			}
+			normalizedBaseURL, err := s.validateUpstreamBaseURL(baseURL)
+			if err != nil {
+				return s.sendErrorAndEnd(c, fmt.Sprintf("Invalid base URL: %s", err.Error()))
+			}
+			apiURL = strings.TrimSuffix(normalizedBaseURL, "/") + "/v1/messages"
 		}
-		normalizedBaseURL, err := s.validateUpstreamBaseURL(baseURL)
-		if err != nil {
-			return s.sendErrorAndEnd(c, fmt.Sprintf("Invalid base URL: %s", err.Error()))
-		}
-		apiURL = strings.TrimSuffix(normalizedBaseURL, "/") + "/v1/messages"
 	} else {
 		return s.sendErrorAndEnd(c, fmt.Sprintf("Unsupported account type: %s", account.Type))
 	}
