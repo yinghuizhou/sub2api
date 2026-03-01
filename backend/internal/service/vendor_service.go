@@ -131,6 +131,24 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "reseller_platform is required for reseller vendor")
 	}
 
+	// 验证 reseller 类型不应使用官方 API 地址
+	if vendorType == "reseller" {
+		baseURL := strings.ToLower(strings.TrimSpace(input.BaseURL))
+		officialDomains := []string{
+			"api.anthropic.com",
+			"api.openai.com",
+			"generativelanguage.googleapis.com",
+		}
+		for _, domain := range officialDomains {
+			if strings.Contains(baseURL, domain) {
+				return nil, infraerrors.BadRequest(
+					"VENDOR_INVALID_CONFIG",
+					"reseller vendor should not use official API domain ("+domain+"). Please use your reseller proxy URL instead.",
+				)
+			}
+		}
+	}
+
 	validAPIFormats := map[string]bool{VendorAPIFormatAnthropic: true, VendorAPIFormatOpenAI: true}
 	if !validAPIFormats[input.APIFormat] {
 		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor api_format must be 'anthropic' or 'openai'")
@@ -272,6 +290,24 @@ func (s *VendorService) Update(ctx context.Context, id int64, input *UpdateVendo
 	}
 	if input.AutoPurchaseConfig != nil {
 		vendor.AutoPurchaseConfig = input.AutoPurchaseConfig
+	}
+
+	// 验证 reseller 类型不应使用官方 API 地址
+	if vendor.VendorType == "reseller" {
+		baseURL := strings.ToLower(strings.TrimSpace(vendor.BaseURL))
+		officialDomains := []string{
+			"api.anthropic.com",
+			"api.openai.com",
+			"generativelanguage.googleapis.com",
+		}
+		for _, domain := range officialDomains {
+			if strings.Contains(baseURL, domain) {
+				return nil, infraerrors.BadRequest(
+					"VENDOR_INVALID_CONFIG",
+					"reseller vendor should not use official API domain ("+domain+"). Please use your reseller proxy URL instead.",
+				)
+			}
+		}
 	}
 
 	if err := s.vendorRepo.Update(ctx, vendor); err != nil {
