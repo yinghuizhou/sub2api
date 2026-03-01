@@ -61,8 +61,8 @@ func (s *VendorProxyService) CreateProxyAccount(ctx context.Context, vendorID in
 	proxyAccount := &Account{
 		Name:          fmt.Sprintf("[Vendor] %s", vendor.Name),
 		Platform:      platform,
-		Type:          "vendor_proxy",
-		Credentials:   map[string]any{},
+		Type:          AccountTypeAPIKey,
+		Credentials:   buildVendorProxyCredentials(vendor),
 		Extra:         map[string]any{},
 		Concurrency:   vendor.Concurrency,
 		Priority:      vendor.Priority,
@@ -120,6 +120,7 @@ func (s *VendorProxyService) syncProxyAccount(ctx context.Context, account *Acco
 	account.Concurrency = vendor.Concurrency
 	account.Schedulable = vendor.Status == VendorStatusActive
 	account.Status = vendorStatusToAccountStatus(vendor.Status)
+	account.Credentials = buildVendorProxyCredentials(vendor)
 
 	if err := s.accountRepo.Update(ctx, account); err != nil {
 		return fmt.Errorf("sync vendor proxy account failed: %w", err)
@@ -144,4 +145,24 @@ func vendorStatusToAccountStatus(vendorStatus string) string {
 	default:
 		return StatusDisabled
 	}
+}
+
+// buildVendorProxyCredentials 从 Vendor 构建代理账号的 credentials
+// 根据 Vendor 的 auth_type 将认证信息放入 credentials 中
+func buildVendorProxyCredentials(vendor *Vendor) map[string]any {
+	creds := map[string]any{}
+	apiKey := ""
+	if vendor.ResellerAPIKey != nil {
+		apiKey = *vendor.ResellerAPIKey
+	}
+	switch vendor.AuthType {
+	case VendorAuthTypeBearer:
+		creds["api_key"] = apiKey
+	case VendorAuthTypeSession:
+		creds["api_key"] = "vendor-session"
+		creds["session_key"] = apiKey
+	default: // api_key
+		creds["api_key"] = apiKey
+	}
+	return creds
 }
