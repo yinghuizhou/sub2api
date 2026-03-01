@@ -85,6 +85,62 @@ func (_c *VendorCreate) SetNillableDescription(v *string) *VendorCreate {
 	return _c
 }
 
+// SetVendorType sets the "vendor_type" field.
+func (_c *VendorCreate) SetVendorType(v string) *VendorCreate {
+	_c.mutation.SetVendorType(v)
+	return _c
+}
+
+// SetNillableVendorType sets the "vendor_type" field if the given value is not nil.
+func (_c *VendorCreate) SetNillableVendorType(v *string) *VendorCreate {
+	if v != nil {
+		_c.SetVendorType(*v)
+	}
+	return _c
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (_c *VendorCreate) SetOfficialPlatform(v string) *VendorCreate {
+	_c.mutation.SetOfficialPlatform(v)
+	return _c
+}
+
+// SetNillableOfficialPlatform sets the "official_platform" field if the given value is not nil.
+func (_c *VendorCreate) SetNillableOfficialPlatform(v *string) *VendorCreate {
+	if v != nil {
+		_c.SetOfficialPlatform(*v)
+	}
+	return _c
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (_c *VendorCreate) SetResellerPlatform(v string) *VendorCreate {
+	_c.mutation.SetResellerPlatform(v)
+	return _c
+}
+
+// SetNillableResellerPlatform sets the "reseller_platform" field if the given value is not nil.
+func (_c *VendorCreate) SetNillableResellerPlatform(v *string) *VendorCreate {
+	if v != nil {
+		_c.SetResellerPlatform(*v)
+	}
+	return _c
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (_c *VendorCreate) SetResellerAPIKey(v string) *VendorCreate {
+	_c.mutation.SetResellerAPIKey(v)
+	return _c
+}
+
+// SetNillableResellerAPIKey sets the "reseller_api_key" field if the given value is not nil.
+func (_c *VendorCreate) SetNillableResellerAPIKey(v *string) *VendorCreate {
+	if v != nil {
+		_c.SetResellerAPIKey(*v)
+	}
+	return _c
+}
+
 // SetAPIFormat sets the "api_format" field.
 func (_c *VendorCreate) SetAPIFormat(v string) *VendorCreate {
 	_c.mutation.SetAPIFormat(v)
@@ -469,6 +525,10 @@ func (_c *VendorCreate) defaults() error {
 		v := vendor.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.VendorType(); !ok {
+		v := vendor.DefaultVendorType
+		_c.mutation.SetVendorType(v)
+	}
 	if _, ok := _c.mutation.AuthType(); !ok {
 		v := vendor.DefaultAuthType
 		_c.mutation.SetAuthType(v)
@@ -534,6 +594,29 @@ func (_c *VendorCreate) check() error {
 	if v, ok := _c.mutation.Name(); ok {
 		if err := vendor.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Vendor.name": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.VendorType(); !ok {
+		return &ValidationError{Name: "vendor_type", err: errors.New(`ent: missing required field "Vendor.vendor_type"`)}
+	}
+	if v, ok := _c.mutation.VendorType(); ok {
+		if err := vendor.VendorTypeValidator(v); err != nil {
+			return &ValidationError{Name: "vendor_type", err: fmt.Errorf(`ent: validator failed for field "Vendor.vendor_type": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.OfficialPlatform(); ok {
+		if err := vendor.OfficialPlatformValidator(v); err != nil {
+			return &ValidationError{Name: "official_platform", err: fmt.Errorf(`ent: validator failed for field "Vendor.official_platform": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.ResellerPlatform(); ok {
+		if err := vendor.ResellerPlatformValidator(v); err != nil {
+			return &ValidationError{Name: "reseller_platform", err: fmt.Errorf(`ent: validator failed for field "Vendor.reseller_platform": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.ResellerAPIKey(); ok {
+		if err := vendor.ResellerAPIKeyValidator(v); err != nil {
+			return &ValidationError{Name: "reseller_api_key", err: fmt.Errorf(`ent: validator failed for field "Vendor.reseller_api_key": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.APIFormat(); !ok {
@@ -664,6 +747,22 @@ func (_c *VendorCreate) createSpec() (*Vendor, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(vendor.FieldDescription, field.TypeString, value)
 		_node.Description = &value
+	}
+	if value, ok := _c.mutation.VendorType(); ok {
+		_spec.SetField(vendor.FieldVendorType, field.TypeString, value)
+		_node.VendorType = value
+	}
+	if value, ok := _c.mutation.OfficialPlatform(); ok {
+		_spec.SetField(vendor.FieldOfficialPlatform, field.TypeString, value)
+		_node.OfficialPlatform = &value
+	}
+	if value, ok := _c.mutation.ResellerPlatform(); ok {
+		_spec.SetField(vendor.FieldResellerPlatform, field.TypeString, value)
+		_node.ResellerPlatform = &value
+	}
+	if value, ok := _c.mutation.ResellerAPIKey(); ok {
+		_spec.SetField(vendor.FieldResellerAPIKey, field.TypeString, value)
+		_node.ResellerAPIKey = &value
 	}
 	if value, ok := _c.mutation.APIFormat(); ok {
 		_spec.SetField(vendor.FieldAPIFormat, field.TypeString, value)
@@ -890,6 +989,72 @@ func (u *VendorUpsert) UpdateDescription() *VendorUpsert {
 // ClearDescription clears the value of the "description" field.
 func (u *VendorUpsert) ClearDescription() *VendorUpsert {
 	u.SetNull(vendor.FieldDescription)
+	return u
+}
+
+// SetVendorType sets the "vendor_type" field.
+func (u *VendorUpsert) SetVendorType(v string) *VendorUpsert {
+	u.Set(vendor.FieldVendorType, v)
+	return u
+}
+
+// UpdateVendorType sets the "vendor_type" field to the value that was provided on create.
+func (u *VendorUpsert) UpdateVendorType() *VendorUpsert {
+	u.SetExcluded(vendor.FieldVendorType)
+	return u
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (u *VendorUpsert) SetOfficialPlatform(v string) *VendorUpsert {
+	u.Set(vendor.FieldOfficialPlatform, v)
+	return u
+}
+
+// UpdateOfficialPlatform sets the "official_platform" field to the value that was provided on create.
+func (u *VendorUpsert) UpdateOfficialPlatform() *VendorUpsert {
+	u.SetExcluded(vendor.FieldOfficialPlatform)
+	return u
+}
+
+// ClearOfficialPlatform clears the value of the "official_platform" field.
+func (u *VendorUpsert) ClearOfficialPlatform() *VendorUpsert {
+	u.SetNull(vendor.FieldOfficialPlatform)
+	return u
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (u *VendorUpsert) SetResellerPlatform(v string) *VendorUpsert {
+	u.Set(vendor.FieldResellerPlatform, v)
+	return u
+}
+
+// UpdateResellerPlatform sets the "reseller_platform" field to the value that was provided on create.
+func (u *VendorUpsert) UpdateResellerPlatform() *VendorUpsert {
+	u.SetExcluded(vendor.FieldResellerPlatform)
+	return u
+}
+
+// ClearResellerPlatform clears the value of the "reseller_platform" field.
+func (u *VendorUpsert) ClearResellerPlatform() *VendorUpsert {
+	u.SetNull(vendor.FieldResellerPlatform)
+	return u
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (u *VendorUpsert) SetResellerAPIKey(v string) *VendorUpsert {
+	u.Set(vendor.FieldResellerAPIKey, v)
+	return u
+}
+
+// UpdateResellerAPIKey sets the "reseller_api_key" field to the value that was provided on create.
+func (u *VendorUpsert) UpdateResellerAPIKey() *VendorUpsert {
+	u.SetExcluded(vendor.FieldResellerAPIKey)
+	return u
+}
+
+// ClearResellerAPIKey clears the value of the "reseller_api_key" field.
+func (u *VendorUpsert) ClearResellerAPIKey() *VendorUpsert {
+	u.SetNull(vendor.FieldResellerAPIKey)
 	return u
 }
 
@@ -1425,6 +1590,83 @@ func (u *VendorUpsertOne) UpdateDescription() *VendorUpsertOne {
 func (u *VendorUpsertOne) ClearDescription() *VendorUpsertOne {
 	return u.Update(func(s *VendorUpsert) {
 		s.ClearDescription()
+	})
+}
+
+// SetVendorType sets the "vendor_type" field.
+func (u *VendorUpsertOne) SetVendorType(v string) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetVendorType(v)
+	})
+}
+
+// UpdateVendorType sets the "vendor_type" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdateVendorType() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateVendorType()
+	})
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (u *VendorUpsertOne) SetOfficialPlatform(v string) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetOfficialPlatform(v)
+	})
+}
+
+// UpdateOfficialPlatform sets the "official_platform" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdateOfficialPlatform() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateOfficialPlatform()
+	})
+}
+
+// ClearOfficialPlatform clears the value of the "official_platform" field.
+func (u *VendorUpsertOne) ClearOfficialPlatform() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.ClearOfficialPlatform()
+	})
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (u *VendorUpsertOne) SetResellerPlatform(v string) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetResellerPlatform(v)
+	})
+}
+
+// UpdateResellerPlatform sets the "reseller_platform" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdateResellerPlatform() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateResellerPlatform()
+	})
+}
+
+// ClearResellerPlatform clears the value of the "reseller_platform" field.
+func (u *VendorUpsertOne) ClearResellerPlatform() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.ClearResellerPlatform()
+	})
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (u *VendorUpsertOne) SetResellerAPIKey(v string) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetResellerAPIKey(v)
+	})
+}
+
+// UpdateResellerAPIKey sets the "reseller_api_key" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdateResellerAPIKey() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateResellerAPIKey()
+	})
+}
+
+// ClearResellerAPIKey clears the value of the "reseller_api_key" field.
+func (u *VendorUpsertOne) ClearResellerAPIKey() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.ClearResellerAPIKey()
 	})
 }
 
@@ -2196,6 +2438,83 @@ func (u *VendorUpsertBulk) UpdateDescription() *VendorUpsertBulk {
 func (u *VendorUpsertBulk) ClearDescription() *VendorUpsertBulk {
 	return u.Update(func(s *VendorUpsert) {
 		s.ClearDescription()
+	})
+}
+
+// SetVendorType sets the "vendor_type" field.
+func (u *VendorUpsertBulk) SetVendorType(v string) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetVendorType(v)
+	})
+}
+
+// UpdateVendorType sets the "vendor_type" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdateVendorType() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateVendorType()
+	})
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (u *VendorUpsertBulk) SetOfficialPlatform(v string) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetOfficialPlatform(v)
+	})
+}
+
+// UpdateOfficialPlatform sets the "official_platform" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdateOfficialPlatform() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateOfficialPlatform()
+	})
+}
+
+// ClearOfficialPlatform clears the value of the "official_platform" field.
+func (u *VendorUpsertBulk) ClearOfficialPlatform() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.ClearOfficialPlatform()
+	})
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (u *VendorUpsertBulk) SetResellerPlatform(v string) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetResellerPlatform(v)
+	})
+}
+
+// UpdateResellerPlatform sets the "reseller_platform" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdateResellerPlatform() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateResellerPlatform()
+	})
+}
+
+// ClearResellerPlatform clears the value of the "reseller_platform" field.
+func (u *VendorUpsertBulk) ClearResellerPlatform() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.ClearResellerPlatform()
+	})
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (u *VendorUpsertBulk) SetResellerAPIKey(v string) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetResellerAPIKey(v)
+	})
+}
+
+// UpdateResellerAPIKey sets the "reseller_api_key" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdateResellerAPIKey() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateResellerAPIKey()
+	})
+}
+
+// ClearResellerAPIKey clears the value of the "reseller_api_key" field.
+func (u *VendorUpsertBulk) ClearResellerAPIKey() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.ClearResellerAPIKey()
 	})
 }
 

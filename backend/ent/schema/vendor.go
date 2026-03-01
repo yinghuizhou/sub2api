@@ -34,6 +34,33 @@ func (Vendor) Fields() []ent.Field {
 		field.String("name").MaxLen(100).NotEmpty(),
 		field.String("description").Optional().Nillable().SchemaType(map[string]string{dialect.Postgres: "text"}),
 
+		// 渠道类型
+		field.String("vendor_type").
+			MaxLen(20).
+			NotEmpty().
+			Default("official").
+			Comment("official | reseller"),
+
+		// 官方渠道字段
+		field.String("official_platform").
+			MaxLen(50).
+			Optional().
+			Nillable().
+			Comment("claude | openai | gemini (仅 vendor_type=official)"),
+
+		// 二次分发渠道字段
+		field.String("reseller_platform").
+			MaxLen(100).
+			Optional().
+			Nillable().
+			Comment("sub2api | newapi | other (仅 vendor_type=reseller)"),
+
+		field.String("reseller_api_key").
+			MaxLen(500).
+			Optional().
+			Nillable().
+			Comment("渠道商主 API Key (仅 vendor_type=reseller)"),
+
 		// API 配置
 		field.String("api_format").MaxLen(20).NotEmpty().Comment("anthropic | openai"),
 		field.String("base_url").MaxLen(500).NotEmpty().Comment("供应商 API 地址"),
@@ -79,6 +106,7 @@ func (Vendor) Edges() []ent.Edge {
 
 func (Vendor) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("vendor_type"),
 		index.Fields("status"),
 		index.Fields("api_format"),
 		index.Fields("billing_type"),

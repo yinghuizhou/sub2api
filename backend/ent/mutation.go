@@ -31235,6 +31235,10 @@ type VendorMutation struct {
 	deleted_at                 *time.Time
 	name                       *string
 	description                *string
+	vendor_type                *string
+	official_platform          *string
+	reseller_platform          *string
+	reseller_api_key           *string
 	api_format                 *string
 	base_url                   *string
 	auth_type                  *string
@@ -31580,6 +31584,189 @@ func (m *VendorMutation) DescriptionCleared() bool {
 func (m *VendorMutation) ResetDescription() {
 	m.description = nil
 	delete(m.clearedFields, vendor.FieldDescription)
+}
+
+// SetVendorType sets the "vendor_type" field.
+func (m *VendorMutation) SetVendorType(s string) {
+	m.vendor_type = &s
+}
+
+// VendorType returns the value of the "vendor_type" field in the mutation.
+func (m *VendorMutation) VendorType() (r string, exists bool) {
+	v := m.vendor_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVendorType returns the old "vendor_type" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldVendorType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVendorType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVendorType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVendorType: %w", err)
+	}
+	return oldValue.VendorType, nil
+}
+
+// ResetVendorType resets all changes to the "vendor_type" field.
+func (m *VendorMutation) ResetVendorType() {
+	m.vendor_type = nil
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (m *VendorMutation) SetOfficialPlatform(s string) {
+	m.official_platform = &s
+}
+
+// OfficialPlatform returns the value of the "official_platform" field in the mutation.
+func (m *VendorMutation) OfficialPlatform() (r string, exists bool) {
+	v := m.official_platform
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOfficialPlatform returns the old "official_platform" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldOfficialPlatform(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOfficialPlatform is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOfficialPlatform requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOfficialPlatform: %w", err)
+	}
+	return oldValue.OfficialPlatform, nil
+}
+
+// ClearOfficialPlatform clears the value of the "official_platform" field.
+func (m *VendorMutation) ClearOfficialPlatform() {
+	m.official_platform = nil
+	m.clearedFields[vendor.FieldOfficialPlatform] = struct{}{}
+}
+
+// OfficialPlatformCleared returns if the "official_platform" field was cleared in this mutation.
+func (m *VendorMutation) OfficialPlatformCleared() bool {
+	_, ok := m.clearedFields[vendor.FieldOfficialPlatform]
+	return ok
+}
+
+// ResetOfficialPlatform resets all changes to the "official_platform" field.
+func (m *VendorMutation) ResetOfficialPlatform() {
+	m.official_platform = nil
+	delete(m.clearedFields, vendor.FieldOfficialPlatform)
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (m *VendorMutation) SetResellerPlatform(s string) {
+	m.reseller_platform = &s
+}
+
+// ResellerPlatform returns the value of the "reseller_platform" field in the mutation.
+func (m *VendorMutation) ResellerPlatform() (r string, exists bool) {
+	v := m.reseller_platform
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResellerPlatform returns the old "reseller_platform" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldResellerPlatform(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResellerPlatform is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResellerPlatform requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResellerPlatform: %w", err)
+	}
+	return oldValue.ResellerPlatform, nil
+}
+
+// ClearResellerPlatform clears the value of the "reseller_platform" field.
+func (m *VendorMutation) ClearResellerPlatform() {
+	m.reseller_platform = nil
+	m.clearedFields[vendor.FieldResellerPlatform] = struct{}{}
+}
+
+// ResellerPlatformCleared returns if the "reseller_platform" field was cleared in this mutation.
+func (m *VendorMutation) ResellerPlatformCleared() bool {
+	_, ok := m.clearedFields[vendor.FieldResellerPlatform]
+	return ok
+}
+
+// ResetResellerPlatform resets all changes to the "reseller_platform" field.
+func (m *VendorMutation) ResetResellerPlatform() {
+	m.reseller_platform = nil
+	delete(m.clearedFields, vendor.FieldResellerPlatform)
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (m *VendorMutation) SetResellerAPIKey(s string) {
+	m.reseller_api_key = &s
+}
+
+// ResellerAPIKey returns the value of the "reseller_api_key" field in the mutation.
+func (m *VendorMutation) ResellerAPIKey() (r string, exists bool) {
+	v := m.reseller_api_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResellerAPIKey returns the old "reseller_api_key" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldResellerAPIKey(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResellerAPIKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResellerAPIKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResellerAPIKey: %w", err)
+	}
+	return oldValue.ResellerAPIKey, nil
+}
+
+// ClearResellerAPIKey clears the value of the "reseller_api_key" field.
+func (m *VendorMutation) ClearResellerAPIKey() {
+	m.reseller_api_key = nil
+	m.clearedFields[vendor.FieldResellerAPIKey] = struct{}{}
+}
+
+// ResellerAPIKeyCleared returns if the "reseller_api_key" field was cleared in this mutation.
+func (m *VendorMutation) ResellerAPIKeyCleared() bool {
+	_, ok := m.clearedFields[vendor.FieldResellerAPIKey]
+	return ok
+}
+
+// ResetResellerAPIKey resets all changes to the "reseller_api_key" field.
+func (m *VendorMutation) ResetResellerAPIKey() {
+	m.reseller_api_key = nil
+	delete(m.clearedFields, vendor.FieldResellerAPIKey)
 }
 
 // SetAPIFormat sets the "api_format" field.
@@ -32899,7 +33086,7 @@ func (m *VendorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VendorMutation) Fields() []string {
-	fields := make([]string, 0, 30)
+	fields := make([]string, 0, 34)
 	if m.created_at != nil {
 		fields = append(fields, vendor.FieldCreatedAt)
 	}
@@ -32914,6 +33101,18 @@ func (m *VendorMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, vendor.FieldDescription)
+	}
+	if m.vendor_type != nil {
+		fields = append(fields, vendor.FieldVendorType)
+	}
+	if m.official_platform != nil {
+		fields = append(fields, vendor.FieldOfficialPlatform)
+	}
+	if m.reseller_platform != nil {
+		fields = append(fields, vendor.FieldResellerPlatform)
+	}
+	if m.reseller_api_key != nil {
+		fields = append(fields, vendor.FieldResellerAPIKey)
 	}
 	if m.api_format != nil {
 		fields = append(fields, vendor.FieldAPIFormat)
@@ -33008,6 +33207,14 @@ func (m *VendorMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case vendor.FieldDescription:
 		return m.Description()
+	case vendor.FieldVendorType:
+		return m.VendorType()
+	case vendor.FieldOfficialPlatform:
+		return m.OfficialPlatform()
+	case vendor.FieldResellerPlatform:
+		return m.ResellerPlatform()
+	case vendor.FieldResellerAPIKey:
+		return m.ResellerAPIKey()
 	case vendor.FieldAPIFormat:
 		return m.APIFormat()
 	case vendor.FieldBaseURL:
@@ -33077,6 +33284,14 @@ func (m *VendorMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldName(ctx)
 	case vendor.FieldDescription:
 		return m.OldDescription(ctx)
+	case vendor.FieldVendorType:
+		return m.OldVendorType(ctx)
+	case vendor.FieldOfficialPlatform:
+		return m.OldOfficialPlatform(ctx)
+	case vendor.FieldResellerPlatform:
+		return m.OldResellerPlatform(ctx)
+	case vendor.FieldResellerAPIKey:
+		return m.OldResellerAPIKey(ctx)
 	case vendor.FieldAPIFormat:
 		return m.OldAPIFormat(ctx)
 	case vendor.FieldBaseURL:
@@ -33170,6 +33385,34 @@ func (m *VendorMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
+		return nil
+	case vendor.FieldVendorType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVendorType(v)
+		return nil
+	case vendor.FieldOfficialPlatform:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOfficialPlatform(v)
+		return nil
+	case vendor.FieldResellerPlatform:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResellerPlatform(v)
+		return nil
+	case vendor.FieldResellerAPIKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResellerAPIKey(v)
 		return nil
 	case vendor.FieldAPIFormat:
 		v, ok := value.(string)
@@ -33493,6 +33736,15 @@ func (m *VendorMutation) ClearedFields() []string {
 	if m.FieldCleared(vendor.FieldDescription) {
 		fields = append(fields, vendor.FieldDescription)
 	}
+	if m.FieldCleared(vendor.FieldOfficialPlatform) {
+		fields = append(fields, vendor.FieldOfficialPlatform)
+	}
+	if m.FieldCleared(vendor.FieldResellerPlatform) {
+		fields = append(fields, vendor.FieldResellerPlatform)
+	}
+	if m.FieldCleared(vendor.FieldResellerAPIKey) {
+		fields = append(fields, vendor.FieldResellerAPIKey)
+	}
 	if m.FieldCleared(vendor.FieldAPIPathOverride) {
 		fields = append(fields, vendor.FieldAPIPathOverride)
 	}
@@ -33545,6 +33797,15 @@ func (m *VendorMutation) ClearField(name string) error {
 		return nil
 	case vendor.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case vendor.FieldOfficialPlatform:
+		m.ClearOfficialPlatform()
+		return nil
+	case vendor.FieldResellerPlatform:
+		m.ClearResellerPlatform()
+		return nil
+	case vendor.FieldResellerAPIKey:
+		m.ClearResellerAPIKey()
 		return nil
 	case vendor.FieldAPIPathOverride:
 		m.ClearAPIPathOverride()
@@ -33601,6 +33862,18 @@ func (m *VendorMutation) ResetField(name string) error {
 		return nil
 	case vendor.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case vendor.FieldVendorType:
+		m.ResetVendorType()
+		return nil
+	case vendor.FieldOfficialPlatform:
+		m.ResetOfficialPlatform()
+		return nil
+	case vendor.FieldResellerPlatform:
+		m.ResetResellerPlatform()
+		return nil
+	case vendor.FieldResellerAPIKey:
+		m.ResetResellerAPIKey()
 		return nil
 	case vendor.FieldAPIFormat:
 		m.ResetAPIFormat()

@@ -25,6 +25,14 @@ const (
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldVendorType holds the string denoting the vendor_type field in the database.
+	FieldVendorType = "vendor_type"
+	// FieldOfficialPlatform holds the string denoting the official_platform field in the database.
+	FieldOfficialPlatform = "official_platform"
+	// FieldResellerPlatform holds the string denoting the reseller_platform field in the database.
+	FieldResellerPlatform = "reseller_platform"
+	// FieldResellerAPIKey holds the string denoting the reseller_api_key field in the database.
+	FieldResellerAPIKey = "reseller_api_key"
 	// FieldAPIFormat holds the string denoting the api_format field in the database.
 	FieldAPIFormat = "api_format"
 	// FieldBaseURL holds the string denoting the base_url field in the database.
@@ -96,6 +104,10 @@ var Columns = []string{
 	FieldDeletedAt,
 	FieldName,
 	FieldDescription,
+	FieldVendorType,
+	FieldOfficialPlatform,
+	FieldResellerPlatform,
+	FieldResellerAPIKey,
 	FieldAPIFormat,
 	FieldBaseURL,
 	FieldAuthType,
@@ -149,6 +161,16 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultVendorType holds the default value on creation for the "vendor_type" field.
+	DefaultVendorType string
+	// VendorTypeValidator is a validator for the "vendor_type" field. It is called by the builders before save.
+	VendorTypeValidator func(string) error
+	// OfficialPlatformValidator is a validator for the "official_platform" field. It is called by the builders before save.
+	OfficialPlatformValidator func(string) error
+	// ResellerPlatformValidator is a validator for the "reseller_platform" field. It is called by the builders before save.
+	ResellerPlatformValidator func(string) error
+	// ResellerAPIKeyValidator is a validator for the "reseller_api_key" field. It is called by the builders before save.
+	ResellerAPIKeyValidator func(string) error
 	// APIFormatValidator is a validator for the "api_format" field. It is called by the builders before save.
 	APIFormatValidator func(string) error
 	// BaseURLValidator is a validator for the "base_url" field. It is called by the builders before save.
@@ -222,6 +244,26 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByVendorType orders the results by the vendor_type field.
+func ByVendorType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVendorType, opts...).ToFunc()
+}
+
+// ByOfficialPlatform orders the results by the official_platform field.
+func ByOfficialPlatform(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOfficialPlatform, opts...).ToFunc()
+}
+
+// ByResellerPlatform orders the results by the reseller_platform field.
+func ByResellerPlatform(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResellerPlatform, opts...).ToFunc()
+}
+
+// ByResellerAPIKey orders the results by the reseller_api_key field.
+func ByResellerAPIKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResellerAPIKey, opts...).ToFunc()
 }
 
 // ByAPIFormat orders the results by the api_format field.

@@ -1247,6 +1247,10 @@ var (
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "name", Type: field.TypeString, Size: 100},
 		{Name: "description", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "vendor_type", Type: field.TypeString, Size: 20, Default: "official"},
+		{Name: "official_platform", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "reseller_platform", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "reseller_api_key", Type: field.TypeString, Nullable: true, Size: 500},
 		{Name: "api_format", Type: field.TypeString, Size: 20},
 		{Name: "base_url", Type: field.TypeString, Size: 500},
 		{Name: "auth_type", Type: field.TypeString, Size: 20, Default: "api_key"},
@@ -1280,19 +1284,24 @@ var (
 		PrimaryKey: []*schema.Column{VendorsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "vendor_status",
-				Unique:  false,
-				Columns: []*schema.Column{VendorsColumns[18]},
-			},
-			{
-				Name:    "vendor_api_format",
+				Name:    "vendor_vendor_type",
 				Unique:  false,
 				Columns: []*schema.Column{VendorsColumns[6]},
 			},
 			{
+				Name:    "vendor_status",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[22]},
+			},
+			{
+				Name:    "vendor_api_format",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[10]},
+			},
+			{
 				Name:    "vendor_billing_type",
 				Unique:  false,
-				Columns: []*schema.Column{VendorsColumns[11]},
+				Columns: []*schema.Column{VendorsColumns[15]},
 			},
 			{
 				Name:    "vendor_deleted_at",

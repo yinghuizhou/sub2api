@@ -80,6 +80,26 @@ func Description(v string) predicate.Vendor {
 	return predicate.Vendor(sql.FieldEQ(FieldDescription, v))
 }
 
+// VendorType applies equality check predicate on the "vendor_type" field. It's identical to VendorTypeEQ.
+func VendorType(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldVendorType, v))
+}
+
+// OfficialPlatform applies equality check predicate on the "official_platform" field. It's identical to OfficialPlatformEQ.
+func OfficialPlatform(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldOfficialPlatform, v))
+}
+
+// ResellerPlatform applies equality check predicate on the "reseller_platform" field. It's identical to ResellerPlatformEQ.
+func ResellerPlatform(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldResellerPlatform, v))
+}
+
+// ResellerAPIKey applies equality check predicate on the "reseller_api_key" field. It's identical to ResellerAPIKeyEQ.
+func ResellerAPIKey(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldResellerAPIKey, v))
+}
+
 // APIFormat applies equality check predicate on the "api_format" field. It's identical to APIFormatEQ.
 func APIFormat(v string) predicate.Vendor {
 	return predicate.Vendor(sql.FieldEQ(FieldAPIFormat, v))
@@ -463,6 +483,296 @@ func DescriptionEqualFold(v string) predicate.Vendor {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.Vendor {
 	return predicate.Vendor(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// VendorTypeEQ applies the EQ predicate on the "vendor_type" field.
+func VendorTypeEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldVendorType, v))
+}
+
+// VendorTypeNEQ applies the NEQ predicate on the "vendor_type" field.
+func VendorTypeNEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldVendorType, v))
+}
+
+// VendorTypeIn applies the In predicate on the "vendor_type" field.
+func VendorTypeIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldIn(FieldVendorType, vs...))
+}
+
+// VendorTypeNotIn applies the NotIn predicate on the "vendor_type" field.
+func VendorTypeNotIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotIn(FieldVendorType, vs...))
+}
+
+// VendorTypeGT applies the GT predicate on the "vendor_type" field.
+func VendorTypeGT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGT(FieldVendorType, v))
+}
+
+// VendorTypeGTE applies the GTE predicate on the "vendor_type" field.
+func VendorTypeGTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGTE(FieldVendorType, v))
+}
+
+// VendorTypeLT applies the LT predicate on the "vendor_type" field.
+func VendorTypeLT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLT(FieldVendorType, v))
+}
+
+// VendorTypeLTE applies the LTE predicate on the "vendor_type" field.
+func VendorTypeLTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLTE(FieldVendorType, v))
+}
+
+// VendorTypeContains applies the Contains predicate on the "vendor_type" field.
+func VendorTypeContains(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContains(FieldVendorType, v))
+}
+
+// VendorTypeHasPrefix applies the HasPrefix predicate on the "vendor_type" field.
+func VendorTypeHasPrefix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasPrefix(FieldVendorType, v))
+}
+
+// VendorTypeHasSuffix applies the HasSuffix predicate on the "vendor_type" field.
+func VendorTypeHasSuffix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasSuffix(FieldVendorType, v))
+}
+
+// VendorTypeEqualFold applies the EqualFold predicate on the "vendor_type" field.
+func VendorTypeEqualFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEqualFold(FieldVendorType, v))
+}
+
+// VendorTypeContainsFold applies the ContainsFold predicate on the "vendor_type" field.
+func VendorTypeContainsFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContainsFold(FieldVendorType, v))
+}
+
+// OfficialPlatformEQ applies the EQ predicate on the "official_platform" field.
+func OfficialPlatformEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformNEQ applies the NEQ predicate on the "official_platform" field.
+func OfficialPlatformNEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformIn applies the In predicate on the "official_platform" field.
+func OfficialPlatformIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldIn(FieldOfficialPlatform, vs...))
+}
+
+// OfficialPlatformNotIn applies the NotIn predicate on the "official_platform" field.
+func OfficialPlatformNotIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotIn(FieldOfficialPlatform, vs...))
+}
+
+// OfficialPlatformGT applies the GT predicate on the "official_platform" field.
+func OfficialPlatformGT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGT(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformGTE applies the GTE predicate on the "official_platform" field.
+func OfficialPlatformGTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGTE(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformLT applies the LT predicate on the "official_platform" field.
+func OfficialPlatformLT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLT(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformLTE applies the LTE predicate on the "official_platform" field.
+func OfficialPlatformLTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLTE(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformContains applies the Contains predicate on the "official_platform" field.
+func OfficialPlatformContains(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContains(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformHasPrefix applies the HasPrefix predicate on the "official_platform" field.
+func OfficialPlatformHasPrefix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasPrefix(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformHasSuffix applies the HasSuffix predicate on the "official_platform" field.
+func OfficialPlatformHasSuffix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasSuffix(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformIsNil applies the IsNil predicate on the "official_platform" field.
+func OfficialPlatformIsNil() predicate.Vendor {
+	return predicate.Vendor(sql.FieldIsNull(FieldOfficialPlatform))
+}
+
+// OfficialPlatformNotNil applies the NotNil predicate on the "official_platform" field.
+func OfficialPlatformNotNil() predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotNull(FieldOfficialPlatform))
+}
+
+// OfficialPlatformEqualFold applies the EqualFold predicate on the "official_platform" field.
+func OfficialPlatformEqualFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEqualFold(FieldOfficialPlatform, v))
+}
+
+// OfficialPlatformContainsFold applies the ContainsFold predicate on the "official_platform" field.
+func OfficialPlatformContainsFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContainsFold(FieldOfficialPlatform, v))
+}
+
+// ResellerPlatformEQ applies the EQ predicate on the "reseller_platform" field.
+func ResellerPlatformEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformNEQ applies the NEQ predicate on the "reseller_platform" field.
+func ResellerPlatformNEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformIn applies the In predicate on the "reseller_platform" field.
+func ResellerPlatformIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldIn(FieldResellerPlatform, vs...))
+}
+
+// ResellerPlatformNotIn applies the NotIn predicate on the "reseller_platform" field.
+func ResellerPlatformNotIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotIn(FieldResellerPlatform, vs...))
+}
+
+// ResellerPlatformGT applies the GT predicate on the "reseller_platform" field.
+func ResellerPlatformGT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGT(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformGTE applies the GTE predicate on the "reseller_platform" field.
+func ResellerPlatformGTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGTE(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformLT applies the LT predicate on the "reseller_platform" field.
+func ResellerPlatformLT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLT(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformLTE applies the LTE predicate on the "reseller_platform" field.
+func ResellerPlatformLTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLTE(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformContains applies the Contains predicate on the "reseller_platform" field.
+func ResellerPlatformContains(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContains(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformHasPrefix applies the HasPrefix predicate on the "reseller_platform" field.
+func ResellerPlatformHasPrefix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasPrefix(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformHasSuffix applies the HasSuffix predicate on the "reseller_platform" field.
+func ResellerPlatformHasSuffix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasSuffix(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformIsNil applies the IsNil predicate on the "reseller_platform" field.
+func ResellerPlatformIsNil() predicate.Vendor {
+	return predicate.Vendor(sql.FieldIsNull(FieldResellerPlatform))
+}
+
+// ResellerPlatformNotNil applies the NotNil predicate on the "reseller_platform" field.
+func ResellerPlatformNotNil() predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotNull(FieldResellerPlatform))
+}
+
+// ResellerPlatformEqualFold applies the EqualFold predicate on the "reseller_platform" field.
+func ResellerPlatformEqualFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEqualFold(FieldResellerPlatform, v))
+}
+
+// ResellerPlatformContainsFold applies the ContainsFold predicate on the "reseller_platform" field.
+func ResellerPlatformContainsFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContainsFold(FieldResellerPlatform, v))
+}
+
+// ResellerAPIKeyEQ applies the EQ predicate on the "reseller_api_key" field.
+func ResellerAPIKeyEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyNEQ applies the NEQ predicate on the "reseller_api_key" field.
+func ResellerAPIKeyNEQ(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyIn applies the In predicate on the "reseller_api_key" field.
+func ResellerAPIKeyIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldIn(FieldResellerAPIKey, vs...))
+}
+
+// ResellerAPIKeyNotIn applies the NotIn predicate on the "reseller_api_key" field.
+func ResellerAPIKeyNotIn(vs ...string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotIn(FieldResellerAPIKey, vs...))
+}
+
+// ResellerAPIKeyGT applies the GT predicate on the "reseller_api_key" field.
+func ResellerAPIKeyGT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGT(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyGTE applies the GTE predicate on the "reseller_api_key" field.
+func ResellerAPIKeyGTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGTE(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyLT applies the LT predicate on the "reseller_api_key" field.
+func ResellerAPIKeyLT(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLT(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyLTE applies the LTE predicate on the "reseller_api_key" field.
+func ResellerAPIKeyLTE(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLTE(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyContains applies the Contains predicate on the "reseller_api_key" field.
+func ResellerAPIKeyContains(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContains(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyHasPrefix applies the HasPrefix predicate on the "reseller_api_key" field.
+func ResellerAPIKeyHasPrefix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasPrefix(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyHasSuffix applies the HasSuffix predicate on the "reseller_api_key" field.
+func ResellerAPIKeyHasSuffix(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldHasSuffix(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyIsNil applies the IsNil predicate on the "reseller_api_key" field.
+func ResellerAPIKeyIsNil() predicate.Vendor {
+	return predicate.Vendor(sql.FieldIsNull(FieldResellerAPIKey))
+}
+
+// ResellerAPIKeyNotNil applies the NotNil predicate on the "reseller_api_key" field.
+func ResellerAPIKeyNotNil() predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotNull(FieldResellerAPIKey))
+}
+
+// ResellerAPIKeyEqualFold applies the EqualFold predicate on the "reseller_api_key" field.
+func ResellerAPIKeyEqualFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEqualFold(FieldResellerAPIKey, v))
+}
+
+// ResellerAPIKeyContainsFold applies the ContainsFold predicate on the "reseller_api_key" field.
+func ResellerAPIKeyContainsFold(v string) predicate.Vendor {
+	return predicate.Vendor(sql.FieldContainsFold(FieldResellerAPIKey, v))
 }
 
 // APIFormatEQ applies the EQ predicate on the "api_format" field.

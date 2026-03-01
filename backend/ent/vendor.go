@@ -28,6 +28,14 @@ type Vendor struct {
 	Name string `json:"name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty"`
+	// official | reseller
+	VendorType string `json:"vendor_type,omitempty"`
+	// claude | openai | gemini (仅 vendor_type=official)
+	OfficialPlatform *string `json:"official_platform,omitempty"`
+	// sub2api | newapi | other (仅 vendor_type=reseller)
+	ResellerPlatform *string `json:"reseller_platform,omitempty"`
+	// 渠道商主 API Key (仅 vendor_type=reseller)
+	ResellerAPIKey *string `json:"reseller_api_key,omitempty"`
 	// anthropic | openai
 	APIFormat string `json:"api_format,omitempty"`
 	// 供应商 API 地址
@@ -115,7 +123,7 @@ func (*Vendor) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case vendor.FieldID, vendor.FieldHealthCheckInterval, vendor.FieldLastHealthLatency, vendor.FieldConsecutiveFailures:
 			values[i] = new(sql.NullInt64)
-		case vendor.FieldName, vendor.FieldDescription, vendor.FieldAPIFormat, vendor.FieldBaseURL, vendor.FieldAuthType, vendor.FieldAPIPathOverride, vendor.FieldBillingType, vendor.FieldStatus, vendor.FieldHealthCheckModel, vendor.FieldLastHealthStatus, vendor.FieldErrorMessage:
+		case vendor.FieldName, vendor.FieldDescription, vendor.FieldVendorType, vendor.FieldOfficialPlatform, vendor.FieldResellerPlatform, vendor.FieldResellerAPIKey, vendor.FieldAPIFormat, vendor.FieldBaseURL, vendor.FieldAuthType, vendor.FieldAPIPathOverride, vendor.FieldBillingType, vendor.FieldStatus, vendor.FieldHealthCheckModel, vendor.FieldLastHealthStatus, vendor.FieldErrorMessage:
 			values[i] = new(sql.NullString)
 		case vendor.FieldCreatedAt, vendor.FieldUpdatedAt, vendor.FieldDeletedAt, vendor.FieldExpiresAt, vendor.FieldLastHealthCheckAt:
 			values[i] = new(sql.NullTime)
@@ -171,6 +179,33 @@ func (_m *Vendor) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Description = new(string)
 				*_m.Description = value.String
+			}
+		case vendor.FieldVendorType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field vendor_type", values[i])
+			} else if value.Valid {
+				_m.VendorType = value.String
+			}
+		case vendor.FieldOfficialPlatform:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field official_platform", values[i])
+			} else if value.Valid {
+				_m.OfficialPlatform = new(string)
+				*_m.OfficialPlatform = value.String
+			}
+		case vendor.FieldResellerPlatform:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field reseller_platform", values[i])
+			} else if value.Valid {
+				_m.ResellerPlatform = new(string)
+				*_m.ResellerPlatform = value.String
+			}
+		case vendor.FieldResellerAPIKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field reseller_api_key", values[i])
+			} else if value.Valid {
+				_m.ResellerAPIKey = new(string)
+				*_m.ResellerAPIKey = value.String
 			}
 		case vendor.FieldAPIFormat:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -394,6 +429,24 @@ func (_m *Vendor) String() string {
 	builder.WriteString(", ")
 	if v := _m.Description; v != nil {
 		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("vendor_type=")
+	builder.WriteString(_m.VendorType)
+	builder.WriteString(", ")
+	if v := _m.OfficialPlatform; v != nil {
+		builder.WriteString("official_platform=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ResellerPlatform; v != nil {
+		builder.WriteString("reseller_platform=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ResellerAPIKey; v != nil {
+		builder.WriteString("reseller_api_key=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

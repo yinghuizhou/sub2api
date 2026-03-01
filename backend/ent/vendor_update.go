@@ -89,6 +89,80 @@ func (_u *VendorUpdate) ClearDescription() *VendorUpdate {
 	return _u
 }
 
+// SetVendorType sets the "vendor_type" field.
+func (_u *VendorUpdate) SetVendorType(v string) *VendorUpdate {
+	_u.mutation.SetVendorType(v)
+	return _u
+}
+
+// SetNillableVendorType sets the "vendor_type" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillableVendorType(v *string) *VendorUpdate {
+	if v != nil {
+		_u.SetVendorType(*v)
+	}
+	return _u
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (_u *VendorUpdate) SetOfficialPlatform(v string) *VendorUpdate {
+	_u.mutation.SetOfficialPlatform(v)
+	return _u
+}
+
+// SetNillableOfficialPlatform sets the "official_platform" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillableOfficialPlatform(v *string) *VendorUpdate {
+	if v != nil {
+		_u.SetOfficialPlatform(*v)
+	}
+	return _u
+}
+
+// ClearOfficialPlatform clears the value of the "official_platform" field.
+func (_u *VendorUpdate) ClearOfficialPlatform() *VendorUpdate {
+	_u.mutation.ClearOfficialPlatform()
+	return _u
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (_u *VendorUpdate) SetResellerPlatform(v string) *VendorUpdate {
+	_u.mutation.SetResellerPlatform(v)
+	return _u
+}
+
+// SetNillableResellerPlatform sets the "reseller_platform" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillableResellerPlatform(v *string) *VendorUpdate {
+	if v != nil {
+		_u.SetResellerPlatform(*v)
+	}
+	return _u
+}
+
+// ClearResellerPlatform clears the value of the "reseller_platform" field.
+func (_u *VendorUpdate) ClearResellerPlatform() *VendorUpdate {
+	_u.mutation.ClearResellerPlatform()
+	return _u
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (_u *VendorUpdate) SetResellerAPIKey(v string) *VendorUpdate {
+	_u.mutation.SetResellerAPIKey(v)
+	return _u
+}
+
+// SetNillableResellerAPIKey sets the "reseller_api_key" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillableResellerAPIKey(v *string) *VendorUpdate {
+	if v != nil {
+		_u.SetResellerAPIKey(*v)
+	}
+	return _u
+}
+
+// ClearResellerAPIKey clears the value of the "reseller_api_key" field.
+func (_u *VendorUpdate) ClearResellerAPIKey() *VendorUpdate {
+	_u.mutation.ClearResellerAPIKey()
+	return _u
+}
+
 // SetAPIFormat sets the "api_format" field.
 func (_u *VendorUpdate) SetAPIFormat(v string) *VendorUpdate {
 	_u.mutation.SetAPIFormat(v)
@@ -642,6 +716,26 @@ func (_u *VendorUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Vendor.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.VendorType(); ok {
+		if err := vendor.VendorTypeValidator(v); err != nil {
+			return &ValidationError{Name: "vendor_type", err: fmt.Errorf(`ent: validator failed for field "Vendor.vendor_type": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.OfficialPlatform(); ok {
+		if err := vendor.OfficialPlatformValidator(v); err != nil {
+			return &ValidationError{Name: "official_platform", err: fmt.Errorf(`ent: validator failed for field "Vendor.official_platform": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ResellerPlatform(); ok {
+		if err := vendor.ResellerPlatformValidator(v); err != nil {
+			return &ValidationError{Name: "reseller_platform", err: fmt.Errorf(`ent: validator failed for field "Vendor.reseller_platform": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ResellerAPIKey(); ok {
+		if err := vendor.ResellerAPIKeyValidator(v); err != nil {
+			return &ValidationError{Name: "reseller_api_key", err: fmt.Errorf(`ent: validator failed for field "Vendor.reseller_api_key": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.APIFormat(); ok {
 		if err := vendor.APIFormatValidator(v); err != nil {
 			return &ValidationError{Name: "api_format", err: fmt.Errorf(`ent: validator failed for field "Vendor.api_format": %w`, err)}
@@ -714,6 +808,27 @@ func (_u *VendorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(vendor.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.VendorType(); ok {
+		_spec.SetField(vendor.FieldVendorType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.OfficialPlatform(); ok {
+		_spec.SetField(vendor.FieldOfficialPlatform, field.TypeString, value)
+	}
+	if _u.mutation.OfficialPlatformCleared() {
+		_spec.ClearField(vendor.FieldOfficialPlatform, field.TypeString)
+	}
+	if value, ok := _u.mutation.ResellerPlatform(); ok {
+		_spec.SetField(vendor.FieldResellerPlatform, field.TypeString, value)
+	}
+	if _u.mutation.ResellerPlatformCleared() {
+		_spec.ClearField(vendor.FieldResellerPlatform, field.TypeString)
+	}
+	if value, ok := _u.mutation.ResellerAPIKey(); ok {
+		_spec.SetField(vendor.FieldResellerAPIKey, field.TypeString, value)
+	}
+	if _u.mutation.ResellerAPIKeyCleared() {
+		_spec.ClearField(vendor.FieldResellerAPIKey, field.TypeString)
 	}
 	if value, ok := _u.mutation.APIFormat(); ok {
 		_spec.SetField(vendor.FieldAPIFormat, field.TypeString, value)
@@ -972,6 +1087,80 @@ func (_u *VendorUpdateOne) SetNillableDescription(v *string) *VendorUpdateOne {
 // ClearDescription clears the value of the "description" field.
 func (_u *VendorUpdateOne) ClearDescription() *VendorUpdateOne {
 	_u.mutation.ClearDescription()
+	return _u
+}
+
+// SetVendorType sets the "vendor_type" field.
+func (_u *VendorUpdateOne) SetVendorType(v string) *VendorUpdateOne {
+	_u.mutation.SetVendorType(v)
+	return _u
+}
+
+// SetNillableVendorType sets the "vendor_type" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillableVendorType(v *string) *VendorUpdateOne {
+	if v != nil {
+		_u.SetVendorType(*v)
+	}
+	return _u
+}
+
+// SetOfficialPlatform sets the "official_platform" field.
+func (_u *VendorUpdateOne) SetOfficialPlatform(v string) *VendorUpdateOne {
+	_u.mutation.SetOfficialPlatform(v)
+	return _u
+}
+
+// SetNillableOfficialPlatform sets the "official_platform" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillableOfficialPlatform(v *string) *VendorUpdateOne {
+	if v != nil {
+		_u.SetOfficialPlatform(*v)
+	}
+	return _u
+}
+
+// ClearOfficialPlatform clears the value of the "official_platform" field.
+func (_u *VendorUpdateOne) ClearOfficialPlatform() *VendorUpdateOne {
+	_u.mutation.ClearOfficialPlatform()
+	return _u
+}
+
+// SetResellerPlatform sets the "reseller_platform" field.
+func (_u *VendorUpdateOne) SetResellerPlatform(v string) *VendorUpdateOne {
+	_u.mutation.SetResellerPlatform(v)
+	return _u
+}
+
+// SetNillableResellerPlatform sets the "reseller_platform" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillableResellerPlatform(v *string) *VendorUpdateOne {
+	if v != nil {
+		_u.SetResellerPlatform(*v)
+	}
+	return _u
+}
+
+// ClearResellerPlatform clears the value of the "reseller_platform" field.
+func (_u *VendorUpdateOne) ClearResellerPlatform() *VendorUpdateOne {
+	_u.mutation.ClearResellerPlatform()
+	return _u
+}
+
+// SetResellerAPIKey sets the "reseller_api_key" field.
+func (_u *VendorUpdateOne) SetResellerAPIKey(v string) *VendorUpdateOne {
+	_u.mutation.SetResellerAPIKey(v)
+	return _u
+}
+
+// SetNillableResellerAPIKey sets the "reseller_api_key" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillableResellerAPIKey(v *string) *VendorUpdateOne {
+	if v != nil {
+		_u.SetResellerAPIKey(*v)
+	}
+	return _u
+}
+
+// ClearResellerAPIKey clears the value of the "reseller_api_key" field.
+func (_u *VendorUpdateOne) ClearResellerAPIKey() *VendorUpdateOne {
+	_u.mutation.ClearResellerAPIKey()
 	return _u
 }
 
@@ -1541,6 +1730,26 @@ func (_u *VendorUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Vendor.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.VendorType(); ok {
+		if err := vendor.VendorTypeValidator(v); err != nil {
+			return &ValidationError{Name: "vendor_type", err: fmt.Errorf(`ent: validator failed for field "Vendor.vendor_type": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.OfficialPlatform(); ok {
+		if err := vendor.OfficialPlatformValidator(v); err != nil {
+			return &ValidationError{Name: "official_platform", err: fmt.Errorf(`ent: validator failed for field "Vendor.official_platform": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ResellerPlatform(); ok {
+		if err := vendor.ResellerPlatformValidator(v); err != nil {
+			return &ValidationError{Name: "reseller_platform", err: fmt.Errorf(`ent: validator failed for field "Vendor.reseller_platform": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ResellerAPIKey(); ok {
+		if err := vendor.ResellerAPIKeyValidator(v); err != nil {
+			return &ValidationError{Name: "reseller_api_key", err: fmt.Errorf(`ent: validator failed for field "Vendor.reseller_api_key": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.APIFormat(); ok {
 		if err := vendor.APIFormatValidator(v); err != nil {
 			return &ValidationError{Name: "api_format", err: fmt.Errorf(`ent: validator failed for field "Vendor.api_format": %w`, err)}
@@ -1630,6 +1839,27 @@ func (_u *VendorUpdateOne) sqlSave(ctx context.Context) (_node *Vendor, err erro
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(vendor.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.VendorType(); ok {
+		_spec.SetField(vendor.FieldVendorType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.OfficialPlatform(); ok {
+		_spec.SetField(vendor.FieldOfficialPlatform, field.TypeString, value)
+	}
+	if _u.mutation.OfficialPlatformCleared() {
+		_spec.ClearField(vendor.FieldOfficialPlatform, field.TypeString)
+	}
+	if value, ok := _u.mutation.ResellerPlatform(); ok {
+		_spec.SetField(vendor.FieldResellerPlatform, field.TypeString, value)
+	}
+	if _u.mutation.ResellerPlatformCleared() {
+		_spec.ClearField(vendor.FieldResellerPlatform, field.TypeString)
+	}
+	if value, ok := _u.mutation.ResellerAPIKey(); ok {
+		_spec.SetField(vendor.FieldResellerAPIKey, field.TypeString, value)
+	}
+	if _u.mutation.ResellerAPIKeyCleared() {
+		_spec.ClearField(vendor.FieldResellerAPIKey, field.TypeString)
 	}
 	if value, ok := _u.mutation.APIFormat(); ok {
 		_spec.SetField(vendor.FieldAPIFormat, field.TypeString, value)
