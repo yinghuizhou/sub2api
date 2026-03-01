@@ -23,6 +23,7 @@ func NewVendorRepository(client *dbent.Client) service.VendorRepository {
 func (r *vendorRepository) Create(ctx context.Context, v *service.Vendor) error {
 	builder := r.client.Vendor.Create().
 		SetName(v.Name).
+		SetVendorType(v.VendorType).
 		SetAPIFormat(v.APIFormat).
 		SetBaseURL(v.BaseURL).
 		SetAuthType(v.AuthType).
@@ -38,6 +39,15 @@ func (r *vendorRepository) Create(ctx context.Context, v *service.Vendor) error 
 
 	if v.Description != nil {
 		builder.SetDescription(*v.Description)
+	}
+	if v.OfficialPlatform != nil {
+		builder.SetOfficialPlatform(*v.OfficialPlatform)
+	}
+	if v.ResellerPlatform != nil {
+		builder.SetResellerPlatform(*v.ResellerPlatform)
+	}
+	if v.ResellerAPIKey != nil {
+		builder.SetResellerAPIKey(*v.ResellerAPIKey)
 	}
 	if v.APIPathOverride != nil {
 		builder.SetAPIPathOverride(*v.APIPathOverride)
@@ -89,6 +99,7 @@ func (r *vendorRepository) GetByID(ctx context.Context, id int64) (*service.Vend
 func (r *vendorRepository) Update(ctx context.Context, v *service.Vendor) error {
 	builder := r.client.Vendor.UpdateOneID(v.ID).
 		SetName(v.Name).
+		SetVendorType(v.VendorType).
 		SetAPIFormat(v.APIFormat).
 		SetBaseURL(v.BaseURL).
 		SetAuthType(v.AuthType).
@@ -105,6 +116,21 @@ func (r *vendorRepository) Update(ctx context.Context, v *service.Vendor) error 
 		builder.SetDescription(*v.Description)
 	} else {
 		builder.ClearDescription()
+	}
+	if v.OfficialPlatform != nil {
+		builder.SetOfficialPlatform(*v.OfficialPlatform)
+	} else {
+		builder.ClearOfficialPlatform()
+	}
+	if v.ResellerPlatform != nil {
+		builder.SetResellerPlatform(*v.ResellerPlatform)
+	} else {
+		builder.ClearResellerPlatform()
+	}
+	if v.ResellerAPIKey != nil {
+		builder.SetResellerAPIKey(*v.ResellerAPIKey)
+	} else {
+		builder.ClearResellerAPIKey()
 	}
 	if v.APIPathOverride != nil {
 		builder.SetAPIPathOverride(*v.APIPathOverride)
@@ -244,6 +270,19 @@ func (r *vendorRepository) ListActive(ctx context.Context) ([]service.Vendor, er
 	return vendorEntitiesToService(entities), nil
 }
 
+func (r *vendorRepository) ListByIDs(ctx context.Context, ids []int64) ([]service.Vendor, error) {
+	if len(ids) == 0 {
+		return []service.Vendor{}, nil
+	}
+	entities, err := r.client.Vendor.Query().
+		Where(vendor.IDIn(ids...)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return vendorEntitiesToService(entities), nil
+}
+
 func (r *vendorRepository) ListByStatus(ctx context.Context, status string) ([]service.Vendor, error) {
 	entities, err := r.client.Vendor.Query().
 		Where(vendor.StatusEQ(status)).
@@ -354,6 +393,10 @@ func vendorEntityToService(e *dbent.Vendor) *service.Vendor {
 		ID:                    e.ID,
 		Name:                  e.Name,
 		Description:           e.Description,
+		VendorType:            e.VendorType,
+		OfficialPlatform:      e.OfficialPlatform,
+		ResellerPlatform:      e.ResellerPlatform,
+		ResellerAPIKey:        e.ResellerAPIKey,
 		APIFormat:             e.APIFormat,
 		BaseURL:               e.BaseURL,
 		AuthType:              e.AuthType,

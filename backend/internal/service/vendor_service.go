@@ -25,6 +25,7 @@ type VendorRepository interface {
 	List(ctx context.Context, params pagination.PaginationParams) ([]Vendor, *pagination.PaginationResult, error)
 	ListWithFilters(ctx context.Context, params pagination.PaginationParams, status, apiFormat, billingType, search string) ([]Vendor, *pagination.PaginationResult, error)
 	ListActive(ctx context.Context) ([]Vendor, error)
+	ListByIDs(ctx context.Context, ids []int64) ([]Vendor, error)
 	ListByStatus(ctx context.Context, status string) ([]Vendor, error)
 	ListHealthCheckDue(ctx context.Context) ([]Vendor, error)
 	ListBalanceAlertDue(ctx context.Context) ([]Vendor, error)

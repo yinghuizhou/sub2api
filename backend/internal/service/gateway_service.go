@@ -1816,6 +1816,8 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 			}
 			// 过滤超限账户
 			accounts = s.filterAccountsByDailyLimit(ctx, accounts, groupID, platform)
+			// 过滤 Vendor 状态不可用的账户
+			accounts = s.filterAccountsByVendorStatus(ctx, accounts, groupID, platform)
 		}
 		return accounts, useMixed, err
 	}
@@ -1859,6 +1861,8 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 		}
 		// 过滤超限账户
 		filtered = s.filterAccountsByDailyLimit(ctx, filtered, groupID, platform)
+		// 过滤 Vendor 状态不可用的账户
+		filtered = s.filterAccountsByVendorStatus(ctx, filtered, groupID, platform)
 		return filtered, useMixed, nil
 	}
 
@@ -1894,6 +1898,8 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 	}
 	// 过滤超限账户
 	accounts = s.filterAccountsByDailyLimit(ctx, accounts, groupID, platform)
+	// 过滤 Vendor 状态不可用的账户
+	accounts = s.filterAccountsByVendorStatus(ctx, accounts, groupID, platform)
 	return accounts, useMixed, nil
 }
 
@@ -1949,6 +1955,105 @@ func (s *GatewayService) filterAccountsByDailyLimit(ctx context.Context, account
 
 	if filteredCount > 0 {
 		slog.Debug("account_scheduling_daily_limit_filter",
+			"group_id", derefGroupID(groupID),
+			"platform", platform,
+			"before_count", len(accounts),
+			"after_count", len(filtered),
+			"filtered_count", filteredCount)
+	}
+
+	return filtered
+}
+
+// filterAccountsByVendorStatus 过滤 Vendor 状态不可用的账户
+func (s *GatewayService) filterAccountsByVendorStatus(ctx context.Context, accounts []Account, groupID *int64, platform string) []Account {
+	if len(accounts) == 0 {
+		return accounts
+	}
+
+	// 收集需要检查的 vendor IDs
+	vendorIDs := make(map[int64]struct{})
+	for _, acc := range accounts {
+		if acc.VendorID != nil {
+			vendorIDs[*acc.VendorID] = struct{}{}
+		}
+	}
+
+	if len(vendorIDs) == 0 {
+		return accounts // 没有账户关联 Vendor，无需过滤
+	}
+
+	// 批量查询 Vendor 状态
+	vendorIDList := make([]int64, 0, len(vendorIDs))
+	for id := range vendorIDs {
+		vendorIDList = append(vendorIDList, id)
+	}
+
+	vendors, err := s.vendorRepo.ListByIDs(ctx, vendorIDList)
+	if err != nil {
+		slog.Warn("failed to load vendors for filtering",
+			"error", err,
+			"vendor_ids", vendorIDList)
+		return accounts // 查询失败，不过滤
+	}
+
+	// 构建 Vendor 状态映射
+	vendorStatusMap := make(map[int64]string)
+	vendorBalanceMap := make(map[int64]*float64)
+	vendorTypeMap := make(map[int64]string)
+	for _, v := range vendors {
+		vendorStatusMap[v.ID] = v.Status
+		vendorBalanceMap[v.ID] = v.BalanceUSD
+		vendorTypeMap[v.ID] = v.VendorType
+	}
+
+	// 过滤账户
+	filtered := make([]Account, 0, len(accounts))
+	filteredCount := 0
+	for _, acc := range accounts {
+		if acc.VendorID == nil {
+			filtered = append(filtered, acc)
+			continue
+		}
+
+		vendorID := *acc.VendorID
+		status, hasStatus := vendorStatusMap[vendorID]
+		if !hasStatus {
+			slog.Warn("account has vendor_id but vendor not found",
+				"account_id", acc.ID,
+				"vendor_id", vendorID)
+			continue
+		}
+
+		// 检查 Vendor 状态
+		if status != "active" {
+			slog.Debug("vendor not active",
+				"vendor_id", vendorID,
+				"account_id", acc.ID,
+				"status", status)
+			filteredCount++
+			continue
+		}
+
+		// 检查 Vendor 余额（仅二次分发渠道）
+		vendorType := vendorTypeMap[vendorID]
+		if vendorType == "reseller" {
+			balance := vendorBalanceMap[vendorID]
+			if balance != nil && *balance <= 0 {
+				slog.Debug("vendor balance depleted",
+					"vendor_id", vendorID,
+					"account_id", acc.ID,
+					"balance", *balance)
+				filteredCount++
+				continue
+			}
+		}
+
+		filtered = append(filtered, acc)
+	}
+
+	if filteredCount > 0 {
+		slog.Debug("account_scheduling_vendor_filter",
 			"group_id", derefGroupID(groupID),
 			"platform", platform,
 			"before_count", len(accounts),
