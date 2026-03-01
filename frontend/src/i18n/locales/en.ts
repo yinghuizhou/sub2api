@@ -1418,6 +1418,7 @@ export default {
         billingRateMultiplier: 'Billing Rate',
         weight: 'Weight',
         status: 'Status',
+        subscriptionStatus: 'Subscription',
         schedulable: 'Schedulable',
         todayStats: 'Today Stats',
         groups: 'Groups',
@@ -2094,7 +2095,75 @@ export default {
         unlimited: 'Unlimited'
       },
       ineligibleWarning:
-        'This account is not eligible for Antigravity, but API forwarding still works. Use at your own risk.'
+        'This account is not eligible for Antigravity, but API forwarding still works. Use at your own risk.',
+      subscription: {
+        title: 'Subscription Config',
+        enabled: 'Enable Subscription Limit',
+        dailyLimit: 'Daily Limit (USD)',
+        period: 'Subscription Period',
+        startDate: 'Start Date',
+        endDate: 'End Date',
+        todayUsage: "Today's Usage",
+        status: {
+          normal: 'Normal',
+          warning: 'Warning',
+          exceeded: 'Exceeded',
+          expired: 'Expired',
+          disabled: 'Not Configured'
+        },
+        periods: {
+          daily: 'Daily',
+          weekly: 'Weekly',
+          monthly: 'Monthly'
+        },
+        quickActions: {
+          title: 'Quick Actions',
+          renew: 'Renew',
+          adjustLimit: 'Adjust Limit',
+          resetUsage: 'Reset Usage',
+          custom: 'Custom',
+          confirm: 'Confirm',
+          dangerZone: 'Danger Zone'
+        },
+        monitor: {
+          title: 'Subscription Monitor Dashboard',
+          totalAccounts: 'Total Accounts',
+          availableAccounts: 'Available Accounts',
+          todayTotalUsage: "Today's Total Usage",
+          exceededAccounts: 'Exceeded Accounts',
+          usageTrend: 'Usage Trend (Last 7 Days)',
+          accountComparison: 'Account Usage Comparison (Today)',
+          alertSettings: 'Alert Settings',
+          alertThreshold: 'Alert Threshold',
+          enableAlert: 'Enable Alert',
+          alertDescription: 'Trigger alert when account usage reaches {threshold}% of limit'
+        },
+        batchConfig: {
+          title: 'Batch Subscription Config',
+          selectAccounts: 'Select Accounts ({selected} / {total} selected)',
+          selectAll: 'Select All',
+          applyTo: 'Apply to {count} accounts',
+          applying: 'Applying...'
+        },
+        actions: {
+          save: 'Save',
+          saving: 'Saving...',
+          cancel: 'Cancel',
+          close: 'Close',
+          refresh: 'Refresh',
+          export: 'Export Report',
+          loading: 'Loading...'
+        },
+        messages: {
+          saveSuccess: 'Saved successfully',
+          saveFailed: 'Save failed, please try again',
+          resetConfirm: "Are you sure you want to reset today's usage? This action cannot be undone.",
+          resetSuccess: 'Reset successfully',
+          resetFailed: 'Reset failed, please try again',
+          selectAtLeastOne: 'Please select at least one account',
+          clickToConfig: 'Click to configure subscription limit'
+        }
+      }
     },
 
     // Proxies

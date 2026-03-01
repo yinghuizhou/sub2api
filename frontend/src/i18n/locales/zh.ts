@@ -1473,6 +1473,7 @@ export default {
         billingRateMultiplier: '账号倍率',
         weight: '权重',
         status: '状态',
+        subscriptionStatus: '订阅状态',
         schedulable: '调度',
         todayStats: '今日统计',
         groups: '分组',
@@ -2204,6 +2205,76 @@ export default {
         todayCost: '今日费用',
         usageTrend: '30天费用与请求趋势',
         noData: '该账号暂无使用数据'
+      },
+      subscription: {
+        title: '订阅配置',
+        monitorButton: '监控仪表板',
+        batchConfigButton: '批量配置',
+        enabled: '启用订阅限额',
+        dailyLimit: '每日限额（美元）',
+        period: '订阅周期',
+        startDate: '开始日期',
+        endDate: '结束日期',
+        todayUsage: '今日用量',
+        status: {
+          normal: '正常',
+          warning: '警告',
+          exceeded: '超限',
+          expired: '已过期',
+          disabled: '未配置'
+        },
+        periods: {
+          daily: '每日',
+          weekly: '每周',
+          monthly: '每月'
+        },
+        quickActions: {
+          title: '快速操作',
+          renew: '续费',
+          adjustLimit: '调整限额',
+          resetUsage: '重置用量',
+          custom: '自定义',
+          confirm: '确定',
+          dangerZone: '危险操作'
+        },
+        monitor: {
+          title: '订阅账户监控仪表板',
+          totalAccounts: '总账户数',
+          availableAccounts: '可用账户',
+          todayTotalUsage: '今日总用量',
+          exceededAccounts: '超限账户',
+          usageTrend: '用量趋势（近 7 天）',
+          accountComparison: '账户用量对比（今日）',
+          alertSettings: '告警设置',
+          alertThreshold: '告警阈值',
+          enableAlert: '启用告警',
+          alertDescription: '当账户用量达到限额的 {threshold}% 时触发告警'
+        },
+        batchConfig: {
+          title: '批量配置订阅',
+          selectAccounts: '选择账户（已选 {selected} / {total}）',
+          selectAll: '全选',
+          applyTo: '应用到 {count} 个账户',
+          applying: '应用中...'
+        },
+        actions: {
+          save: '保存',
+          saving: '保存中...',
+          cancel: '取消',
+          close: '关闭',
+          refresh: '刷新',
+          export: '导出报表',
+          loading: '加载中...'
+        },
+        messages: {
+          saveSuccess: '保存成功',
+          saveFailed: '保存失败，请重试',
+          resetConfirm: '确定要重置今日用量吗？此操作不可撤销。',
+          resetSuccess: '重置成功',
+          resetFailed: '重置失败，请重试',
+          selectAtLeastOne: '请至少选择一个账户',
+          clickToConfig: '点击配置订阅限额'
+        }
       }
     },
 
