@@ -4,6 +4,13 @@ export interface Vendor {
   id: number
   name: string
   description?: string
+
+  // 渠道类型
+  vendor_type: 'official' | 'reseller'
+  official_platform?: 'claude' | 'openai' | 'gemini'
+  reseller_platform?: 'sub2api' | 'newapi' | 'other'
+  reseller_api_key?: string
+
   api_format: 'anthropic' | 'openai'
   base_url: string
   auth_type: 'api_key' | 'session' | 'bearer'
@@ -35,6 +42,10 @@ export interface Vendor {
 export interface CreateVendorRequest {
   name: string
   description?: string
+  vendor_type: string
+  official_platform?: string
+  reseller_platform?: string
+  reseller_api_key?: string
   api_format: string
   base_url: string
   auth_type: string
