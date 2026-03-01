@@ -192,7 +192,7 @@
             <SubscriptionStatusCell
               :account-id="row.id"
               :status="subscriptionStatuses.get(row.id)"
-              @configure="openConfigModal(row)"
+              @click="openConfigModal(row)"
             />
           </template>
           <template #cell-schedulable="{ row }">
