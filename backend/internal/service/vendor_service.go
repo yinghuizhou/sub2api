@@ -38,6 +38,10 @@ type VendorRepository interface {
 type CreateVendorInput struct {
 	Name                  string            `json:"name"`
 	Description           *string           `json:"description"`
+	VendorType            string            `json:"vendor_type"`
+	OfficialPlatform      *string           `json:"official_platform"`
+	ResellerPlatform      *string           `json:"reseller_platform"`
+	ResellerAPIKey        *string           `json:"reseller_api_key"`
 	APIFormat             string            `json:"api_format"`
 	BaseURL               string            `json:"base_url"`
 	AuthType              string            `json:"auth_type"`
@@ -60,6 +64,10 @@ type CreateVendorInput struct {
 type UpdateVendorInput struct {
 	Name                  *string           `json:"name"`
 	Description           *string           `json:"description"`
+	VendorType            *string           `json:"vendor_type"`
+	OfficialPlatform      *string           `json:"official_platform"`
+	ResellerPlatform      *string           `json:"reseller_platform"`
+	ResellerAPIKey        *string           `json:"reseller_api_key"`
 	APIFormat             *string           `json:"api_format"`
 	BaseURL               *string           `json:"base_url"`
 	AuthType              *string           `json:"auth_type"`
@@ -103,6 +111,26 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 	if strings.TrimSpace(input.BaseURL) == "" {
 		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor base_url is required")
 	}
+
+	// 验证 vendor_type
+	vendorType := strings.TrimSpace(input.VendorType)
+	if vendorType == "" {
+		vendorType = "official" // 默认为官方渠道
+	}
+	if vendorType != "official" && vendorType != "reseller" {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor_type must be 'official' or 'reseller'")
+	}
+
+	// 验证官方渠道必须提供 official_platform
+	if vendorType == "official" && input.OfficialPlatform == nil {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "official_platform is required for official vendor")
+	}
+
+	// 验证二次分发渠道必须提供 reseller_platform
+	if vendorType == "reseller" && input.ResellerPlatform == nil {
+		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "reseller_platform is required for reseller vendor")
+	}
+
 	validAPIFormats := map[string]bool{VendorAPIFormatAnthropic: true, VendorAPIFormatOpenAI: true}
 	if !validAPIFormats[input.APIFormat] {
 		return nil, infraerrors.BadRequest("VENDOR_INVALID_INPUT", "vendor api_format must be 'anthropic' or 'openai'")
@@ -115,6 +143,10 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 	vendor := &Vendor{
 		Name:                  input.Name,
 		Description:           input.Description,
+		VendorType:            vendorType,
+		OfficialPlatform:      input.OfficialPlatform,
+		ResellerPlatform:      input.ResellerPlatform,
+		ResellerAPIKey:        input.ResellerAPIKey,
 		APIFormat:             input.APIFormat,
 		BaseURL:               input.BaseURL,
 		AuthType:              input.AuthType,
@@ -171,6 +203,18 @@ func (s *VendorService) Update(ctx context.Context, id int64, input *UpdateVendo
 	}
 	if input.Description != nil {
 		vendor.Description = input.Description
+	}
+	if input.VendorType != nil {
+		vendor.VendorType = *input.VendorType
+	}
+	if input.OfficialPlatform != nil {
+		vendor.OfficialPlatform = input.OfficialPlatform
+	}
+	if input.ResellerPlatform != nil {
+		vendor.ResellerPlatform = input.ResellerPlatform
+	}
+	if input.ResellerAPIKey != nil {
+		vendor.ResellerAPIKey = input.ResellerAPIKey
 	}
 	if input.APIFormat != nil {
 		vendor.APIFormat = *input.APIFormat
