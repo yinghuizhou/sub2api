@@ -76,6 +76,8 @@ func (r *vendorRepository) Create(ctx context.Context, v *service.Vendor) error 
 	if v.BalanceAlertThreshold != nil {
 		builder.SetBalanceAlertThreshold(*v.BalanceAlertThreshold)
 	}
+	builder.SetPriority(v.Priority).
+		SetConcurrency(v.Concurrency)
 
 	created, err := builder.Save(ctx)
 	if err != nil {
@@ -193,6 +195,8 @@ func (r *vendorRepository) Update(ctx context.Context, v *service.Vendor) error 
 	} else {
 		builder.ClearErrorMessage()
 	}
+	builder.SetPriority(v.Priority).
+		SetConcurrency(v.Concurrency)
 
 	updated, err := builder.Save(ctx)
 	if err != nil {
@@ -422,6 +426,8 @@ func vendorEntityToService(e *dbent.Vendor) *service.Vendor {
 		AutoPurchaseConfig:    e.AutoPurchaseConfig,
 		BalanceAlertEnabled:   e.BalanceAlertEnabled,
 		BalanceAlertThreshold: e.BalanceAlertThreshold,
+		Priority:              e.Priority,
+		Concurrency:           e.Concurrency,
 		CreatedAt:             e.CreatedAt,
 		UpdatedAt:             e.UpdatedAt,
 	}

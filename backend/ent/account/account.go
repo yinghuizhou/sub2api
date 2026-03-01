@@ -71,6 +71,10 @@ const (
 	FieldVendorID = "vendor_id"
 	// FieldSourceType holds the string denoting the source_type field in the database.
 	FieldSourceType = "source_type"
+	// FieldIsVendorProxy holds the string denoting the is_vendor_proxy field in the database.
+	FieldIsVendorProxy = "is_vendor_proxy"
+	// FieldVendorProxyID holds the string denoting the vendor_proxy_id field in the database.
+	FieldVendorProxyID = "vendor_proxy_id"
 	// EdgeGroups holds the string denoting the groups edge name in mutations.
 	EdgeGroups = "groups"
 	// EdgeProxy holds the string denoting the proxy edge name in mutations.
@@ -79,6 +83,8 @@ const (
 	EdgeUsageLogs = "usage_logs"
 	// EdgeVendor holds the string denoting the vendor edge name in mutations.
 	EdgeVendor = "vendor"
+	// EdgeVendorProxy holds the string denoting the vendor_proxy edge name in mutations.
+	EdgeVendorProxy = "vendor_proxy"
 	// EdgeAccountGroups holds the string denoting the account_groups edge name in mutations.
 	EdgeAccountGroups = "account_groups"
 	// Table holds the table name of the account in the database.
@@ -109,6 +115,13 @@ const (
 	VendorInverseTable = "vendors"
 	// VendorColumn is the table column denoting the vendor relation/edge.
 	VendorColumn = "vendor_id"
+	// VendorProxyTable is the table that holds the vendor_proxy relation/edge.
+	VendorProxyTable = "accounts"
+	// VendorProxyInverseTable is the table name for the Vendor entity.
+	// It exists in this package in order to avoid circular dependency with the "vendor" package.
+	VendorProxyInverseTable = "vendors"
+	// VendorProxyColumn is the table column denoting the vendor_proxy relation/edge.
+	VendorProxyColumn = "vendor_proxy_id"
 	// AccountGroupsTable is the table that holds the account_groups relation/edge.
 	AccountGroupsTable = "account_groups"
 	// AccountGroupsInverseTable is the table name for the AccountGroup entity.
@@ -149,6 +162,8 @@ var Columns = []string{
 	FieldSessionWindowStatus,
 	FieldVendorID,
 	FieldSourceType,
+	FieldIsVendorProxy,
+	FieldVendorProxyID,
 }
 
 var (
@@ -213,6 +228,8 @@ var (
 	DefaultSourceType string
 	// SourceTypeValidator is a validator for the "source_type" field. It is called by the builders before save.
 	SourceTypeValidator func(string) error
+	// DefaultIsVendorProxy holds the default value on creation for the "is_vendor_proxy" field.
+	DefaultIsVendorProxy bool
 )
 
 // OrderOption defines the ordering options for the Account queries.
@@ -353,6 +370,16 @@ func BySourceType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSourceType, opts...).ToFunc()
 }
 
+// ByIsVendorProxy orders the results by the is_vendor_proxy field.
+func ByIsVendorProxy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsVendorProxy, opts...).ToFunc()
+}
+
+// ByVendorProxyID orders the results by the vendor_proxy_id field.
+func ByVendorProxyID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVendorProxyID, opts...).ToFunc()
+}
+
 // ByGroupsCount orders the results by groups count.
 func ByGroupsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -395,6 +422,13 @@ func ByVendorField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByVendorProxyField orders the results by vendor_proxy field.
+func ByVendorProxyField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newVendorProxyStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByAccountGroupsCount orders the results by account_groups count.
 func ByAccountGroupsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -434,6 +468,13 @@ func newVendorStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(VendorInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, VendorTable, VendorColumn),
+	)
+}
+func newVendorProxyStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(VendorProxyInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, VendorProxyTable, VendorProxyColumn),
 	)
 }
 func newAccountGroupsStep() *sqlgraph.Step {

@@ -230,6 +230,10 @@ func init() {
 	account.DefaultSourceType = accountDescSourceType.Default.(string)
 	// account.SourceTypeValidator is a validator for the "source_type" field. It is called by the builders before save.
 	account.SourceTypeValidator = accountDescSourceType.Validators[0].(func(string) error)
+	// accountDescIsVendorProxy is the schema descriptor for is_vendor_proxy field.
+	accountDescIsVendorProxy := accountFields[25].Descriptor()
+	// account.DefaultIsVendorProxy holds the default value on creation for the is_vendor_proxy field.
+	account.DefaultIsVendorProxy = accountDescIsVendorProxy.Default.(bool)
 	accountgroupFields := schema.AccountGroup{}.Fields()
 	_ = accountgroupFields
 	// accountgroupDescPriority is the schema descriptor for priority field.
@@ -1503,6 +1507,14 @@ func init() {
 	vendorDescBalanceAlertEnabled := vendorFields[29].Descriptor()
 	// vendor.DefaultBalanceAlertEnabled holds the default value on creation for the balance_alert_enabled field.
 	vendor.DefaultBalanceAlertEnabled = vendorDescBalanceAlertEnabled.Default.(bool)
+	// vendorDescPriority is the schema descriptor for priority field.
+	vendorDescPriority := vendorFields[31].Descriptor()
+	// vendor.DefaultPriority holds the default value on creation for the priority field.
+	vendor.DefaultPriority = vendorDescPriority.Default.(int)
+	// vendorDescConcurrency is the schema descriptor for concurrency field.
+	vendorDescConcurrency := vendorFields[32].Descriptor()
+	// vendor.DefaultConcurrency holds the default value on creation for the concurrency field.
+	vendor.DefaultConcurrency = vendorDescConcurrency.Default.(int)
 	vpnalertruleMixin := schema.VpnAlertRule{}.Mixin()
 	vpnalertruleMixinFields0 := vpnalertruleMixin[0].Fields()
 	_ = vpnalertruleMixinFields0

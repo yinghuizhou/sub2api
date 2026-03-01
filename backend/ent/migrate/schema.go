@@ -113,8 +113,10 @@ var (
 		{Name: "session_window_end", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "session_window_status", Type: field.TypeString, Nullable: true, Size: 20},
 		{Name: "source_type", Type: field.TypeString, Size: 20, Default: "owned"},
+		{Name: "is_vendor_proxy", Type: field.TypeBool, Default: false},
 		{Name: "proxy_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "vendor_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "vendor_proxy_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// AccountsTable holds the schema information for the "accounts" table.
 	AccountsTable = &schema.Table{
@@ -124,13 +126,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "accounts_proxies_proxy",
-				Columns:    []*schema.Column{AccountsColumns[27]},
+				Columns:    []*schema.Column{AccountsColumns[28]},
 				RefColumns: []*schema.Column{ProxiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "accounts_vendors_vendor",
-				Columns:    []*schema.Column{AccountsColumns[28]},
+				Columns:    []*schema.Column{AccountsColumns[29]},
+				RefColumns: []*schema.Column{VendorsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "accounts_vendors_vendor_proxy",
+				Columns:    []*schema.Column{AccountsColumns[30]},
 				RefColumns: []*schema.Column{VendorsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -154,7 +162,7 @@ var (
 			{
 				Name:    "account_proxy_id",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[27]},
+				Columns: []*schema.Column{AccountsColumns[28]},
 			},
 			{
 				Name:    "account_proxy_group",
@@ -199,12 +207,22 @@ var (
 			{
 				Name:    "account_vendor_id",
 				Unique:  false,
-				Columns: []*schema.Column{AccountsColumns[28]},
+				Columns: []*schema.Column{AccountsColumns[29]},
 			},
 			{
 				Name:    "account_source_type",
 				Unique:  false,
 				Columns: []*schema.Column{AccountsColumns[26]},
+			},
+			{
+				Name:    "account_is_vendor_proxy",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[27]},
+			},
+			{
+				Name:    "account_vendor_proxy_id",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[30]},
 			},
 		},
 	}
@@ -1276,6 +1294,8 @@ var (
 		{Name: "auto_purchase_config", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "balance_alert_enabled", Type: field.TypeBool, Default: false},
 		{Name: "balance_alert_threshold", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "priority", Type: field.TypeInt, Default: 50},
+		{Name: "concurrency", Type: field.TypeInt, Default: 3},
 	}
 	// VendorsTable holds the schema information for the "vendors" table.
 	VendorsTable = &schema.Table{
@@ -1307,6 +1327,11 @@ var (
 				Name:    "vendor_deleted_at",
 				Unique:  false,
 				Columns: []*schema.Column{VendorsColumns[3]},
+			},
+			{
+				Name:    "vendor_priority",
+				Unique:  false,
+				Columns: []*schema.Column{VendorsColumns[35]},
 			},
 		},
 	}
@@ -1399,6 +1424,7 @@ func init() {
 	}
 	AccountsTable.ForeignKeys[0].RefTable = ProxiesTable
 	AccountsTable.ForeignKeys[1].RefTable = VendorsTable
+	AccountsTable.ForeignKeys[2].RefTable = VendorsTable
 	AccountsTable.Annotation = &entsql.Annotation{
 		Table: "accounts",
 	}

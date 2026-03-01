@@ -459,6 +459,34 @@ func (_c *VendorCreate) SetNillableBalanceAlertThreshold(v *float64) *VendorCrea
 	return _c
 }
 
+// SetPriority sets the "priority" field.
+func (_c *VendorCreate) SetPriority(v int) *VendorCreate {
+	_c.mutation.SetPriority(v)
+	return _c
+}
+
+// SetNillablePriority sets the "priority" field if the given value is not nil.
+func (_c *VendorCreate) SetNillablePriority(v *int) *VendorCreate {
+	if v != nil {
+		_c.SetPriority(*v)
+	}
+	return _c
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (_c *VendorCreate) SetConcurrency(v int) *VendorCreate {
+	_c.mutation.SetConcurrency(v)
+	return _c
+}
+
+// SetNillableConcurrency sets the "concurrency" field if the given value is not nil.
+func (_c *VendorCreate) SetNillableConcurrency(v *int) *VendorCreate {
+	if v != nil {
+		_c.SetConcurrency(*v)
+	}
+	return _c
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_c *VendorCreate) AddAccountIDs(ids ...int64) *VendorCreate {
 	_c.mutation.AddAccountIDs(ids...)
@@ -472,6 +500,21 @@ func (_c *VendorCreate) AddAccounts(v ...*Account) *VendorCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddAccountIDs(ids...)
+}
+
+// AddProxyAccountIDs adds the "proxy_accounts" edge to the Account entity by IDs.
+func (_c *VendorCreate) AddProxyAccountIDs(ids ...int64) *VendorCreate {
+	_c.mutation.AddProxyAccountIDs(ids...)
+	return _c
+}
+
+// AddProxyAccounts adds the "proxy_accounts" edges to the Account entity.
+func (_c *VendorCreate) AddProxyAccounts(v ...*Account) *VendorCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddProxyAccountIDs(ids...)
 }
 
 // Mutation returns the VendorMutation object of the builder.
@@ -576,6 +619,14 @@ func (_c *VendorCreate) defaults() error {
 	if _, ok := _c.mutation.BalanceAlertEnabled(); !ok {
 		v := vendor.DefaultBalanceAlertEnabled
 		_c.mutation.SetBalanceAlertEnabled(v)
+	}
+	if _, ok := _c.mutation.Priority(); !ok {
+		v := vendor.DefaultPriority
+		_c.mutation.SetPriority(v)
+	}
+	if _, ok := _c.mutation.Concurrency(); !ok {
+		v := vendor.DefaultConcurrency
+		_c.mutation.SetConcurrency(v)
 	}
 	return nil
 }
@@ -700,6 +751,12 @@ func (_c *VendorCreate) check() error {
 	}
 	if _, ok := _c.mutation.BalanceAlertEnabled(); !ok {
 		return &ValidationError{Name: "balance_alert_enabled", err: errors.New(`ent: missing required field "Vendor.balance_alert_enabled"`)}
+	}
+	if _, ok := _c.mutation.Priority(); !ok {
+		return &ValidationError{Name: "priority", err: errors.New(`ent: missing required field "Vendor.priority"`)}
+	}
+	if _, ok := _c.mutation.Concurrency(); !ok {
+		return &ValidationError{Name: "concurrency", err: errors.New(`ent: missing required field "Vendor.concurrency"`)}
 	}
 	return nil
 }
@@ -864,12 +921,36 @@ func (_c *VendorCreate) createSpec() (*Vendor, *sqlgraph.CreateSpec) {
 		_spec.SetField(vendor.FieldBalanceAlertThreshold, field.TypeFloat64, value)
 		_node.BalanceAlertThreshold = &value
 	}
+	if value, ok := _c.mutation.Priority(); ok {
+		_spec.SetField(vendor.FieldPriority, field.TypeInt, value)
+		_node.Priority = value
+	}
+	if value, ok := _c.mutation.Concurrency(); ok {
+		_spec.SetField(vendor.FieldConcurrency, field.TypeInt, value)
+		_node.Concurrency = value
+	}
 	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   vendor.AccountsTable,
 			Columns: []string{vendor.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ProxyAccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
@@ -1475,6 +1556,42 @@ func (u *VendorUpsert) AddBalanceAlertThreshold(v float64) *VendorUpsert {
 // ClearBalanceAlertThreshold clears the value of the "balance_alert_threshold" field.
 func (u *VendorUpsert) ClearBalanceAlertThreshold() *VendorUpsert {
 	u.SetNull(vendor.FieldBalanceAlertThreshold)
+	return u
+}
+
+// SetPriority sets the "priority" field.
+func (u *VendorUpsert) SetPriority(v int) *VendorUpsert {
+	u.Set(vendor.FieldPriority, v)
+	return u
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *VendorUpsert) UpdatePriority() *VendorUpsert {
+	u.SetExcluded(vendor.FieldPriority)
+	return u
+}
+
+// AddPriority adds v to the "priority" field.
+func (u *VendorUpsert) AddPriority(v int) *VendorUpsert {
+	u.Add(vendor.FieldPriority, v)
+	return u
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (u *VendorUpsert) SetConcurrency(v int) *VendorUpsert {
+	u.Set(vendor.FieldConcurrency, v)
+	return u
+}
+
+// UpdateConcurrency sets the "concurrency" field to the value that was provided on create.
+func (u *VendorUpsert) UpdateConcurrency() *VendorUpsert {
+	u.SetExcluded(vendor.FieldConcurrency)
+	return u
+}
+
+// AddConcurrency adds v to the "concurrency" field.
+func (u *VendorUpsert) AddConcurrency(v int) *VendorUpsert {
+	u.Add(vendor.FieldConcurrency, v)
 	return u
 }
 
@@ -2157,6 +2274,48 @@ func (u *VendorUpsertOne) UpdateBalanceAlertThreshold() *VendorUpsertOne {
 func (u *VendorUpsertOne) ClearBalanceAlertThreshold() *VendorUpsertOne {
 	return u.Update(func(s *VendorUpsert) {
 		s.ClearBalanceAlertThreshold()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *VendorUpsertOne) SetPriority(v int) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// AddPriority adds v to the "priority" field.
+func (u *VendorUpsertOne) AddPriority(v int) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.AddPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdatePriority() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdatePriority()
+	})
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (u *VendorUpsertOne) SetConcurrency(v int) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetConcurrency(v)
+	})
+}
+
+// AddConcurrency adds v to the "concurrency" field.
+func (u *VendorUpsertOne) AddConcurrency(v int) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.AddConcurrency(v)
+	})
+}
+
+// UpdateConcurrency sets the "concurrency" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdateConcurrency() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateConcurrency()
 	})
 }
 
@@ -3005,6 +3164,48 @@ func (u *VendorUpsertBulk) UpdateBalanceAlertThreshold() *VendorUpsertBulk {
 func (u *VendorUpsertBulk) ClearBalanceAlertThreshold() *VendorUpsertBulk {
 	return u.Update(func(s *VendorUpsert) {
 		s.ClearBalanceAlertThreshold()
+	})
+}
+
+// SetPriority sets the "priority" field.
+func (u *VendorUpsertBulk) SetPriority(v int) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetPriority(v)
+	})
+}
+
+// AddPriority adds v to the "priority" field.
+func (u *VendorUpsertBulk) AddPriority(v int) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.AddPriority(v)
+	})
+}
+
+// UpdatePriority sets the "priority" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdatePriority() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdatePriority()
+	})
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (u *VendorUpsertBulk) SetConcurrency(v int) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetConcurrency(v)
+	})
+}
+
+// AddConcurrency adds v to the "concurrency" field.
+func (u *VendorUpsertBulk) AddConcurrency(v int) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.AddConcurrency(v)
+	})
+}
+
+// UpdateConcurrency sets the "concurrency" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdateConcurrency() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateConcurrency()
 	})
 }
 

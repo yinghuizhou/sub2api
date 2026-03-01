@@ -83,8 +83,14 @@ const (
 	FieldBalanceAlertEnabled = "balance_alert_enabled"
 	// FieldBalanceAlertThreshold holds the string denoting the balance_alert_threshold field in the database.
 	FieldBalanceAlertThreshold = "balance_alert_threshold"
+	// FieldPriority holds the string denoting the priority field in the database.
+	FieldPriority = "priority"
+	// FieldConcurrency holds the string denoting the concurrency field in the database.
+	FieldConcurrency = "concurrency"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
+	// EdgeProxyAccounts holds the string denoting the proxy_accounts edge name in mutations.
+	EdgeProxyAccounts = "proxy_accounts"
 	// Table holds the table name of the vendor in the database.
 	Table = "vendors"
 	// AccountsTable is the table that holds the accounts relation/edge.
@@ -94,6 +100,13 @@ const (
 	AccountsInverseTable = "accounts"
 	// AccountsColumn is the table column denoting the accounts relation/edge.
 	AccountsColumn = "vendor_id"
+	// ProxyAccountsTable is the table that holds the proxy_accounts relation/edge.
+	ProxyAccountsTable = "accounts"
+	// ProxyAccountsInverseTable is the table name for the Account entity.
+	// It exists in this package in order to avoid circular dependency with the "account" package.
+	ProxyAccountsInverseTable = "accounts"
+	// ProxyAccountsColumn is the table column denoting the proxy_accounts relation/edge.
+	ProxyAccountsColumn = "vendor_proxy_id"
 )
 
 // Columns holds all SQL columns for vendor fields.
@@ -133,6 +146,8 @@ var Columns = []string{
 	FieldAutoPurchaseConfig,
 	FieldBalanceAlertEnabled,
 	FieldBalanceAlertThreshold,
+	FieldPriority,
+	FieldConcurrency,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -211,6 +226,10 @@ var (
 	DefaultAutoPurchaseConfig map[string]interface{}
 	// DefaultBalanceAlertEnabled holds the default value on creation for the "balance_alert_enabled" field.
 	DefaultBalanceAlertEnabled bool
+	// DefaultPriority holds the default value on creation for the "priority" field.
+	DefaultPriority int
+	// DefaultConcurrency holds the default value on creation for the "concurrency" field.
+	DefaultConcurrency int
 )
 
 // OrderOption defines the ordering options for the Vendor queries.
@@ -381,6 +400,16 @@ func ByBalanceAlertThreshold(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBalanceAlertThreshold, opts...).ToFunc()
 }
 
+// ByPriority orders the results by the priority field.
+func ByPriority(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPriority, opts...).ToFunc()
+}
+
+// ByConcurrency orders the results by the concurrency field.
+func ByConcurrency(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldConcurrency, opts...).ToFunc()
+}
+
 // ByAccountsCount orders the results by accounts count.
 func ByAccountsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -394,10 +423,31 @@ func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByProxyAccountsCount orders the results by proxy_accounts count.
+func ByProxyAccountsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newProxyAccountsStep(), opts...)
+	}
+}
+
+// ByProxyAccounts orders the results by proxy_accounts terms.
+func ByProxyAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProxyAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newAccountsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AccountsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, true, AccountsTable, AccountsColumn),
+	)
+}
+func newProxyAccountsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProxyAccountsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, ProxyAccountsTable, ProxyAccountsColumn),
 	)
 }

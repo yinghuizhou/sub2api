@@ -76,6 +76,10 @@ type Account struct {
 	VendorID *int64 `json:"vendor_id,omitempty"`
 	// SourceType holds the value of the "source_type" field.
 	SourceType string `json:"source_type,omitempty"`
+	// 是否为 Vendor 的代理账号（虚拟账号）
+	IsVendorProxy bool `json:"is_vendor_proxy,omitempty"`
+	// 关联的 Vendor ID（仅 is_vendor_proxy=true 时有效）
+	VendorProxyID *int64 `json:"vendor_proxy_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AccountQuery when eager-loading is set.
 	Edges        AccountEdges `json:"edges"`
@@ -92,11 +96,13 @@ type AccountEdges struct {
 	UsageLogs []*UsageLog `json:"usage_logs,omitempty"`
 	// Vendor holds the value of the vendor edge.
 	Vendor *Vendor `json:"vendor,omitempty"`
+	// VendorProxy holds the value of the vendor_proxy edge.
+	VendorProxy *Vendor `json:"vendor_proxy,omitempty"`
 	// AccountGroups holds the value of the account_groups edge.
 	AccountGroups []*AccountGroup `json:"account_groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // GroupsOrErr returns the Groups value or an error if the edge
@@ -139,10 +145,21 @@ func (e AccountEdges) VendorOrErr() (*Vendor, error) {
 	return nil, &NotLoadedError{edge: "vendor"}
 }
 
+// VendorProxyOrErr returns the VendorProxy value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AccountEdges) VendorProxyOrErr() (*Vendor, error) {
+	if e.VendorProxy != nil {
+		return e.VendorProxy, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: vendor.Label}
+	}
+	return nil, &NotLoadedError{edge: "vendor_proxy"}
+}
+
 // AccountGroupsOrErr returns the AccountGroups value or an error if the edge
 // was not loaded in eager-loading.
 func (e AccountEdges) AccountGroupsOrErr() ([]*AccountGroup, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.AccountGroups, nil
 	}
 	return nil, &NotLoadedError{edge: "account_groups"}
@@ -155,11 +172,11 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case account.FieldCredentials, account.FieldExtra:
 			values[i] = new([]byte)
-		case account.FieldAutoPauseOnExpired, account.FieldSchedulable:
+		case account.FieldAutoPauseOnExpired, account.FieldSchedulable, account.FieldIsVendorProxy:
 			values[i] = new(sql.NullBool)
 		case account.FieldRateMultiplier:
 			values[i] = new(sql.NullFloat64)
-		case account.FieldID, account.FieldProxyID, account.FieldConcurrency, account.FieldPriority, account.FieldVendorID:
+		case account.FieldID, account.FieldProxyID, account.FieldConcurrency, account.FieldPriority, account.FieldVendorID, account.FieldVendorProxyID:
 			values[i] = new(sql.NullInt64)
 		case account.FieldName, account.FieldNotes, account.FieldPlatform, account.FieldType, account.FieldProxyGroup, account.FieldStatus, account.FieldErrorMessage, account.FieldSessionWindowStatus, account.FieldSourceType:
 			values[i] = new(sql.NullString)
@@ -372,6 +389,19 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.SourceType = value.String
 			}
+		case account.FieldIsVendorProxy:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_vendor_proxy", values[i])
+			} else if value.Valid {
+				_m.IsVendorProxy = value.Bool
+			}
+		case account.FieldVendorProxyID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field vendor_proxy_id", values[i])
+			} else if value.Valid {
+				_m.VendorProxyID = new(int64)
+				*_m.VendorProxyID = value.Int64
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -403,6 +433,11 @@ func (_m *Account) QueryUsageLogs() *UsageLogQuery {
 // QueryVendor queries the "vendor" edge of the Account entity.
 func (_m *Account) QueryVendor() *VendorQuery {
 	return NewAccountClient(_m.config).QueryVendor(_m)
+}
+
+// QueryVendorProxy queries the "vendor_proxy" edge of the Account entity.
+func (_m *Account) QueryVendorProxy() *VendorQuery {
+	return NewAccountClient(_m.config).QueryVendorProxy(_m)
 }
 
 // QueryAccountGroups queries the "account_groups" edge of the Account entity.
@@ -544,6 +579,14 @@ func (_m *Account) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("source_type=")
 	builder.WriteString(_m.SourceType)
+	builder.WriteString(", ")
+	builder.WriteString("is_vendor_proxy=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsVendorProxy))
+	builder.WriteString(", ")
+	if v := _m.VendorProxyID; v != nil {
+		builder.WriteString("vendor_proxy_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

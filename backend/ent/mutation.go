@@ -1551,6 +1551,7 @@ type AccountMutation struct {
 	session_window_end    *time.Time
 	session_window_status *string
 	source_type           *string
+	is_vendor_proxy       *bool
 	clearedFields         map[string]struct{}
 	groups                map[int64]struct{}
 	removedgroups         map[int64]struct{}
@@ -1562,6 +1563,8 @@ type AccountMutation struct {
 	clearedusage_logs     bool
 	vendor                *int64
 	clearedvendor         bool
+	vendor_proxy          *int64
+	clearedvendor_proxy   bool
 	done                  bool
 	oldValue              func(context.Context) (*Account, error)
 	predicates            []predicate.Account
@@ -2915,6 +2918,91 @@ func (m *AccountMutation) ResetSourceType() {
 	m.source_type = nil
 }
 
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (m *AccountMutation) SetIsVendorProxy(b bool) {
+	m.is_vendor_proxy = &b
+}
+
+// IsVendorProxy returns the value of the "is_vendor_proxy" field in the mutation.
+func (m *AccountMutation) IsVendorProxy() (r bool, exists bool) {
+	v := m.is_vendor_proxy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsVendorProxy returns the old "is_vendor_proxy" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldIsVendorProxy(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsVendorProxy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsVendorProxy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsVendorProxy: %w", err)
+	}
+	return oldValue.IsVendorProxy, nil
+}
+
+// ResetIsVendorProxy resets all changes to the "is_vendor_proxy" field.
+func (m *AccountMutation) ResetIsVendorProxy() {
+	m.is_vendor_proxy = nil
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (m *AccountMutation) SetVendorProxyID(i int64) {
+	m.vendor_proxy = &i
+}
+
+// VendorProxyID returns the value of the "vendor_proxy_id" field in the mutation.
+func (m *AccountMutation) VendorProxyID() (r int64, exists bool) {
+	v := m.vendor_proxy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVendorProxyID returns the old "vendor_proxy_id" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldVendorProxyID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVendorProxyID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVendorProxyID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVendorProxyID: %w", err)
+	}
+	return oldValue.VendorProxyID, nil
+}
+
+// ClearVendorProxyID clears the value of the "vendor_proxy_id" field.
+func (m *AccountMutation) ClearVendorProxyID() {
+	m.vendor_proxy = nil
+	m.clearedFields[account.FieldVendorProxyID] = struct{}{}
+}
+
+// VendorProxyIDCleared returns if the "vendor_proxy_id" field was cleared in this mutation.
+func (m *AccountMutation) VendorProxyIDCleared() bool {
+	_, ok := m.clearedFields[account.FieldVendorProxyID]
+	return ok
+}
+
+// ResetVendorProxyID resets all changes to the "vendor_proxy_id" field.
+func (m *AccountMutation) ResetVendorProxyID() {
+	m.vendor_proxy = nil
+	delete(m.clearedFields, account.FieldVendorProxyID)
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by ids.
 func (m *AccountMutation) AddGroupIDs(ids ...int64) {
 	if m.groups == nil {
@@ -3077,6 +3165,33 @@ func (m *AccountMutation) ResetVendor() {
 	m.clearedvendor = false
 }
 
+// ClearVendorProxy clears the "vendor_proxy" edge to the Vendor entity.
+func (m *AccountMutation) ClearVendorProxy() {
+	m.clearedvendor_proxy = true
+	m.clearedFields[account.FieldVendorProxyID] = struct{}{}
+}
+
+// VendorProxyCleared reports if the "vendor_proxy" edge to the Vendor entity was cleared.
+func (m *AccountMutation) VendorProxyCleared() bool {
+	return m.VendorProxyIDCleared() || m.clearedvendor_proxy
+}
+
+// VendorProxyIDs returns the "vendor_proxy" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// VendorProxyID instead. It exists only for internal usage by the builders.
+func (m *AccountMutation) VendorProxyIDs() (ids []int64) {
+	if id := m.vendor_proxy; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetVendorProxy resets all changes to the "vendor_proxy" edge.
+func (m *AccountMutation) ResetVendorProxy() {
+	m.vendor_proxy = nil
+	m.clearedvendor_proxy = false
+}
+
 // Where appends a list predicates to the AccountMutation builder.
 func (m *AccountMutation) Where(ps ...predicate.Account) {
 	m.predicates = append(m.predicates, ps...)
@@ -3111,7 +3226,7 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 28)
+	fields := make([]string, 0, 30)
 	if m.created_at != nil {
 		fields = append(fields, account.FieldCreatedAt)
 	}
@@ -3196,6 +3311,12 @@ func (m *AccountMutation) Fields() []string {
 	if m.source_type != nil {
 		fields = append(fields, account.FieldSourceType)
 	}
+	if m.is_vendor_proxy != nil {
+		fields = append(fields, account.FieldIsVendorProxy)
+	}
+	if m.vendor_proxy != nil {
+		fields = append(fields, account.FieldVendorProxyID)
+	}
 	return fields
 }
 
@@ -3260,6 +3381,10 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 		return m.VendorID()
 	case account.FieldSourceType:
 		return m.SourceType()
+	case account.FieldIsVendorProxy:
+		return m.IsVendorProxy()
+	case account.FieldVendorProxyID:
+		return m.VendorProxyID()
 	}
 	return nil, false
 }
@@ -3325,6 +3450,10 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldVendorID(ctx)
 	case account.FieldSourceType:
 		return m.OldSourceType(ctx)
+	case account.FieldIsVendorProxy:
+		return m.OldIsVendorProxy(ctx)
+	case account.FieldVendorProxyID:
+		return m.OldVendorProxyID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Account field %s", name)
 }
@@ -3530,6 +3659,20 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSourceType(v)
 		return nil
+	case account.FieldIsVendorProxy:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsVendorProxy(v)
+		return nil
+	case account.FieldVendorProxyID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVendorProxyID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Account field %s", name)
 }
@@ -3641,6 +3784,9 @@ func (m *AccountMutation) ClearedFields() []string {
 	if m.FieldCleared(account.FieldVendorID) {
 		fields = append(fields, account.FieldVendorID)
 	}
+	if m.FieldCleared(account.FieldVendorProxyID) {
+		fields = append(fields, account.FieldVendorProxyID)
+	}
 	return fields
 }
 
@@ -3696,6 +3842,9 @@ func (m *AccountMutation) ClearField(name string) error {
 		return nil
 	case account.FieldVendorID:
 		m.ClearVendorID()
+		return nil
+	case account.FieldVendorProxyID:
+		m.ClearVendorProxyID()
 		return nil
 	}
 	return fmt.Errorf("unknown Account nullable field %s", name)
@@ -3789,13 +3938,19 @@ func (m *AccountMutation) ResetField(name string) error {
 	case account.FieldSourceType:
 		m.ResetSourceType()
 		return nil
+	case account.FieldIsVendorProxy:
+		m.ResetIsVendorProxy()
+		return nil
+	case account.FieldVendorProxyID:
+		m.ResetVendorProxyID()
+		return nil
 	}
 	return fmt.Errorf("unknown Account field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *AccountMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.groups != nil {
 		edges = append(edges, account.EdgeGroups)
 	}
@@ -3807,6 +3962,9 @@ func (m *AccountMutation) AddedEdges() []string {
 	}
 	if m.vendor != nil {
 		edges = append(edges, account.EdgeVendor)
+	}
+	if m.vendor_proxy != nil {
+		edges = append(edges, account.EdgeVendorProxy)
 	}
 	return edges
 }
@@ -3835,13 +3993,17 @@ func (m *AccountMutation) AddedIDs(name string) []ent.Value {
 		if id := m.vendor; id != nil {
 			return []ent.Value{*id}
 		}
+	case account.EdgeVendorProxy:
+		if id := m.vendor_proxy; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *AccountMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedgroups != nil {
 		edges = append(edges, account.EdgeGroups)
 	}
@@ -3873,7 +4035,7 @@ func (m *AccountMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *AccountMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedgroups {
 		edges = append(edges, account.EdgeGroups)
 	}
@@ -3885,6 +4047,9 @@ func (m *AccountMutation) ClearedEdges() []string {
 	}
 	if m.clearedvendor {
 		edges = append(edges, account.EdgeVendor)
+	}
+	if m.clearedvendor_proxy {
+		edges = append(edges, account.EdgeVendorProxy)
 	}
 	return edges
 }
@@ -3901,6 +4066,8 @@ func (m *AccountMutation) EdgeCleared(name string) bool {
 		return m.clearedusage_logs
 	case account.EdgeVendor:
 		return m.clearedvendor
+	case account.EdgeVendorProxy:
+		return m.clearedvendor_proxy
 	}
 	return false
 }
@@ -3914,6 +4081,9 @@ func (m *AccountMutation) ClearEdge(name string) error {
 		return nil
 	case account.EdgeVendor:
 		m.ClearVendor()
+		return nil
+	case account.EdgeVendorProxy:
+		m.ClearVendorProxy()
 		return nil
 	}
 	return fmt.Errorf("unknown Account unique edge %s", name)
@@ -3934,6 +4104,9 @@ func (m *AccountMutation) ResetEdge(name string) error {
 		return nil
 	case account.EdgeVendor:
 		m.ResetVendor()
+		return nil
+	case account.EdgeVendorProxy:
+		m.ResetVendorProxy()
 		return nil
 	}
 	return fmt.Errorf("unknown Account edge %s", name)
@@ -31273,10 +31446,17 @@ type VendorMutation struct {
 	balance_alert_enabled      *bool
 	balance_alert_threshold    *float64
 	addbalance_alert_threshold *float64
+	priority                   *int
+	addpriority                *int
+	concurrency                *int
+	addconcurrency             *int
 	clearedFields              map[string]struct{}
 	accounts                   map[int64]struct{}
 	removedaccounts            map[int64]struct{}
 	clearedaccounts            bool
+	proxy_accounts             map[int64]struct{}
+	removedproxy_accounts      map[int64]struct{}
+	clearedproxy_accounts      bool
 	done                       bool
 	oldValue                   func(context.Context) (*Vendor, error)
 	predicates                 []predicate.Vendor
@@ -32998,6 +33178,118 @@ func (m *VendorMutation) ResetBalanceAlertThreshold() {
 	delete(m.clearedFields, vendor.FieldBalanceAlertThreshold)
 }
 
+// SetPriority sets the "priority" field.
+func (m *VendorMutation) SetPriority(i int) {
+	m.priority = &i
+	m.addpriority = nil
+}
+
+// Priority returns the value of the "priority" field in the mutation.
+func (m *VendorMutation) Priority() (r int, exists bool) {
+	v := m.priority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPriority returns the old "priority" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldPriority(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPriority is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPriority requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPriority: %w", err)
+	}
+	return oldValue.Priority, nil
+}
+
+// AddPriority adds i to the "priority" field.
+func (m *VendorMutation) AddPriority(i int) {
+	if m.addpriority != nil {
+		*m.addpriority += i
+	} else {
+		m.addpriority = &i
+	}
+}
+
+// AddedPriority returns the value that was added to the "priority" field in this mutation.
+func (m *VendorMutation) AddedPriority() (r int, exists bool) {
+	v := m.addpriority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPriority resets all changes to the "priority" field.
+func (m *VendorMutation) ResetPriority() {
+	m.priority = nil
+	m.addpriority = nil
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (m *VendorMutation) SetConcurrency(i int) {
+	m.concurrency = &i
+	m.addconcurrency = nil
+}
+
+// Concurrency returns the value of the "concurrency" field in the mutation.
+func (m *VendorMutation) Concurrency() (r int, exists bool) {
+	v := m.concurrency
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConcurrency returns the old "concurrency" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldConcurrency(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConcurrency is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConcurrency requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConcurrency: %w", err)
+	}
+	return oldValue.Concurrency, nil
+}
+
+// AddConcurrency adds i to the "concurrency" field.
+func (m *VendorMutation) AddConcurrency(i int) {
+	if m.addconcurrency != nil {
+		*m.addconcurrency += i
+	} else {
+		m.addconcurrency = &i
+	}
+}
+
+// AddedConcurrency returns the value that was added to the "concurrency" field in this mutation.
+func (m *VendorMutation) AddedConcurrency() (r int, exists bool) {
+	v := m.addconcurrency
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConcurrency resets all changes to the "concurrency" field.
+func (m *VendorMutation) ResetConcurrency() {
+	m.concurrency = nil
+	m.addconcurrency = nil
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by ids.
 func (m *VendorMutation) AddAccountIDs(ids ...int64) {
 	if m.accounts == nil {
@@ -33052,6 +33344,60 @@ func (m *VendorMutation) ResetAccounts() {
 	m.removedaccounts = nil
 }
 
+// AddProxyAccountIDs adds the "proxy_accounts" edge to the Account entity by ids.
+func (m *VendorMutation) AddProxyAccountIDs(ids ...int64) {
+	if m.proxy_accounts == nil {
+		m.proxy_accounts = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.proxy_accounts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearProxyAccounts clears the "proxy_accounts" edge to the Account entity.
+func (m *VendorMutation) ClearProxyAccounts() {
+	m.clearedproxy_accounts = true
+}
+
+// ProxyAccountsCleared reports if the "proxy_accounts" edge to the Account entity was cleared.
+func (m *VendorMutation) ProxyAccountsCleared() bool {
+	return m.clearedproxy_accounts
+}
+
+// RemoveProxyAccountIDs removes the "proxy_accounts" edge to the Account entity by IDs.
+func (m *VendorMutation) RemoveProxyAccountIDs(ids ...int64) {
+	if m.removedproxy_accounts == nil {
+		m.removedproxy_accounts = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.proxy_accounts, ids[i])
+		m.removedproxy_accounts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedProxyAccounts returns the removed IDs of the "proxy_accounts" edge to the Account entity.
+func (m *VendorMutation) RemovedProxyAccountsIDs() (ids []int64) {
+	for id := range m.removedproxy_accounts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ProxyAccountsIDs returns the "proxy_accounts" edge IDs in the mutation.
+func (m *VendorMutation) ProxyAccountsIDs() (ids []int64) {
+	for id := range m.proxy_accounts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetProxyAccounts resets all changes to the "proxy_accounts" edge.
+func (m *VendorMutation) ResetProxyAccounts() {
+	m.proxy_accounts = nil
+	m.clearedproxy_accounts = false
+	m.removedproxy_accounts = nil
+}
+
 // Where appends a list predicates to the VendorMutation builder.
 func (m *VendorMutation) Where(ps ...predicate.Vendor) {
 	m.predicates = append(m.predicates, ps...)
@@ -33086,7 +33432,7 @@ func (m *VendorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VendorMutation) Fields() []string {
-	fields := make([]string, 0, 34)
+	fields := make([]string, 0, 36)
 	if m.created_at != nil {
 		fields = append(fields, vendor.FieldCreatedAt)
 	}
@@ -33189,6 +33535,12 @@ func (m *VendorMutation) Fields() []string {
 	if m.balance_alert_threshold != nil {
 		fields = append(fields, vendor.FieldBalanceAlertThreshold)
 	}
+	if m.priority != nil {
+		fields = append(fields, vendor.FieldPriority)
+	}
+	if m.concurrency != nil {
+		fields = append(fields, vendor.FieldConcurrency)
+	}
 	return fields
 }
 
@@ -33265,6 +33617,10 @@ func (m *VendorMutation) Field(name string) (ent.Value, bool) {
 		return m.BalanceAlertEnabled()
 	case vendor.FieldBalanceAlertThreshold:
 		return m.BalanceAlertThreshold()
+	case vendor.FieldPriority:
+		return m.Priority()
+	case vendor.FieldConcurrency:
+		return m.Concurrency()
 	}
 	return nil, false
 }
@@ -33342,6 +33698,10 @@ func (m *VendorMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldBalanceAlertEnabled(ctx)
 	case vendor.FieldBalanceAlertThreshold:
 		return m.OldBalanceAlertThreshold(ctx)
+	case vendor.FieldPriority:
+		return m.OldPriority(ctx)
+	case vendor.FieldConcurrency:
+		return m.OldConcurrency(ctx)
 	}
 	return nil, fmt.Errorf("unknown Vendor field %s", name)
 }
@@ -33589,6 +33949,20 @@ func (m *VendorMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetBalanceAlertThreshold(v)
 		return nil
+	case vendor.FieldPriority:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPriority(v)
+		return nil
+	case vendor.FieldConcurrency:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConcurrency(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Vendor field %s", name)
 }
@@ -33624,6 +33998,12 @@ func (m *VendorMutation) AddedFields() []string {
 	if m.addbalance_alert_threshold != nil {
 		fields = append(fields, vendor.FieldBalanceAlertThreshold)
 	}
+	if m.addpriority != nil {
+		fields = append(fields, vendor.FieldPriority)
+	}
+	if m.addconcurrency != nil {
+		fields = append(fields, vendor.FieldConcurrency)
+	}
 	return fields
 }
 
@@ -33650,6 +34030,10 @@ func (m *VendorMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedConsecutiveFailures()
 	case vendor.FieldBalanceAlertThreshold:
 		return m.AddedBalanceAlertThreshold()
+	case vendor.FieldPriority:
+		return m.AddedPriority()
+	case vendor.FieldConcurrency:
+		return m.AddedConcurrency()
 	}
 	return nil, false
 }
@@ -33721,6 +34105,20 @@ func (m *VendorMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddBalanceAlertThreshold(v)
+		return nil
+	case vendor.FieldPriority:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPriority(v)
+		return nil
+	case vendor.FieldConcurrency:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConcurrency(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Vendor numeric field %s", name)
@@ -33950,15 +34348,24 @@ func (m *VendorMutation) ResetField(name string) error {
 	case vendor.FieldBalanceAlertThreshold:
 		m.ResetBalanceAlertThreshold()
 		return nil
+	case vendor.FieldPriority:
+		m.ResetPriority()
+		return nil
+	case vendor.FieldConcurrency:
+		m.ResetConcurrency()
+		return nil
 	}
 	return fmt.Errorf("unknown Vendor field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *VendorMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.accounts != nil {
 		edges = append(edges, vendor.EdgeAccounts)
+	}
+	if m.proxy_accounts != nil {
+		edges = append(edges, vendor.EdgeProxyAccounts)
 	}
 	return edges
 }
@@ -33973,15 +34380,24 @@ func (m *VendorMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case vendor.EdgeProxyAccounts:
+		ids := make([]ent.Value, 0, len(m.proxy_accounts))
+		for id := range m.proxy_accounts {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *VendorMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedaccounts != nil {
 		edges = append(edges, vendor.EdgeAccounts)
+	}
+	if m.removedproxy_accounts != nil {
+		edges = append(edges, vendor.EdgeProxyAccounts)
 	}
 	return edges
 }
@@ -33996,15 +34412,24 @@ func (m *VendorMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case vendor.EdgeProxyAccounts:
+		ids := make([]ent.Value, 0, len(m.removedproxy_accounts))
+		for id := range m.removedproxy_accounts {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *VendorMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedaccounts {
 		edges = append(edges, vendor.EdgeAccounts)
+	}
+	if m.clearedproxy_accounts {
+		edges = append(edges, vendor.EdgeProxyAccounts)
 	}
 	return edges
 }
@@ -34015,6 +34440,8 @@ func (m *VendorMutation) EdgeCleared(name string) bool {
 	switch name {
 	case vendor.EdgeAccounts:
 		return m.clearedaccounts
+	case vendor.EdgeProxyAccounts:
+		return m.clearedproxy_accounts
 	}
 	return false
 }
@@ -34033,6 +34460,9 @@ func (m *VendorMutation) ResetEdge(name string) error {
 	switch name {
 	case vendor.EdgeAccounts:
 		m.ResetAccounts()
+		return nil
+	case vendor.EdgeProxyAccounts:
+		m.ResetProxyAccounts()
 		return nil
 	}
 	return fmt.Errorf("unknown Vendor edge %s", name)

@@ -209,6 +209,12 @@ func (r *stubAccountRepo) UpdateExtra(ctx context.Context, id int64, updates map
 func (r *stubAccountRepo) BulkUpdate(ctx context.Context, ids []int64, updates service.AccountBulkUpdate) (int64, error) {
 	return 0, nil
 }
+func (r *stubAccountRepo) GetByVendorProxyID(ctx context.Context, vendorProxyID int64) (*service.Account, error) {
+	return nil, service.ErrAccountNotFound
+}
+func (r *stubAccountRepo) DeleteByVendorProxyID(ctx context.Context, vendorProxyID int64) error {
+	return nil
+}
 
 func (r *stubAccountRepo) listSchedulable() []service.Account {
 	var result []service.Account

@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -12,19 +13,21 @@ import (
 
 // VendorHandler handles admin vendor management
 type VendorHandler struct {
-	vendorService  *service.VendorService
-	probeService   *service.VendorProbeService
-	healthService  *service.VendorHealthService
-	balanceService *service.VendorBalanceService
+	vendorService      *service.VendorService
+	vendorProxyService *service.VendorProxyService
+	probeService       *service.VendorProbeService
+	healthService      *service.VendorHealthService
+	balanceService     *service.VendorBalanceService
 }
 
 // NewVendorHandler creates a new vendor handler
-func NewVendorHandler(vendorService *service.VendorService, probeService *service.VendorProbeService, healthService *service.VendorHealthService, balanceService *service.VendorBalanceService) *VendorHandler {
+func NewVendorHandler(vendorService *service.VendorService, vendorProxyService *service.VendorProxyService, probeService *service.VendorProbeService, healthService *service.VendorHealthService, balanceService *service.VendorBalanceService) *VendorHandler {
 	return &VendorHandler{
-		vendorService:  vendorService,
-		probeService:   probeService,
-		healthService:  healthService,
-		balanceService: balanceService,
+		vendorService:      vendorService,
+		vendorProxyService: vendorProxyService,
+		probeService:       probeService,
+		healthService:      healthService,
+		balanceService:     balanceService,
 	}
 }
 
@@ -81,6 +84,10 @@ func (h *VendorHandler) Create(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
+	// 自动创建代理账号
+	if _, proxyErr := h.vendorProxyService.CreateProxyAccount(c.Request.Context(), vendor.ID); proxyErr != nil {
+		slog.Error("failed to create vendor proxy account", "vendor_id", vendor.ID, "error", proxyErr)
+	}
 	response.Created(c, vendor)
 }
 
@@ -101,6 +108,10 @@ func (h *VendorHandler) Update(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
+	// 同步代理账号
+	if proxyErr := h.vendorProxyService.SyncProxyAccount(c.Request.Context(), id); proxyErr != nil {
+		slog.Error("failed to sync vendor proxy account", "vendor_id", id, "error", proxyErr)
+	}
 	response.Success(c, vendor)
 }
 
@@ -110,6 +121,10 @@ func (h *VendorHandler) Delete(c *gin.Context) {
 	if err != nil {
 		response.BadRequest(c, "invalid vendor id")
 		return
+	}
+	// 先删除代理账号
+	if proxyErr := h.vendorProxyService.DeleteProxyAccount(c.Request.Context(), id); proxyErr != nil {
+		slog.Error("failed to delete vendor proxy account", "vendor_id", id, "error", proxyErr)
 	}
 	if err := h.vendorService.Delete(c.Request.Context(), id); err != nil {
 		response.ErrorFrom(c, err)

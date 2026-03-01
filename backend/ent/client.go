@@ -790,6 +790,22 @@ func (c *AccountClient) QueryVendor(_m *Account) *VendorQuery {
 	return query
 }
 
+// QueryVendorProxy queries the vendor_proxy edge of a Account.
+func (c *AccountClient) QueryVendorProxy(_m *Account) *VendorQuery {
+	query := (&VendorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, id),
+			sqlgraph.To(vendor.Table, vendor.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, account.VendorProxyTable, account.VendorProxyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAccountGroups queries the account_groups edge of a Account.
 func (c *AccountClient) QueryAccountGroups(_m *Account) *AccountGroupQuery {
 	query := (&AccountGroupClient{config: c.config}).Query()
@@ -4609,6 +4625,22 @@ func (c *VendorClient) QueryAccounts(_m *Vendor) *AccountQuery {
 			sqlgraph.From(vendor.Table, vendor.FieldID, id),
 			sqlgraph.To(account.Table, account.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, vendor.AccountsTable, vendor.AccountsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProxyAccounts queries the proxy_accounts edge of a Vendor.
+func (c *VendorClient) QueryProxyAccounts(_m *Vendor) *AccountQuery {
+	query := (&AccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vendor.Table, vendor.FieldID, id),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, vendor.ProxyAccountsTable, vendor.ProxyAccountsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

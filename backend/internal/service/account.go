@@ -56,6 +56,10 @@ type Account struct {
 	// 供应商关联
 	VendorID   *int64
 	SourceType string
+
+	// Vendor 代理
+	IsVendorProxy bool
+	VendorProxyID *int64
 }
 
 type TempUnschedulableRule struct {

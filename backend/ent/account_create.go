@@ -378,6 +378,34 @@ func (_c *AccountCreate) SetNillableSourceType(v *string) *AccountCreate {
 	return _c
 }
 
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (_c *AccountCreate) SetIsVendorProxy(v bool) *AccountCreate {
+	_c.mutation.SetIsVendorProxy(v)
+	return _c
+}
+
+// SetNillableIsVendorProxy sets the "is_vendor_proxy" field if the given value is not nil.
+func (_c *AccountCreate) SetNillableIsVendorProxy(v *bool) *AccountCreate {
+	if v != nil {
+		_c.SetIsVendorProxy(*v)
+	}
+	return _c
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (_c *AccountCreate) SetVendorProxyID(v int64) *AccountCreate {
+	_c.mutation.SetVendorProxyID(v)
+	return _c
+}
+
+// SetNillableVendorProxyID sets the "vendor_proxy_id" field if the given value is not nil.
+func (_c *AccountCreate) SetNillableVendorProxyID(v *int64) *AccountCreate {
+	if v != nil {
+		_c.SetVendorProxyID(*v)
+	}
+	return _c
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
 func (_c *AccountCreate) AddGroupIDs(ids ...int64) *AccountCreate {
 	_c.mutation.AddGroupIDs(ids...)
@@ -416,6 +444,11 @@ func (_c *AccountCreate) AddUsageLogs(v ...*UsageLog) *AccountCreate {
 // SetVendor sets the "vendor" edge to the Vendor entity.
 func (_c *AccountCreate) SetVendor(v *Vendor) *AccountCreate {
 	return _c.SetVendorID(v.ID)
+}
+
+// SetVendorProxy sets the "vendor_proxy" edge to the Vendor entity.
+func (_c *AccountCreate) SetVendorProxy(v *Vendor) *AccountCreate {
+	return _c.SetVendorProxyID(v.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -511,6 +544,10 @@ func (_c *AccountCreate) defaults() error {
 		v := account.DefaultSourceType
 		_c.mutation.SetSourceType(v)
 	}
+	if _, ok := _c.mutation.IsVendorProxy(); !ok {
+		v := account.DefaultIsVendorProxy
+		_c.mutation.SetIsVendorProxy(v)
+	}
 	return nil
 }
 
@@ -592,6 +629,9 @@ func (_c *AccountCreate) check() error {
 		if err := account.SourceTypeValidator(v); err != nil {
 			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "Account.source_type": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.IsVendorProxy(); !ok {
+		return &ValidationError{Name: "is_vendor_proxy", err: errors.New(`ent: missing required field "Account.is_vendor_proxy"`)}
 	}
 	return nil
 }
@@ -724,6 +764,10 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_spec.SetField(account.FieldSourceType, field.TypeString, value)
 		_node.SourceType = value
 	}
+	if value, ok := _c.mutation.IsVendorProxy(); ok {
+		_spec.SetField(account.FieldIsVendorProxy, field.TypeBool, value)
+		_node.IsVendorProxy = value
+	}
 	if nodes := _c.mutation.GroupsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -792,6 +836,23 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.VendorID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.VendorProxyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorProxyTable,
+			Columns: []string{account.VendorProxyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.VendorProxyID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -1269,6 +1330,36 @@ func (u *AccountUpsert) SetSourceType(v string) *AccountUpsert {
 // UpdateSourceType sets the "source_type" field to the value that was provided on create.
 func (u *AccountUpsert) UpdateSourceType() *AccountUpsert {
 	u.SetExcluded(account.FieldSourceType)
+	return u
+}
+
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (u *AccountUpsert) SetIsVendorProxy(v bool) *AccountUpsert {
+	u.Set(account.FieldIsVendorProxy, v)
+	return u
+}
+
+// UpdateIsVendorProxy sets the "is_vendor_proxy" field to the value that was provided on create.
+func (u *AccountUpsert) UpdateIsVendorProxy() *AccountUpsert {
+	u.SetExcluded(account.FieldIsVendorProxy)
+	return u
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (u *AccountUpsert) SetVendorProxyID(v int64) *AccountUpsert {
+	u.Set(account.FieldVendorProxyID, v)
+	return u
+}
+
+// UpdateVendorProxyID sets the "vendor_proxy_id" field to the value that was provided on create.
+func (u *AccountUpsert) UpdateVendorProxyID() *AccountUpsert {
+	u.SetExcluded(account.FieldVendorProxyID)
+	return u
+}
+
+// ClearVendorProxyID clears the value of the "vendor_proxy_id" field.
+func (u *AccountUpsert) ClearVendorProxyID() *AccountUpsert {
+	u.SetNull(account.FieldVendorProxyID)
 	return u
 }
 
@@ -1811,6 +1902,41 @@ func (u *AccountUpsertOne) SetSourceType(v string) *AccountUpsertOne {
 func (u *AccountUpsertOne) UpdateSourceType() *AccountUpsertOne {
 	return u.Update(func(s *AccountUpsert) {
 		s.UpdateSourceType()
+	})
+}
+
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (u *AccountUpsertOne) SetIsVendorProxy(v bool) *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetIsVendorProxy(v)
+	})
+}
+
+// UpdateIsVendorProxy sets the "is_vendor_proxy" field to the value that was provided on create.
+func (u *AccountUpsertOne) UpdateIsVendorProxy() *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateIsVendorProxy()
+	})
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (u *AccountUpsertOne) SetVendorProxyID(v int64) *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetVendorProxyID(v)
+	})
+}
+
+// UpdateVendorProxyID sets the "vendor_proxy_id" field to the value that was provided on create.
+func (u *AccountUpsertOne) UpdateVendorProxyID() *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateVendorProxyID()
+	})
+}
+
+// ClearVendorProxyID clears the value of the "vendor_proxy_id" field.
+func (u *AccountUpsertOne) ClearVendorProxyID() *AccountUpsertOne {
+	return u.Update(func(s *AccountUpsert) {
+		s.ClearVendorProxyID()
 	})
 }
 
@@ -2519,6 +2645,41 @@ func (u *AccountUpsertBulk) SetSourceType(v string) *AccountUpsertBulk {
 func (u *AccountUpsertBulk) UpdateSourceType() *AccountUpsertBulk {
 	return u.Update(func(s *AccountUpsert) {
 		s.UpdateSourceType()
+	})
+}
+
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (u *AccountUpsertBulk) SetIsVendorProxy(v bool) *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetIsVendorProxy(v)
+	})
+}
+
+// UpdateIsVendorProxy sets the "is_vendor_proxy" field to the value that was provided on create.
+func (u *AccountUpsertBulk) UpdateIsVendorProxy() *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateIsVendorProxy()
+	})
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (u *AccountUpsertBulk) SetVendorProxyID(v int64) *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.SetVendorProxyID(v)
+	})
+}
+
+// UpdateVendorProxyID sets the "vendor_proxy_id" field to the value that was provided on create.
+func (u *AccountUpsertBulk) UpdateVendorProxyID() *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.UpdateVendorProxyID()
+	})
+}
+
+// ClearVendorProxyID clears the value of the "vendor_proxy_id" field.
+func (u *AccountUpsertBulk) ClearVendorProxyID() *AccountUpsertBulk {
+	return u.Update(func(s *AccountUpsert) {
+		s.ClearVendorProxyID()
 	})
 }
 

@@ -180,6 +180,12 @@ func (m *mockAccountRepoForPlatform) UpdateExtra(ctx context.Context, id int64, 
 func (m *mockAccountRepoForPlatform) BulkUpdate(ctx context.Context, ids []int64, updates AccountBulkUpdate) (int64, error) {
 	return 0, nil
 }
+func (m *mockAccountRepoForPlatform) GetByVendorProxyID(ctx context.Context, vendorProxyID int64) (*Account, error) {
+	return nil, ErrAccountNotFound
+}
+func (m *mockAccountRepoForPlatform) DeleteByVendorProxyID(ctx context.Context, vendorProxyID int64) error {
+	return nil
+}
 
 // Verify interface implementation
 var _ AccountRepository = (*mockAccountRepoForPlatform)(nil)

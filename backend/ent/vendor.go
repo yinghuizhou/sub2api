@@ -86,6 +86,10 @@ type Vendor struct {
 	BalanceAlertEnabled bool `json:"balance_alert_enabled,omitempty"`
 	// BalanceAlertThreshold holds the value of the "balance_alert_threshold" field.
 	BalanceAlertThreshold *float64 `json:"balance_alert_threshold,omitempty"`
+	// 供应商优先级（数值越小越优先，用于调度排序）
+	Priority int `json:"priority,omitempty"`
+	// 供应商最大并发请求数
+	Concurrency int `json:"concurrency,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VendorQuery when eager-loading is set.
 	Edges        VendorEdges `json:"edges"`
@@ -96,9 +100,11 @@ type Vendor struct {
 type VendorEdges struct {
 	// Accounts holds the value of the accounts edge.
 	Accounts []*Account `json:"accounts,omitempty"`
+	// ProxyAccounts holds the value of the proxy_accounts edge.
+	ProxyAccounts []*Account `json:"proxy_accounts,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // AccountsOrErr returns the Accounts value or an error if the edge
@@ -108,6 +114,15 @@ func (e VendorEdges) AccountsOrErr() ([]*Account, error) {
 		return e.Accounts, nil
 	}
 	return nil, &NotLoadedError{edge: "accounts"}
+}
+
+// ProxyAccountsOrErr returns the ProxyAccounts value or an error if the edge
+// was not loaded in eager-loading.
+func (e VendorEdges) ProxyAccountsOrErr() ([]*Account, error) {
+	if e.loadedTypes[1] {
+		return e.ProxyAccounts, nil
+	}
+	return nil, &NotLoadedError{edge: "proxy_accounts"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -121,7 +136,7 @@ func (*Vendor) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case vendor.FieldCostPer1kInput, vendor.FieldCostPer1kOutput, vendor.FieldTotalQuotaUsd, vendor.FieldUsedQuotaUsd, vendor.FieldBalanceUsd, vendor.FieldBalanceAlertThreshold:
 			values[i] = new(sql.NullFloat64)
-		case vendor.FieldID, vendor.FieldHealthCheckInterval, vendor.FieldLastHealthLatency, vendor.FieldConsecutiveFailures:
+		case vendor.FieldID, vendor.FieldHealthCheckInterval, vendor.FieldLastHealthLatency, vendor.FieldConsecutiveFailures, vendor.FieldPriority, vendor.FieldConcurrency:
 			values[i] = new(sql.NullInt64)
 		case vendor.FieldName, vendor.FieldDescription, vendor.FieldVendorType, vendor.FieldOfficialPlatform, vendor.FieldResellerPlatform, vendor.FieldResellerAPIKey, vendor.FieldAPIFormat, vendor.FieldBaseURL, vendor.FieldAuthType, vendor.FieldAPIPathOverride, vendor.FieldBillingType, vendor.FieldStatus, vendor.FieldHealthCheckModel, vendor.FieldLastHealthStatus, vendor.FieldErrorMessage:
 			values[i] = new(sql.NullString)
@@ -372,6 +387,18 @@ func (_m *Vendor) assignValues(columns []string, values []any) error {
 				_m.BalanceAlertThreshold = new(float64)
 				*_m.BalanceAlertThreshold = value.Float64
 			}
+		case vendor.FieldPriority:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field priority", values[i])
+			} else if value.Valid {
+				_m.Priority = int(value.Int64)
+			}
+		case vendor.FieldConcurrency:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field concurrency", values[i])
+			} else if value.Valid {
+				_m.Concurrency = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -388,6 +415,11 @@ func (_m *Vendor) Value(name string) (ent.Value, error) {
 // QueryAccounts queries the "accounts" edge of the Vendor entity.
 func (_m *Vendor) QueryAccounts() *AccountQuery {
 	return NewVendorClient(_m.config).QueryAccounts(_m)
+}
+
+// QueryProxyAccounts queries the "proxy_accounts" edge of the Vendor entity.
+func (_m *Vendor) QueryProxyAccounts() *AccountQuery {
+	return NewVendorClient(_m.config).QueryProxyAccounts(_m)
 }
 
 // Update returns a builder for updating this Vendor.
@@ -546,6 +578,12 @@ func (_m *Vendor) String() string {
 		builder.WriteString("balance_alert_threshold=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("priority=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Priority))
+	builder.WriteString(", ")
+	builder.WriteString("concurrency=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Concurrency))
 	builder.WriteByte(')')
 	return builder.String()
 }

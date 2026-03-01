@@ -185,6 +185,16 @@ func SourceType(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldSourceType, v))
 }
 
+// IsVendorProxy applies equality check predicate on the "is_vendor_proxy" field. It's identical to IsVendorProxyEQ.
+func IsVendorProxy(v bool) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldIsVendorProxy, v))
+}
+
+// VendorProxyID applies equality check predicate on the "vendor_proxy_id" field. It's identical to VendorProxyIDEQ.
+func VendorProxyID(v int64) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldVendorProxyID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldCreatedAt, v))
@@ -1490,6 +1500,46 @@ func SourceTypeContainsFold(v string) predicate.Account {
 	return predicate.Account(sql.FieldContainsFold(FieldSourceType, v))
 }
 
+// IsVendorProxyEQ applies the EQ predicate on the "is_vendor_proxy" field.
+func IsVendorProxyEQ(v bool) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldIsVendorProxy, v))
+}
+
+// IsVendorProxyNEQ applies the NEQ predicate on the "is_vendor_proxy" field.
+func IsVendorProxyNEQ(v bool) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldIsVendorProxy, v))
+}
+
+// VendorProxyIDEQ applies the EQ predicate on the "vendor_proxy_id" field.
+func VendorProxyIDEQ(v int64) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldVendorProxyID, v))
+}
+
+// VendorProxyIDNEQ applies the NEQ predicate on the "vendor_proxy_id" field.
+func VendorProxyIDNEQ(v int64) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldVendorProxyID, v))
+}
+
+// VendorProxyIDIn applies the In predicate on the "vendor_proxy_id" field.
+func VendorProxyIDIn(vs ...int64) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldVendorProxyID, vs...))
+}
+
+// VendorProxyIDNotIn applies the NotIn predicate on the "vendor_proxy_id" field.
+func VendorProxyIDNotIn(vs ...int64) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldVendorProxyID, vs...))
+}
+
+// VendorProxyIDIsNil applies the IsNil predicate on the "vendor_proxy_id" field.
+func VendorProxyIDIsNil() predicate.Account {
+	return predicate.Account(sql.FieldIsNull(FieldVendorProxyID))
+}
+
+// VendorProxyIDNotNil applies the NotNil predicate on the "vendor_proxy_id" field.
+func VendorProxyIDNotNil() predicate.Account {
+	return predicate.Account(sql.FieldNotNull(FieldVendorProxyID))
+}
+
 // HasGroups applies the HasEdge predicate on the "groups" edge.
 func HasGroups() predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
@@ -1574,6 +1624,29 @@ func HasVendor() predicate.Account {
 func HasVendorWith(preds ...predicate.Vendor) predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
 		step := newVendorStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasVendorProxy applies the HasEdge predicate on the "vendor_proxy" edge.
+func HasVendorProxy() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, VendorProxyTable, VendorProxyColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasVendorProxyWith applies the HasEdge predicate on the "vendor_proxy" edge with a given conditions (other predicates).
+func HasVendorProxyWith(preds ...predicate.Vendor) predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := newVendorProxyStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

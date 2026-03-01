@@ -21,12 +21,13 @@ import (
 // VendorQuery is the builder for querying Vendor entities.
 type VendorQuery struct {
 	config
-	ctx          *QueryContext
-	order        []vendor.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Vendor
-	withAccounts *AccountQuery
-	modifiers    []func(*sql.Selector)
+	ctx               *QueryContext
+	order             []vendor.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Vendor
+	withAccounts      *AccountQuery
+	withProxyAccounts *AccountQuery
+	modifiers         []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -78,6 +79,28 @@ func (_q *VendorQuery) QueryAccounts() *AccountQuery {
 			sqlgraph.From(vendor.Table, vendor.FieldID, selector),
 			sqlgraph.To(account.Table, account.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, vendor.AccountsTable, vendor.AccountsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProxyAccounts chains the current query on the "proxy_accounts" edge.
+func (_q *VendorQuery) QueryProxyAccounts() *AccountQuery {
+	query := (&AccountClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(vendor.Table, vendor.FieldID, selector),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, vendor.ProxyAccountsTable, vendor.ProxyAccountsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -272,12 +295,13 @@ func (_q *VendorQuery) Clone() *VendorQuery {
 		return nil
 	}
 	return &VendorQuery{
-		config:       _q.config,
-		ctx:          _q.ctx.Clone(),
-		order:        append([]vendor.OrderOption{}, _q.order...),
-		inters:       append([]Interceptor{}, _q.inters...),
-		predicates:   append([]predicate.Vendor{}, _q.predicates...),
-		withAccounts: _q.withAccounts.Clone(),
+		config:            _q.config,
+		ctx:               _q.ctx.Clone(),
+		order:             append([]vendor.OrderOption{}, _q.order...),
+		inters:            append([]Interceptor{}, _q.inters...),
+		predicates:        append([]predicate.Vendor{}, _q.predicates...),
+		withAccounts:      _q.withAccounts.Clone(),
+		withProxyAccounts: _q.withProxyAccounts.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -292,6 +316,17 @@ func (_q *VendorQuery) WithAccounts(opts ...func(*AccountQuery)) *VendorQuery {
 		opt(query)
 	}
 	_q.withAccounts = query
+	return _q
+}
+
+// WithProxyAccounts tells the query-builder to eager-load the nodes that are connected to
+// the "proxy_accounts" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *VendorQuery) WithProxyAccounts(opts ...func(*AccountQuery)) *VendorQuery {
+	query := (&AccountClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProxyAccounts = query
 	return _q
 }
 
@@ -373,8 +408,9 @@ func (_q *VendorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Vendo
 	var (
 		nodes       = []*Vendor{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withAccounts != nil,
+			_q.withProxyAccounts != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -402,6 +438,13 @@ func (_q *VendorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Vendo
 		if err := _q.loadAccounts(ctx, query, nodes,
 			func(n *Vendor) { n.Edges.Accounts = []*Account{} },
 			func(n *Vendor, e *Account) { n.Edges.Accounts = append(n.Edges.Accounts, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withProxyAccounts; query != nil {
+		if err := _q.loadProxyAccounts(ctx, query, nodes,
+			func(n *Vendor) { n.Edges.ProxyAccounts = []*Account{} },
+			func(n *Vendor, e *Account) { n.Edges.ProxyAccounts = append(n.Edges.ProxyAccounts, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -436,6 +479,39 @@ func (_q *VendorQuery) loadAccounts(ctx context.Context, query *AccountQuery, no
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "vendor_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *VendorQuery) loadProxyAccounts(ctx context.Context, query *AccountQuery, nodes []*Vendor, init func(*Vendor), assign func(*Vendor, *Account)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Vendor)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(account.FieldVendorProxyID)
+	}
+	query.Where(predicate.Account(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(vendor.ProxyAccountsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.VendorProxyID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "vendor_proxy_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "vendor_proxy_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

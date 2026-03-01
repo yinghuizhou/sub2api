@@ -197,6 +197,20 @@ func (Account) Fields() []ent.Field {
 		field.String("source_type").
 			MaxLen(20).
 			Default("owned"),
+
+		// ========== Vendor 代理字段 ==========
+		// is_vendor_proxy: 是否为 Vendor 的代理账号（虚拟账号）
+		// true 表示这是一个为 Vendor 创建的虚拟账号，用于调度
+		field.Bool("is_vendor_proxy").
+			Default(false).
+			Comment("是否为 Vendor 的代理账号（虚拟账号）"),
+
+		// vendor_proxy_id: 关联的 Vendor ID（仅 is_vendor_proxy=true 时有效）
+		// 指向该代理账号所代表的 Vendor
+		field.Int64("vendor_proxy_id").
+			Optional().
+			Nillable().
+			Comment("关联的 Vendor ID（仅 is_vendor_proxy=true 时有效）"),
 	}
 }
 
@@ -220,6 +234,11 @@ func (Account) Edges() []ent.Edge {
 		edge.To("vendor", Vendor.Type).
 			Field("vendor_id").
 			Unique(),
+		// vendor_proxy: 该账号代理的供应商（可选的一对一关系）
+		// 仅当 is_vendor_proxy=true 时有效
+		edge.To("vendor_proxy", Vendor.Type).
+			Field("vendor_proxy_id").
+			Unique(),
 	}
 }
 
@@ -241,5 +260,7 @@ func (Account) Indexes() []ent.Index {
 		index.Fields("deleted_at"),          // 软删除查询优化
 		index.Fields("vendor_id"),           // 按供应商筛选
 		index.Fields("source_type"),         // 按来源类型筛选
+		index.Fields("is_vendor_proxy"),     // 筛选 Vendor 代理账号
+		index.Fields("vendor_proxy_id"),     // 按代理的 Vendor 筛选
 	}
 }

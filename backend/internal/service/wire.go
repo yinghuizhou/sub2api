@@ -373,6 +373,7 @@ var ProviderSet = wire.NewSet(
 	NewErrorPassthroughService,
 	NewDigestSessionStore,
 	NewVendorService,
+	NewVendorProxyService,
 	NewVendorHealthService,
 	NewVendorBalanceService,
 	NewVendorProbeService,

@@ -35,6 +35,8 @@ export interface Vendor {
   auto_purchase_enabled: boolean
   balance_alert_enabled: boolean
   balance_alert_threshold?: number
+  priority: number
+  concurrency: number
   created_at: string
   updated_at: string
 }
@@ -62,6 +64,8 @@ export interface CreateVendorRequest {
   health_check_model?: string
   balance_alert_enabled?: boolean
   balance_alert_threshold?: number
+  priority?: number
+  concurrency?: number
 }
 
 export type UpdateVendorRequest = Partial<CreateVendorRequest> & { status?: string }

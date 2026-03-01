@@ -215,6 +215,16 @@ func BalanceAlertThreshold(v float64) predicate.Vendor {
 	return predicate.Vendor(sql.FieldEQ(FieldBalanceAlertThreshold, v))
 }
 
+// Priority applies equality check predicate on the "priority" field. It's identical to PriorityEQ.
+func Priority(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldPriority, v))
+}
+
+// Concurrency applies equality check predicate on the "concurrency" field. It's identical to ConcurrencyEQ.
+func Concurrency(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldConcurrency, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Vendor {
 	return predicate.Vendor(sql.FieldEQ(FieldCreatedAt, v))
@@ -1940,6 +1950,86 @@ func BalanceAlertThresholdNotNil() predicate.Vendor {
 	return predicate.Vendor(sql.FieldNotNull(FieldBalanceAlertThreshold))
 }
 
+// PriorityEQ applies the EQ predicate on the "priority" field.
+func PriorityEQ(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldPriority, v))
+}
+
+// PriorityNEQ applies the NEQ predicate on the "priority" field.
+func PriorityNEQ(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldPriority, v))
+}
+
+// PriorityIn applies the In predicate on the "priority" field.
+func PriorityIn(vs ...int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldIn(FieldPriority, vs...))
+}
+
+// PriorityNotIn applies the NotIn predicate on the "priority" field.
+func PriorityNotIn(vs ...int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotIn(FieldPriority, vs...))
+}
+
+// PriorityGT applies the GT predicate on the "priority" field.
+func PriorityGT(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGT(FieldPriority, v))
+}
+
+// PriorityGTE applies the GTE predicate on the "priority" field.
+func PriorityGTE(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGTE(FieldPriority, v))
+}
+
+// PriorityLT applies the LT predicate on the "priority" field.
+func PriorityLT(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLT(FieldPriority, v))
+}
+
+// PriorityLTE applies the LTE predicate on the "priority" field.
+func PriorityLTE(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLTE(FieldPriority, v))
+}
+
+// ConcurrencyEQ applies the EQ predicate on the "concurrency" field.
+func ConcurrencyEQ(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldConcurrency, v))
+}
+
+// ConcurrencyNEQ applies the NEQ predicate on the "concurrency" field.
+func ConcurrencyNEQ(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldConcurrency, v))
+}
+
+// ConcurrencyIn applies the In predicate on the "concurrency" field.
+func ConcurrencyIn(vs ...int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldIn(FieldConcurrency, vs...))
+}
+
+// ConcurrencyNotIn applies the NotIn predicate on the "concurrency" field.
+func ConcurrencyNotIn(vs ...int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNotIn(FieldConcurrency, vs...))
+}
+
+// ConcurrencyGT applies the GT predicate on the "concurrency" field.
+func ConcurrencyGT(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGT(FieldConcurrency, v))
+}
+
+// ConcurrencyGTE applies the GTE predicate on the "concurrency" field.
+func ConcurrencyGTE(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldGTE(FieldConcurrency, v))
+}
+
+// ConcurrencyLT applies the LT predicate on the "concurrency" field.
+func ConcurrencyLT(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLT(FieldConcurrency, v))
+}
+
+// ConcurrencyLTE applies the LTE predicate on the "concurrency" field.
+func ConcurrencyLTE(v int) predicate.Vendor {
+	return predicate.Vendor(sql.FieldLTE(FieldConcurrency, v))
+}
+
 // HasAccounts applies the HasEdge predicate on the "accounts" edge.
 func HasAccounts() predicate.Vendor {
 	return predicate.Vendor(func(s *sql.Selector) {
@@ -1955,6 +2045,29 @@ func HasAccounts() predicate.Vendor {
 func HasAccountsWith(preds ...predicate.Account) predicate.Vendor {
 	return predicate.Vendor(func(s *sql.Selector) {
 		step := newAccountsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasProxyAccounts applies the HasEdge predicate on the "proxy_accounts" edge.
+func HasProxyAccounts() predicate.Vendor {
+	return predicate.Vendor(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ProxyAccountsTable, ProxyAccountsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProxyAccountsWith applies the HasEdge predicate on the "proxy_accounts" edge with a given conditions (other predicates).
+func HasProxyAccountsWith(preds ...predicate.Account) predicate.Vendor {
+	return predicate.Vendor(func(s *sql.Selector) {
+		step := newProxyAccountsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

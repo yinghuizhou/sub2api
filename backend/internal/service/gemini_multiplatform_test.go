@@ -169,6 +169,12 @@ func (m *mockAccountRepoForGemini) UpdateExtra(ctx context.Context, id int64, up
 func (m *mockAccountRepoForGemini) BulkUpdate(ctx context.Context, ids []int64, updates AccountBulkUpdate) (int64, error) {
 	return 0, nil
 }
+func (m *mockAccountRepoForGemini) GetByVendorProxyID(ctx context.Context, vendorProxyID int64) (*Account, error) {
+	return nil, ErrAccountNotFound
+}
+func (m *mockAccountRepoForGemini) DeleteByVendorProxyID(ctx context.Context, vendorProxyID int64) error {
+	return nil
+}
 
 // Verify interface implementation
 var _ AccountRepository = (*mockAccountRepoForGemini)(nil)

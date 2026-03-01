@@ -126,6 +126,10 @@ func (r *accountRepository) Create(ctx context.Context, account *service.Account
 	if account.SourceType != "" {
 		builder.SetSourceType(account.SourceType)
 	}
+	builder.SetIsVendorProxy(account.IsVendorProxy)
+	if account.VendorProxyID != nil {
+		builder.SetVendorProxyID(*account.VendorProxyID)
+	}
 
 	created, err := builder.Save(ctx)
 	if err != nil {
@@ -1551,6 +1555,8 @@ func accountEntityToService(m *dbent.Account) *service.Account {
 		SessionWindowStatus: derefString(m.SessionWindowStatus),
 		VendorID:            m.VendorID,
 		SourceType:          m.SourceType,
+		IsVendorProxy:       m.IsVendorProxy,
+		VendorProxyID:       m.VendorProxyID,
 	}
 }
 
@@ -1646,4 +1652,41 @@ func (r *accountRepository) FindByExtraField(ctx context.Context, key string, va
 	}
 
 	return r.accountsToService(ctx, accounts)
+}
+
+// GetByVendorProxyID 通过 vendor_proxy_id 查找代理账号
+func (r *accountRepository) GetByVendorProxyID(ctx context.Context, vendorProxyID int64) (*service.Account, error) {
+	m, err := r.client.Account.Query().
+		Where(
+			dbaccount.IsVendorProxy(true),
+			dbaccount.VendorProxyID(vendorProxyID),
+			dbaccount.DeletedAtIsNil(),
+		).
+		Only(ctx)
+	if err != nil {
+		return nil, translatePersistenceError(err, service.ErrAccountNotFound, nil)
+	}
+	return accountEntityToService(m), nil
+}
+
+// DeleteByVendorProxyID 通过 vendor_proxy_id 软删除代理账号
+func (r *accountRepository) DeleteByVendorProxyID(ctx context.Context, vendorProxyID int64) error {
+	// 查找代理账号
+	m, err := r.client.Account.Query().
+		Where(
+			dbaccount.IsVendorProxy(true),
+			dbaccount.VendorProxyID(vendorProxyID),
+			dbaccount.DeletedAtIsNil(),
+		).
+		Only(ctx)
+	if err != nil {
+		// 如果不存在则忽略
+		if dbent.IsNotFound(err) {
+			return nil
+		}
+		return translatePersistenceError(err, service.ErrAccountNotFound, nil)
+	}
+
+	// 软删除
+	return r.Delete(ctx, m.ID)
 }

@@ -85,6 +85,10 @@ type Vendor struct {
 	BalanceAlertEnabled   bool     `json:"balance_alert_enabled"`
 	BalanceAlertThreshold *float64 `json:"balance_alert_threshold,omitempty"`
 
+	// 调度
+	Priority    int `json:"priority"`
+	Concurrency int `json:"concurrency"`
+
 	// 时间戳
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

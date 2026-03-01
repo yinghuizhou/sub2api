@@ -626,6 +626,48 @@ func (_u *VendorUpdate) ClearBalanceAlertThreshold() *VendorUpdate {
 	return _u
 }
 
+// SetPriority sets the "priority" field.
+func (_u *VendorUpdate) SetPriority(v int) *VendorUpdate {
+	_u.mutation.ResetPriority()
+	_u.mutation.SetPriority(v)
+	return _u
+}
+
+// SetNillablePriority sets the "priority" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillablePriority(v *int) *VendorUpdate {
+	if v != nil {
+		_u.SetPriority(*v)
+	}
+	return _u
+}
+
+// AddPriority adds value to the "priority" field.
+func (_u *VendorUpdate) AddPriority(v int) *VendorUpdate {
+	_u.mutation.AddPriority(v)
+	return _u
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (_u *VendorUpdate) SetConcurrency(v int) *VendorUpdate {
+	_u.mutation.ResetConcurrency()
+	_u.mutation.SetConcurrency(v)
+	return _u
+}
+
+// SetNillableConcurrency sets the "concurrency" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillableConcurrency(v *int) *VendorUpdate {
+	if v != nil {
+		_u.SetConcurrency(*v)
+	}
+	return _u
+}
+
+// AddConcurrency adds value to the "concurrency" field.
+func (_u *VendorUpdate) AddConcurrency(v int) *VendorUpdate {
+	_u.mutation.AddConcurrency(v)
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *VendorUpdate) AddAccountIDs(ids ...int64) *VendorUpdate {
 	_u.mutation.AddAccountIDs(ids...)
@@ -639,6 +681,21 @@ func (_u *VendorUpdate) AddAccounts(v ...*Account) *VendorUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddAccountIDs(ids...)
+}
+
+// AddProxyAccountIDs adds the "proxy_accounts" edge to the Account entity by IDs.
+func (_u *VendorUpdate) AddProxyAccountIDs(ids ...int64) *VendorUpdate {
+	_u.mutation.AddProxyAccountIDs(ids...)
+	return _u
+}
+
+// AddProxyAccounts adds the "proxy_accounts" edges to the Account entity.
+func (_u *VendorUpdate) AddProxyAccounts(v ...*Account) *VendorUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddProxyAccountIDs(ids...)
 }
 
 // Mutation returns the VendorMutation object of the builder.
@@ -665,6 +722,27 @@ func (_u *VendorUpdate) RemoveAccounts(v ...*Account) *VendorUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAccountIDs(ids...)
+}
+
+// ClearProxyAccounts clears all "proxy_accounts" edges to the Account entity.
+func (_u *VendorUpdate) ClearProxyAccounts() *VendorUpdate {
+	_u.mutation.ClearProxyAccounts()
+	return _u
+}
+
+// RemoveProxyAccountIDs removes the "proxy_accounts" edge to Account entities by IDs.
+func (_u *VendorUpdate) RemoveProxyAccountIDs(ids ...int64) *VendorUpdate {
+	_u.mutation.RemoveProxyAccountIDs(ids...)
+	return _u
+}
+
+// RemoveProxyAccounts removes "proxy_accounts" edges to Account entities.
+func (_u *VendorUpdate) RemoveProxyAccounts(v ...*Account) *VendorUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveProxyAccountIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -965,6 +1043,18 @@ func (_u *VendorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.BalanceAlertThresholdCleared() {
 		_spec.ClearField(vendor.FieldBalanceAlertThreshold, field.TypeFloat64)
 	}
+	if value, ok := _u.mutation.Priority(); ok {
+		_spec.SetField(vendor.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPriority(); ok {
+		_spec.AddField(vendor.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Concurrency(); ok {
+		_spec.SetField(vendor.FieldConcurrency, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedConcurrency(); ok {
+		_spec.AddField(vendor.FieldConcurrency, field.TypeInt, value)
+	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1000,6 +1090,51 @@ func (_u *VendorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Inverse: true,
 			Table:   vendor.AccountsTable,
 			Columns: []string{vendor.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProxyAccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedProxyAccountsIDs(); len(nodes) > 0 && !_u.mutation.ProxyAccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProxyAccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
@@ -1627,6 +1762,48 @@ func (_u *VendorUpdateOne) ClearBalanceAlertThreshold() *VendorUpdateOne {
 	return _u
 }
 
+// SetPriority sets the "priority" field.
+func (_u *VendorUpdateOne) SetPriority(v int) *VendorUpdateOne {
+	_u.mutation.ResetPriority()
+	_u.mutation.SetPriority(v)
+	return _u
+}
+
+// SetNillablePriority sets the "priority" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillablePriority(v *int) *VendorUpdateOne {
+	if v != nil {
+		_u.SetPriority(*v)
+	}
+	return _u
+}
+
+// AddPriority adds value to the "priority" field.
+func (_u *VendorUpdateOne) AddPriority(v int) *VendorUpdateOne {
+	_u.mutation.AddPriority(v)
+	return _u
+}
+
+// SetConcurrency sets the "concurrency" field.
+func (_u *VendorUpdateOne) SetConcurrency(v int) *VendorUpdateOne {
+	_u.mutation.ResetConcurrency()
+	_u.mutation.SetConcurrency(v)
+	return _u
+}
+
+// SetNillableConcurrency sets the "concurrency" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillableConcurrency(v *int) *VendorUpdateOne {
+	if v != nil {
+		_u.SetConcurrency(*v)
+	}
+	return _u
+}
+
+// AddConcurrency adds value to the "concurrency" field.
+func (_u *VendorUpdateOne) AddConcurrency(v int) *VendorUpdateOne {
+	_u.mutation.AddConcurrency(v)
+	return _u
+}
+
 // AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
 func (_u *VendorUpdateOne) AddAccountIDs(ids ...int64) *VendorUpdateOne {
 	_u.mutation.AddAccountIDs(ids...)
@@ -1640,6 +1817,21 @@ func (_u *VendorUpdateOne) AddAccounts(v ...*Account) *VendorUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.AddAccountIDs(ids...)
+}
+
+// AddProxyAccountIDs adds the "proxy_accounts" edge to the Account entity by IDs.
+func (_u *VendorUpdateOne) AddProxyAccountIDs(ids ...int64) *VendorUpdateOne {
+	_u.mutation.AddProxyAccountIDs(ids...)
+	return _u
+}
+
+// AddProxyAccounts adds the "proxy_accounts" edges to the Account entity.
+func (_u *VendorUpdateOne) AddProxyAccounts(v ...*Account) *VendorUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddProxyAccountIDs(ids...)
 }
 
 // Mutation returns the VendorMutation object of the builder.
@@ -1666,6 +1858,27 @@ func (_u *VendorUpdateOne) RemoveAccounts(v ...*Account) *VendorUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAccountIDs(ids...)
+}
+
+// ClearProxyAccounts clears all "proxy_accounts" edges to the Account entity.
+func (_u *VendorUpdateOne) ClearProxyAccounts() *VendorUpdateOne {
+	_u.mutation.ClearProxyAccounts()
+	return _u
+}
+
+// RemoveProxyAccountIDs removes the "proxy_accounts" edge to Account entities by IDs.
+func (_u *VendorUpdateOne) RemoveProxyAccountIDs(ids ...int64) *VendorUpdateOne {
+	_u.mutation.RemoveProxyAccountIDs(ids...)
+	return _u
+}
+
+// RemoveProxyAccounts removes "proxy_accounts" edges to Account entities.
+func (_u *VendorUpdateOne) RemoveProxyAccounts(v ...*Account) *VendorUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveProxyAccountIDs(ids...)
 }
 
 // Where appends a list predicates to the VendorUpdate builder.
@@ -1996,6 +2209,18 @@ func (_u *VendorUpdateOne) sqlSave(ctx context.Context) (_node *Vendor, err erro
 	if _u.mutation.BalanceAlertThresholdCleared() {
 		_spec.ClearField(vendor.FieldBalanceAlertThreshold, field.TypeFloat64)
 	}
+	if value, ok := _u.mutation.Priority(); ok {
+		_spec.SetField(vendor.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPriority(); ok {
+		_spec.AddField(vendor.FieldPriority, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Concurrency(); ok {
+		_spec.SetField(vendor.FieldConcurrency, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedConcurrency(); ok {
+		_spec.AddField(vendor.FieldConcurrency, field.TypeInt, value)
+	}
 	if _u.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -2031,6 +2256,51 @@ func (_u *VendorUpdateOne) sqlSave(ctx context.Context) (_node *Vendor, err erro
 			Inverse: true,
 			Table:   vendor.AccountsTable,
 			Columns: []string{vendor.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProxyAccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedProxyAccountsIDs(); len(nodes) > 0 && !_u.mutation.ProxyAccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProxyAccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   vendor.ProxyAccountsTable,
+			Columns: []string{vendor.ProxyAccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt64),

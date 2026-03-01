@@ -491,6 +491,40 @@ func (_u *AccountUpdate) SetNillableSourceType(v *string) *AccountUpdate {
 	return _u
 }
 
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (_u *AccountUpdate) SetIsVendorProxy(v bool) *AccountUpdate {
+	_u.mutation.SetIsVendorProxy(v)
+	return _u
+}
+
+// SetNillableIsVendorProxy sets the "is_vendor_proxy" field if the given value is not nil.
+func (_u *AccountUpdate) SetNillableIsVendorProxy(v *bool) *AccountUpdate {
+	if v != nil {
+		_u.SetIsVendorProxy(*v)
+	}
+	return _u
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (_u *AccountUpdate) SetVendorProxyID(v int64) *AccountUpdate {
+	_u.mutation.SetVendorProxyID(v)
+	return _u
+}
+
+// SetNillableVendorProxyID sets the "vendor_proxy_id" field if the given value is not nil.
+func (_u *AccountUpdate) SetNillableVendorProxyID(v *int64) *AccountUpdate {
+	if v != nil {
+		_u.SetVendorProxyID(*v)
+	}
+	return _u
+}
+
+// ClearVendorProxyID clears the value of the "vendor_proxy_id" field.
+func (_u *AccountUpdate) ClearVendorProxyID() *AccountUpdate {
+	_u.mutation.ClearVendorProxyID()
+	return _u
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
 func (_u *AccountUpdate) AddGroupIDs(ids ...int64) *AccountUpdate {
 	_u.mutation.AddGroupIDs(ids...)
@@ -529,6 +563,11 @@ func (_u *AccountUpdate) AddUsageLogs(v ...*UsageLog) *AccountUpdate {
 // SetVendor sets the "vendor" edge to the Vendor entity.
 func (_u *AccountUpdate) SetVendor(v *Vendor) *AccountUpdate {
 	return _u.SetVendorID(v.ID)
+}
+
+// SetVendorProxy sets the "vendor_proxy" edge to the Vendor entity.
+func (_u *AccountUpdate) SetVendorProxy(v *Vendor) *AccountUpdate {
+	return _u.SetVendorProxyID(v.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -587,6 +626,12 @@ func (_u *AccountUpdate) RemoveUsageLogs(v ...*UsageLog) *AccountUpdate {
 // ClearVendor clears the "vendor" edge to the Vendor entity.
 func (_u *AccountUpdate) ClearVendor() *AccountUpdate {
 	_u.mutation.ClearVendor()
+	return _u
+}
+
+// ClearVendorProxy clears the "vendor_proxy" edge to the Vendor entity.
+func (_u *AccountUpdate) ClearVendorProxy() *AccountUpdate {
+	_u.mutation.ClearVendorProxy()
 	return _u
 }
 
@@ -804,6 +849,9 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.SourceType(); ok {
 		_spec.SetField(account.FieldSourceType, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.IsVendorProxy(); ok {
+		_spec.SetField(account.FieldIsVendorProxy, field.TypeBool, value)
+	}
 	if _u.mutation.GroupsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -954,6 +1002,35 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Inverse: false,
 			Table:   account.VendorTable,
 			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.VendorProxyCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorProxyTable,
+			Columns: []string{account.VendorProxyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.VendorProxyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorProxyTable,
+			Columns: []string{account.VendorProxyColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
@@ -1443,6 +1520,40 @@ func (_u *AccountUpdateOne) SetNillableSourceType(v *string) *AccountUpdateOne {
 	return _u
 }
 
+// SetIsVendorProxy sets the "is_vendor_proxy" field.
+func (_u *AccountUpdateOne) SetIsVendorProxy(v bool) *AccountUpdateOne {
+	_u.mutation.SetIsVendorProxy(v)
+	return _u
+}
+
+// SetNillableIsVendorProxy sets the "is_vendor_proxy" field if the given value is not nil.
+func (_u *AccountUpdateOne) SetNillableIsVendorProxy(v *bool) *AccountUpdateOne {
+	if v != nil {
+		_u.SetIsVendorProxy(*v)
+	}
+	return _u
+}
+
+// SetVendorProxyID sets the "vendor_proxy_id" field.
+func (_u *AccountUpdateOne) SetVendorProxyID(v int64) *AccountUpdateOne {
+	_u.mutation.SetVendorProxyID(v)
+	return _u
+}
+
+// SetNillableVendorProxyID sets the "vendor_proxy_id" field if the given value is not nil.
+func (_u *AccountUpdateOne) SetNillableVendorProxyID(v *int64) *AccountUpdateOne {
+	if v != nil {
+		_u.SetVendorProxyID(*v)
+	}
+	return _u
+}
+
+// ClearVendorProxyID clears the value of the "vendor_proxy_id" field.
+func (_u *AccountUpdateOne) ClearVendorProxyID() *AccountUpdateOne {
+	_u.mutation.ClearVendorProxyID()
+	return _u
+}
+
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
 func (_u *AccountUpdateOne) AddGroupIDs(ids ...int64) *AccountUpdateOne {
 	_u.mutation.AddGroupIDs(ids...)
@@ -1481,6 +1592,11 @@ func (_u *AccountUpdateOne) AddUsageLogs(v ...*UsageLog) *AccountUpdateOne {
 // SetVendor sets the "vendor" edge to the Vendor entity.
 func (_u *AccountUpdateOne) SetVendor(v *Vendor) *AccountUpdateOne {
 	return _u.SetVendorID(v.ID)
+}
+
+// SetVendorProxy sets the "vendor_proxy" edge to the Vendor entity.
+func (_u *AccountUpdateOne) SetVendorProxy(v *Vendor) *AccountUpdateOne {
+	return _u.SetVendorProxyID(v.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -1539,6 +1655,12 @@ func (_u *AccountUpdateOne) RemoveUsageLogs(v ...*UsageLog) *AccountUpdateOne {
 // ClearVendor clears the "vendor" edge to the Vendor entity.
 func (_u *AccountUpdateOne) ClearVendor() *AccountUpdateOne {
 	_u.mutation.ClearVendor()
+	return _u
+}
+
+// ClearVendorProxy clears the "vendor_proxy" edge to the Vendor entity.
+func (_u *AccountUpdateOne) ClearVendorProxy() *AccountUpdateOne {
+	_u.mutation.ClearVendorProxy()
 	return _u
 }
 
@@ -1786,6 +1908,9 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 	if value, ok := _u.mutation.SourceType(); ok {
 		_spec.SetField(account.FieldSourceType, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.IsVendorProxy(); ok {
+		_spec.SetField(account.FieldIsVendorProxy, field.TypeBool, value)
+	}
 	if _u.mutation.GroupsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -1936,6 +2061,35 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 			Inverse: false,
 			Table:   account.VendorTable,
 			Columns: []string{account.VendorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.VendorProxyCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorProxyTable,
+			Columns: []string{account.VendorProxyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.VendorProxyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   account.VendorProxyTable,
+			Columns: []string{account.VendorProxyColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(vendor.FieldID, field.TypeInt64),

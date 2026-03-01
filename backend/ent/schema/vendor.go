@@ -95,12 +95,28 @@ func (Vendor) Fields() []ent.Field {
 		// 余额预警
 		field.Bool("balance_alert_enabled").Default(false),
 		field.Float("balance_alert_threshold").Optional().Nillable().SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
+
+		// ========== 调度相关字段 ==========
+		// priority: 供应商优先级（数值越小越优先）
+		// 用于调度排序，与 Account.priority 一起参与优先级比较
+		field.Int("priority").
+			Default(50).
+			Comment("供应商优先级（数值越小越优先，用于调度排序）"),
+
+		// concurrency: 供应商最大并发请求数
+		// 限制同一时间对该供应商发起的请求数量
+		field.Int("concurrency").
+			Default(3).
+			Comment("供应商最大并发请求数"),
 	}
 }
 
 func (Vendor) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("accounts", Account.Type).Ref("vendor"),
+		// proxy_accounts: 该 Vendor 的代理账号（反向关系）
+		// 一个 Vendor 最多有一个代理账号
+		edge.From("proxy_accounts", Account.Type).Ref("vendor_proxy"),
 	}
 }
 
@@ -111,5 +127,6 @@ func (Vendor) Indexes() []ent.Index {
 		index.Fields("api_format"),
 		index.Fields("billing_type"),
 		index.Fields("deleted_at"),
+		index.Fields("priority"), // 调度优先级排序
 	}
 }
