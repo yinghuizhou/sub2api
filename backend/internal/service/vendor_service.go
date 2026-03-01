@@ -183,9 +183,13 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 	}
 	if vendor.Priority <= 0 {
 		vendor.Priority = 50
+	} else if vendor.Priority > 100 {
+		vendor.Priority = 100
 	}
 	if vendor.Concurrency <= 0 {
 		vendor.Concurrency = 3
+	} else if vendor.Concurrency > 100 {
+		vendor.Concurrency = 100
 	}
 
 	if err := s.vendorRepo.Create(ctx, vendor); err != nil {
@@ -308,6 +312,11 @@ func (s *VendorService) Delete(ctx context.Context, id int64) error {
 	if count > 0 {
 		return ErrVendorHasAccounts
 	}
+	return s.vendorRepo.Delete(ctx, id)
+}
+
+// ForceDelete 强制删除供应商（跳过账号检查，用于创建回滚）
+func (s *VendorService) ForceDelete(ctx context.Context, id int64) error {
 	return s.vendorRepo.Delete(ctx, id)
 }
 

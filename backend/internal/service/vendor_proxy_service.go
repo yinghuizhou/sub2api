@@ -22,8 +22,8 @@ func NewVendorProxyService(vendorRepo VendorRepository, accountRepo AccountRepos
 	}
 }
 
-// InferPlatformFromVendor 从 Vendor 推断平台类型
-func InferPlatformFromVendor(vendor *Vendor) string {
+// inferPlatformFromVendor 从 Vendor 推断平台类型
+func inferPlatformFromVendor(vendor *Vendor) string {
 	if vendor.VendorType == domain.VendorTypeOfficial && vendor.OfficialPlatform != nil {
 		return *vendor.OfficialPlatform
 	}
@@ -57,7 +57,7 @@ func (s *VendorProxyService) CreateProxyAccount(ctx context.Context, vendorID in
 	}
 
 	// 创建新的代理账号
-	platform := InferPlatformFromVendor(vendor)
+	platform := inferPlatformFromVendor(vendor)
 	proxyAccount := &Account{
 		Name:          fmt.Sprintf("[Vendor] %s", vendor.Name),
 		Platform:      platform,
@@ -115,7 +115,7 @@ func (s *VendorProxyService) DeleteProxyAccount(ctx context.Context, vendorID in
 // syncProxyAccount 内部方法：同步 Vendor 字段到代理账号
 func (s *VendorProxyService) syncProxyAccount(ctx context.Context, account *Account, vendor *Vendor) error {
 	account.Name = fmt.Sprintf("[Vendor] %s", vendor.Name)
-	account.Platform = InferPlatformFromVendor(vendor)
+	account.Platform = inferPlatformFromVendor(vendor)
 	account.Priority = vendor.Priority
 	account.Concurrency = vendor.Concurrency
 	account.Schedulable = vendor.Status == VendorStatusActive

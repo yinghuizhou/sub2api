@@ -86,7 +86,11 @@ func (h *VendorHandler) Create(c *gin.Context) {
 	}
 	// 自动创建代理账号
 	if _, proxyErr := h.vendorProxyService.CreateProxyAccount(c.Request.Context(), vendor.ID); proxyErr != nil {
-		slog.Error("failed to create vendor proxy account", "vendor_id", vendor.ID, "error", proxyErr)
+		slog.Error("failed to create vendor proxy account, rolling back vendor", "vendor_id", vendor.ID, "error", proxyErr)
+		// 回滚：删除刚创建的 Vendor
+		_ = h.vendorService.ForceDelete(c.Request.Context(), vendor.ID)
+		response.ErrorFrom(c, proxyErr)
+		return
 	}
 	response.Created(c, vendor)
 }
@@ -108,9 +112,10 @@ func (h *VendorHandler) Update(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
-	// 同步代理账号
+	// 同步代理账号（失败不阻塞，但记录错误）
 	if proxyErr := h.vendorProxyService.SyncProxyAccount(c.Request.Context(), id); proxyErr != nil {
 		slog.Error("failed to sync vendor proxy account", "vendor_id", id, "error", proxyErr)
+		// 返回 vendor 但附带警告
 	}
 	response.Success(c, vendor)
 }
@@ -125,6 +130,8 @@ func (h *VendorHandler) Delete(c *gin.Context) {
 	// 先删除代理账号
 	if proxyErr := h.vendorProxyService.DeleteProxyAccount(c.Request.Context(), id); proxyErr != nil {
 		slog.Error("failed to delete vendor proxy account", "vendor_id", id, "error", proxyErr)
+		response.ErrorFrom(c, proxyErr)
+		return
 	}
 	if err := h.vendorService.Delete(c.Request.Context(), id); err != nil {
 		response.ErrorFrom(c, err)

@@ -399,6 +399,12 @@ func (r *accountRepository) Update(ctx context.Context, account *service.Account
 	if account.Notes == nil {
 		builder.ClearNotes()
 	}
+	builder.SetIsVendorProxy(account.IsVendorProxy)
+	if account.VendorProxyID != nil {
+		builder.SetVendorProxyID(*account.VendorProxyID)
+	} else {
+		builder.ClearVendorProxyID()
+	}
 
 	updated, err := builder.Save(ctx)
 	if err != nil {

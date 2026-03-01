@@ -73,14 +73,9 @@ BEGIN
 END $$;
 
 -- Ensure each vendor has at most one proxy account
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_accounts_vendor_proxy_id') THEN
-        CREATE UNIQUE INDEX uq_accounts_vendor_proxy_id
-            ON accounts (vendor_proxy_id)
-            WHERE is_vendor_proxy = TRUE AND deleted_at IS NULL;
-    END IF;
-END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_accounts_vendor_proxy_id
+    ON accounts (vendor_proxy_id)
+    WHERE is_vendor_proxy = TRUE AND deleted_at IS NULL;
 
 -- ============================================================
 -- Part 4: Migration notes and rollback instructions
