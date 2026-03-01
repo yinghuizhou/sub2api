@@ -188,6 +188,22 @@
               <label class="input-label">描述</label>
               <input v-model="form.description" type="text" class="input" placeholder="可选描述" />
             </div>
+            <div>
+              <label class="input-label">渠道类型</label>
+              <Select v-model="form.vendor_type" :options="vendorTypeOptions" />
+            </div>
+            <div v-if="form.vendor_type === 'official'">
+              <label class="input-label">官方平台 <span class="text-red-500">*</span></label>
+              <Select v-model="form.official_platform" :options="officialPlatformOptions" />
+            </div>
+            <div v-if="form.vendor_type === 'reseller'">
+              <label class="input-label">二次分发平台 <span class="text-red-500">*</span></label>
+              <Select v-model="form.reseller_platform" :options="resellerPlatformOptions" />
+            </div>
+            <div v-if="form.vendor_type === 'reseller'">
+              <label class="input-label">分发商 API Key</label>
+              <input v-model="form.reseller_api_key" type="password" autocomplete="off" class="input" placeholder="分发商提供的 API Key" />
+            </div>
           </div>
         </fieldset>
         <!-- API Config -->
@@ -364,6 +380,20 @@ const billingTypeOptions = [
   { value: 'quota', label: '额度计费' },
   { value: 'subscription', label: '订阅制' },
 ]
+const vendorTypeOptions = [
+  { value: 'official', label: '官方渠道' },
+  { value: 'reseller', label: '二次分发' },
+]
+const officialPlatformOptions = [
+  { value: 'claude', label: 'Claude (Anthropic)' },
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'gemini', label: 'Gemini (Google)' },
+]
+const resellerPlatformOptions = [
+  { value: 'sub2api', label: 'Sub2API' },
+  { value: 'newapi', label: 'NewAPI' },
+  { value: 'other', label: '其他' },
+]
 const editStatusOptions = [
   { value: 'active', label: '正常' },
   { value: 'suspended', label: '暂停' },
@@ -396,7 +426,7 @@ const detectForm = reactive({ url: '', api_key: '' })
 const detectResult = ref<VendorProbeResult | null>(null)
 
 const defaultForm = (): CreateVendorRequest & { status?: string; health_check_enabled: boolean; health_check_interval: number; health_check_model: string; balance_alert_enabled: boolean; balance_alert_threshold?: number } => ({
-  name: '', description: '', vendor_type: 'official', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
+  name: '', description: '', vendor_type: 'official', official_platform: undefined, reseller_platform: undefined, reseller_api_key: '', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
   api_path_override: '', billing_type: 'token', cost_per_1k_input: 0, cost_per_1k_output: 0,
   total_quota_usd: 0, balance_usd: 0, expires_at: '', health_check_enabled: false,
   health_check_interval: 300, health_check_model: 'claude-sonnet-4-20250514',
@@ -477,7 +507,7 @@ const openCreateModal = () => {
 }
 const handleEdit = (v: Vendor) => {
   editingVendor.value = v
-  Object.assign(form, { name: v.name, description: v.description || '', api_format: v.api_format, base_url: v.base_url, auth_type: v.auth_type, api_path_override: v.api_path_override || '', billing_type: v.billing_type, cost_per_1k_input: v.cost_per_1k_input || 0, cost_per_1k_output: v.cost_per_1k_output || 0, total_quota_usd: v.total_quota_usd || 0, balance_usd: v.balance_usd || 0, expires_at: v.expires_at ? v.expires_at.slice(0, 16) : '', health_check_enabled: v.health_check_enabled, health_check_interval: v.health_check_interval, health_check_model: v.health_check_model, balance_alert_enabled: v.balance_alert_enabled, balance_alert_threshold: v.balance_alert_threshold || 10, status: v.status })
+  Object.assign(form, { name: v.name, description: v.description || '', vendor_type: v.vendor_type, official_platform: v.official_platform, reseller_platform: v.reseller_platform, reseller_api_key: v.reseller_api_key || '', api_format: v.api_format, base_url: v.base_url, auth_type: v.auth_type, api_path_override: v.api_path_override || '', billing_type: v.billing_type, cost_per_1k_input: v.cost_per_1k_input || 0, cost_per_1k_output: v.cost_per_1k_output || 0, total_quota_usd: v.total_quota_usd || 0, balance_usd: v.balance_usd || 0, expires_at: v.expires_at ? v.expires_at.slice(0, 16) : '', health_check_enabled: v.health_check_enabled, health_check_interval: v.health_check_interval, health_check_model: v.health_check_model, balance_alert_enabled: v.balance_alert_enabled, balance_alert_threshold: v.balance_alert_threshold || 10, status: v.status })
   extraHeadersJson.value = JSON.stringify(v.extra_headers || {}, null, 2)
   showModal.value = true
 }
@@ -485,6 +515,8 @@ const closeModal = () => { showModal.value = false; editingVendor.value = null; 
 
 const handleSubmit = async () => {
   if (!form.name.trim() || !form.base_url.trim()) { appStore.showError('名称和 Base URL 为必填项'); return }
+  if (form.vendor_type === 'official' && !form.official_platform) { appStore.showError('官方渠道必须选择官方平台'); return }
+  if (form.vendor_type === 'reseller' && !form.reseller_platform) { appStore.showError('二次分发渠道必须选择分发平台'); return }
   let parsedHeaders: Record<string, string> = {}
   try { parsedHeaders = JSON.parse(extraHeadersJson.value || '{}') } catch { appStore.showError('额外 Headers JSON 格式错误'); return }
   submitting.value = true
