@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -84,6 +85,27 @@ func (s *VendorHealthService) checkVendor(ctx context.Context, vendor *Vendor) (
 	// 应用供应商配置的认证头（管理员在 extra_headers 中设置，如 x-api-key 或 Authorization）
 	for k, v := range vendor.ExtraHeaders {
 		req.Header.Set(k, v)
+	}
+
+	// 对于 reseller 类型的供应商，如果有 reseller_api_key 但 extra_headers 中没有认证信息，自动添加
+	if vendor.VendorType == "reseller" && vendor.ResellerAPIKey != nil && *vendor.ResellerAPIKey != "" {
+		// 检查是否已经有认证头
+		hasAuth := false
+		for k := range vendor.ExtraHeaders {
+			lowerKey := strings.ToLower(k)
+			if lowerKey == "authorization" || lowerKey == "x-api-key" {
+				hasAuth = true
+				break
+			}
+		}
+		// 如果没有认证头，根据 API 格式自动添加
+		if !hasAuth {
+			if vendor.APIFormat == VendorAPIFormatAnthropic {
+				req.Header.Set("x-api-key", *vendor.ResellerAPIKey)
+			} else {
+				req.Header.Set("Authorization", "Bearer "+*vendor.ResellerAPIKey)
+			}
+		}
 	}
 
 	start := time.Now()
