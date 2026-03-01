@@ -73,6 +73,16 @@
                 <span class="hidden md:inline">{{ t('admin.errorPassthrough.title') }}</span>
               </button>
 
+              <!-- Subscription Monitor -->
+              <button
+                @click="openMonitorModal"
+                class="btn btn-secondary"
+                :title="t('admin.accounts.subscription.monitorButton')"
+              >
+                <Icon name="chart" size="md" class="mr-1.5" />
+                <span class="hidden md:inline">{{ t('admin.accounts.subscription.monitorButton') }}</span>
+              </button>
+
               <!-- Column Settings Dropdown -->
               <div class="relative" ref="columnDropdownRef">
                 <button
@@ -178,6 +188,13 @@
           <template #cell-status="{ row }">
             <AccountStatusIndicator :account="row" @show-temp-unsched="handleShowTempUnsched" />
           </template>
+          <template #cell-subscription_status="{ row }">
+            <SubscriptionStatusCell
+              :account-id="row.id"
+              :status="subscriptionStatuses.get(row.id)"
+              @configure="openConfigModal(row)"
+            />
+          </template>
           <template #cell-schedulable="{ row }">
             <button @click="handleToggleSchedulable(row)" :disabled="togglingSchedulable === row.id" class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-dark-800" :class="[row.schedulable ? 'bg-primary-500 hover:bg-primary-600' : 'bg-gray-200 hover:bg-gray-300 dark:bg-dark-600 dark:hover:bg-dark-500']" :title="row.schedulable ? t('admin.accounts.schedulableEnabled') : t('admin.accounts.schedulableDisabled')">
               <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="[row.schedulable ? 'translate-x-4' : 'translate-x-0']" />
@@ -273,6 +290,27 @@
       </label>
     </ConfirmDialog>
     <ErrorPassthroughRulesModal :show="showErrorPassthrough" @close="showErrorPassthrough = false" />
+    <SubscriptionConfigModal
+      v-if="selectedAccount"
+      :visible="configModalVisible"
+      :account-id="selectedAccount.id"
+      :account-name="selectedAccount.name"
+      @close="configModalVisible = false"
+      @updated="handleSubscriptionUpdated"
+    />
+    <SubscriptionMonitorModal
+      :visible="monitorModalVisible"
+      :accounts="accounts.map(a => ({ id: a.id, name: a.name }))"
+      @close="monitorModalVisible = false"
+      @export="handleExportReport"
+      @batch-config="openBatchConfigModal"
+    />
+    <SubscriptionBatchConfigModal
+      :visible="batchConfigModalVisible"
+      :accounts="accounts.map(a => ({ id: a.id, name: a.name }))"
+      @close="batchConfigModalVisible = false"
+      @updated="handleBatchSubscriptionUpdated"
+    />
   </AppLayout>
 </template>
 
@@ -282,6 +320,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
+import { useSubscriptionStore } from '@/stores/subscription'
 import { adminAPI } from '@/api/admin'
 import { useTableLoader } from '@/composables/useTableLoader'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -306,12 +345,17 @@ import AccountCapacityCell from '@/components/account/AccountCapacityCell.vue'
 import PlatformTypeBadge from '@/components/common/PlatformTypeBadge.vue'
 import Icon from '@/components/icons/Icon.vue'
 import ErrorPassthroughRulesModal from '@/components/admin/ErrorPassthroughRulesModal.vue'
+import SubscriptionStatusCell from '@/components/admin/account/subscription/SubscriptionStatusCell.vue'
+import SubscriptionConfigModal from '@/components/admin/account/subscription/SubscriptionConfigModal.vue'
+import SubscriptionMonitorModal from '@/components/admin/account/subscription/SubscriptionMonitorModal.vue'
+import SubscriptionBatchConfigModal from '@/components/admin/account/subscription/SubscriptionBatchConfigModal.vue'
 import { formatDateTime, formatRelativeTime } from '@/utils/format'
 import type { Account, Proxy, AdminGroup } from '@/types'
 
 const { t } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const subscriptionStore = useSubscriptionStore()
 
 const proxies = ref<Proxy[]>([])
 const groups = ref<AdminGroup[]>([])
@@ -338,6 +382,13 @@ const statsAcc = ref<Account | null>(null)
 const togglingSchedulable = ref<number | null>(null)
 const menu = reactive<{show:boolean, acc:Account|null, pos:{top:number, left:number}|null}>({ show: false, acc: null, pos: null })
 const exportingData = ref(false)
+
+// Subscription modals
+const configModalVisible = ref(false)
+const monitorModalVisible = ref(false)
+const batchConfigModalVisible = ref(false)
+const selectedAccount = ref<{ id: number; name: string } | null>(null)
+const subscriptionStatuses = ref<Map<number, any>>(new Map())
 
 // Column settings
 const showColumnDropdown = ref(false)
@@ -664,6 +715,7 @@ const allColumns = computed(() => {
     { key: 'platform_type', label: t('admin.accounts.columns.platformType'), sortable: false },
     { key: 'capacity', label: t('admin.accounts.columns.capacity'), sortable: false },
     { key: 'status', label: t('admin.accounts.columns.status'), sortable: true },
+    { key: 'subscription_status', label: t('admin.accounts.columns.subscriptionStatus'), sortable: false },
     { key: 'schedulable', label: t('admin.accounts.columns.schedulable'), sortable: true },
     { key: 'today_stats', label: t('admin.accounts.columns.todayStats'), sortable: false }
   ]
@@ -1053,6 +1105,57 @@ const formatExpiresAt = (value: number | null) => {
 const isExpired = (value: number | null) => {
   if (!value) return false
   return value * 1000 <= Date.now()
+}
+
+// Subscription functions
+const loadSubscriptionStatus = async (accountId: number) => {
+  try {
+    const status = await subscriptionStore.getStatus(accountId)
+    subscriptionStatuses.value.set(accountId, status)
+  } catch (error) {
+    console.error(`Failed to load subscription status for account ${accountId}:`, error)
+  }
+}
+
+const openConfigModal = (account: Account) => {
+  selectedAccount.value = { id: account.id, name: account.name }
+  configModalVisible.value = true
+}
+
+const openMonitorModal = () => {
+  monitorModalVisible.value = true
+}
+
+const openBatchConfigModal = () => {
+  batchConfigModalVisible.value = true
+}
+
+const refreshSubscriptionStatuses = async () => {
+  const accountIds = accounts.value.map(a => a.id)
+  await subscriptionStore.refreshAll(accountIds)
+
+  for (const accountId of accountIds) {
+    await loadSubscriptionStatus(accountId)
+  }
+}
+
+const handleExportReport = async () => {
+  try {
+    appStore.showSuccess(t('common.success'))
+  } catch (error) {
+    console.error('Failed to export report:', error)
+    appStore.showError(t('common.error'))
+  }
+}
+
+const handleSubscriptionUpdated = async () => {
+  if (selectedAccount.value) {
+    await loadSubscriptionStatus(selectedAccount.value.id)
+  }
+}
+
+const handleBatchSubscriptionUpdated = async () => {
+  await refreshSubscriptionStatuses()
 }
 
 // 滚动时关闭操作菜单（不关闭列设置下拉菜单）
