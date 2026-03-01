@@ -4143,6 +4143,32 @@ export default {
         description:
           '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;">点击确认创建您的 API 密钥。</p><div style="padding: 8px 12px; background: #fee2e2; border-left: 3px solid #ef4444; border-radius: 4px; font-size: 13px; margin-bottom: 12px;"><b>⚠️ 重要：</b><ul style="margin: 8px 0 0 16px;"><li>创建后请立即复制密钥（sk-xxx）</li><li>密钥只显示一次，丢失需重新生成</li></ul></div><p style="padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>🚀 如何使用：</b><br/>将密钥配置到支持 OpenAI 接口的任何客户端（如 ChatBox、OpenCat 等），即可开始使用！</p><p style="margin-top: 12px; color: #10b981; font-weight: 600;">👉 点击"创建"按钮</p></div>'
       }
+    },
+
+    // Vendors Management
+    vendors: {
+      title: '渠道商管理',
+      description: '管理官方渠道和二次分发渠道',
+      vendorType: '渠道类型',
+      vendorTypeOfficial: '官方渠道',
+      vendorTypeReseller: '二次分发',
+      officialPlatform: '官方平台',
+      resellerPlatform: '渠道平台',
+      resellerApiKey: '渠道商 API Key',
+      filterAll: '全部渠道',
+      filterOfficial: '官方渠道',
+      filterReseller: '二次分发渠道',
+      createWizard: {
+        title: '创建渠道商',
+        step1Title: '选择渠道类型',
+        step2Title: '配置渠道信息',
+        officialTitle: '官方渠道',
+        officialDesc: '直接对接 Claude、OpenAI 等官方 API',
+        officialFeatures: ['稳定性高', '功能完整', '需要官方账号'],
+        resellerTitle: '二次分发渠道',
+        resellerDesc: '对接 Sub2API、NewAPI 等中转站',
+        resellerFeatures: ['价格便宜', '快速接入', '支持订阅限额']
+      }
     }
   },
 

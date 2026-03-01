@@ -3937,6 +3937,32 @@ export default {
         title: '🎉 Complete Creation',
         description: '<div style="line-height: 1.7;"><p style="margin-bottom: 12px;">Click to confirm and create your API key.</p><div style="padding: 8px 12px; background: #fee2e2; border-left: 3px solid #ef4444; border-radius: 4px; font-size: 13px; margin-bottom: 12px;"><b>⚠️ Important:</b><ul style="margin: 8px 0 0 16px;"><li>Copy the key (sk-xxx) immediately after creation</li><li>Key is only shown once, need to regenerate if lost</li></ul></div><p style="padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 4px; font-size: 13px;"><b>🚀 How to Use:</b><br/>Configure the key in any OpenAI-compatible client (like ChatBox, OpenCat, etc.) and start using!</p><p style="margin-top: 12px; color: #10b981; font-weight: 600;">👉 Click "Create" button</p></div>'
       }
+    },
+
+    // Vendors Management
+    vendors: {
+      title: 'Vendor Management',
+      description: 'Manage official channels and reseller channels',
+      vendorType: 'Vendor Type',
+      vendorTypeOfficial: 'Official Channel',
+      vendorTypeReseller: 'Reseller',
+      officialPlatform: 'Official Platform',
+      resellerPlatform: 'Reseller Platform',
+      resellerApiKey: 'Reseller API Key',
+      filterAll: 'All Vendors',
+      filterOfficial: 'Official Channels',
+      filterReseller: 'Reseller Channels',
+      createWizard: {
+        title: 'Create Vendor',
+        step1Title: 'Select Vendor Type',
+        step2Title: 'Configure Vendor',
+        officialTitle: 'Official Channel',
+        officialDesc: 'Direct integration with Claude, OpenAI, etc.',
+        officialFeatures: ['High Stability', 'Full Features', 'Requires Official Account'],
+        resellerTitle: 'Reseller Channel',
+        resellerDesc: 'Integration with Sub2API, NewAPI, etc.',
+        resellerFeatures: ['Lower Cost', 'Quick Setup', 'Subscription Limits']
+      }
     }
   },
 
