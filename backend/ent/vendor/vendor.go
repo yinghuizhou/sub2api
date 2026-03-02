@@ -83,6 +83,8 @@ const (
 	FieldBalanceAlertEnabled = "balance_alert_enabled"
 	// FieldBalanceAlertThreshold holds the string denoting the balance_alert_threshold field in the database.
 	FieldBalanceAlertThreshold = "balance_alert_threshold"
+	// FieldForceClaudeCodeHeaders holds the string denoting the force_claude_code_headers field in the database.
+	FieldForceClaudeCodeHeaders = "force_claude_code_headers"
 	// FieldPriority holds the string denoting the priority field in the database.
 	FieldPriority = "priority"
 	// FieldConcurrency holds the string denoting the concurrency field in the database.
@@ -146,6 +148,7 @@ var Columns = []string{
 	FieldAutoPurchaseConfig,
 	FieldBalanceAlertEnabled,
 	FieldBalanceAlertThreshold,
+	FieldForceClaudeCodeHeaders,
 	FieldPriority,
 	FieldConcurrency,
 }
@@ -226,6 +229,8 @@ var (
 	DefaultAutoPurchaseConfig map[string]interface{}
 	// DefaultBalanceAlertEnabled holds the default value on creation for the "balance_alert_enabled" field.
 	DefaultBalanceAlertEnabled bool
+	// DefaultForceClaudeCodeHeaders holds the default value on creation for the "force_claude_code_headers" field.
+	DefaultForceClaudeCodeHeaders bool
 	// DefaultPriority holds the default value on creation for the "priority" field.
 	DefaultPriority int
 	// DefaultConcurrency holds the default value on creation for the "concurrency" field.
@@ -398,6 +403,11 @@ func ByBalanceAlertEnabled(opts ...sql.OrderTermOption) OrderOption {
 // ByBalanceAlertThreshold orders the results by the balance_alert_threshold field.
 func ByBalanceAlertThreshold(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBalanceAlertThreshold, opts...).ToFunc()
+}
+
+// ByForceClaudeCodeHeaders orders the results by the force_claude_code_headers field.
+func ByForceClaudeCodeHeaders(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldForceClaudeCodeHeaders, opts...).ToFunc()
 }
 
 // ByPriority orders the results by the priority field.

@@ -56,10 +56,11 @@ type CreateVendorInput struct {
 	HealthCheckEnabled    bool              `json:"health_check_enabled"`
 	HealthCheckInterval   int               `json:"health_check_interval"`
 	HealthCheckModel      string            `json:"health_check_model"`
-	BalanceAlertEnabled   bool              `json:"balance_alert_enabled"`
-	BalanceAlertThreshold *float64          `json:"balance_alert_threshold"`
-	Priority              int               `json:"priority"`
-	Concurrency           int               `json:"concurrency"`
+	BalanceAlertEnabled    bool              `json:"balance_alert_enabled"`
+	BalanceAlertThreshold  *float64          `json:"balance_alert_threshold"`
+	ForceClaudeCodeHeaders bool              `json:"force_claude_code_headers"`
+	Priority               int               `json:"priority"`
+	Concurrency            int               `json:"concurrency"`
 }
 
 // UpdateVendorInput 更新供应商请求
@@ -87,10 +88,11 @@ type UpdateVendorInput struct {
 	HealthCheckModel      *string           `json:"health_check_model"`
 	BalanceAlertEnabled   *bool             `json:"balance_alert_enabled"`
 	BalanceAlertThreshold *float64          `json:"balance_alert_threshold"`
-	AutoPurchaseEnabled   *bool             `json:"auto_purchase_enabled"`
-	AutoPurchaseConfig    map[string]any    `json:"auto_purchase_config"`
-	Priority              *int              `json:"priority"`
-	Concurrency           *int              `json:"concurrency"`
+	AutoPurchaseEnabled    *bool             `json:"auto_purchase_enabled"`
+	AutoPurchaseConfig     map[string]any    `json:"auto_purchase_config"`
+	ForceClaudeCodeHeaders *bool             `json:"force_claude_code_headers"`
+	Priority               *int              `json:"priority"`
+	Concurrency            *int              `json:"concurrency"`
 }
 
 // VendorService 供应商业务逻辑服务
@@ -184,10 +186,11 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 		HealthCheckEnabled:    input.HealthCheckEnabled,
 		HealthCheckInterval:   input.HealthCheckInterval,
 		HealthCheckModel:      input.HealthCheckModel,
-		BalanceAlertEnabled:   input.BalanceAlertEnabled,
-		BalanceAlertThreshold: input.BalanceAlertThreshold,
-		Priority:              input.Priority,
-		Concurrency:           input.Concurrency,
+		BalanceAlertEnabled:    input.BalanceAlertEnabled,
+		BalanceAlertThreshold:  input.BalanceAlertThreshold,
+		ForceClaudeCodeHeaders: input.ForceClaudeCodeHeaders,
+		Priority:               input.Priority,
+		Concurrency:            input.Concurrency,
 	}
 
 	if vendor.ExtraHeaders == nil {
@@ -306,6 +309,9 @@ func (s *VendorService) Update(ctx context.Context, id int64, input *UpdateVendo
 	}
 	if input.AutoPurchaseConfig != nil {
 		vendor.AutoPurchaseConfig = input.AutoPurchaseConfig
+	}
+	if input.ForceClaudeCodeHeaders != nil {
+		vendor.ForceClaudeCodeHeaders = *input.ForceClaudeCodeHeaders
 	}
 	if input.Priority != nil {
 		vendor.Priority = *input.Priority

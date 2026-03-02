@@ -4057,7 +4057,7 @@ func (s *GatewayService) forwardAnthropicAPIKeyPassthrough(
 	var resp *http.Response
 	retryStart := time.Now()
 	for attempt := 1; attempt <= maxRetryAttempts; attempt++ {
-		upstreamReq, err := s.buildUpstreamRequestAnthropicAPIKeyPassthrough(ctx, c, account, body, token)
+		upstreamReq, err := s.buildUpstreamRequestAnthropicAPIKeyPassthrough(ctx, c, account, body, token, reqStream)
 		if err != nil {
 			return nil, err
 		}
@@ -4258,15 +4258,29 @@ func (s *GatewayService) buildUpstreamRequestAnthropicAPIKeyPassthrough(
 	account *Account,
 	body []byte,
 	token string,
+	reqStream bool,
 ) (*http.Request, error) {
 	targetURL := claudeAPIURL
-	baseURL := account.GetBaseURL()
-	if baseURL != "" {
-		validatedURL, err := s.validateUpstreamBaseURL(baseURL)
-		if err != nil {
-			return nil, err
+
+	// 加载供应商配置（如果账户绑定了 vendor）
+	var vendor *Vendor
+	if account.VendorID != nil && s.vendorRepo != nil {
+		v, err := s.vendorRepo.GetByID(ctx, *account.VendorID)
+		if err == nil && v.IsActive() {
+			vendor = v
+			targetURL = vendor.BaseURL + vendor.GetAPIPath()
 		}
-		targetURL = validatedURL + "/v1/messages"
+	}
+
+	if vendor == nil {
+		baseURL := account.GetBaseURL()
+		if baseURL != "" {
+			validatedURL, err := s.validateUpstreamBaseURL(baseURL)
+			if err != nil {
+				return nil, err
+			}
+			targetURL = validatedURL + "/v1/messages"
+		}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL, bytes.NewReader(body))
@@ -4291,13 +4305,47 @@ func (s *GatewayService) buildUpstreamRequestAnthropicAPIKeyPassthrough(
 	req.Header.Del("x-api-key")
 	req.Header.Del("x-goog-api-key")
 	req.Header.Del("cookie")
-	req.Header.Set("x-api-key", token)
+
+	if vendor != nil {
+		// 供应商认证
+		switch vendor.AuthType {
+		case VendorAuthTypeBearer:
+			req.Header.Set("authorization", "Bearer "+token)
+		case VendorAuthTypeSession:
+			sessionKey := ""
+			if sk, ok := account.Credentials["session_key"].(string); ok {
+				sessionKey = sk
+			}
+			if sessionKey != "" {
+				req.Header.Set("Cookie", "session="+sessionKey)
+			}
+		default:
+			req.Header.Set("x-api-key", token)
+		}
+		// 供应商额外请求头
+		for k, v := range vendor.ExtraHeaders {
+			req.Header.Set(k, v)
+		}
+	} else {
+		req.Header.Set("x-api-key", token)
+	}
 
 	if req.Header.Get("content-type") == "" {
 		req.Header.Set("content-type", "application/json")
 	}
 	if req.Header.Get("anthropic-version") == "" {
 		req.Header.Set("anthropic-version", "2023-06-01")
+	}
+
+	// Vendor 强制 Claude Code 伪装
+	if vendor != nil && vendor.ForceClaudeCodeHeaders {
+		logger.LegacyPrintf("service.gateway", "[Passthrough] Applying Claude Code mimic headers for vendor=%d(%s) account=%d stream=%v", vendor.ID, vendor.Name, account.ID, reqStream)
+		applyClaudeCodeMimicHeaders(req, reqStream)
+		// 设置 anthropic-beta 请求头（API Key 账号使用 APIKeyBetaHeader）
+		req.Header.Set("anthropic-beta", claude.APIKeyBetaHeader)
+		logger.LegacyPrintf("service.gateway", "[Passthrough] After mimic: UA=%s X-App=%s anthropic-beta=%s", req.Header.Get("User-Agent"), req.Header.Get("X-App"), req.Header.Get("anthropic-beta"))
+	} else if vendor != nil {
+		logger.LegacyPrintf("service.gateway", "[Passthrough] Vendor=%d(%s) force_claude_code=%v - NOT applying mimic", vendor.ID, vendor.Name, vendor.ForceClaudeCodeHeaders)
 	}
 
 	return req, nil
@@ -4758,6 +4806,12 @@ func (s *GatewayService) buildUpstreamRequest(ctx context.Context, c *gin.Contex
 	}
 	if tokenType == "oauth" {
 		applyClaudeOAuthHeaderDefaults(req, reqStream)
+	}
+
+	// Vendor 级别强制 Claude Code 伪装：无论账户类型，都注入 Claude Code 请求头
+	vendorForceClaudeCode := vendor != nil && vendor.ForceClaudeCodeHeaders
+	if vendorForceClaudeCode && tokenType != "oauth" {
+		applyClaudeCodeMimicHeaders(req, reqStream)
 	}
 
 	// 处理 anthropic-beta header（OAuth 账号需要包含 oauth beta）

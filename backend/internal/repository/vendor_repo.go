@@ -35,7 +35,8 @@ func (r *vendorRepository) Create(ctx context.Context, v *service.Vendor) error 
 		SetHealthCheckModel(v.HealthCheckModel).
 		SetConsecutiveFailures(v.ConsecutiveFailures).
 		SetAutoPurchaseEnabled(v.AutoPurchaseEnabled).
-		SetBalanceAlertEnabled(v.BalanceAlertEnabled)
+		SetBalanceAlertEnabled(v.BalanceAlertEnabled).
+		SetForceClaudeCodeHeaders(v.ForceClaudeCodeHeaders)
 
 	if v.Description != nil {
 		builder.SetDescription(*v.Description)
@@ -112,7 +113,8 @@ func (r *vendorRepository) Update(ctx context.Context, v *service.Vendor) error 
 		SetHealthCheckModel(v.HealthCheckModel).
 		SetConsecutiveFailures(v.ConsecutiveFailures).
 		SetAutoPurchaseEnabled(v.AutoPurchaseEnabled).
-		SetBalanceAlertEnabled(v.BalanceAlertEnabled)
+		SetBalanceAlertEnabled(v.BalanceAlertEnabled).
+		SetForceClaudeCodeHeaders(v.ForceClaudeCodeHeaders)
 
 	if v.Description != nil {
 		builder.SetDescription(*v.Description)
@@ -405,8 +407,9 @@ func vendorEntityToService(e *dbent.Vendor) *service.Vendor {
 		BaseURL:               e.BaseURL,
 		AuthType:              e.AuthType,
 		APIPathOverride:       e.APIPathOverride,
-		ExtraHeaders:          e.ExtraHeaders,
-		BillingType:           e.BillingType,
+		ExtraHeaders:           e.ExtraHeaders,
+		ForceClaudeCodeHeaders: e.ForceClaudeCodeHeaders,
+		BillingType:            e.BillingType,
 		CostPer1kInput:        e.CostPer1kInput,
 		CostPer1kOutput:       e.CostPer1kOutput,
 		TotalQuotaUSD:         e.TotalQuotaUsd,

@@ -1507,12 +1507,16 @@ func init() {
 	vendorDescBalanceAlertEnabled := vendorFields[29].Descriptor()
 	// vendor.DefaultBalanceAlertEnabled holds the default value on creation for the balance_alert_enabled field.
 	vendor.DefaultBalanceAlertEnabled = vendorDescBalanceAlertEnabled.Default.(bool)
+	// vendorDescForceClaudeCodeHeaders is the schema descriptor for force_claude_code_headers field.
+	vendorDescForceClaudeCodeHeaders := vendorFields[31].Descriptor()
+	// vendor.DefaultForceClaudeCodeHeaders holds the default value on creation for the force_claude_code_headers field.
+	vendor.DefaultForceClaudeCodeHeaders = vendorDescForceClaudeCodeHeaders.Default.(bool)
 	// vendorDescPriority is the schema descriptor for priority field.
-	vendorDescPriority := vendorFields[31].Descriptor()
+	vendorDescPriority := vendorFields[32].Descriptor()
 	// vendor.DefaultPriority holds the default value on creation for the priority field.
 	vendor.DefaultPriority = vendorDescPriority.Default.(int)
 	// vendorDescConcurrency is the schema descriptor for concurrency field.
-	vendorDescConcurrency := vendorFields[32].Descriptor()
+	vendorDescConcurrency := vendorFields[33].Descriptor()
 	// vendor.DefaultConcurrency holds the default value on creation for the concurrency field.
 	vendor.DefaultConcurrency = vendorDescConcurrency.Default.(int)
 	vpnalertruleMixin := schema.VpnAlertRule{}.Mixin()

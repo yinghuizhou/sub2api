@@ -86,6 +86,8 @@ type Vendor struct {
 	BalanceAlertEnabled bool `json:"balance_alert_enabled,omitempty"`
 	// BalanceAlertThreshold holds the value of the "balance_alert_threshold" field.
 	BalanceAlertThreshold *float64 `json:"balance_alert_threshold,omitempty"`
+	// 强制注入 Claude Code CLI 请求头（User-Agent、X-App 等），用于上游要求 Claude Code 客户端身份的渠道
+	ForceClaudeCodeHeaders bool `json:"force_claude_code_headers,omitempty"`
 	// 供应商优先级（数值越小越优先，用于调度排序）
 	Priority int `json:"priority,omitempty"`
 	// 供应商最大并发请求数
@@ -132,7 +134,7 @@ func (*Vendor) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case vendor.FieldExtraHeaders, vendor.FieldAutoPurchaseConfig:
 			values[i] = new([]byte)
-		case vendor.FieldHealthCheckEnabled, vendor.FieldAutoPurchaseEnabled, vendor.FieldBalanceAlertEnabled:
+		case vendor.FieldHealthCheckEnabled, vendor.FieldAutoPurchaseEnabled, vendor.FieldBalanceAlertEnabled, vendor.FieldForceClaudeCodeHeaders:
 			values[i] = new(sql.NullBool)
 		case vendor.FieldCostPer1kInput, vendor.FieldCostPer1kOutput, vendor.FieldTotalQuotaUsd, vendor.FieldUsedQuotaUsd, vendor.FieldBalanceUsd, vendor.FieldBalanceAlertThreshold:
 			values[i] = new(sql.NullFloat64)
@@ -387,6 +389,12 @@ func (_m *Vendor) assignValues(columns []string, values []any) error {
 				_m.BalanceAlertThreshold = new(float64)
 				*_m.BalanceAlertThreshold = value.Float64
 			}
+		case vendor.FieldForceClaudeCodeHeaders:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field force_claude_code_headers", values[i])
+			} else if value.Valid {
+				_m.ForceClaudeCodeHeaders = value.Bool
+			}
 		case vendor.FieldPriority:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field priority", values[i])
@@ -578,6 +586,9 @@ func (_m *Vendor) String() string {
 		builder.WriteString("balance_alert_threshold=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("force_claude_code_headers=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ForceClaudeCodeHeaders))
 	builder.WriteString(", ")
 	builder.WriteString("priority=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Priority))

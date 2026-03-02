@@ -459,6 +459,20 @@ func (_c *VendorCreate) SetNillableBalanceAlertThreshold(v *float64) *VendorCrea
 	return _c
 }
 
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (_c *VendorCreate) SetForceClaudeCodeHeaders(v bool) *VendorCreate {
+	_c.mutation.SetForceClaudeCodeHeaders(v)
+	return _c
+}
+
+// SetNillableForceClaudeCodeHeaders sets the "force_claude_code_headers" field if the given value is not nil.
+func (_c *VendorCreate) SetNillableForceClaudeCodeHeaders(v *bool) *VendorCreate {
+	if v != nil {
+		_c.SetForceClaudeCodeHeaders(*v)
+	}
+	return _c
+}
+
 // SetPriority sets the "priority" field.
 func (_c *VendorCreate) SetPriority(v int) *VendorCreate {
 	_c.mutation.SetPriority(v)
@@ -620,6 +634,10 @@ func (_c *VendorCreate) defaults() error {
 		v := vendor.DefaultBalanceAlertEnabled
 		_c.mutation.SetBalanceAlertEnabled(v)
 	}
+	if _, ok := _c.mutation.ForceClaudeCodeHeaders(); !ok {
+		v := vendor.DefaultForceClaudeCodeHeaders
+		_c.mutation.SetForceClaudeCodeHeaders(v)
+	}
 	if _, ok := _c.mutation.Priority(); !ok {
 		v := vendor.DefaultPriority
 		_c.mutation.SetPriority(v)
@@ -751,6 +769,9 @@ func (_c *VendorCreate) check() error {
 	}
 	if _, ok := _c.mutation.BalanceAlertEnabled(); !ok {
 		return &ValidationError{Name: "balance_alert_enabled", err: errors.New(`ent: missing required field "Vendor.balance_alert_enabled"`)}
+	}
+	if _, ok := _c.mutation.ForceClaudeCodeHeaders(); !ok {
+		return &ValidationError{Name: "force_claude_code_headers", err: errors.New(`ent: missing required field "Vendor.force_claude_code_headers"`)}
 	}
 	if _, ok := _c.mutation.Priority(); !ok {
 		return &ValidationError{Name: "priority", err: errors.New(`ent: missing required field "Vendor.priority"`)}
@@ -920,6 +941,10 @@ func (_c *VendorCreate) createSpec() (*Vendor, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.BalanceAlertThreshold(); ok {
 		_spec.SetField(vendor.FieldBalanceAlertThreshold, field.TypeFloat64, value)
 		_node.BalanceAlertThreshold = &value
+	}
+	if value, ok := _c.mutation.ForceClaudeCodeHeaders(); ok {
+		_spec.SetField(vendor.FieldForceClaudeCodeHeaders, field.TypeBool, value)
+		_node.ForceClaudeCodeHeaders = value
 	}
 	if value, ok := _c.mutation.Priority(); ok {
 		_spec.SetField(vendor.FieldPriority, field.TypeInt, value)
@@ -1556,6 +1581,18 @@ func (u *VendorUpsert) AddBalanceAlertThreshold(v float64) *VendorUpsert {
 // ClearBalanceAlertThreshold clears the value of the "balance_alert_threshold" field.
 func (u *VendorUpsert) ClearBalanceAlertThreshold() *VendorUpsert {
 	u.SetNull(vendor.FieldBalanceAlertThreshold)
+	return u
+}
+
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (u *VendorUpsert) SetForceClaudeCodeHeaders(v bool) *VendorUpsert {
+	u.Set(vendor.FieldForceClaudeCodeHeaders, v)
+	return u
+}
+
+// UpdateForceClaudeCodeHeaders sets the "force_claude_code_headers" field to the value that was provided on create.
+func (u *VendorUpsert) UpdateForceClaudeCodeHeaders() *VendorUpsert {
+	u.SetExcluded(vendor.FieldForceClaudeCodeHeaders)
 	return u
 }
 
@@ -2274,6 +2311,20 @@ func (u *VendorUpsertOne) UpdateBalanceAlertThreshold() *VendorUpsertOne {
 func (u *VendorUpsertOne) ClearBalanceAlertThreshold() *VendorUpsertOne {
 	return u.Update(func(s *VendorUpsert) {
 		s.ClearBalanceAlertThreshold()
+	})
+}
+
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (u *VendorUpsertOne) SetForceClaudeCodeHeaders(v bool) *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetForceClaudeCodeHeaders(v)
+	})
+}
+
+// UpdateForceClaudeCodeHeaders sets the "force_claude_code_headers" field to the value that was provided on create.
+func (u *VendorUpsertOne) UpdateForceClaudeCodeHeaders() *VendorUpsertOne {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateForceClaudeCodeHeaders()
 	})
 }
 
@@ -3164,6 +3215,20 @@ func (u *VendorUpsertBulk) UpdateBalanceAlertThreshold() *VendorUpsertBulk {
 func (u *VendorUpsertBulk) ClearBalanceAlertThreshold() *VendorUpsertBulk {
 	return u.Update(func(s *VendorUpsert) {
 		s.ClearBalanceAlertThreshold()
+	})
+}
+
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (u *VendorUpsertBulk) SetForceClaudeCodeHeaders(v bool) *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.SetForceClaudeCodeHeaders(v)
+	})
+}
+
+// UpdateForceClaudeCodeHeaders sets the "force_claude_code_headers" field to the value that was provided on create.
+func (u *VendorUpsertBulk) UpdateForceClaudeCodeHeaders() *VendorUpsertBulk {
+	return u.Update(func(s *VendorUpsert) {
+		s.UpdateForceClaudeCodeHeaders()
 	})
 }
 

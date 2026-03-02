@@ -33,6 +33,7 @@ export interface Vendor {
   error_message?: string
   consecutive_failures: number
   auto_purchase_enabled: boolean
+  force_claude_code_headers: boolean
   balance_alert_enabled: boolean
   balance_alert_threshold?: number
   priority: number
@@ -62,6 +63,7 @@ export interface CreateVendorRequest {
   health_check_enabled?: boolean
   health_check_interval?: number
   health_check_model?: string
+  force_claude_code_headers?: boolean
   balance_alert_enabled?: boolean
   balance_alert_threshold?: number
   priority?: number

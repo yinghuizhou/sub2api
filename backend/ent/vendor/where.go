@@ -215,6 +215,11 @@ func BalanceAlertThreshold(v float64) predicate.Vendor {
 	return predicate.Vendor(sql.FieldEQ(FieldBalanceAlertThreshold, v))
 }
 
+// ForceClaudeCodeHeaders applies equality check predicate on the "force_claude_code_headers" field. It's identical to ForceClaudeCodeHeadersEQ.
+func ForceClaudeCodeHeaders(v bool) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldForceClaudeCodeHeaders, v))
+}
+
 // Priority applies equality check predicate on the "priority" field. It's identical to PriorityEQ.
 func Priority(v int) predicate.Vendor {
 	return predicate.Vendor(sql.FieldEQ(FieldPriority, v))
@@ -1948,6 +1953,16 @@ func BalanceAlertThresholdIsNil() predicate.Vendor {
 // BalanceAlertThresholdNotNil applies the NotNil predicate on the "balance_alert_threshold" field.
 func BalanceAlertThresholdNotNil() predicate.Vendor {
 	return predicate.Vendor(sql.FieldNotNull(FieldBalanceAlertThreshold))
+}
+
+// ForceClaudeCodeHeadersEQ applies the EQ predicate on the "force_claude_code_headers" field.
+func ForceClaudeCodeHeadersEQ(v bool) predicate.Vendor {
+	return predicate.Vendor(sql.FieldEQ(FieldForceClaudeCodeHeaders, v))
+}
+
+// ForceClaudeCodeHeadersNEQ applies the NEQ predicate on the "force_claude_code_headers" field.
+func ForceClaudeCodeHeadersNEQ(v bool) predicate.Vendor {
+	return predicate.Vendor(sql.FieldNEQ(FieldForceClaudeCodeHeaders, v))
 }
 
 // PriorityEQ applies the EQ predicate on the "priority" field.

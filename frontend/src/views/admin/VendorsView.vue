@@ -296,6 +296,15 @@
             </div>
           </div>
         </fieldset>
+        <!-- 请求伪装 -->
+        <fieldset class="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-dark-600">
+          <legend class="px-2 text-sm font-medium text-gray-700 dark:text-gray-300">请求伪装</legend>
+          <label class="flex items-center gap-2">
+            <input v-model="form.force_claude_code_headers" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+            <span class="text-sm text-gray-700 dark:text-gray-300">强制 Claude Code 客户端身份</span>
+          </label>
+          <p class="text-xs text-gray-500 dark:text-gray-400">启用后，转发请求时注入 Claude Code CLI 的 User-Agent、X-App 等请求头。适用于上游要求 Claude Code 客户端身份的渠道。</p>
+        </fieldset>
         <!-- 调度配置 -->
         <fieldset class="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-dark-600">
           <legend class="px-2 text-sm font-medium text-gray-700 dark:text-gray-300">调度配置</legend>
@@ -439,13 +448,13 @@ const detecting = ref(false)
 const detectForm = reactive({ url: '', api_key: '' })
 const detectResult = ref<VendorProbeResult | null>(null)
 
-const defaultForm = (): CreateVendorRequest & { status?: string; health_check_enabled: boolean; health_check_interval: number; health_check_model: string; balance_alert_enabled: boolean; balance_alert_threshold?: number; priority: number; concurrency: number } => ({
+const defaultForm = (): CreateVendorRequest & { status?: string; health_check_enabled: boolean; health_check_interval: number; health_check_model: string; balance_alert_enabled: boolean; balance_alert_threshold?: number; force_claude_code_headers: boolean; priority: number; concurrency: number } => ({
   name: '', description: '', vendor_type: 'official', official_platform: undefined, reseller_platform: undefined, reseller_api_key: '', api_format: 'anthropic', base_url: '', auth_type: 'api_key',
   api_path_override: '', billing_type: 'token', cost_per_1k_input: 0, cost_per_1k_output: 0,
   total_quota_usd: 0, balance_usd: 0, expires_at: '', health_check_enabled: false,
   health_check_interval: 300, health_check_model: 'claude-sonnet-4-20250514',
-  balance_alert_enabled: false, balance_alert_threshold: 10, status: 'active',
-  priority: 50, concurrency: 3,
+  balance_alert_enabled: false, balance_alert_threshold: 10, force_claude_code_headers: false,
+  status: 'active', priority: 50, concurrency: 3,
 })
 const form = reactive(defaultForm())
 
@@ -522,7 +531,7 @@ const openCreateModal = () => {
 }
 const handleEdit = (v: Vendor) => {
   editingVendor.value = v
-  Object.assign(form, { name: v.name, description: v.description || '', vendor_type: v.vendor_type, official_platform: v.official_platform, reseller_platform: v.reseller_platform, reseller_api_key: v.reseller_api_key || '', api_format: v.api_format, base_url: v.base_url, auth_type: v.auth_type, api_path_override: v.api_path_override || '', billing_type: v.billing_type, cost_per_1k_input: v.cost_per_1k_input || 0, cost_per_1k_output: v.cost_per_1k_output || 0, total_quota_usd: v.total_quota_usd || 0, balance_usd: v.balance_usd || 0, expires_at: v.expires_at ? v.expires_at.slice(0, 16) : '', health_check_enabled: v.health_check_enabled, health_check_interval: v.health_check_interval, health_check_model: v.health_check_model, balance_alert_enabled: v.balance_alert_enabled, balance_alert_threshold: v.balance_alert_threshold || 10, status: v.status, priority: v.priority ?? 50, concurrency: v.concurrency ?? 3 })
+  Object.assign(form, { name: v.name, description: v.description || '', vendor_type: v.vendor_type, official_platform: v.official_platform, reseller_platform: v.reseller_platform, reseller_api_key: v.reseller_api_key || '', api_format: v.api_format, base_url: v.base_url, auth_type: v.auth_type, api_path_override: v.api_path_override || '', billing_type: v.billing_type, cost_per_1k_input: v.cost_per_1k_input || 0, cost_per_1k_output: v.cost_per_1k_output || 0, total_quota_usd: v.total_quota_usd || 0, balance_usd: v.balance_usd || 0, expires_at: v.expires_at ? v.expires_at.slice(0, 16) : '', health_check_enabled: v.health_check_enabled, health_check_interval: v.health_check_interval, health_check_model: v.health_check_model, balance_alert_enabled: v.balance_alert_enabled, balance_alert_threshold: v.balance_alert_threshold || 10, force_claude_code_headers: v.force_claude_code_headers ?? false, status: v.status, priority: v.priority ?? 50, concurrency: v.concurrency ?? 3 })
   extraHeadersJson.value = JSON.stringify(v.extra_headers || {}, null, 2)
   showModal.value = true
 }

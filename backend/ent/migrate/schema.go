@@ -1294,6 +1294,7 @@ var (
 		{Name: "auto_purchase_config", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "balance_alert_enabled", Type: field.TypeBool, Default: false},
 		{Name: "balance_alert_threshold", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "force_claude_code_headers", Type: field.TypeBool, Default: false},
 		{Name: "priority", Type: field.TypeInt, Default: 50},
 		{Name: "concurrency", Type: field.TypeInt, Default: 3},
 	}
@@ -1331,7 +1332,7 @@ var (
 			{
 				Name:    "vendor_priority",
 				Unique:  false,
-				Columns: []*schema.Column{VendorsColumns[35]},
+				Columns: []*schema.Column{VendorsColumns[36]},
 			},
 		},
 	}

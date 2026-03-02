@@ -31446,6 +31446,7 @@ type VendorMutation struct {
 	balance_alert_enabled      *bool
 	balance_alert_threshold    *float64
 	addbalance_alert_threshold *float64
+	force_claude_code_headers  *bool
 	priority                   *int
 	addpriority                *int
 	concurrency                *int
@@ -33178,6 +33179,42 @@ func (m *VendorMutation) ResetBalanceAlertThreshold() {
 	delete(m.clearedFields, vendor.FieldBalanceAlertThreshold)
 }
 
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (m *VendorMutation) SetForceClaudeCodeHeaders(b bool) {
+	m.force_claude_code_headers = &b
+}
+
+// ForceClaudeCodeHeaders returns the value of the "force_claude_code_headers" field in the mutation.
+func (m *VendorMutation) ForceClaudeCodeHeaders() (r bool, exists bool) {
+	v := m.force_claude_code_headers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldForceClaudeCodeHeaders returns the old "force_claude_code_headers" field's value of the Vendor entity.
+// If the Vendor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VendorMutation) OldForceClaudeCodeHeaders(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldForceClaudeCodeHeaders is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldForceClaudeCodeHeaders requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldForceClaudeCodeHeaders: %w", err)
+	}
+	return oldValue.ForceClaudeCodeHeaders, nil
+}
+
+// ResetForceClaudeCodeHeaders resets all changes to the "force_claude_code_headers" field.
+func (m *VendorMutation) ResetForceClaudeCodeHeaders() {
+	m.force_claude_code_headers = nil
+}
+
 // SetPriority sets the "priority" field.
 func (m *VendorMutation) SetPriority(i int) {
 	m.priority = &i
@@ -33432,7 +33469,7 @@ func (m *VendorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VendorMutation) Fields() []string {
-	fields := make([]string, 0, 36)
+	fields := make([]string, 0, 37)
 	if m.created_at != nil {
 		fields = append(fields, vendor.FieldCreatedAt)
 	}
@@ -33535,6 +33572,9 @@ func (m *VendorMutation) Fields() []string {
 	if m.balance_alert_threshold != nil {
 		fields = append(fields, vendor.FieldBalanceAlertThreshold)
 	}
+	if m.force_claude_code_headers != nil {
+		fields = append(fields, vendor.FieldForceClaudeCodeHeaders)
+	}
 	if m.priority != nil {
 		fields = append(fields, vendor.FieldPriority)
 	}
@@ -33617,6 +33657,8 @@ func (m *VendorMutation) Field(name string) (ent.Value, bool) {
 		return m.BalanceAlertEnabled()
 	case vendor.FieldBalanceAlertThreshold:
 		return m.BalanceAlertThreshold()
+	case vendor.FieldForceClaudeCodeHeaders:
+		return m.ForceClaudeCodeHeaders()
 	case vendor.FieldPriority:
 		return m.Priority()
 	case vendor.FieldConcurrency:
@@ -33698,6 +33740,8 @@ func (m *VendorMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldBalanceAlertEnabled(ctx)
 	case vendor.FieldBalanceAlertThreshold:
 		return m.OldBalanceAlertThreshold(ctx)
+	case vendor.FieldForceClaudeCodeHeaders:
+		return m.OldForceClaudeCodeHeaders(ctx)
 	case vendor.FieldPriority:
 		return m.OldPriority(ctx)
 	case vendor.FieldConcurrency:
@@ -33948,6 +33992,13 @@ func (m *VendorMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBalanceAlertThreshold(v)
+		return nil
+	case vendor.FieldForceClaudeCodeHeaders:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetForceClaudeCodeHeaders(v)
 		return nil
 	case vendor.FieldPriority:
 		v, ok := value.(int)
@@ -34347,6 +34398,9 @@ func (m *VendorMutation) ResetField(name string) error {
 		return nil
 	case vendor.FieldBalanceAlertThreshold:
 		m.ResetBalanceAlertThreshold()
+		return nil
+	case vendor.FieldForceClaudeCodeHeaders:
+		m.ResetForceClaudeCodeHeaders()
 		return nil
 	case vendor.FieldPriority:
 		m.ResetPriority()

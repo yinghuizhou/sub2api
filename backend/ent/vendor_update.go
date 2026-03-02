@@ -626,6 +626,20 @@ func (_u *VendorUpdate) ClearBalanceAlertThreshold() *VendorUpdate {
 	return _u
 }
 
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (_u *VendorUpdate) SetForceClaudeCodeHeaders(v bool) *VendorUpdate {
+	_u.mutation.SetForceClaudeCodeHeaders(v)
+	return _u
+}
+
+// SetNillableForceClaudeCodeHeaders sets the "force_claude_code_headers" field if the given value is not nil.
+func (_u *VendorUpdate) SetNillableForceClaudeCodeHeaders(v *bool) *VendorUpdate {
+	if v != nil {
+		_u.SetForceClaudeCodeHeaders(*v)
+	}
+	return _u
+}
+
 // SetPriority sets the "priority" field.
 func (_u *VendorUpdate) SetPriority(v int) *VendorUpdate {
 	_u.mutation.ResetPriority()
@@ -1042,6 +1056,9 @@ func (_u *VendorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.BalanceAlertThresholdCleared() {
 		_spec.ClearField(vendor.FieldBalanceAlertThreshold, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ForceClaudeCodeHeaders(); ok {
+		_spec.SetField(vendor.FieldForceClaudeCodeHeaders, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(vendor.FieldPriority, field.TypeInt, value)
@@ -1762,6 +1779,20 @@ func (_u *VendorUpdateOne) ClearBalanceAlertThreshold() *VendorUpdateOne {
 	return _u
 }
 
+// SetForceClaudeCodeHeaders sets the "force_claude_code_headers" field.
+func (_u *VendorUpdateOne) SetForceClaudeCodeHeaders(v bool) *VendorUpdateOne {
+	_u.mutation.SetForceClaudeCodeHeaders(v)
+	return _u
+}
+
+// SetNillableForceClaudeCodeHeaders sets the "force_claude_code_headers" field if the given value is not nil.
+func (_u *VendorUpdateOne) SetNillableForceClaudeCodeHeaders(v *bool) *VendorUpdateOne {
+	if v != nil {
+		_u.SetForceClaudeCodeHeaders(*v)
+	}
+	return _u
+}
+
 // SetPriority sets the "priority" field.
 func (_u *VendorUpdateOne) SetPriority(v int) *VendorUpdateOne {
 	_u.mutation.ResetPriority()
@@ -2208,6 +2239,9 @@ func (_u *VendorUpdateOne) sqlSave(ctx context.Context) (_node *Vendor, err erro
 	}
 	if _u.mutation.BalanceAlertThresholdCleared() {
 		_spec.ClearField(vendor.FieldBalanceAlertThreshold, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.ForceClaudeCodeHeaders(); ok {
+		_spec.SetField(vendor.FieldForceClaudeCodeHeaders, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(vendor.FieldPriority, field.TypeInt, value)

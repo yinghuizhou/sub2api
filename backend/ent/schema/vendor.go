@@ -96,6 +96,11 @@ func (Vendor) Fields() []ent.Field {
 		field.Bool("balance_alert_enabled").Default(false),
 		field.Float("balance_alert_threshold").Optional().Nillable().SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
 
+		// 请求伪装
+		field.Bool("force_claude_code_headers").
+			Default(false).
+			Comment("强制注入 Claude Code CLI 请求头（User-Agent、X-App 等），用于上游要求 Claude Code 客户端身份的渠道"),
+
 		// ========== 调度相关字段 ==========
 		// priority: 供应商优先级（数值越小越优先）
 		// 用于调度排序，与 Account.priority 一起参与优先级比较

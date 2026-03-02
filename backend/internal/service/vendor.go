@@ -85,6 +85,9 @@ type Vendor struct {
 	BalanceAlertEnabled   bool     `json:"balance_alert_enabled"`
 	BalanceAlertThreshold *float64 `json:"balance_alert_threshold,omitempty"`
 
+	// 请求伪装
+	ForceClaudeCodeHeaders bool `json:"force_claude_code_headers"`
+
 	// 调度
 	Priority    int `json:"priority"`
 	Concurrency int `json:"concurrency"`
