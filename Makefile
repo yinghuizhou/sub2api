@@ -4,7 +4,8 @@
        devcontainer-up devcontainer-down devcontainer-rebuild devcontainer-logs devcontainer-ps \
        clean version urls fmt fmt-check generate security coverage ci release-check \
        build-prod secret-scan \
-       gcp-auto gcp-setup gcp-deploy gcp-ssh gcp-status gcp-destroy
+       gcp-auto gcp-setup gcp-deploy gcp-ssh gcp-status gcp-destroy \
+       docker-build-amd64 docker-save deploy-ha ha-rolling-update ha-health ha-logs ha-ps ha-restart
 
 # --------------------------------------------------------------------------
 # 版本 & 构建信息
@@ -92,6 +93,14 @@ help:
 	@echo "  make docker-tag      给 Docker 镜像打标签 (latest + 版本)"
 	@echo "  make docker-logs     查看容器日志"
 	@echo "  make docker-ps       查看容器状态"
+	@echo ""
+	@echo "$(CYAN)高可用部署$(RESET)"
+	@echo "  make deploy-ha       部署高可用版本到香港服务器 (零停机)"
+	@echo "  make ha-rolling-update  滚动更新 3 个实例"
+	@echo "  make ha-health       检查所有实例健康状态"
+	@echo "  make ha-logs         查看高可用集群日志"
+	@echo "  make ha-ps           查看高可用集群状态"
+	@echo "  make ha-restart      重启高可用集群"
 	@echo ""
 	@echo "$(CYAN)清理$(RESET)"
 	@echo "  make clean           清理构建产物"
@@ -447,3 +456,80 @@ clean:
 	rm -rf backend/coverage.out
 	rm -rf frontend/dist
 	@echo "$(GREEN)清理完成$(RESET)"
+
+# --------------------------------------------------------------------------
+# 高可用部署 (High Availability Deployment)
+# --------------------------------------------------------------------------
+# 服务器配置
+PEM := $(HOME)/work/sub2api.pem
+SERVER := 47.76.82.51
+
+# 构建 AMD64 架构镜像（用于部署到 Linux 服务器）
+docker-build-amd64:
+	@echo "$(BOLD)构建 AMD64 架构镜像...$(RESET)"
+	@docker buildx build --platform linux/amd64 -t sub2api:amd64-hk --load .
+	@echo "$(GREEN)镜像构建完成$(RESET)"
+
+# 导出镜像为 tar.gz
+docker-save:
+	@echo "$(BOLD)导出镜像...$(RESET)"
+	@docker save sub2api:amd64-hk | gzip > /tmp/sub2api-amd64-hk.tar.gz
+	@ls -lh /tmp/sub2api-amd64-hk.tar.gz
+	@echo "$(GREEN)镜像导出完成$(RESET)"
+
+# 部署到香港服务器（高可用模式，零停机）
+deploy-ha: docker-build-amd64 docker-save
+	@echo "$(BOLD)部署高可用版本到香港服务器...$(RESET)"
+	@echo "  1. 上传镜像..."
+	@scp -i $(PEM) /tmp/sub2api-amd64-hk.tar.gz root@$(SERVER):/opt/sub2api/src/
+	@echo "  2. 加载镜像..."
+	@ssh -i $(PEM) root@$(SERVER) "cd /opt/sub2api && docker load < src/sub2api-amd64-hk.tar.gz && docker tag sub2api:amd64-hk sub2api:latest"
+	@echo "  3. 滚动更新..."
+	@$(MAKE) ha-rolling-update
+	@echo ""
+	@echo "$(GREEN)$(BOLD)部署完成！$(RESET)"
+	@echo "  访问地址: https://llm.mindabc.ai"
+	@echo "  健康检查: make ha-health"
+
+# 滚动更新（零停机）
+ha-rolling-update:
+	@echo "$(BOLD)开始滚动更新...$(RESET)"
+	@ssh -i $(PEM) root@$(SERVER) 'cd /opt/sub2api && \
+		for i in 1 2 3; do \
+			echo "更新 sub2api-$$i..."; \
+			docker compose -f docker-compose.ha.yml stop sub2api-$$i; \
+			docker compose -f docker-compose.ha.yml up -d sub2api-$$i; \
+			sleep 15; \
+			if curl -sf http://localhost:8888/health > /dev/null; then \
+				echo "✓ 实例 $$i 已就绪"; \
+			else \
+				echo "⚠ 警告: 实例 $$i 可能未就绪"; \
+			fi; \
+		done'
+	@echo "$(GREEN)滚动更新完成$(RESET)"
+
+# 检查所有实例健康状态
+ha-health:
+	@echo "$(BOLD)检查高可用集群健康状态...$(RESET)"
+	@ssh -i $(PEM) root@$(SERVER) 'cd /opt/sub2api && \
+		echo "Nginx 负载均衡器:"; \
+		curl -sf http://localhost:8888/health && echo "  ✓ 正常" || echo "  ✗ 异常"; \
+		echo ""; \
+		for i in 1 2 3; do \
+			echo "实例 sub2api-$$i:"; \
+			docker compose -f docker-compose.ha.yml exec -T sub2api-$$i curl -sf http://localhost:8080/health && echo "  ✓ 正常" || echo "  ✗ 异常"; \
+		done'
+
+# 查看高可用集群日志
+ha-logs:
+	@ssh -i $(PEM) root@$(SERVER) "cd /opt/sub2api && docker compose -f docker-compose.ha.yml logs -f --tail=100"
+
+# 查看高可用集群状态
+ha-ps:
+	@ssh -i $(PEM) root@$(SERVER) "cd /opt/sub2api && docker compose -f docker-compose.ha.yml ps"
+
+# 重启高可用集群
+ha-restart:
+	@echo "$(BOLD)重启高可用集群...$(RESET)"
+	@ssh -i $(PEM) root@$(SERVER) "cd /opt/sub2api && docker compose -f docker-compose.ha.yml restart"
+	@echo "$(GREEN)集群重启完成$(RESET)"
