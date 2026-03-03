@@ -109,6 +109,16 @@ func (m *mockVendorRepo) ListActive(_ context.Context) ([]Vendor, error) {
 	return out, nil
 }
 
+func (m *mockVendorRepo) ListByIDs(_ context.Context, ids []int64) ([]Vendor, error) {
+	var out []Vendor
+	for _, id := range ids {
+		if v, ok := m.vendors[id]; ok {
+			out = append(out, *v)
+		}
+	}
+	return out, nil
+}
+
 func (m *mockVendorRepo) ListByStatus(_ context.Context, status string) ([]Vendor, error) {
 	var out []Vendor
 	for _, v := range m.vendors {

@@ -62,6 +62,14 @@ func (s *accountRepoStub) ListCRSAccountIDs(ctx context.Context) (map[string]int
 	panic("unexpected ListCRSAccountIDs call")
 }
 
+func (s *accountRepoStub) DeleteByVendorProxyID(ctx context.Context, vendorProxyID int64) error {
+	panic("unexpected DeleteByVendorProxyID call")
+}
+
+func (s *accountRepoStub) GetByVendorProxyID(ctx context.Context, vendorProxyID int64) (*Account, error) {
+	panic("unexpected GetByVendorProxyID call")
+}
+
 func (s *accountRepoStub) Update(ctx context.Context, account *Account) error {
 	panic("unexpected Update call")
 }
