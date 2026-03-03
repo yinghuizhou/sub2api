@@ -257,8 +257,8 @@ type pushConfigRequest struct {
 
 type pushConfigItem struct {
 	Filename   string `json:"filename"`
-	Content    string `json:"content"`     // base64 encoded
-	Region     string `json:"region"`      // optional
+	Content    string `json:"content"` // base64 encoded
+	Region     string `json:"region"`  // optional
 	AutoDeploy bool   `json:"auto_deploy"`
 }
 

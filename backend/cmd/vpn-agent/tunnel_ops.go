@@ -207,7 +207,7 @@ func (tm *TunnelManager) persistState() {
 		state.Tunnels[name] = TunnelState{
 			Name: name, TunnelType: string(rt.TunnelType),
 			ConfigName: rt.ConfigName,
-			SocksPort: rt.SocksPort, Region: rt.Region,
+			SocksPort:  rt.SocksPort, Region: rt.Region,
 			ServerIP: rt.ServerIP, ProxyID: rt.ProxyID,
 			CertID: rt.CertID,
 		}

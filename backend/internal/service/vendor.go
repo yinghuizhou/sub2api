@@ -45,10 +45,10 @@ type Vendor struct {
 	Description *string `json:"description,omitempty"`
 
 	// 渠道类型
-	VendorType         string  `json:"vendor_type"`
-	OfficialPlatform   *string `json:"official_platform,omitempty"`
-	ResellerPlatform   *string `json:"reseller_platform,omitempty"`
-	ResellerAPIKey     *string `json:"reseller_api_key,omitempty"`
+	VendorType       string  `json:"vendor_type"`
+	OfficialPlatform *string `json:"official_platform,omitempty"`
+	ResellerPlatform *string `json:"reseller_platform,omitempty"`
+	ResellerAPIKey   *string `json:"reseller_api_key,omitempty"`
 
 	// API 配置
 	APIFormat       string            `json:"api_format"`

@@ -77,7 +77,6 @@ type AccountSubscriptionConfig struct {
 	SubscriptionEnd    time.Time `json:"subscription_end"`
 }
 
-
 func (a *Account) IsActive() bool {
 	return a.Status == StatusActive
 }
@@ -105,30 +104,30 @@ func (a *Account) GetSubscriptionConfig() *AccountSubscriptionConfig {
 	if !ok {
 		return nil
 	}
-	
+
 	// 处理 map[string]any 类型
 	subConfigMap, ok := subConfigRaw.(map[string]any)
 	if !ok {
 		return nil
 	}
-	
+
 	cfg := &AccountSubscriptionConfig{}
-	
+
 	// 解析 enabled
 	if v, ok := subConfigMap["enabled"].(bool); ok {
 		cfg.Enabled = v
 	}
-	
+
 	// 解析 daily_limit_usd
 	if v, ok := subConfigMap["daily_limit_usd"].(float64); ok {
 		cfg.DailyLimitUSD = v
 	}
-	
+
 	// 解析 subscription_period
 	if v, ok := subConfigMap["subscription_period"].(string); ok {
 		cfg.SubscriptionPeriod = v
 	}
-	
+
 	// 解析时间字段（支持 string 和 time.Time）
 	if v, ok := subConfigMap["subscription_start"].(string); ok {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
@@ -137,7 +136,7 @@ func (a *Account) GetSubscriptionConfig() *AccountSubscriptionConfig {
 	} else if v, ok := subConfigMap["subscription_start"].(time.Time); ok {
 		cfg.SubscriptionStart = v
 	}
-	
+
 	if v, ok := subConfigMap["subscription_end"].(string); ok {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
 			cfg.SubscriptionEnd = t
@@ -145,7 +144,7 @@ func (a *Account) GetSubscriptionConfig() *AccountSubscriptionConfig {
 	} else if v, ok := subConfigMap["subscription_end"].(time.Time); ok {
 		cfg.SubscriptionEnd = v
 	}
-	
+
 	return cfg
 }
 

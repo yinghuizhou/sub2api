@@ -36,26 +36,26 @@ type VendorRepository interface {
 
 // CreateVendorInput 创建供应商请求
 type CreateVendorInput struct {
-	Name                  string            `json:"name"`
-	Description           *string           `json:"description"`
-	VendorType            string            `json:"vendor_type"`
-	OfficialPlatform      *string           `json:"official_platform"`
-	ResellerPlatform      *string           `json:"reseller_platform"`
-	ResellerAPIKey        *string           `json:"reseller_api_key"`
-	APIFormat             string            `json:"api_format"`
-	BaseURL               string            `json:"base_url"`
-	AuthType              string            `json:"auth_type"`
-	APIPathOverride       *string           `json:"api_path_override"`
-	ExtraHeaders          map[string]string `json:"extra_headers"`
-	BillingType           string            `json:"billing_type"`
-	CostPer1kInput        *float64          `json:"cost_per_1k_input"`
-	CostPer1kOutput       *float64          `json:"cost_per_1k_output"`
-	TotalQuotaUSD         *float64          `json:"total_quota_usd"`
-	BalanceUSD            *float64          `json:"balance_usd"`
-	ExpiresAt             *time.Time        `json:"expires_at"`
-	HealthCheckEnabled    bool              `json:"health_check_enabled"`
-	HealthCheckInterval   int               `json:"health_check_interval"`
-	HealthCheckModel      string            `json:"health_check_model"`
+	Name                   string            `json:"name"`
+	Description            *string           `json:"description"`
+	VendorType             string            `json:"vendor_type"`
+	OfficialPlatform       *string           `json:"official_platform"`
+	ResellerPlatform       *string           `json:"reseller_platform"`
+	ResellerAPIKey         *string           `json:"reseller_api_key"`
+	APIFormat              string            `json:"api_format"`
+	BaseURL                string            `json:"base_url"`
+	AuthType               string            `json:"auth_type"`
+	APIPathOverride        *string           `json:"api_path_override"`
+	ExtraHeaders           map[string]string `json:"extra_headers"`
+	BillingType            string            `json:"billing_type"`
+	CostPer1kInput         *float64          `json:"cost_per_1k_input"`
+	CostPer1kOutput        *float64          `json:"cost_per_1k_output"`
+	TotalQuotaUSD          *float64          `json:"total_quota_usd"`
+	BalanceUSD             *float64          `json:"balance_usd"`
+	ExpiresAt              *time.Time        `json:"expires_at"`
+	HealthCheckEnabled     bool              `json:"health_check_enabled"`
+	HealthCheckInterval    int               `json:"health_check_interval"`
+	HealthCheckModel       string            `json:"health_check_model"`
 	BalanceAlertEnabled    bool              `json:"balance_alert_enabled"`
 	BalanceAlertThreshold  *float64          `json:"balance_alert_threshold"`
 	ForceClaudeCodeHeaders bool              `json:"force_claude_code_headers"`
@@ -65,29 +65,29 @@ type CreateVendorInput struct {
 
 // UpdateVendorInput 更新供应商请求
 type UpdateVendorInput struct {
-	Name                  *string           `json:"name"`
-	Description           *string           `json:"description"`
-	VendorType            *string           `json:"vendor_type"`
-	OfficialPlatform      *string           `json:"official_platform"`
-	ResellerPlatform      *string           `json:"reseller_platform"`
-	ResellerAPIKey        *string           `json:"reseller_api_key"`
-	APIFormat             *string           `json:"api_format"`
-	BaseURL               *string           `json:"base_url"`
-	AuthType              *string           `json:"auth_type"`
-	APIPathOverride       *string           `json:"api_path_override"`
-	ExtraHeaders          map[string]string `json:"extra_headers"`
-	BillingType           *string           `json:"billing_type"`
-	CostPer1kInput        *float64          `json:"cost_per_1k_input"`
-	CostPer1kOutput       *float64          `json:"cost_per_1k_output"`
-	TotalQuotaUSD         *float64          `json:"total_quota_usd"`
-	BalanceUSD            *float64          `json:"balance_usd"`
-	ExpiresAt             *time.Time        `json:"expires_at"`
-	Status                *string           `json:"status"`
-	HealthCheckEnabled    *bool             `json:"health_check_enabled"`
-	HealthCheckInterval   *int              `json:"health_check_interval"`
-	HealthCheckModel      *string           `json:"health_check_model"`
-	BalanceAlertEnabled   *bool             `json:"balance_alert_enabled"`
-	BalanceAlertThreshold *float64          `json:"balance_alert_threshold"`
+	Name                   *string           `json:"name"`
+	Description            *string           `json:"description"`
+	VendorType             *string           `json:"vendor_type"`
+	OfficialPlatform       *string           `json:"official_platform"`
+	ResellerPlatform       *string           `json:"reseller_platform"`
+	ResellerAPIKey         *string           `json:"reseller_api_key"`
+	APIFormat              *string           `json:"api_format"`
+	BaseURL                *string           `json:"base_url"`
+	AuthType               *string           `json:"auth_type"`
+	APIPathOverride        *string           `json:"api_path_override"`
+	ExtraHeaders           map[string]string `json:"extra_headers"`
+	BillingType            *string           `json:"billing_type"`
+	CostPer1kInput         *float64          `json:"cost_per_1k_input"`
+	CostPer1kOutput        *float64          `json:"cost_per_1k_output"`
+	TotalQuotaUSD          *float64          `json:"total_quota_usd"`
+	BalanceUSD             *float64          `json:"balance_usd"`
+	ExpiresAt              *time.Time        `json:"expires_at"`
+	Status                 *string           `json:"status"`
+	HealthCheckEnabled     *bool             `json:"health_check_enabled"`
+	HealthCheckInterval    *int              `json:"health_check_interval"`
+	HealthCheckModel       *string           `json:"health_check_model"`
+	BalanceAlertEnabled    *bool             `json:"balance_alert_enabled"`
+	BalanceAlertThreshold  *float64          `json:"balance_alert_threshold"`
 	AutoPurchaseEnabled    *bool             `json:"auto_purchase_enabled"`
 	AutoPurchaseConfig     map[string]any    `json:"auto_purchase_config"`
 	ForceClaudeCodeHeaders *bool             `json:"force_claude_code_headers"`
@@ -165,27 +165,27 @@ func (s *VendorService) Create(ctx context.Context, input *CreateVendorInput) (*
 	}
 
 	vendor := &Vendor{
-		Name:                  input.Name,
-		Description:           input.Description,
-		VendorType:            vendorType,
-		OfficialPlatform:      input.OfficialPlatform,
-		ResellerPlatform:      input.ResellerPlatform,
-		ResellerAPIKey:        input.ResellerAPIKey,
-		APIFormat:             input.APIFormat,
-		BaseURL:               input.BaseURL,
-		AuthType:              input.AuthType,
-		APIPathOverride:       input.APIPathOverride,
-		ExtraHeaders:          input.ExtraHeaders,
-		BillingType:           input.BillingType,
-		CostPer1kInput:        input.CostPer1kInput,
-		CostPer1kOutput:       input.CostPer1kOutput,
-		TotalQuotaUSD:         input.TotalQuotaUSD,
-		BalanceUSD:            input.BalanceUSD,
-		ExpiresAt:             input.ExpiresAt,
-		Status:                VendorStatusActive,
-		HealthCheckEnabled:    input.HealthCheckEnabled,
-		HealthCheckInterval:   input.HealthCheckInterval,
-		HealthCheckModel:      input.HealthCheckModel,
+		Name:                   input.Name,
+		Description:            input.Description,
+		VendorType:             vendorType,
+		OfficialPlatform:       input.OfficialPlatform,
+		ResellerPlatform:       input.ResellerPlatform,
+		ResellerAPIKey:         input.ResellerAPIKey,
+		APIFormat:              input.APIFormat,
+		BaseURL:                input.BaseURL,
+		AuthType:               input.AuthType,
+		APIPathOverride:        input.APIPathOverride,
+		ExtraHeaders:           input.ExtraHeaders,
+		BillingType:            input.BillingType,
+		CostPer1kInput:         input.CostPer1kInput,
+		CostPer1kOutput:        input.CostPer1kOutput,
+		TotalQuotaUSD:          input.TotalQuotaUSD,
+		BalanceUSD:             input.BalanceUSD,
+		ExpiresAt:              input.ExpiresAt,
+		Status:                 VendorStatusActive,
+		HealthCheckEnabled:     input.HealthCheckEnabled,
+		HealthCheckInterval:    input.HealthCheckInterval,
+		HealthCheckModel:       input.HealthCheckModel,
 		BalanceAlertEnabled:    input.BalanceAlertEnabled,
 		BalanceAlertThreshold:  input.BalanceAlertThreshold,
 		ForceClaudeCodeHeaders: input.ForceClaudeCodeHeaders,

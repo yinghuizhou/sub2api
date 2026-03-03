@@ -42,7 +42,7 @@ type PaymentHandler struct {
 	paymentService *service.PaymentService
 	settingService *service.SettingService
 	cfg            *config.Config
-	wxPubKey       *rsa.PublicKey    // cached WeChat public key for callback verification
+	wxPubKey       *rsa.PublicKey   // cached WeChat public key for callback verification
 	wxClient       *wechat.ClientV3 // WeChat V3 client for creating payments
 	aliClient      *alipay.Client   // Alipay client for creating payments
 }
@@ -50,7 +50,7 @@ type PaymentHandler struct {
 // CreateOrderResponse is the response for creating a payment order.
 type CreateOrderResponse struct {
 	Order *service.PaymentOrder `json:"order"`
-	QrURL string               `json:"qr_url"`
+	QrURL string                `json:"qr_url"`
 }
 
 // NewPaymentHandler creates a new PaymentHandler.

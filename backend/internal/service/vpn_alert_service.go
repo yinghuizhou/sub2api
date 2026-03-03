@@ -16,10 +16,10 @@ import (
 
 // Valid alert conditions.
 var validConditions = map[string]bool{
-	"tunnel_offline":        true,
-	"consecutive_failover":  true,
-	"all_offline":           true,
-	"config_stale":          true,
+	"tunnel_offline":       true,
+	"consecutive_failover": true,
+	"all_offline":          true,
+	"config_stale":         true,
 }
 
 // CreateAlertRuleInput is the input for creating a new alert rule.
@@ -70,8 +70,8 @@ type VpnAlertService struct {
 // NewVpnAlertService creates a new VpnAlertService.
 func NewVpnAlertService(client *ent.Client, eventSvc *VpnEventService) *VpnAlertService {
 	return &VpnAlertService{
-		client:   client,
-		eventSvc: eventSvc,
+		client:     client,
+		eventSvc:   eventSvc,
 		httpClient: &http.Client{Timeout: 10 * time.Second},
 	}
 }
@@ -210,9 +210,9 @@ func (s *VpnAlertService) EvaluateAndNotify(ctx context.Context, tunnelName, vpn
 			// Record alert event.
 			if s.eventSvc != nil {
 				_ = s.eventSvc.RecordEvent(ctx, tunnelName, "alert_triggered", map[string]interface{}{
-					"rule_name":  rule.Name,
-					"condition":  rule.Condition,
-					"message":    message,
+					"rule_name":   rule.Name,
+					"condition":   rule.Condition,
+					"message":     message,
 					"webhook_url": rule.WebhookURL,
 				})
 			}

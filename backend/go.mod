@@ -40,11 +40,7 @@ require (
 	modernc.org/sqlite v1.44.3
 )
 
-require (
-	github.com/google/subcommands v1.2.0 // indirect
-	github.com/yuin/gopher-lua v1.1.1 // indirect
-	golang.org/x/tools v0.41.0 // indirect
-)
+require github.com/yuin/gopher-lua v1.1.1 // indirect
 
 require (
 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect

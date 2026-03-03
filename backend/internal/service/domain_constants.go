@@ -189,7 +189,7 @@ const (
 	// =========================
 
 	SettingKeyReferralEnabled        = "referral_enabled"         // 邀请返佣开关
-	SettingKeyReferralCommissionRate = "referral_commission_rate"  // 返佣比例 (0-1)
+	SettingKeyReferralCommissionRate = "referral_commission_rate" // 返佣比例 (0-1)
 	SettingKeyPaymentEnabled         = "payment_enabled"          // 充值功能开关
 
 	// SettingKeyVendorSystemEnabled 供应商系统总开关（默认关闭）

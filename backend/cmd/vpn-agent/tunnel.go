@@ -26,21 +26,21 @@ const (
 type TunnelInfo struct {
 	Name       string     `json:"name"`
 	TunnelType TunnelType `json:"tunnel_type"`
-	ConfigName string    `json:"config_name"`
-	Region     string    `json:"region"`
-	ServerIP   string    `json:"server_ip"`
-	SocksPort  int       `json:"socks_port"`
-	Status     string    `json:"status"`
-	TunDevice  string    `json:"tun_device"`
-	LocalIP    string    `json:"local_ip"`
-	ExitIP     string    `json:"exit_ip"`
-	Health     string    `json:"health"`
-	LatencyMs  int       `json:"latency_ms"`
-	Uptime     time.Time `json:"uptime"`
-	Failures   int       `json:"consecutive_failures"`
-	LastCheck  time.Time `json:"last_check"`
-	ProxyID    int       `json:"proxy_id,omitempty"`
-	CertID     string    `json:"cert_id,omitempty"`
+	ConfigName string     `json:"config_name"`
+	Region     string     `json:"region"`
+	ServerIP   string     `json:"server_ip"`
+	SocksPort  int        `json:"socks_port"`
+	Status     string     `json:"status"`
+	TunDevice  string     `json:"tun_device"`
+	LocalIP    string     `json:"local_ip"`
+	ExitIP     string     `json:"exit_ip"`
+	Health     string     `json:"health"`
+	LatencyMs  int        `json:"latency_ms"`
+	Uptime     time.Time  `json:"uptime"`
+	Failures   int        `json:"consecutive_failures"`
+	LastCheck  time.Time  `json:"last_check"`
+	ProxyID    int        `json:"proxy_id,omitempty"`
+	CertID     string     `json:"cert_id,omitempty"`
 }
 
 // runningTunnel holds runtime process handles for a tunnel.

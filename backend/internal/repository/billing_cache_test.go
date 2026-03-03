@@ -306,7 +306,7 @@ func TestBillingCache_IncrementAccountDailyUsage(t *testing.T) {
 		// 验证最终结果（原子性）
 		usage, err := cache.GetAccountDailyUsage(ctx, accountID, date)
 		require.NoError(t, err)
-		expected := float64(goroutines * incrementsPerGoroutine) * incrementAmount
+		expected := float64(goroutines*incrementsPerGoroutine) * incrementAmount
 		require.InDelta(t, expected, usage, 0.001)
 	})
 
