@@ -29,6 +29,7 @@ func TestAccountHandler_Create_AnthropicAPIKeyPassthroughExtraForwarded(t *testi
 		nil,
 		nil,
 		nil, // proxyAssignmentService
+		nil, // billingCacheService
 	)
 
 	router := gin.New()
