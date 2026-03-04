@@ -108,33 +108,14 @@ type GitHubAsset struct {
 
 // CheckUpdate checks for available updates
 func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInfo, error) {
-	// Try cache first
-	if !force {
-		if cached, err := s.getFromCache(ctx); err == nil && cached != nil {
-			return cached, nil
-		}
-	}
-
-	// Fetch from GitHub
-	info, err := s.fetchLatestRelease(ctx)
-	if err != nil {
-		// Return cached on error
-		if cached, cacheErr := s.getFromCache(ctx); cacheErr == nil && cached != nil {
-			cached.Warning = "Using cached data: " + err.Error()
-			return cached, nil
-		}
-		return &UpdateInfo{
-			CurrentVersion: s.currentVersion,
-			LatestVersion:  s.currentVersion,
-			HasUpdate:      false,
-			Warning:        err.Error(),
-			BuildType:      s.buildType,
-		}, nil
-	}
-
-	// Cache result
-	s.saveToCache(ctx, info)
-	return info, nil
+	// Update check disabled - return current version info
+	return &UpdateInfo{
+		CurrentVersion: s.currentVersion,
+		LatestVersion:  s.currentVersion,
+		HasUpdate:      false,
+		Warning:        "Update check disabled",
+		BuildType:      s.buildType,
+	}, nil
 }
 
 // PerformUpdate downloads and applies the update
