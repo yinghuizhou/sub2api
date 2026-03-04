@@ -1,7 +1,6 @@
 export default {
   // Home Page
   home: {
-    viewOnGithub: '在 GitHub 上查看',
     viewDocs: '查看文档',
     docs: '文档',
     switchToLight: '切换到浅色模式',
@@ -283,7 +282,6 @@ export default {
     collapse: '收起',
     expand: '展开',
     logout: '退出登录',
-    github: 'GitHub',
     mySubscriptions: '我的订阅',
     buySubscription: '购买订阅',
     recharge: '充值',
