@@ -1,0 +1,33 @@
+FROM alpine:3.20
+
+# Install wget for health check
+RUN apk add --no-cache wget ca-certificates
+
+# Create non-root user
+RUN addgroup -g 1000 sub2api && \
+    adduser -u 1000 -G sub2api -s /bin/sh -D sub2api
+
+# Set working directory
+WORKDIR /app
+
+# Copy pre-built binary
+COPY backend/bin/server-linux-amd64-new /app/sub2api
+
+# Make binary executable
+RUN chmod +x /app/sub2api
+
+# Create data directory
+RUN mkdir -p /app/data && chown -R sub2api:sub2api /app
+
+# Switch to non-root user
+USER sub2api
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget -q -O- http://localhost:${SERVER_PORT:-8080}/health || exit 1
+
+# Run the application
+ENTRYPOINT ["/app/sub2api"]

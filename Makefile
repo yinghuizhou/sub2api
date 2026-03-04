@@ -95,7 +95,8 @@ help:
 	@echo "  make docker-ps       查看容器状态"
 	@echo ""
 	@echo "$(CYAN)高可用部署$(RESET)"
-	@echo "  make deploy-ha       部署高可用版本到香港服务器 (零停机)"
+	@echo "  make deploy-prod     🚀 生产部署 (推荐，完整流程 + 零停机)"
+	@echo "  make deploy-ha       部署高可用版本到香港服务器 (旧版本)"
 	@echo "  make ha-rolling-update  滚动更新 3 个实例"
 	@echo "  make ha-health       检查所有实例健康状态"
 	@echo "  make ha-logs         查看高可用集群日志"
@@ -533,3 +534,11 @@ ha-restart:
 	@echo "$(BOLD)重启高可用集群...$(RESET)"
 	@ssh -i $(PEM) root@$(SERVER) "cd /opt/sub2api && docker compose -f docker-compose.ha.yml restart"
 	@echo "$(GREEN)集群重启完成$(RESET)"
+
+# --------------------------------------------------------------------------
+# 生产部署（推荐，零停机 + 完整验证）
+# --------------------------------------------------------------------------
+deploy-prod:
+	@echo "$(BOLD)$(CYAN)开始生产部署...$(RESET)"
+	@./scripts/deploy-production.sh
+

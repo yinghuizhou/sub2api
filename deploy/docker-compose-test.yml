@@ -17,10 +17,7 @@ services:
   # Sub2API Application
   # ===========================================================================
   sub2api:
-    image: sub2api:latest
-    build:
-      context: ..
-      dockerfile: Dockerfile
+    image: sub2api:arm64-local
     container_name: sub2api
     restart: unless-stopped
     ulimits:
@@ -95,6 +92,7 @@ services:
       # Common values: Asia/Shanghai, America/New_York, Europe/London, UTC
       # =======================================================================
       - TZ=${TZ:-Asia/Shanghai}
+      - TIMEZONE=${TZ:-Asia/Shanghai}
 
       # =======================================================================
       # Gemini OAuth Configuration (for Gemini accounts)
