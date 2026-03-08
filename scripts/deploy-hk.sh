@@ -64,7 +64,7 @@ echo "使用 Dockerfile: ${DOCKERFILE}"
 docker buildx build \
     --platform linux/amd64 \
     -t ${IMAGE_NAME}:amd64-hk-${DATE_TAG} \
-    -f ${DOCKERFILE} \
+    -f "${DOCKERFILE}" \
     --load \
     .
 

@@ -149,9 +149,9 @@ echo ""
 echo "1. Updating docker-compose.yml..."
 # Escape special characters in version string for sed replacement
 TARGET_VERSION_ESCAPED=$(printf '%s\n' "$TARGET_VERSION" | sed 's/[&\\|]/\\&/g')
-ssh -i "$PEM_FILE" -o StrictHostKeyChecking=no root@$HK_SERVER <<EOF
+ssh -i "$PEM_FILE" -o StrictHostKeyChecking=no root@$HK_SERVER <<'EOF'
 cd /opt/sub2api
-sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$TARGET_VERSION_ESCAPED|g" docker-compose.yml
+sed -i 's|image: '"$IMAGE_NAME"':.*|image: '"$IMAGE_NAME"':'"$TARGET_VERSION_ESCAPED"'|g' docker-compose.yml
 EOF
 
 if [[ $? -eq 0 ]]; then

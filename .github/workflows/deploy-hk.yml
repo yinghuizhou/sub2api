@@ -59,19 +59,21 @@ jobs:
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
       - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HK_SERVER_SSH_KEY }}
+
+      - name: Add SSH known hosts
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.HK_SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 47.76.82.51 >> ~/.ssh/known_hosts
 
       - name: Upload image to HK server
         run: |
-          scp -i ~/.ssh/id_rsa /tmp/sub2api-${IMAGE_TAG}.tar.gz root@47.76.82.51:/opt/sub2api/
+          scp /tmp/sub2api-${IMAGE_TAG}.tar.gz root@47.76.82.51:/opt/sub2api/
 
       - name: Deploy with rolling update
         run: |
-          ssh -i ~/.ssh/id_rsa root@47.76.82.51 << 'EOF'
+          ssh root@47.76.82.51 << 'EOF'
             cd /opt/sub2api
 
             # Load new image

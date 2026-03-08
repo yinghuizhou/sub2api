@@ -104,6 +104,13 @@ for i in $(seq 0 $((TUNNEL_COUNT - 1))); do
 
     echo -n "[$((i+1))/$TUNNEL_COUNT] $TUNNEL_NAME (Port: $TUNNEL_PORT)... "
 
+    # Validate port again before using in command (defense in depth)
+    if [[ ! "$TUNNEL_PORT" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}✗ Port validation failed${NC}"
+        UNHEALTHY=$((UNHEALTHY + 1))
+        continue
+    fi
+
     # Test connectivity via SSH
     if ssh -i "$PEM_FILE" -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@$HK_SERVER \
         "curl -sf --socks5 \"localhost:$TUNNEL_PORT\" https://www.google.com >/dev/null 2>&1" 2>/dev/null; then
