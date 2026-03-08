@@ -20,6 +20,24 @@ echo -e "${BLUE}  Sub2API 手动部署脚本${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
+# 步骤 0: 检查网络环境
+echo -e "${YELLOW}步骤 0/6: 检查网络环境${NC}"
+if ./scripts/check-network.sh; then
+    echo -e "${GREEN}网络环境检测通过${NC}"
+    # 根据检测结果选择 Dockerfile
+    if [ -f "backend/internal/web/dist/index.html" ]; then
+        DOCKERFILE="Dockerfile.prod"
+        echo -e "${BLUE}使用预构建前端: ${DOCKERFILE}${NC}"
+    else
+        DOCKERFILE="Dockerfile"
+        echo -e "${BLUE}使用完整构建: ${DOCKERFILE}${NC}"
+    fi
+else
+    echo -e "${RED}网络环境检测失败，请根据建议调整后重试${NC}"
+    exit 1
+fi
+echo ""
+
 # 检查 Docker 是否运行
 echo -n "检查 Docker 状态... "
 if ! docker info >/dev/null 2>&1; then
@@ -40,11 +58,13 @@ echo -e "${GREEN}✓${NC}"
 
 # 构建镜像
 echo ""
-echo -e "${YELLOW}步骤 1/5: 构建 Docker 镜像${NC}"
+echo -e "${YELLOW}步骤 1/6: 构建 Docker 镜像${NC}"
 echo "镜像标签: ${IMAGE_NAME}:amd64-hk-${DATE_TAG}"
+echo "使用 Dockerfile: ${DOCKERFILE}"
 docker buildx build \
     --platform linux/amd64 \
     -t ${IMAGE_NAME}:amd64-hk-${DATE_TAG} \
+    -f ${DOCKERFILE} \
     --load \
     .
 
@@ -56,7 +76,7 @@ echo -e "${GREEN}✓ 镜像构建成功${NC}"
 
 # 导出镜像
 echo ""
-echo -e "${YELLOW}步骤 2/5: 导出镜像${NC}"
+echo -e "${YELLOW}步骤 2/6: 导出镜像${NC}"
 TARBALL="/tmp/${IMAGE_NAME}-amd64-hk-${DATE_TAG}.tar.gz"
 docker save ${IMAGE_NAME}:amd64-hk-${DATE_TAG} | gzip > ${TARBALL}
 
@@ -70,7 +90,7 @@ echo -e "${GREEN}✓ 镜像已导出: ${TARBALL} (${TARBALL_SIZE})${NC}"
 
 # 上传镜像
 echo ""
-echo -e "${YELLOW}步骤 3/5: 上传镜像到 HK 服务器${NC}"
+echo -e "${YELLOW}步骤 3/6: 上传镜像到 HK 服务器${NC}"
 scp -i "$PEM_FILE" ${TARBALL} root@${HK_SERVER}:${DEPLOY_DIR}/
 
 if [ $? -ne 0 ]; then
@@ -81,7 +101,7 @@ echo -e "${GREEN}✓ 镜像上传成功${NC}"
 
 # 滚动更新
 echo ""
-echo -e "${YELLOW}步骤 4/5: 执行滚动更新（零停机）${NC}"
+echo -e "${YELLOW}步骤 4/6: 执行滚动更新（零停机）${NC}"
 ssh -i "$PEM_FILE" root@${HK_SERVER} << EOF
 set -e
 
@@ -125,7 +145,7 @@ echo -e "${GREEN}✓ 滚动更新成功${NC}"
 
 # 验证部署
 echo ""
-echo -e "${YELLOW}步骤 5/5: 验证部署${NC}"
+echo -e "${YELLOW}步骤 5/6: 验证部署${NC}"
 ssh -i "$PEM_FILE" root@${HK_SERVER} << 'EOF'
 set -e
 
@@ -152,7 +172,7 @@ fi
 
 # 清理
 echo ""
-echo -e "${YELLOW}清理本地临时文件...${NC}"
+echo -e "${YELLOW}步骤 6/6: 清理临时文件${NC}"
 rm -f ${TARBALL}
 echo -e "${GREEN}✓ 清理完成${NC}"
 
@@ -164,6 +184,7 @@ echo -e "${GREEN}========================================${NC}"
 echo ""
 echo "部署信息："
 echo "  - 镜像标签: ${IMAGE_NAME}:amd64-hk-${DATE_TAG}"
+echo "  - 使用 Dockerfile: ${DOCKERFILE}"
 echo "  - 服务地址: http://47.76.82.51:8888"
 echo "  - 健康检查: http://47.76.82.51:8888/health"
 echo "  - 监控指标: http://47.76.82.51:8888/metrics"

@@ -1,0 +1,97 @@
+# =============================================================================
+# Sub2API Production Dockerfile (Pre-built Frontend)
+# =============================================================================
+# This Dockerfile assumes frontend is already built at backend/internal/web/dist/
+# Use this when Docker build context cannot access npm registry
+# =============================================================================
+
+ARG GOLANG_IMAGE=golang:1.26.1-alpine
+ARG ALPINE_IMAGE=alpine:3.21
+ARG GOPROXY=https://goproxy.cn,direct
+ARG GOSUMDB=sum.golang.google.cn
+
+# -----------------------------------------------------------------------------
+# Stage 1: Backend Builder
+# -----------------------------------------------------------------------------
+FROM ${GOLANG_IMAGE} AS backend-builder
+
+# Build arguments for version info (set by CI)
+ARG VERSION=
+ARG COMMIT=docker
+ARG DATE
+ARG GOPROXY
+ARG GOSUMDB
+
+ENV GOPROXY=${GOPROXY}
+ENV GOSUMDB=${GOSUMDB}
+
+# Install build dependencies
+# Skip package installation if network is unavailable
+RUN apk add --no-cache git ca-certificates tzdata \
+    || echo "Warning: Failed to install packages, continuing anyway"
+
+WORKDIR /app/backend
+
+# Copy go mod files first (better caching)
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# Copy backend source
+COPY backend/ ./
+
+# Build the binary (BuildType=release for CI builds, embed frontend)
+# Version precedence: build arg VERSION > cmd/server/VERSION
+RUN VERSION_VALUE="${VERSION}" && \
+    if [ -z "${VERSION_VALUE}" ]; then VERSION_VALUE="$(tr -d '\r\n' < ./cmd/server/VERSION)"; fi && \
+    DATE_VALUE="${DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" && \
+    CGO_ENABLED=0 GOOS=linux go build \
+    -tags embed \
+    -ldflags="-s -w -X main.Version=${VERSION_VALUE} -X main.Commit=${COMMIT} -X main.Date=${DATE_VALUE} -X main.BuildType=release" \
+    -trimpath \
+    -o /app/sub2api \
+    ./cmd/server
+
+# -----------------------------------------------------------------------------
+# Stage 2: Final Runtime Image
+# -----------------------------------------------------------------------------
+FROM ${ALPINE_IMAGE}
+
+# Labels
+LABEL maintainer="Wei-Shaw <github.com/Wei-Shaw>"
+LABEL description="Sub2API - AI API Gateway Platform"
+LABEL org.opencontainers.image.source="https://github.com/Wei-Shaw/sub2api"
+
+# Install runtime dependencies
+# Skip package installation if network is unavailable
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    wget \
+    || echo "Warning: Failed to install packages, continuing anyway"
+
+# Create non-root user
+RUN addgroup -g 1000 sub2api && \
+    adduser -u 1000 -G sub2api -s /bin/sh -D sub2api
+
+# Set working directory
+WORKDIR /app
+
+# Copy binary/resources with ownership to avoid extra full-layer chown copy
+COPY --from=backend-builder --chown=sub2api:sub2api /app/sub2api /app/sub2api
+COPY --from=backend-builder --chown=sub2api:sub2api /app/backend/resources /app/resources
+
+# Create data directory
+RUN mkdir -p /app/data && chown sub2api:sub2api /app/data
+
+# Switch to non-root user
+USER sub2api
+
+# Expose port (can be overridden by SERVER_PORT env var)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget -q -T 5 -O /dev/null http://localhost:${SERVER_PORT:-8080}/health || exit 1
+
+# Run the application
+ENTRYPOINT ["/app/sub2api"]
