@@ -1,0 +1,20 @@
+[
+  {
+    "ovpn_file": "/Users/zhouyinghui/work/ai/sub2api/deploy/vpn/ovpn-configs/TCP-USA-Los-Angeles-10G.ovpn",
+    "instance_name": "la_10g",
+    "socks_port": 10802,
+    "region": "us"
+  },
+  {
+    "ovpn_file": "/Users/zhouyinghui/work/ai/sub2api/deploy/vpn/ovpn-configs/TCP-USA-New-York-10G-1.ovpn",
+    "instance_name": "ny_10g",
+    "socks_port": 10803,
+    "region": "us"
+  },
+  {
+    "ovpn_file": "/Users/zhouyinghui/work/ai/sub2api/deploy/vpn/ovpn-configs/TCP-USA-Denver-10G.ovpn",
+    "instance_name": "denver_10g",
+    "socks_port": 10804,
+    "region": "us"
+  }
+]

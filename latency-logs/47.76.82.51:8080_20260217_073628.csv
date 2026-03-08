@@ -1,0 +1,2 @@
+timestamp,endpoint,dns_s,connect_s,ttfb_s,total_s,http_code,cloudflare,cf_location
+2026-02-17 07:36:30,/health,0.001230,0.228528,0.000000,0.757711,0000,0,0,0,0,000,no,

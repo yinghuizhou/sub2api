@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrill OpenVPN 批量下载</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--s1:#111827;--s2:#1a2236;--bd:#253049;--pr:#3b82f6;--ok:#10b981;--wn:#f59e0b;--er:#ef4444;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--r:12px;--f:'Noto Sans SC',sans-serif;--m:'JetBrains Mono',monospace}
+body{font-family:var(--f);background:var(--bg);color:var(--t1);min-height:100vh;padding:24px}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:var(--t3);font-size:.82rem;margin-bottom:24px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card h2{font-size:1rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.status{padding:12px 16px;border-radius:8px;font-size:.85rem;margin-bottom:16px;background:var(--s2);border-left:3px solid var(--pr);color:var(--t2)}
+.status.ok{border-left-color:var(--ok);color:var(--ok)}
+.status.err{border-left-color:var(--er);color:var(--er)}
+/* Server list */
+.srv-controls{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.srv-controls select,.srv-controls input{background:var(--s2);border:1px solid var(--bd);color:var(--t1);padding:6px 12px;border-radius:6px;font-size:.82rem;font-family:var(--f)}
+.srv-filter{flex:1}
+.srv-list{max-height:300px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px}
+.srv-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--bd);font-size:.82rem;cursor:pointer;transition:background .15s}
+.srv-item:hover{background:var(--s2)}
+.srv-item:last-child{border-bottom:none}
+.srv-item input[type=checkbox]{accent-color:var(--pr)}
+.srv-item .flag{min-width:24px}
+.srv-item.downloaded{opacity:.5}
+.srv-count{font-size:.78rem;color:var(--t3);margin-top:8px}
+/* Job list */
+.job-list{max-height:500px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px}
+.job-row{display:grid;grid-template-columns:32px 1fr 90px 80px 28px;gap:8px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bd);font-size:.8rem;transition:background .15s}
+.job-row:last-child{border-bottom:none}
+.job-row.active{background:var(--s2);border-left:2px solid var(--pr)}
+.job-row.done{opacity:.65}
+.job-idx{color:var(--t3);font-family:var(--m);font-size:.72rem;text-align:center}
+.job-captcha{height:28px;border-radius:4px;background:#fff;object-fit:contain}
+.job-ocr{font-family:var(--m);color:#a78bfa;font-size:.78rem;font-weight:600;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis}
+.job-file{font-family:var(--m);color:var(--ok);font-size:.7rem;overflow:hidden;text-overflow:ellipsis}
+.job-status{text-align:center;font-size:.9rem}
+.retry-badge{background:var(--wn);color:#000;padding:1px 6px;border-radius:3px;font-size:.65rem;font-weight:600;margin-left:4px}
+/* Manual captcha input */
+.captcha-box{display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap}
+.captcha-box img{border-radius:8px;background:#fff;height:50px}
+.captcha-box input{flex:1;min-width:120px;padding:8px 12px;background:#0d1117;border:2px solid var(--bd);border-radius:8px;color:var(--t1);font-size:1rem;font-family:var(--m);letter-spacing:2px;outline:none}
+.captcha-box input:focus{border-color:var(--pr)}
+/* Auto mode toggle */
+.auto-toggle{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:.82rem;color:var(--t2)}
+.auto-toggle input[type=checkbox]{accent-color:var(--ok);width:16px;height:16px}
+.auto-toggle label{cursor:pointer;user-select:none}
+/* Buttons */
+.btn{padding:10px 24px;border-radius:8px;font-size:.85rem;font-weight:500;border:none;cursor:pointer;font-family:var(--f);transition:all .15s}
+.btn-pr{background:var(--pr);color:#fff}.btn-pr:hover{background:#2563eb}
+.btn-ok{background:var(--ok);color:#fff}.btn-ok:hover{background:#059669}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--bd)}.btn-ghost:hover{background:var(--s2)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+/* Progress */
+.progress-bar{height:6px;background:var(--s2);border-radius:3px;margin:12px 0;overflow:hidden}
+.progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--pr),var(--ok));border-radius:3px;transition:width .3s}
+.log{max-height:150px;overflow-y:auto;font-family:var(--m);font-size:.75rem;color:var(--t3);background:#0d1117;border-radius:8px;padding:12px;margin-top:12px;line-height:1.8}
+.log .ok{color:var(--ok)}.log .er{color:var(--er)}.log .wn{color:var(--wn)}
+.tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:.7rem;font-weight:500;margin-left:6px}
+.tag-us{background:#3b82f620;color:#60a5fa}
+.tag-eu{background:#8b5cf620;color:#a78bfa}
+.tag-as{background:#f59e0b20;color:#fbbf24}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Astrill OpenVPN 批量下载器</h1>
+  <p class="sub">自动遍历服务器，批量下载 .ovpn 配置文件</p>
+  <div class="status" id="status">⏳ 连接中...</div>
+
+  <!-- AI Config -->
+  <div class="card hidden" id="apiKeyCard">
+    <h2>🔑 AI 验证码识别配置</h2>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="min-width:70px;font-size:.82rem;color:var(--t2)">接口地址</label>
+        <input id="apiUrlInput" placeholder="http://localhost:8080" style="flex:1;padding:8px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:.82rem;outline:none">
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="min-width:70px;font-size:.82rem;color:var(--t2)">API Key</label>
+        <input id="apiKeyInput" type="password" placeholder="sub2api 的 API Key" style="flex:1;padding:8px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:.82rem;outline:none">
+        <button class="btn btn-ghost" onclick="toggleKeyVisibility()" style="padding:8px 12px">👁</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="min-width:70px;font-size:.82rem;color:var(--t2)">模型</label>
+        <input id="modelInput" placeholder="claude-haiku-4-5-20251001 (默认)" style="flex:1;padding:8px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:.82rem;outline:none">
+        <button class="btn btn-ok" onclick="saveApiConfig()">保存</button>
+      </div>
+    </div>
+    <div id="apiKeyStatus" style="font-size:.78rem;color:var(--t3);margin-top:6px"></div>
+  </div>
+
+  <!-- Phase: Select servers -->
+  <div class="card hidden" id="selectCard">
+    <h2>📋 选择要下载的服务器</h2>
+    <div class="srv-controls">
+      <select id="modeSelect"><option value="TCP">TCP (推荐中国)</option><option value="UDP">UDP (快速)</option></select>
+      <input class="srv-filter" id="filter" placeholder="搜索服务器..." oninput="filterServers()">
+      <button class="btn btn-ghost" onclick="selectAll('US')">全选美国</button>
+      <button class="btn btn-ghost" onclick="selectAll()">全选</button>
+      <button class="btn btn-ghost" onclick="selectNone()">取消</button>
+    </div>
+    <div class="srv-list" id="srvList"></div>
+    <div class="srv-count" id="srvCount"></div>
+    <div class="auto-toggle">
+      <input type="checkbox" id="autoMode" checked>
+      <label for="autoMode">🤖 AI 自动识别验证码（识别后 1.5 秒自动提交，可手动修正）</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-pr" id="startBtn" onclick="startDownload()">🚀 开始批量下载</button>
+    </div>
+  </div>
+
+  <!-- Phase: Downloading - Job List -->
+  <div class="card hidden" id="dlCard">
+    <h2>📥 批量下载 <span id="dlProgress" style="color:var(--t3);font-weight:400;font-size:.82rem"></span></h2>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="progress-bar" style="flex:1;margin-right:12px"><div class="fill" id="progressFill" style="width:0%"></div></div>
+      <button class="btn btn-ghost" onclick="stopBatch()" style="padding:6px 16px;font-size:.78rem;white-space:nowrap">⏹ 停止</button>
+    </div>
+    <div class="job-list" id="jobList"></div>
+    <div id="captchaRow" class="captcha-box hidden">
+      <img id="captchaImg" src="" alt="CAPTCHA">
+      <input id="captchaInput" placeholder="输入验证码..." onkeydown="if(event.key==='Enter')submitCaptcha()">
+      <button class="btn btn-ok" onclick="submitCaptcha()">✓</button>
+      <button class="btn btn-ghost" onclick="skipServer()">跳过</button>
+    </div>
+  </div>
+
+  <!-- Phase: Done -->
+  <div class="card hidden" id="doneCard">
+    <h2>🎉 下载完成</h2>
+    <div id="summary"></div>
+    <div class="log" id="doneLog"></div>
+  </div>
+</div>
+<script>
+let state = {};
+let allServers = [];
+const sse = new EventSource('/events');
+sse.onmessage = e => { state = JSON.parse(e.data); render(); };
+
+// AI config management
+async function loadApiKeyConfig() {
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    const statusEl = document.getElementById('apiKeyStatus');
+    if (cfg.apiUrl) document.getElementById('apiUrlInput').placeholder = cfg.apiUrl;
+    if (cfg.model) document.getElementById('modelInput').placeholder = cfg.model;
+    if (cfg.hasKey) {
+      document.getElementById('apiKeyInput').placeholder = cfg.apiKey;
+      statusEl.innerHTML = `✅ 已配置 — 接口: <code style="color:var(--pr)">${cfg.apiUrl || '未设置'}</code>`;
+      statusEl.style.color = 'var(--ok)';
+    } else {
+      statusEl.textContent = '⚠️ 未配置 — 请填入你的 sub2api 地址和 API Key';
+      statusEl.style.color = 'var(--wn)';
+    }
+  } catch {}
+}
+async function saveApiConfig() {
+  const data = {};
+  const url = document.getElementById('apiUrlInput').value.trim();
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const model = document.getElementById('modelInput').value.trim();
+  if (url) data.apiUrl = url;
+  if (key) data.apiKey = key;
+  if (model) data.model = model;
+  if (!Object.keys(data).length) return;
+  await fetch('/api/config', { method: 'POST', body: JSON.stringify(data) });
+  document.getElementById('apiKeyInput').value = '';
+  loadApiKeyConfig();
+}
+function toggleKeyVisibility() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+const STATUS_ICON = { pending:'⏳', captcha:'🔄', recognizing:'🤖', waiting:'✍️', downloading:'📥', done:'✅', failed:'❌', skipped:'⏭️', cached:'💾' };
+
+function render() {
+  const s = document.getElementById('status');
+  s.textContent = state.message || '⏳ 等待中...';
+  s.className = 'status' + (state.phase === 'done' ? ' ok' : state.phase === 'error' ? ' err' : '');
+
+  document.getElementById('apiKeyCard').classList.toggle('hidden', state.phase !== 'select' && state.phase !== 'downloading');
+  document.getElementById('selectCard').classList.toggle('hidden', state.phase !== 'select');
+  document.getElementById('dlCard').classList.toggle('hidden', state.phase !== 'downloading' && state.phase !== 'done');
+  document.getElementById('doneCard').classList.toggle('hidden', state.phase !== 'done');
+
+  if (state.phase === 'select' && state.servers.length && !allServers.length) {
+    allServers = state.servers;
+    renderServers();
+  }
+
+  // Job list rendering
+  if (state.jobs?.length) {
+    const doneCount = state.jobs.filter(j => j.status === 'done').length;
+    const total = state.jobs.length;
+    document.getElementById('dlProgress').textContent = `(${doneCount}/${total} 完成)`;
+    document.getElementById('progressFill').style.width = `${(doneCount / total) * 100}%`;
+    renderJobs();
+
+    // Show manual captcha input when a job is waiting
+    const waitingJob = state.jobs.find(j => j.status === 'waiting');
+    const captchaRow = document.getElementById('captchaRow');
+    if (waitingJob) {
+      captchaRow.classList.remove('hidden');
+      document.getElementById('captchaImg').src = 'data:image/jpeg;base64,' + waitingJob.captchaB64;
+      const inp = document.getElementById('captchaInput');
+      if (!inp.value && waitingJob.ocrText) inp.value = waitingJob.ocrText;
+      inp.focus();
+    } else {
+      captchaRow.classList.add('hidden');
+    }
+  }
+
+  if (state.phase === 'done') {
+    document.getElementById('summary').innerHTML =
+      `<p style="margin:8px 0">✅ 成功: <b style="color:var(--ok)">${state.downloaded?.length || 0}</b> 个 &nbsp; ❌ 失败: <b style="color:var(--er)">${state.failed?.length || 0}</b> 个</p>`;
+    document.getElementById('doneLog').innerHTML = (state.downloaded||[]).map(d =>
+      `<div class="ok">✅ ${d.label} → ${d.file}</div>`).join('') +
+      (state.failed||[]).map(f => `<div class="er">❌ ${f}</div>`).join('');
+  }
+}
+
+function renderJobs() {
+  const list = document.getElementById('jobList');
+  if (!list) return;
+  list.innerHTML = state.jobs.map((j, i) => {
+    const isActive = i === state.currentIndex && state.phase === 'downloading';
+    const isDone = j.status === 'done' || j.status === 'failed' || j.status === 'skipped' || j.status === 'cached';
+    const icon = STATUS_ICON[j.status] || '⏳';
+    const captcha = j.captchaB64
+      ? `<img class="job-captcha" src="data:image/jpeg;base64,${j.captchaB64}">`
+      : '<span style="color:var(--t3);font-size:.72rem">—</span>';
+    const ocrOrFile = j.file
+      ? `<span class="job-file" title="${j.file}">${j.file}</span>`
+      : j.ocrText
+        ? `<span class="job-ocr">${j.ocrText}</span>`
+        : '<span style="color:var(--t3)">—</span>';
+    const retry = j.retries > 0 ? `<span class="retry-badge">×${j.retries}</span>` : '';
+    return `<div class="job-row${isActive ? ' active' : ''}${isDone ? ' done' : ''}" id="job-${i}">
+      <span class="job-idx">${i + 1}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.server.label}">${j.server.label}${retry}</span>
+      ${captcha}
+      ${ocrOrFile}
+      <span class="job-status">${icon}</span>
+    </div>`;
+  }).join('');
+
+  // Auto-scroll to active
+  if (state.currentIndex >= 0) {
+    const el = document.getElementById(`job-${state.currentIndex}`);
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function getRegionTag(label) {
+  if (/US|United States|Chicago|Los Angeles|New York|Dallas|Miami|Seattle|San Fran|Denver|Phoenix/i.test(label)) return ['🇺🇸', 'tag-us'];
+  if (/UK|London|Europe|Germany|France|Netherlands|Amsterdam/i.test(label)) return ['🇪🇺', 'tag-eu'];
+  if (/Japan|Korea|Singapore|Hong Kong|Tokyo|Asia/i.test(label)) return ['🌏', 'tag-as'];
+  return ['🌐', ''];
+}
+
+function renderServers() {
+  const filter = document.getElementById('filter').value.toLowerCase();
+  const list = document.getElementById('srvList');
+  const filtered = allServers.filter(s => !filter || s.label.toLowerCase().includes(filter));
+  list.innerHTML = filtered.map((s, i) => {
+    const [flag, tagCls] = getRegionTag(s.label);
+    const idx = allServers.indexOf(s);
+    return `<label class="srv-item"><input type="checkbox" data-idx="${idx}" ${s.checked ? 'checked' : ''} onchange="toggleServer(${idx})"><span class="flag">${flag}</span><span>${s.label}</span></label>`;
+  }).join('');
+  updateCount();
+}
+
+function filterServers() { renderServers(); }
+function toggleServer(i) { allServers[i].checked = !allServers[i].checked; updateCount(); }
+function selectAll(region) {
+  allServers.forEach(s => {
+    if (!region) { s.checked = true; }
+    else if (region === 'US' && /US|United States|Chicago|Los Angeles|New York|Dallas|Miami|Seattle|San Fran|Denver|Phoenix|Atlanta|Washington/i.test(s.label)) { s.checked = true; }
+  });
+  renderServers();
+}
+function selectNone() { allServers.forEach(s => s.checked = false); renderServers(); }
+function updateCount() {
+  const n = allServers.filter(s => s.checked).length;
+  document.getElementById('srvCount').textContent = `已选择 ${n} / ${allServers.length} 个服务器`;
+  document.getElementById('startBtn').disabled = n === 0;
+}
+
+function startDownload() {
+  const selected = allServers.filter(s => s.checked);
+  const mode = document.getElementById('modeSelect').value;
+  const auto = document.getElementById('autoMode').checked;
+  fetch('/api/start', { method: 'POST', body: JSON.stringify({ servers: selected, mode, auto }) });
+}
+
+function submitCaptcha() {
+  const v = document.getElementById('captchaInput').value.trim();
+  if (!v) return;
+  fetch('/api/captcha', { method: 'POST', body: JSON.stringify({ solution: v }) });
+  document.getElementById('captchaInput').value = '';
+}
+
+function skipServer() {
+  fetch('/api/skip', { method: 'POST', body: '{}' });
+}
+
+function stopBatch() {
+  fetch('/api/stop', { method: 'POST', body: '{}' });
+}
+
+// Load API key config on startup
+loadApiKeyConfig();
+</script>
+</body>
+</html>

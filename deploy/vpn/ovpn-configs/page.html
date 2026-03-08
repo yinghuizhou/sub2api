@@ -1,0 +1,1685 @@
+<!DOCTYPE html><html lang="zh" prefix="og: http://ogp.me/ns#"><head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#2a3776">
+
+    <link rel="preload" href="/fonts/NeoSansW1G/NeoSansW1G-Medium.woff2" as="font" type="font/woff2" crossorigin="">
+    <link rel="preload" href="/fonts/NeoSansW1G/NeoSansW1G-Regular.woff2" as="font" type="font/woff2" crossorigin="">
+    <link rel="preload" href="/fonts/Roboto/Roboto-Regular.woff2" as="font" type="font/woff2" crossorigin="">
+    <link rel="preload" href="/fonts/Roboto/Roboto-Bold.woff2" as="font" type="font/woff2" crossorigin="">
+    <link rel="preload" href="/fonts/Roboto/Roboto-Medium.woff2" as="font" type="font/woff2" crossorigin="">
+
+    <meta content="通过我们快速、安全和匿名的VPN，保障您的隐私和不受地区限制地访问媒体内容。严格的无日志策略，也支持洪流功能。在50个国家的330台服务器使用高度加密" name="description">
+
+    <title>OpenVPN证书 | Astrill VPN</title>
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="/images/favicon/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/images/favicon/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/images/favicon/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/images/favicon/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="/images/favicon/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="/images/favicon/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="/images/favicon/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="/images/favicon/apple-touch-icon-152x152.png">
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-196x196.png" sizes="196x196">
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-128.png" sizes="128x128">
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-32x32.png" sizes="32x32">
+    <meta name="application-name" content="Astrill VPN">
+    <meta name="msapplication-TileColor" content="#FFFFFF">
+    <meta name="msapplication-TileImage" content="/images/favicon/mstile-144x144.png">
+    <meta name="msapplication-square70x70logo" content="/images/favicon/mstile-70x70.png">
+    <meta name="msapplication-square150x150logo" content="/images/favicon/mstile-150x150.png">
+    <meta name="msapplication-wide310x150logo" content="/images/favicon/mstile-310x150.png">
+    <meta name="msapplication-square310x310logo" content="/images/favicon/mstile-310x310.png">
+
+    <meta property="og:image" content="/images/facebook-preview/facebook-preview-image-03.png">
+    <meta property="og:image:width" content="600">
+    <meta property="og:image:height" content="315">
+
+            <link rel="stylesheet" href="/css/main.min.css?v=20251103" as="style">
+
+    
+
+    <script src="https://connect.facebook.net/signals/config/1237414121236301?v=2.9.268&amp;r=stable&amp;domain=www.astrill.com&amp;hme=8c09666b801027ec77ae6e3d39d3827f08833acc316174b73d9ec4ab26e1bdc3&amp;ex_m=96%2C188%2C136%2C21%2C68%2C69%2C129%2C64%2C43%2C130%2C73%2C63%2C10%2C144%2C82%2C15%2C95%2C124%2C117%2C71%2C74%2C123%2C141%2C104%2C146%2C7%2C3%2C4%2C6%2C5%2C2%2C83%2C93%2C147%2C152%2C202%2C57%2C168%2C169%2C50%2C240%2C28%2C70%2C214%2C213%2C212%2C30%2C56%2C9%2C59%2C89%2C90%2C91%2C97%2C120%2C29%2C27%2C122%2C119%2C118%2C137%2C72%2C140%2C138%2C139%2C45%2C55%2C113%2C14%2C143%2C40%2C228%2C229%2C227%2C24%2C25%2C26%2C17%2C19%2C39%2C35%2C37%2C36%2C78%2C84%2C88%2C102%2C128%2C131%2C41%2C103%2C22%2C20%2C109%2C65%2C33%2C133%2C132%2C134%2C125%2C23%2C32%2C54%2C101%2C142%2C66%2C16%2C135%2C106%2C77%2C62%2C18%2C31%2C252%2C195%2C182%2C183%2C181%2C255%2C247%2C196%2C99%2C121%2C76%2C111%2C49%2C42%2C44%2C105%2C110%2C116%2C53%2C60%2C115%2C48%2C51%2C47%2C92%2C145%2C0%2C114%2C13%2C112%2C11%2C1%2C52%2C85%2C58%2C61%2C108%2C81%2C80%2C148%2C149%2C86%2C87%2C8%2C94%2C46%2C126%2C79%2C75%2C67%2C107%2C98%2C38%2C127%2C34%2C100%2C12%2C150" async=""></script><script async="" src="https://connect.facebook.net/en_US/fbevents.js"></script><script src="https://chat.astrill.org/packs/js/sdk.js" defer="" async=""></script><script async="" src="https://t.as-stats.com/js/container_SiffkyfS.js"></script><script src="/javascript/jquery-3.2.1.min.js"></script>
+    <script src="/javascript/uikit.min.js"></script>
+    <script src="/javascript/main.min.js?v=20251103"></script>
+
+            <script src="/javascript/vendors/select2.min.js"></script>
+        <script src="/javascript/select2.js"></script>
+    
+    
+    
+    
+    
+    
+    
+                                        <link rel="alternate" hreflang="en" href="https://www.astrill.com/en/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="zh" href="https://www.astrill.com/zh/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="ru" href="https://www.astrill.com/ru/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="fr" href="https://www.astrill.com/fr/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="de" href="https://www.astrill.com/de/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="es" href="https://www.astrill.com/es/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="pt" href="https://www.astrill.com/pt/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="pl" href="https://www.astrill.com/pl/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="ar" href="https://www.astrill.com/ar/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="tr" href="https://www.astrill.com/tr/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="tk" href="https://www.astrill.com/tk/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="kr" href="https://www.astrill.com/kr/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="ja" href="https://www.astrill.com/ja/member-zone/tools/openvpn-certificates">
+                                                <link rel="alternate" hreflang="th" href="https://www.astrill.com/th/member-zone/tools/openvpn-certificates">
+                                            
+    <link rel="canonical" href="https://www.astrill.com/member-zone/zh/member-zone/tools/openvpn-certificates">
+
+    
+
+    
+    
+        <!-- Matomo Tag Manager -->
+        <script>
+			var _mtm = window._mtm = window._mtm || [];
+			_mtm.push({'mtm.startTime': (new Date().getTime()), 'event': 'mtm.Start'});
+			var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+			g.async=true; g.src='https://t.as-stats.com/js/container_SiffkyfS.js'; s.parentNode.insertBefore(g,s);
+        </script>
+        <!-- End Matomo Tag Manager -->
+    
+
+    
+
+    
+    <script type="application/ld+json">
+    {
+        "@context": "http://www.schema.org",
+        "@type": "WebSite",
+        "name": "Astrill VPN",
+        "alternateName": "Astrill",
+        "url": "https://www.astrill.com/"
+    }
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "http://www.schema.org",
+  "@type": "Organization",
+  "name": "Astrill",
+  "alternateName": "Astrill VPN",
+  "url": "https://www.astrill.com/",
+  "logo": "https://www.astrill.com/images/home/astrill_star_blue_square_512.png",
+  "description": "The fastest VPN in 2026. Best VPN apps. VPN servers in over 50 countries. Strict no logs policy. Torrents supported. Secure VPN connection with OpenVPN, StealthVPN, OpenWeb, L2TP, IPSec, SSTP and PPTP. VPN software provider for Windows, macOS, Linux, Android, iOS and routers.",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+1 323 522 5635",
+    "contactType": "Customer Support",
+    "email": "support@astrill.com"
+  },
+  "sameAs": [
+    "https://www.facebook.com/astrillvpn",
+    "https://twitter.com/astrill"
+  ]
+}
+ </script>
+
+
+</head>
+<body>
+
+<input type="hidden" id="csrf_token" value="5fbb3a986642db6591488040cf10e8e0" style="">
+
+
+
+            <script>
+            
+
+			window.chatwootSettings = {"position":"right","type":"standard","launcherTitle":"Chat with us"};
+
+            (function(d,t) {
+                var BASE_URL="https://chat.astrill.org";
+                var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+                g.src=BASE_URL+"/packs/js/sdk.js";
+                g.defer = true;
+                g.async = true;
+                s.parentNode.insertBefore(g,s);
+                g.onload=function(){
+                    window.chatwootSDK.run({
+                        websiteToken: 'nAFpeRu1WTgNJU9RumA6LXKC',
+                        baseUrl: BASE_URL
+                    })
+                }
+            })(document,"script");
+
+            
+
+            			window.addEventListener("chatwoot:ready", function () {
+				///*
+				window.$chatwoot.setUser(3920525, {
+					name: "OwenZhou ", // Name of the user
+					email: "zhouyinghui.us@gmail.com", // Email of the user
+					identifier_hash: "4f2712c65e49804095510846d585922cd90542d94f9a58f2a3cb31c7be889515", // Identifier Hash generated based on the webwidget hmac_token
+				});
+				//*/
+			});
+                    </script>
+    
+
+
+<div class="site-header static memberzone-menu scrolling">
+
+    
+    
+    <div class="uk-container">
+        <nav class="uk-navbar-container uk-flex uk-flex-wrap uk-navbar-transparent uk-navbar" uk-navbar="">
+            <div class="uk-navbar-left">
+                <a href="https://www.astrill.com/zh/" class="uk-navbar-item uk-logo">
+                    <img src="/images/astrill-logo.svg" alt="AstrillVPN">
+                </a>
+            </div>
+
+            <div class="uk-navbar-right uk-visible@m">
+                    <ul class="uk-navbar-nav">
+
+                    <li class="has-children megamenu-dropdown">
+                <a href="#"><span>功能</span></a>
+                <div class="uk-navbar-dropdown megamenu-dropdown-content" style="top: 60px;">
+                    <div class="list-wrapper megamenu">
+                        <ul class="uk-nav uk-navbar-dropdown-nav list-item">
+                            <li class="title">关于Astrill VPN</li>
+                            <li><a href="https://www.astrill.com/zh/features" class="active-item">VPN功能概述</a></li>
+                            <li><a href="https://www.astrill.com/zh/what-makes-astrill-special">是什么突显我们的VPN与众不同？</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/vip">VIP计划</a></li>
+                            <li><a href="https://www.astrill.com/zh/business-vpn">商业VPN</a></li>
+                            <li><a href="https://www.astrill.com/zh/astrill-vpn-routers">Astrill VPN路由器</a></li>
+                            <li><a href="https://www.astrill.com/zh/what-is-vpn">VPN是什么？</a></li>
+                        </ul>
+                        <ul class="uk-nav uk-navbar-dropdown-nav list-item">
+                            <li class="title">VPN软件功能</li>
+                            <li><a href="https://www.astrill.com/zh/features/smart-mode">智能模式</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/kill-switch">安全开关/应用卫士</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/vpn-sharing">VPN共享</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/website-and-app-filter">网站和应用程序过滤器</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/port-forwarding">转发端口</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/third-party-vpn-clients">第三方VPN客户端</a></li>
+                                                    </ul>
+                        <ul class="uk-nav uk-navbar-dropdown-nav list-item">
+                            <li class="title">网络</li>
+                            <li><a href="https://www.astrill.com/zh/network/vpn-servers">VPN服务器</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/fastest-vpn">为什么Astrill是最快的VPN？</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/dedicated-ips">专用IP</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/vpn-speedtest-results">Speedtest结果</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/multi-hop-vpn">多跳式VPN</a></li>
+                                                    </ul>
+                        <ul class="uk-nav uk-navbar-dropdown-nav list-item">
+                            <li class="title">VPN协议</li>
+                            <li><a href="https://www.astrill.com/zh/features/vpn-protocols/openweb">OpenWeb</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/vpn-protocols/stealth-vpn">Stealth VPN</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/vpn-protocols/wireguard">Wireguard</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/vpn-protocols">查看所有协议</a></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </li>
+        
+        <li class="has-children buttons-dropdown">
+            <a href="#"><span>下载</span></a>
+            <div class="uk-navbar-dropdown buttons-dropdown-content" style="top: 60px;">
+
+                <div class="uk-grid uk-grid-small">
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/windows">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/windows-grey.svg" class="mobile-icon win-icon" alt="Windows">
+                                    <img src="/images/icon/devices/windows-purple.svg" class="desktop-icon win-icon" alt="Windows">
+                                </div>
+                                <span>Windows应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/mac">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/mac-grey.svg" class="mobile-icon mac-icon" alt="Mac">
+                                    <img src="/images/icon/devices/mac-purple.svg" class="desktop-icon mac-icon" alt="Mac">
+                                </div>
+                                <span>macOS应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/ios">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/ios-grey.svg" class="mobile-icon" alt="Ios">
+                                    <img src="/images/icon/devices/ios-purple.svg" class="desktop-icon" alt="Ios">
+                                </div>
+                                <span>iPhone/iPad应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/linux">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/linux-grey.svg" class="mobile-icon linux-icon" alt="Linux">
+                                    <img src="/images/icon/devices/linux-purple.svg" class="desktop-icon linux-icon" alt="Linux">
+                                </div>
+                                <span>Linux应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app uk-margin-remove-bottom" href="https://www.astrill.com/zh/download/android">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/android-grey.svg" class="mobile-icon android-icon" alt="Android">
+                                    <img src="/images/icon/devices/android-purple.svg" class="desktop-icon android-icon" alt="Android">
+                                </div>
+                                <span>Android应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app uk-margin-remove-bottom" href="https://www.astrill.com/zh/astrill-vpn-routers/self-made">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/router-grey.svg" class="mobile-icon router-icon" alt="Router">
+                                    <img src="/images/icon/devices/router-purple.svg" class="desktop-icon router-icon" alt="Router">
+                                </div>
+                                <span>VPN路由器小程序</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </li>
+
+        <li><a href="https://www.astrill.com/zh/pricing">定价</a></li>
+        <li><a href="https://www.astrill.com/support">支持</a></li>
+        <li><a href="https://www.astrill.com/blog/" target="_blank">博客</a></li>
+    </ul>
+
+<ul class="uk-navbar-nav buttons ">
+    <li class="login-button ">
+
+        <a class="uk-button uk-button-default memberzone" href="https://www.astrill.com/member-zone/">
+            <i class="icon icon-user"></i>  OwenZhou 
+        </a>
+
+        <div class="uk-navbar-dropdown uk-padding-remove user-menu right">
+            
+                                    <div class="uk-nav uk-navbar-dropdown-nav">
+                        <div class="user">
+                            <span class="name">OwenZhou </span>
+                            <span class="expiration"> 截止于 <span class="date">2026-03-14</span></span>
+                        </div>
+                        <div class="menu">
+                            <ul>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/overview"><i class="icon"></i> 前往会员区</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/extend"><i class="icon"></i> 延期</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/tools" class="active"><i class="icon"></i> VPN服务</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/invoices"><i class="icon icon-invoice"></i> 发票</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/support"><i class="icon icon-support"></i> 我的支持</a>
+                                </li>
+                                <li>
+                                                                            <a href="https://www.astrill.com/member-zone/affiliates"> <i class="icon icon-affiliates"></i> 联属营销</a>
+                                                                    </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/settings"><i class="icon icon-settings"></i> 帐号设定</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/log-out"><i class="icon icon-logout"></i> 注销</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                            
+        </div>
+    </li>
+    <li class="has-children">
+        <a class="uk-button uk-button-default selected-country" href="#"> <i class="icon icon-country country-cn"></i> </a>
+        <div class="uk-navbar-dropdown uk-padding-remove user-menu" style="top: 60px;">
+            <ul class="uk-nav uk-navbar-dropdown-nav state-nav">
+                                    <li><a class="uk-button uk-button-default" href="/en"> <i class="icon icon-country country-us"></i> English </a></li>
+                                    <li><a class="uk-button uk-button-default active" href="/zh"> <i class="icon icon-country country-cn"></i> 中文 </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/ru"> <i class="icon icon-country country-ru"></i> русский </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/fr"> <i class="icon icon-country country-fr"></i> Français </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/de"> <i class="icon icon-country country-de"></i> Deutsch </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/es"> <i class="icon icon-country country-es"></i> Español </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/pt"> <i class="icon icon-country country-pt"></i> Português </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/pl"> <i class="icon icon-country country-pl"></i> Polski </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/ar"> <i class="icon icon-country country-ae"></i> عربى </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/tr"> <i class="icon icon-country country-tr"></i> Türk </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/tk"> <i class="icon icon-country country-tm"></i> Türkmen </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/kr"> <i class="icon icon-country country-kr"></i> 한국어 </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/ja"> <i class="icon icon-country country-jp"></i> 日本語 </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/th"> <i class="icon icon-country country-th"></i> ไทย </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/xm"> <i class="icon icon-country country-xm"></i> Minion </a></li>
+                            </ul>
+        </div>
+    </li>
+    
+            
+</ul>
+            </div>
+
+            <div class="uk-navbar-right uk-hidden@m">
+                <a class="uk-navbar-toggle uk-navbar-toggle-icon uk-icon" uk-navbar-toggle-icon="" uk-toggle="target: #offcanvas-overlay"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" icon="navbar-toggle-icon" ratio="1"><rect y="9" width="20" height="2"></rect><rect y="3" width="20" height="2"></rect><rect y="15" width="20" height="2"></rect></svg></a>
+            </div>
+        </nav>
+    </div>
+
+    
+        
+            <div class="uk-visible@l memberzone-menu scrolling">
+                <div class="uk-container-medium">
+
+                    <nav class="uk-navbar-container uk-flex uk-flex-wrap uk-navbar" uk-navbar="">
+                        <ul class="uk-navbar-nav">
+                            <li><a href="https://www.astrill.com/member-zone/overview">总览</a></li>
+                            <li class="active"><a href="https://www.astrill.com/member-zone/tools">VPN服务</a></li>
+                            <li><a href="https://www.astrill.com/member-zone/invoices">发票</a></li>
+                            <li><a href="https://www.astrill.com/member-zone/support">我的支持</a></li>
+                            <li><a href="https://www.astrill.com/member-zone/extend">延期</a></li>
+                            <li>
+                                                                    <a href="https://www.astrill.com/member-zone/affiliates">联属营销</a>
+                                                            </li>
+                            <li><a href="https://www.astrill.com/member-zone/settings">帐号设定</a></li>
+                        </ul>
+                    </nav>
+
+                </div>
+            </div>
+
+            
+
+</div>
+
+<div class="uk-offcanvas-content">
+    <div id="offcanvas-overlay" uk-offcanvas="overlay: true" class="uk-offcanvas">
+        <div class="uk-offcanvas-bar mobile-menu">
+            <div class="scroll-wrap">
+                <button class="uk-offcanvas-close uk-close uk-icon" type="button" uk-close=""><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" icon="close-icon" ratio="1"><line fill="none" stroke="#000" stroke-width="1.1" x1="1" y1="1" x2="13" y2="13"></line><line fill="none" stroke="#000" stroke-width="1.1" x1="13" y1="1" x2="1" y2="13"></line></svg></button>
+                    <ul class="uk-navbar-nav uk-flex-column">
+
+                    <li class="has-children">
+                <a href="#"><span>关于Astrill VPN</span></a>
+                <div class="uk-nav-sub">
+                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                        <li><a href="https://www.astrill.com/zh/features" class="active-item">VPN功能概述</a></li>
+                        <li><a href="https://www.astrill.com/zh/what-makes-astrill-special">是什么突显我们的VPN与众不同？</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/vip">VIP计划</a></li>
+                        <li><a href="https://www.astrill.com/zh/business-vpn">商业VPN</a></li>
+                        <li><a href="https://www.astrill.com/zh/astrill-vpn-routers">Astrill VPN路由器</a></li>
+                        <li><a href="https://www.astrill.com/zh/vpn-for">无限制的网络</a></li>
+                        <li><a href="https://www.astrill.com/zh/what-is-vpn">VPN是什么？</a></li>
+                    </ul>
+                </div>
+            </li>
+            <li class="has-children">
+                <a href="#"><span>VPN软件功能</span></a>
+                <div class="uk-nav-sub">
+                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                        <li><a href="https://www.astrill.com/zh/features/smart-mode">智能模式</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/kill-switch">安全开关/应用卫士</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/vpn-sharing">VPN共享</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/website-and-app-filter">网站和应用程序过滤器</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/port-forwarding">转发端口</a></li>
+                                            </ul>
+                </div>
+            </li>
+            <li class="has-children">
+                <a href="#"><span>网络</span></a>
+                <div class="uk-nav-sub">
+                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                        <li><a href="https://www.astrill.com/zh/network/vpn-servers">VPN服务器</a></li>
+                        <li><a href="https://www.astrill.com/zh/network/fastest-vpn">为什么Astrill是最快的VPN？</a></li>
+                        <li><a href="https://www.astrill.com/zh/network/dedicated-ips">专用IP</a></li>
+                        <li><a href="https://www.astrill.com/zh/network/vpn-speedtest-results">Speedtest结果</a></li>
+                        <li><a href="https://www.astrill.com/zh/network/multi-hop-vpn">多跳式VPN</a></li>
+                                            </ul>
+                </div>
+            </li>
+            <li class="has-children">
+                <a href="#"><span>VPN协议</span></a>
+                <div class="uk-nav-sub">
+                    <ul class="uk-nav uk-navbar-dropdown-nav">
+                        <li><a href="https://www.astrill.com/zh/features/vpn-protocols/openweb">OpenWeb</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/vpn-protocols/stealth-vpn">Stealth VPN</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/vpn-protocols/wireguard">Wireguard</a></li>
+                        <li><a href="https://www.astrill.com/zh/features/vpn-protocols">查看所有协议</a></li>
+                    </ul>
+                </div>
+            </li>
+        
+        <li class="has-children buttons-dropdown">
+            <a href="#"><span>下载</span></a>
+            <div class="uk-nav-sub">
+
+                <div class="uk-grid uk-grid-small">
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/windows">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/windows-grey.svg" class="mobile-icon win-icon" alt="Windows">
+                                    <img src="/images/icon/devices/windows-purple.svg" class="desktop-icon win-icon" alt="Windows">
+                                </div>
+                                <span>Windows应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/mac">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/mac-grey.svg" class="mobile-icon mac-icon" alt="Mac">
+                                    <img src="/images/icon/devices/mac-purple.svg" class="desktop-icon mac-icon" alt="Mac">
+                                </div>
+                                <span>macOS应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/ios">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/ios-grey.svg" class="mobile-icon" alt="Ios">
+                                    <img src="/images/icon/devices/ios-purple.svg" class="desktop-icon" alt="Ios">
+                                </div>
+                                <span>iPhone/iPad应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app" href="https://www.astrill.com/zh/download/linux">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/linux-grey.svg" class="mobile-icon linux-icon" alt="Linux">
+                                    <img src="/images/icon/devices/linux-purple.svg" class="desktop-icon linux-icon" alt="Linux">
+                                </div>
+                                <span>Linux应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app uk-margin-remove-bottom" href="https://www.astrill.com/zh/download/android">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/android-grey.svg" class="mobile-icon android-icon" alt="Android">
+                                    <img src="/images/icon/devices/android-purple.svg" class="desktop-icon android-icon" alt="Android">
+                                </div>
+                                <span>Android应用程序</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="uk-width-1-2@m">
+                        <a class="button-app uk-margin-remove-bottom" href="https://www.astrill.com/zh/astrill-vpn-routers/self-made">
+                            <div class="button-content">
+                                <div class="button-content-icon">
+                                    <img src="/images/icon/devices/router-grey.svg" class="mobile-icon router-icon" alt="Router">
+                                    <img src="/images/icon/devices/router-purple.svg" class="desktop-icon router-icon" alt="Router">
+                                </div>
+                                <span>VPN路由器小程序</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </li>
+
+        <li><a href="https://www.astrill.com/zh/pricing">定价</a></li>
+        <li><a href="https://www.astrill.com/support">支持</a></li>
+        <li><a href="https://www.astrill.com/blog/" target="_blank">博客</a></li>
+    </ul>
+
+<ul class="uk-navbar-nav uk-flex-column buttons ">
+    <li class="login-button has-children">
+
+        <a class="uk-button uk-button-default memberzone" href="https://www.astrill.com/member-zone/">
+            <i class="icon icon-user"></i>  OwenZhou 
+        </a>
+
+        <div class="uk-nav-sub uk-padding-remove user-menu" style="display: block;">
+            
+                                    <div class="uk-nav uk-navbar-dropdown-nav">
+                        <div class="user">
+                            <span class="name">OwenZhou </span>
+                            <span class="expiration"> 截止于 <span class="date">2026-03-14</span></span>
+                        </div>
+                        <div class="menu">
+                            <ul>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/overview"><i class="icon"></i> 前往会员区</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/extend"><i class="icon"></i> 延期</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/tools" class="active"><i class="icon"></i> VPN服务</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/invoices"><i class="icon icon-invoice"></i> 发票</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/support"><i class="icon icon-support"></i> 我的支持</a>
+                                </li>
+                                <li>
+                                                                            <a href="https://www.astrill.com/member-zone/affiliates"> <i class="icon icon-affiliates"></i> 联属营销</a>
+                                                                    </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/settings"><i class="icon icon-settings"></i> 帐号设定</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.astrill.com/member-zone/log-out"><i class="icon icon-logout"></i> 注销</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                            
+        </div>
+    </li>
+    <li class="has-children">
+        <a class="uk-button uk-button-default selected-country" href="#"> <i class="icon icon-country country-cn"></i> </a>
+        <div class="uk-nav-sub uk-padding-remove uk-width-auto select-language">
+            <ul class="uk-nav uk-navbar-dropdown-nav state-nav">
+                                    <li><a class="uk-button uk-button-default" href="/en"> <i class="icon icon-country country-us"></i> English </a></li>
+                                    <li><a class="uk-button uk-button-default active" href="/zh"> <i class="icon icon-country country-cn"></i> 中文 </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/ru"> <i class="icon icon-country country-ru"></i> русский </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/fr"> <i class="icon icon-country country-fr"></i> Français </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/de"> <i class="icon icon-country country-de"></i> Deutsch </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/es"> <i class="icon icon-country country-es"></i> Español </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/pt"> <i class="icon icon-country country-pt"></i> Português </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/pl"> <i class="icon icon-country country-pl"></i> Polski </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/ar"> <i class="icon icon-country country-ae"></i> عربى </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/tr"> <i class="icon icon-country country-tr"></i> Türk </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/tk"> <i class="icon icon-country country-tm"></i> Türkmen </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/kr"> <i class="icon icon-country country-kr"></i> 한국어 </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/ja"> <i class="icon icon-country country-jp"></i> 日本語 </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/th"> <i class="icon icon-country country-th"></i> ไทย </a></li>
+                                    <li><a class="uk-button uk-button-default" href="/xm"> <i class="icon icon-country country-xm"></i> Minion </a></li>
+                            </ul>
+        </div>
+    </li>
+    
+            
+</ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page memberzone open-vpn">
+  <div class="uk-container uk-container-medium">
+
+
+    <div class="breadcrumbs">
+      <ul class="list list-breadcrumbs">
+        <li class="home"><a href="https://www.astrill.com/"><i class="icon icon-home"></i></a></li>
+        <li><a href="https://www.astrill.com/member-zone/">会员专区</a></li>
+        <li><a href="https://www.astrill.com/member-zone/tools/">工具</a></li>
+        <li class="current">OpenVPN证书</li>
+      </ul>
+    </div>
+
+    <div class="uk-section heading">
+      <div class="uk-alert-warning uk-alert" uk-alert="">
+        <p><i class="icon icon-warning"></i><strong>如果你是在中国:</strong> 由于您的ISP主动阻止了OpenVPN协议，因此OpenVPN无法在您的所在国使用。我们不为中国地区提供任何该协议的支持。如果OpenVPN在中国不起作用，请不要与支持人员联系。</p>
+      </div>
+      <h1 class="uk-text-center uk-margin-custom-top">OpenVPN证书</h1>
+    </div>
+
+
+    <div class="about-open-vpn">
+      <div class="uk-grid uk-grid-small uk-flex uk-flex-grid">
+        <div class="uk-width-1-6@s uk-text-center">
+          <img class="uk-margin-small-bottom" src="/images/memberzone/open_vpn_v2.svg" alt="OpenVPN">
+        </div>
+        <div class="uk-width-5-6@s">
+          <h4 class="uk-margin-small-bottom">关于OpenVPN证书</h4>
+          <p class="uk-margin-remove-top">
+            如果您想使用第三方 OpenVPN 客户端，您将需要 OpenVPN 证书和配置文件。请注意，您可以在多个设备之间共享一组证书，但如果您希望同时连接两个设备，它们必须使用不同的证书。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="uk-section uk-margin-top overview-table">
+      <div class="heading uk-margin-remove-bottom">
+        <h2>您的OpenVPN证书</h2>
+      </div>
+
+
+      <style media="screen">
+        .table-your-vpn-certificates tbody td:nth-of-type(1):before {
+          content: "描述";
+        }
+        .table-your-vpn-certificates tbody td:nth-of-type(2):before {
+          content: "日期";
+        }
+        .table-your-vpn-certificates tbody td:nth-of-type(3):before {
+          content: "序列号";
+        }
+      </style>
+
+
+
+      <script type="text/javascript">
+
+          $(document).ready(function() {
+              var tableMyAccounts = $('.overview-table').find('table#table-your-openvpn-certificates');
+
+              tableMyAccounts.find('td').on('click', 'span', label_on_click);
+
+              $('#ovpncert-all,#ovpncert-all-mobile').change(function(){
+                  var set_checked = $(this).prop('checked');
+                  tableMyAccounts.find('input[type=checkbox][id^=ovpncert-]:not(#ovpncert-all)').prop('checked', set_checked);
+              });
+
+              $('input#create_certificate').click(function(){
+                  var description_selector = $('input#certificate_description');
+                  if(description_selector.val().length < 3){
+                      errorInputToggle(description_selector, true, '描述太短');
+                  }else{
+                      closeModal('#modal-create-account');
+
+                      errorInputToggle(description_selector, false, '');
+
+                      pendingActionTable(tableMyAccounts, true);
+
+                      $.post(
+                          window.location.href,
+                          {
+                              action: 'create',
+                              description: description_selector.val(),
+                              type: $('#certificate_type').val(),
+                              csrf_token: getCSRFToken()
+                          },
+                          function(data){
+                            pendingActionTable(tableMyAccounts, false);
+
+                            if(data.csrf_token)
+                              setCSRFToken(data.csrf_token);
+
+                            if(data.status === 'success'){
+                              openVPNCertificatesAddRow(data.certid, data.description, data.time, data.commonname)
+                            }else{
+                              alert(data.message);
+                            }
+                          }, 'json'
+                      );
+                  }
+              });
+
+          });
+
+          function openVPNCertificatesGetSelected() {
+
+              var checkboxes = $('table#table-your-openvpn-certificates input[type="checkbox"]:checked');
+              var result = [];
+
+              checkboxes.each(function(i, box) {
+                  result.push($(box).val())
+              });
+
+              return result;
+
+          }
+
+          function openVPNCertificatesAddRow(id, description, date, serial) {
+              var table = $('table#table-your-openvpn-certificates');
+
+              insertTableRows(table, 1, function(i, newRow){
+                  newRow.append($(
+                      '<td>' +
+                      '<input id="ovpncert-' + id + '" type="checkbox" value="' + id + '">' +
+                      '<label for="ovpncert-' + id + '"></label><span class="description clickable">' + description + '</span>' +
+                      '</td>'
+                  ));
+
+                  newRow.find('td').on('click', 'span', label_on_click);
+
+                newRow.append($('<td>' + date + '</td>'));
+                  newRow.append(
+                      '<td>' +
+                      serial +
+                      '<div class="tools">' +
+                      '<a href="#" class="tooltip" title="下载单个OVPN文件" uk-tooltip="pos: top" onclick="openVPNCertificatesOnDownloadSingle(' + id + ', \''+serial+'\'); return false;">' +
+                      '<i class="icon icon-download"></i>' +
+                      '</a> ' +
+                      '<a href="#" class="tooltip" title="删除证书" uk-tooltip="pos: top" onclick="deleteSingleCertificatePrompt(' + id + '); return false;">' +
+                      '<i class="icon icon-trash"></i>' +
+                      '</a>' +
+                      '</div>'    +
+                      '</td>'
+                  );
+              }, false);
+              showRows(table, '证书已添加');
+          }
+
+          function openVPNCertificatesRemoveRow(id) {
+              var row = $('table.table-your-vpn-certificates tr:has(input[type="checkbox"][value="' + id + '"])');
+              if(row.length > 0) {
+                  deleteRow(row, '证书已取消')
+              }
+          }
+
+          function deleteOpenVPNCertificatesAJAX(ids) {
+
+              var table_selector = $('#table-your-openvpn-certificates');
+
+              pendingActionTable(table_selector, true);
+
+              $.post(
+                  window.location.href,
+                  {
+                      action: 'delete',
+                      delete_ids: ids,
+                      csrf_token: getCSRFToken()
+                  },
+                  function(data){
+                    pendingActionTable(table_selector, false);
+
+                    if(data.csrf_token)
+                      setCSRFToken(data.csrf_token);
+
+                    if(data.status === 'success'){
+                      if(data.deleted_ids.length > 0){
+                        for(var i = 0; i < data.deleted_ids.length; i++){
+                            openVPNCertificatesRemoveRow(data.deleted_ids[i]);
+                        }
+                      }
+                    }
+                  }, 'json'
+              );
+          }
+
+          function deleteCertificatesConfirm(){
+
+              closeModal('#modal-remove-certificate');
+
+              var to_delete_string = $("#modal-remove-certificate input#to_delete_ids").val();
+
+              deleteOpenVPNCertificatesAJAX(to_delete_string);
+
+              return false;
+
+          }
+
+          function deleteSingleCertificatePrompt(id){
+              $("#modal-remove-certificate input#to_delete_ids").val(id);
+
+              var modal = UIkit.modal("#modal-remove-certificate");
+              modal.show();
+          }
+
+
+          function openVPNCertificatesOnDownloadSingleDo() {
+              var modal_selector = $("#modal-download-single");
+
+              // Cache DOM references
+              var inputCertId   = modal_selector.find("input#single_cert_id");
+              var selectMode    = modal_selector.find("select#mode");
+              var selectVpn     = modal_selector.find("select#vpn_server");
+              var inputCaptcha  = modal_selector.find("input#captcha_openvpn_download");
+              var captchaImg    = modal_selector.find("img#captcha_openvpn_download-image");
+
+              var cert_id    = inputCertId.val();
+              var mode       = selectMode.val();
+              var server_id  = selectVpn.val();
+              var captcha    = inputCaptcha.val();
+              var csrf_token = getCSRFToken();
+              var error      = false;
+
+              if (parseInt(server_id, 10) === 0) {
+                  errorInputToggle(selectVpn, true, '您需要选择服务器');
+                  error = true;
+              }
+
+              if (captcha === '') {
+                  errorInputToggle(inputCaptcha, true, '');
+                  error = true;
+              }
+
+              console.log(error, cert_id, mode, server_id, captcha, csrf_token);
+
+              if (!error) {
+                  // Build the download URL
+                  var download_url = 'https://www.astrill.com/member-zone/tools/openvpn-certificates/download/' +
+                      cert_id + '/' + server_id + '/' + mode + '/' + captcha + '/' + csrf_token;
+
+                  // Create a hidden iframe to trigger the download
+                  var iframe = $("<iframe>", {
+                      id: "download_iframe",
+                      style: "display:none;"
+                  }).appendTo("body");
+
+                  // Fallback: set a timeout to update the captcha even if the load event is never fired.
+                  var backupTimeout = setTimeout(function () {
+                      updateCaptcha();
+                      // Remove iframe (clean up)
+                      iframe.off("load").remove();
+                  }, 3000);
+
+                  // Attempt to use the load event (may not fire in many cases)
+                  iframe.on("load", function () {
+                      clearTimeout(backupTimeout);
+                      updateCaptcha();
+                      iframe.off("load").remove();
+                  });
+
+                  // Trigger download by setting the iframe src
+                  iframe.attr("src", download_url);
+              }
+
+              function updateCaptcha() {
+                  // Build a new URL for the captcha image to ensure cache-busting
+                  var newCaptchaSrc = 'https://www.astrill.com/captcha.jpg?time=' + Math.round(new Date().getTime() / 1000) +
+                      '&captcha_id=captcha_openvpn_download';
+                  captchaImg.attr("src", newCaptchaSrc);
+              }
+          }
+
+          function openVPNCertificatesOnDownloadSingle(id, commonname){
+              var modal_selector = $("#modal-download-single");
+
+              modal_selector.find("input#single_cert_id").val(id);
+              modal_selector.find("strong#single_commonname").text(commonname);
+
+              var modal = UIkit.modal("#modal-download-single");
+              modal.show();
+          }
+
+          function deleteMultipleCertificatesPrompt(){
+
+              var to_delete = openVPNCertificatesGetSelected();
+
+              var to_delete_string = "";
+
+              var i = 0;
+
+              for(i = 0; i < to_delete.length; i++){
+                  to_delete_string += to_delete[i] + "-";
+              }
+
+              $("#modal-remove-certificate input#to_delete_ids").val(to_delete_string);
+
+              var modal = UIkit.modal("#modal-remove-certificate");
+              modal.show();
+          }
+
+
+      </script>
+
+
+      <div class="uk-text-center uk-margin-small uk-hidden@l">
+        <input id="ovpncert-all-mobile" type="checkbox" style=""><label for="ovpncert-all-mobile">全选</label>
+      </div>
+
+      <table class="table-your-vpn-certificates" id="table-your-openvpn-certificates">
+        <thead>
+        <tr>
+          <th><input id="ovpncert-all" type="checkbox" style=""><label for="ovpncert-all"></label>描述</th>
+          <th>日期</th>
+          <th>序列号</th>
+        </tr>
+        </thead>
+        <tbody>
+                  <tr>
+            <td>
+              <input id="ovpncert-28724154" type="checkbox" value="28724154" style="">
+              <label for="ovpncert-28724154"></label>
+              <span class="description clickable">api转发</span>
+            </td>
+            <td>2026-02-18 20:59:48</td>
+            <td>
+              AS3920525-219C72565D29-BECCAC12B2
+              <div class="tools">
+                <a href="#" class="tooltip" uk-tooltip="pos: top" onclick="openVPNCertificatesOnDownloadSingle(28724154,'AS3920525-219C72565D29-BECCAC12B2'); return false;" aria-expanded="false"><i class="icon icon-download"></i></a>
+                <a href="#" class="tooltip" uk-tooltip="pos: top" onclick="deleteSingleCertificatePrompt(28724154); return false;" aria-expanded="false"><i class="icon icon-trash"></i></a>
+              </div>
+            </td>
+          </tr>
+                    <tr>
+            <td>
+              <input id="ovpncert-28704578" type="checkbox" value="28704578" style="">
+              <label for="ovpncert-28704578"></label>
+              <span class="description clickable">Android App@03D47120</span>
+            </td>
+            <td>2026-02-12 09:44:59</td>
+            <td>
+              AS3920525-219C5106654C-9BF7E5CC04
+              <div class="tools">
+                <a href="#" class="tooltip" uk-tooltip="pos: top" onclick="openVPNCertificatesOnDownloadSingle(28704578,'AS3920525-219C5106654C-9BF7E5CC04'); return false;" aria-expanded="false"><i class="icon icon-download"></i></a>
+                <a href="#" class="tooltip" uk-tooltip="pos: top" onclick="deleteSingleCertificatePrompt(28704578); return false;" aria-expanded="false"><i class="icon icon-trash"></i></a>
+              </div>
+            </td>
+          </tr>
+                    <tr>
+            <td>
+              <input id="ovpncert-28704479" type="checkbox" value="28704479" style="">
+              <label for="ovpncert-28704479"></label>
+              <span class="description clickable">Astrill@192.168.0.117</span>
+            </td>
+            <td>2026-02-12 09:10:35</td>
+            <td>
+              AS3920525-219C50E6E5EF-2E9BAB038C
+              <div class="tools">
+                <a href="#" class="tooltip" uk-tooltip="pos: top" onclick="openVPNCertificatesOnDownloadSingle(28704479,'AS3920525-219C50E6E5EF-2E9BAB038C'); return false;" aria-expanded="false"><i class="icon icon-download"></i></a>
+                <a href="#" class="tooltip" uk-tooltip="pos: top" onclick="deleteSingleCertificatePrompt(28704479); return false;" aria-expanded="false"><i class="icon icon-trash"></i></a>
+              </div>
+            </td>
+          </tr>
+                  </tbody>
+      </table>
+
+      <div class="buttons-wrapper uk-margin-top">
+        <a class="uk-button uk-button-warning" href="#" onclick="deleteMultipleCertificatesPrompt(); return false;"><i class="icon icon-trash trash-white"></i>删除所选证书</a>
+        <a class="uk-button uk-button-danger" href="#modal-create-account" uk-toggle="target: #modal-create-account">创建新证书</a>
+      </div>
+
+
+      <div id="modal-remove-certificate" uk-modal="" class="uk-modal">
+
+        <input type="hidden" id="to_delete_ids" value="" style="">
+
+        <div class="uk-modal-dialog uk-modal-body">
+          <button class="uk-modal-close-default uk-close uk-icon" type="button" uk-close=""><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" icon="close-icon" ratio="1"><line fill="none" stroke="#000" stroke-width="1.1" x1="1" y1="1" x2="13" y2="13"></line><line fill="none" stroke="#000" stroke-width="1.1" x1="13" y1="1" x2="1" y2="13"></line></svg></button>
+
+          <div class="remove-certificate">
+            <h2><i class="icon icon-warning"></i>删除所选证书？</h2>
+
+            <p>如果您删除证书，您将无法下载它们，您也将无法使用这些.ovpn配置文件来连接到我们的服务器。</p>
+            <p>你确定你要继续吗？</p>
+
+            <a class="uk-button uk-button-large uk-button-danger" href="#modal-remove-certificate" onclick="closeModal('#modal-remove-certificate'); return false;">不，我要保留</a>
+            <a class="uk-button uk-button-link uk-button-warning" href="#modal-remove-certificate" onclick="deleteCertificatesConfirm(); return false;"><i class="icon icon-trash"></i>是的，继续。我不需要这些证书</a>
+
+          </div>
+
+        </div>
+      </div>
+
+      <div id="modal-download-single" uk-modal="" class="uk-modal uk-open">
+        <input type="hidden" id="single_cert_id" value="" style="">
+
+        <div class="uk-modal-dialog uk-modal-body">
+          <button class="uk-modal-close-default uk-close uk-icon" type="button" uk-close=""><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" icon="close-icon" ratio="1"><line fill="none" stroke="#000" stroke-width="1.1" x1="1" y1="1" x2="13" y2="13"></line><line fill="none" stroke="#000" stroke-width="1.1" x1="13" y1="1" x2="1" y2="13"></line></svg></button>
+          <div class="file-hashes default-modal">
+            <h2>下载单个OVPN文件</h2>
+
+            <div class="uk-section uk-section-secondary uk-padding-small">
+              <span class="note"><span>序列号: <strong id="single_commonname"></strong></span></span>
+            </div>
+
+            <div class="uk-form-row uk-text-left">
+              <label class="uk-form-label" for="mode">Mode<button class="tooltip" uk-tooltip="pos: right" aria-expanded="false">i</button></label>
+              <div class="uk-form-controls">
+                <select id="mode" class="uk-input uk-form-width-medium uk-width-full uk-form-large" name="mode">
+                  <option value="udp">UDP - 快速</option>
+                  <option value="tcp">TCP - 可靠</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="uk-form-row uk-text-left">
+              <label class="uk-form-label" for="vpn_server">VPN 服务器</label>
+              <div class="uk-form-controls">
+                  <select class="select2-dropbox uk-input uk-form-width-medium uk-width-full uk-form-large country-select select2-hidden-accessible" data-country="select-country" name="vpn_server" id="vpn_server" data-select2-id="select2-data-vpn_server" tabindex="-1" aria-hidden="true">
+                      <option data-country="select-country" value="0" data-select2-id="select2-data-2-yn2m">选择服务器</option>
+                                                <option data-country="country-us" value="1404"> *USA - Chicago 10GB (Private)</option>
+                                                <option data-country="country-us" value="1199"> *USA - Los Angeles 10G</option>
+                                                <option data-country="country-us" value="1413"> *USA - Los Angeles 10GB</option>
+                                                <option data-country="country-us" value="1109"> *USA - Los Angeles A</option>
+                                                <option data-country="country-us" value="1073"> *Los Angeles Supercharged 1</option>
+                                                <option data-country="country-us" value="1077"> *San Jose Supercharged</option>
+                                                <option data-country="country-us" value="1225"> *Seattle Supercharged 2</option>
+                                                <option data-country="country-us" value="1083"> *Seattle Supercharged 1</option>
+                                                <option data-country="country-us" value="934"> USA - Los Angeles</option>
+                                                <option data-country="country-us" value="1148"> USA - Los Angeles CG1</option>
+                                                <option data-country="country-us" value="1416"> *USA - Denver 10G</option>
+                                                <option data-country="country-us" value="624"> *USA - Denver 2</option>
+                                                <option data-country="country-us" value="185"> *USA - Dallas 1</option>
+                                                <option data-country="country-us" value="979"> *USA - Dallas 2</option>
+                                                <option data-country="country-us" value="978"> *USA - Dallas 3</option>
+                                                <option data-country="country-us" value="850"> *USA - Dallas 4</option>
+                                                <option data-country="country-us" value="142"> *USA - Fremont 1</option>
+                                                <option data-country="country-us" value="987"> *USA - Fremont 2</option>
+                                                <option data-country="country-us" value="648"> *USA - San Jose 2</option>
+                                                <option data-country="country-us" value="645"> *[China] Supercharged 1</option>
+                                                <option data-country="country-us" value="699"> [China] Supercharged 2</option>
+                                                <option data-country="country-us" value="975"> *[China] Supercharged 3</option>
+                                                <option data-country="country-us" value="542"> [China] Supercharged 4</option>
+                                                <option data-country="country-us" value="405"> [China] Supercharged 5</option>
+                                                <option data-country="country-us" value="264"> *USA - Los Angeles 1</option>
+                                                <option data-country="country-us" value="1022"> *USA - Los Angeles 2</option>
+                                                <option data-country="country-us" value="1032"> *USA - Los Angeles 3</option>
+                                                <option data-country="country-us" value="239"> USA - Los Angeles 4</option>
+                                                <option data-country="country-us" value="998"> *Los Angeles Supercharged 2</option>
+                                                <option data-country="country-us" value="1079"> *Los Angeles Supercharged 3</option>
+                                                <option data-country="country-us" value="158"> *USA - Seattle 1</option>
+                                                <option data-country="country-us" value="980"> *USA - Seattle 2</option>
+                                                <option data-country="country-us" value="589"> *USA - San Francisco</option>
+                                                <option data-country="country-us" value="518"> *USA - Portland</option>
+                                                <option data-country="country-us" value="607"> *USA - Salt Lake 1</option>
+                                                <option data-country="country-us" value="911"> *USA - Salt Lake 2</option>
+                                                <option data-country="country-us" value="1414"> *USA - Phoenix 10G</option>
+                                                <option data-country="country-us" value="852"> *USA - Phoenix 2</option>
+                                                <option data-country="country-us" value="1126"> *USA - Kansas</option>
+                                                <option data-country="country-us" value="1207"> *USA - Ashburn 10G</option>
+                                                <option data-country="country-us" value="578"> *USA - Washington</option>
+                                                <option data-country="country-us" value="1197"> *USA - New York 10G-1</option>
+                                                <option data-country="country-us" value="1014"> *USA - New York WL1</option>
+                                                <option data-country="country-us" value="146"> *USA - New York 1</option>
+                                                <option data-country="country-us" value="687"> *USA - New York 2</option>
+                                                <option data-country="country-us" value="846"> *USA - New York 3</option>
+                                                <option data-country="country-us" value="1124"> *USA - New York HK1</option>
+                                                <option data-country="country-us" value="1191"> *USA - Philadelphia</option>
+                                                <option data-country="country-us" value="1366"> *Buffalo</option>
+                                                <option data-country="country-us" value="1417"> *USA - Chicago 10GB</option>
+                                                <option data-country="country-us" value="144"> USA - Chicago 1</option>
+                                                <option data-country="country-us" value="631"> *USA - Chicago 2</option>
+                                                <option data-country="country-us" value="1203"> *USA - Chicago 3</option>
+                                                <option data-country="country-us" value="367"> USA - Atlanta</option>
+                                                <option data-country="country-us" value="1211"> *USA - Tampa</option>
+                                                <option data-country="country-us" value="1472"> *USA - St Louis</option>
+                                                <option data-country="country-ca" value="388"> *Canada - Toronto</option>
+                                                <option data-country="country-ca" value="447"> *Canada - Beauharnois</option>
+                                                <option data-country="country-ca" value="824"> *Canada - Montreal</option>
+                                                <option data-country="country-gb" value="1195"> *UK - London 10G-1</option>
+                                                <option data-country="country-gb" value="1187"> *UK - London O1</option>
+                                                <option data-country="country-gb" value="390"> *UK - London 1</option>
+                                                <option data-country="country-gb" value="1041"> *UK - London 2</option>
+                                                <option data-country="country-gb" value="268"> *UK - London 3</option>
+                                                <option data-country="country-gb" value="325"> UK - London 4</option>
+                                                <option data-country="country-gb" value="922"> UK - London 5</option>
+                                                <option data-country="country-gb" value="1218"> *UK - London 6</option>
+                                                <option data-country="country-gb" value="1042"> *UK - Manchester</option>
+                                                <option data-country="country-gb" value="1410"> *UK - Manchester 10G</option>
+                                                <option data-country="country-gb" value="236"> UK - Gloucester</option>
+                                                <option data-country="country-nl" value="1407"> *Netherlands 10G</option>
+                                                <option data-country="country-nl" value="897"> *Netherlands 1</option>
+                                                <option data-country="country-nl" value="837"> *Netherlands 3</option>
+                                                <option data-country="country-nl" value="1298"> *Netherlands 4</option>
+                                                <option data-country="country-nl" value="1112"> *Netherlands X1</option>
+                                                <option data-country="country-de" value="1418"> *Germany - Frankfurt 10G</option>
+                                                <option data-country="country-de" value="1449"> *Germany - Frankfurt 1</option>
+                                                <option data-country="country-de" value="1043"> *Germany - Cologne</option>
+                                                <option data-country="country-de" value="375"> Germany - Hanau</option>
+                                                <option data-country="country-fr" value="140"> *France - Roubaix</option>
+                                                <option data-country="country-fr" value="786"> *France - Paris 1</option>
+                                                <option data-country="country-fr" value="907"> *France - Strasbourg</option>
+                                                <option data-country="country-es" value="691"> Spain 2</option>
+                                                <option data-country="country-es" value="1188"> *Spain - Barcelona P1</option>
+                                                <option data-country="country-it" value="697"> Italy</option>
+                                                <option data-country="country-ch" value="869"> *Switzerland</option>
+                                                <option data-country="country-se" value="1212"> *Sweden 2</option>
+                                                <option data-country="country-lu" value="449"> *Luxembourg</option>
+                                                <option data-country="country-no" value="881"> Norway</option>
+                                                <option data-country="country-be" value="712"> Belgium</option>
+                                                <option data-country="country-fi" value="149"> Finland 1</option>
+                                                <option data-country="country-fi" value="1235"> *Finland 2</option>
+                                                <option data-country="country-fi" value="1157"> *Finland 3</option>
+                                                <option data-country="country-at" value="583"> Austria</option>
+                                                <option data-country="country-hu" value="795"> Hungary</option>
+                                                <option data-country="country-rs" value="1158"> *Serbia 1</option>
+                                                <option data-country="country-ro" value="424"> *Romania</option>
+                                                <option data-country="country-ru" value="350"> Russia - Moscow 1</option>
+                                                <option data-country="country-ru" value="1251"> *Russia - Moscow 2</option>
+                                                <option data-country="country-lt" value="1128"> *Lithuania</option>
+                                                <option data-country="country-md" value="996"> *Moldova</option>
+                                                <option data-country="country-tr" value="1461"> *Turkey</option>
+                                                <option data-country="country-au" value="285"> *Australia 1</option>
+                                                <option data-country="country-au" value="1010"> *Australia - Sydney 2</option>
+                                                <option data-country="country-nz" value="386"> New Zealand</option>
+                                                <option data-country="country-jp" value="1260"> *Japan China Supercharged 1</option>
+                                                <option data-country="country-jp" value="1173"> Japan China Supercharged 2</option>
+                                                <option data-country="country-jp" value="502"> *Japan 1</option>
+                                                <option data-country="country-hk" value="420"> Hong Kong 2</option>
+                                                <option data-country="country-kr" value="1098"> Korea 2</option>
+                                                <option data-country="country-sg" value="1136"> *Singapore 1</option>
+                                                <option data-country="country-sg" value="243"> *Singapore 2</option>
+                                                <option data-country="country-th" value="943"> *Thailand</option>
+                                                <option data-country="country-il" value="815"> Israel</option>
+                                                <option data-country="country-ar" value="1003"> *Argentina 2</option>
+                                                <option data-country="country-za" value="1210"> South Africa</option>
+                                        </select><span class="select2 select2-container select2-container--default" dir="ltr" data-select2-id="select2-data-1-f2zv" style="width: 100%;"><span class="selection"><span class="select2-selection select2-selection--single country-select" role="combobox" aria-haspopup="true" aria-expanded="false" tabindex="0" aria-disabled="false" aria-labelledby="select2-vpn_server-container" aria-controls="select2-vpn_server-container"><span class="select2-selection__rendered" id="select2-vpn_server-container" role="textbox" aria-readonly="true" title="选择服务器">选择服务器</span><span class="select2-selection__arrow" role="presentation"><b role="presentation"></b></span></span></span><span class="dropdown-wrapper" aria-hidden="true"></span></span>
+              </div>
+            </div>
+
+              <div class="uk-form-row captcha-wrapper">
+    <span class="error-msg">请输入您在下图中看到的单词。</span>
+
+    <div class="uk-grid uk-flex uk-flex-wrap captcha">
+        <div class="uk-width-1-1">
+            <label for="captcha">图片中的词</label>
+        </div>
+        <div class="uk-width-1-2@s">
+            <div class="captcha-image">
+                <img src="https://www.astrill.com/captcha.jpg?time=1771706438&amp;captcha_id=captcha_openvpn_download" alt="captcha" id="captcha_openvpn_download-image">
+            </div>
+        </div>
+        <div class="uk-width-1-2@s uk-form-controls uk-margin-remove">
+            <input class="uk-input uk-form-width-medium uk-width-full uk-form-large" name="captcha" type="text" id="captcha_openvpn_download" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="">
+        </div>
+    </div>
+</div>
+
+              <a class="uk-button uk-button-large uk-button-danger uk-margin-small-top" href="#" onclick="openVPNCertificatesOnDownloadSingleDo();return false;">下载个人资料</a>
+            <a class="uk-button uk-button-link uk-button-warning" href="#" onclick="closeModal('#modal-download-single');return false;">关闭窗口</a>
+
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-create-account" uk-modal="" class="uk-modal">
+        <div class="uk-modal-dialog uk-modal-body">
+          <button class="uk-modal-close-default uk-close uk-icon" type="button" uk-close=""><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" icon="close-icon" ratio="1"><line fill="none" stroke="#000" stroke-width="1.1" x1="1" y1="1" x2="13" y2="13"></line><line fill="none" stroke="#000" stroke-width="1.1" x1="13" y1="1" x2="1" y2="13"></line></svg></button>
+
+          <div class="modal-inside">
+
+            <h2>创建新证书</h2>
+            <form class="create-account" action="index.html" method="post">
+
+              <div class="uk-grid uk-grid-small uk-flex uk-flex-wrap">
+                <div class="uk-width-1-1 uk-form-row uk-margin-small uk-margin-small-top">
+                  <label class="uk-form-label" for="certificate_description">描述 <button class="tooltip" uk-tooltip="pos: right" aria-expanded="false">i</button></label>
+                  <div class="uk-form-controls">
+                    <input class="uk-input uk-form-width-medium uk-width-full uk-form-large" name="description" type="text" id="certificate_description" placeholder="输入您的描述" style="">
+                  </div>
+                </div>
+                <div class="uk-width-1-1 uk-form-row uk-margin-small uk-margin-small-top">
+                  <label class="uk-form-label" for="certificate_type">类型 <button class="tooltip" uk-tooltip="pos: right" aria-expanded="false">i</button></label>
+                  <div class="uk-form-controls">
+                    <select class="uk-input uk-form-large" name="certificate_type" type="text" id="certificate_type">
+                      <option value="0">标准</option>
+                      <option value="1">拆分中国的路由</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="uk-width-1-1 uk-form-row uk-margin-small uk-margin-small-top">
+                  <div class="uk-form-controls">
+                    <input class="uk-button uk-button-danger uk-form-width-medium uk-width-full uk-form-large" name="create_certificate" type="button" id="create_certificate" value="创建证书" style="">
+                  </div>
+                </div>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+
+  </div>
+</div>
+
+
+<div class=" uk-section uk-section-secondary site-footer ">
+    <div class="uk-container">
+        
+            <div class="uk-grid uk-flex uk-flex-wrap links">
+                <div class="uk-width-1-2 uk-width-1-3@s uk-width-1-4@m">
+
+                    <div>
+                        <h5>Astrill VPN</h5>
+                        <ul class="list">
+                                                        <li><a href="https://www.astrill.com/zh/features">个人VPN</a></li>
+                            <li><a href="https://www.astrill.com/zh/business-vpn">商业VPN</a></li>
+                                                        <li><a href="https://www.astrill.com/zh/what-is-vpn">VPN是什么？</a></li>
+                            <li><a href="https://www.astrill.com/zh/ios-vpn">iOS VPN计划</a></li>
+                                                    </ul>
+                    </div>
+                    <div>
+                        <h5>支持</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/zh/faq">常见问题</a></li>
+                            <li><a href="https://www.astrill.com/wiki/">Astrill维基</a></li>
+                            <li><a href="https://www.astrill.com/zh/videos">视频教程</a></li>
+                            <li><a href="https://www.astrill.com/support">联系</a></li>
+                        </ul>
+                    </div>
+
+                </div>
+                <div class="uk-width-1-2 uk-width-1-3@s uk-width-1-4@m">
+                    <div>
+                                                <h5>了解更多</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/zh/astrill-vpn-routers">VPN路由器</a></li>
+                                                        <li><a href="https://www.astrill.com/zh/features/vip">VIP计划</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/multi-hop-vpn">多跳式VPN</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/dedicated-ips">专用IP</a></li>
+                            <li><a href="https://www.astrill.com/zh/features/vpn-protocols">VPN协议</a></li>
+                            <li><a href="https://www.astrill.com/zh/network/vpn-servers">服务器</a></li>
+                            <li><a href="https://www.astrill.com/blog/" target="_blank">博客</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5>关于</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/zh/about-us">关于我们</a></li>
+                            <li><a href="https://www.astrill.com/zh/reviews">评论</a></li>
+                        </ul>
+                    </div>
+
+                </div>
+                <div class="uk-width-1-2 uk-width-1-3@s uk-width-1-4@m">
+                    <div>
+                        <h5>下载</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/zh/download/windows">Windows</a></li>
+                            <li><a href="https://www.astrill.com/zh/download/mac">macOS</a></li>
+                            <li><a href="https://www.astrill.com/zh/download/linux">Linux</a></li>
+                            <li><a href="https://www.astrill.com/zh/download/ios">iOS (iPhone / iPad)</a></li>
+                            <li><a href="https://www.astrill.com/zh/download/android">安卓</a></li>
+                            <li><a href="https://www.astrill.com/zh/astrill-vpn-routers/self-made">路由器</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5>合作伙伴</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/zh/affiliates">联属营销</a></li>
+                            <li><a href="https://www.astrill.com/zh/resellers">经销商</a></li>
+                            <li><a href="https://www.astrill.com/zh/banners">标语</a></li>
+                        </ul>
+                    </div>
+
+                </div>
+                <div class="uk-width-1-2 uk-width-1-3@s uk-width-1-4@m">
+
+                    <div>
+                        <h5>额外的工具</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/zh/what-is-my-ip">我的IP是什么</a></li>
+                            <li><a href="https://www.astrill.com/zh/vpn-leak-test">VPN泄漏测试</a></li>
+                            <li><a href="https://www.astrill.com/zh/password-leak-test">密码泄漏测试</a></li>
+                            <li><a href="https://www.astrill.com/zh/port-scan">端口扫描</a></li>
+                            <li><a href="https://www.astrill.com/zh/ipv6-leak-test">IPv6泄漏测试</a></li>
+                            <li><a href="https://www.astrill.com/zh/dns-leak-test">DNS泄漏测试</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="uk-hidden@s">
+                        <h5>法律</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/privacy-policy">隐私策略</a></li>
+                            <li><a href="https://www.astrill.com/refund-policy">退款策略</a></li>
+                            <li><a href="https://www.astrill.com/terms-of-service">服务条款</a></li>
+                        </ul>
+                    </div>
+                    <div class="uk-visible@m">
+                        <h5>法律</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/privacy-policy">隐私策略</a></li>
+                            <li><a href="https://www.astrill.com/refund-policy">退款策略</a></li>
+                            <li><a href="https://www.astrill.com/terms-of-service">服务条款</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uk-width-1-2 uk-width-1-3@s uk-width-1-4@m uk-visible@s uk-hidden@m">
+                    <div>
+                        <h5>法律</h5>
+                        <ul class="list">
+                            <li><a href="https://www.astrill.com/privacy-policy">隐私策略</a></li>
+                            <li><a href="https://www.astrill.com/refund-policy">退款策略</a></li>
+                            <li><a href="https://www.astrill.com/terms-of-service">服务条款</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="copyright">
+                <div class="uk-grid uk-flex uk-flex-wrap">
+                    <div class="copy-name uk-width-1-3@s uk-width-1-5@m uk-text-left@s uk-flex uk-flex-middle uk-flex-center">
+                        <span>© 2009-2026. 保留所有权.</span>
+                    </div>
+                    <div class="uk-width-1-3@s uk-width-3-5@m uk-text-center">
+                        <ul class="list list-in-row payment-methods">
+    <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/visa.svg" alt="Visa"> </span>
+    </li>
+    <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/master_card.svg" alt="Mastercard"> </span>
+    </li>
+    <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/maestro.svg" alt="Maestro"> </span>
+    </li>
+    <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/amex.svg" alt="American Express"> </span>
+    </li>
+    <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/cirrus.svg" alt="Cirrus"> </span>
+    </li>
+
+        <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/paypal.svg" alt="PayPal"> </span>
+    </li>
+        <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/bitcoin.svg" alt="Bitcoin"> </span>
+    </li>
+    <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/monero.svg" alt="Monero"> </span>
+    </li>
+        <li>
+        <span uk-tooltip="" aria-expanded="false"> <img src="/images/icon/payments/bank.svg" alt="Bank"> </span>
+    </li>
+</ul>
+                    </div>
+                    <div class="copy-social uk-width-1-3@s uk-width-1-5@m uk-text-right@s uk-flex uk-flex-middle uk-flex-center">
+                        <a class="facebook-link" href="https://www.facebook.com/astrillvpn/"><span>查看我们的社交生活</span> <img src="/images/icon/fb-logo.svg" alt="FaceBook"></a>
+                    </div>
+                </div>
+            </div>
+            </div>
+</div>
+
+
+
+<style id="cw-widget-styles" data-turbo-permanent="true">
+:root {
+  --b-100: #F2F3F7;
+  --s-700: #37546D;
+}
+
+.woot-widget-holder {
+  box-shadow: 0 5px 40px rgba(0, 0, 0, .16);
+  opacity: 1;
+  will-change: transform, opacity;
+  transform: translateY(0);
+  overflow: hidden !important;
+  position: fixed !important;
+  transition: opacity 0.2s linear, transform 0.25s linear;
+  z-index: 2147483000 !important;
+}
+
+.woot-widget-holder.woot-widget-holder--flat {
+  box-shadow: none;
+  border-radius: 0;
+  border: 1px solid var(--b-100);
+}
+
+.woot-widget-holder iframe {
+  border: 0;
+  color-scheme: normal;
+  height: 100% !important;
+  width: 100% !important;
+  max-height: 100vh !important;
+}
+
+.woot-widget-holder.has-unread-view {
+  border-radius: 0 !important;
+  min-height: 80px !important;
+  height: auto;
+  bottom: 94px;
+  box-shadow: none !important;
+  border: 0;
+}
+
+.woot-widget-bubble {
+  background: #1f93ff;
+  border-radius: 100px;
+  border-width: 0px;
+  bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16) !important;
+  cursor: pointer;
+  height: 64px;
+  padding: 0px;
+  position: fixed;
+  user-select: none;
+  width: 64px;
+  z-index: 2147483000 !important;
+  overflow: hidden;
+}
+
+.woot-widget-bubble.woot-widget-bubble--flat {
+  border-radius: 0;
+}
+
+.woot-widget-holder.woot-widget-holder--flat {
+  bottom: 90px;
+}
+
+.woot-widget-bubble.woot-widget-bubble--flat {
+  height: 56px;
+  width: 56px;
+}
+
+.woot-widget-bubble.woot-widget-bubble--flat svg {
+  margin: 16px;
+}
+
+.woot-widget-bubble.woot-widget-bubble--flat.woot--close::before,
+.woot-widget-bubble.woot-widget-bubble--flat.woot--close::after {
+  left: 28px;
+  top: 16px;
+}
+
+.woot-widget-bubble.unread-notification::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ff4040;
+  border-radius: 100%;
+  top: 0px;
+  right: 0px;
+  border: 2px solid #ffffff;
+  transition: background 0.2s ease;
+}
+
+.woot-widget-bubble.woot-widget--expanded {
+  bottom: 24px;
+  display: flex;
+  height: 48px !important;
+  width: auto !important;
+  align-items: center;
+}
+
+.woot-widget-bubble.woot-widget--expanded div {
+  align-items: center;
+  color: #fff;
+  display: flex;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  justify-content: center;
+  padding-right: 20px;
+  width: auto !important;
+}
+
+.woot-widget-bubble.woot-widget--expanded.woot-widget-bubble-color--lighter div{
+  color: var(--s-700);
+}
+
+.woot-widget-bubble.woot-widget--expanded svg {
+  height: 20px;
+  margin: 14px 8px 14px 16px;
+  width: 20px;
+}
+
+.woot-widget-bubble.woot-elements--left {
+  left: 20px;
+}
+
+.woot-widget-bubble.woot-elements--right {
+  right: 20px;
+}
+
+.woot-widget-bubble:hover {
+  background: #1f93ff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .4) !important;
+}
+
+.woot-widget-bubble svg {
+  all: revert;
+  height: 24px;
+  margin: 20px;
+  width: 24px;
+}
+
+.woot-widget-bubble.woot-widget-bubble-color--lighter path{
+  fill: var(--s-700);
+}
+
+@media only screen and (min-width: 667px) {
+  .woot-widget-holder.woot-elements--left {
+    left: 20px;
+ }
+  .woot-widget-holder.woot-elements--right {
+    right: 20px;
+ }
+}
+
+.woot--close:hover {
+  opacity: 1;
+}
+
+.woot--close::before, .woot--close::after {
+  background-color: #fff;
+  content: ' ';
+  display: inline;
+  height: 24px;
+  left: 32px;
+  position: absolute;
+  top: 20px;
+  width: 2px;
+}
+
+.woot-widget-bubble-color--lighter.woot--close::before, .woot-widget-bubble-color--lighter.woot--close::after {
+  background-color: var(--s-700);
+}
+
+.woot--close::before {
+  transform: rotate(45deg);
+}
+
+.woot--close::after {
+  transform: rotate(-45deg);
+}
+
+.woot--hide {
+  bottom: -100vh !important;
+  top: unset !important;
+  opacity: 0;
+  visibility: hidden !important;
+  z-index: -1 !important;
+}
+
+.woot-widget--without-bubble {
+  bottom: 20px !important;
+}
+.woot-widget-holder.woot--hide{
+  transform: translateY(40px);
+}
+.woot-widget-bubble.woot--close {
+  transform: translateX(0px) scale(1) rotate(0deg);
+  transition: transform 300ms ease, opacity 100ms ease, visibility 0ms linear 0ms, bottom 0ms linear 0ms;
+}
+.woot-widget-bubble.woot--close.woot--hide {
+  transform: translateX(8px) scale(.75) rotate(45deg);
+  transition: transform 300ms ease, opacity 200ms ease, visibility 0ms linear 500ms, bottom 0ms ease 200ms;
+}
+
+.woot-widget-bubble {
+  transform-origin: center;
+  will-change: transform, opacity;
+  transform: translateX(0) scale(1) rotate(0deg);
+  transition: transform 300ms ease, opacity 100ms ease, visibility 0ms linear 0ms, bottom 0ms linear 0ms;
+}
+.woot-widget-bubble.woot--hide {
+  transform: translateX(8px) scale(.75) rotate(-30deg);
+  transition: transform 300ms ease, opacity 200ms ease, visibility 0ms linear 500ms, bottom 0ms ease 200ms;
+}
+
+.woot-widget-bubble.woot-widget--expanded {
+  transform: translateX(0px);
+  transition: transform 300ms ease, opacity 100ms ease, visibility 0ms linear 0ms, bottom 0ms linear 0ms;
+}
+.woot-widget-bubble.woot-widget--expanded.woot--hide {
+  transform: translateX(8px);
+  transition: transform 300ms ease, opacity 200ms ease, visibility 0ms linear 500ms, bottom 0ms ease 200ms;
+}
+.woot-widget-bubble.woot-widget-bubble--flat.woot--close {
+  transform: translateX(0px);
+  transition: transform 300ms ease, opacity 10ms ease, visibility 0ms linear 0ms, bottom 0ms linear 0ms;
+}
+.woot-widget-bubble.woot-widget-bubble--flat.woot--close.woot--hide {
+  transform: translateX(8px);
+  transition: transform 300ms ease, opacity 200ms ease, visibility 0ms linear 500ms, bottom 0ms ease 200ms;
+}
+.woot-widget-bubble.woot-widget--expanded.woot-widget-bubble--flat {
+  transform: translateX(0px);
+  transition: transform 300ms ease, opacity 200ms ease, visibility 0ms linear 0ms, bottom 0ms linear 0ms;
+}
+.woot-widget-bubble.woot-widget--expanded.woot-widget-bubble--flat.woot--hide {
+  transform: translateX(8px);
+  transition: transform 300ms ease, opacity 200ms ease, visibility 0ms linear 500ms, bottom 0ms ease 200ms;
+}
+
+@media only screen and (max-width: 667px) {
+  .woot-widget-holder {
+    height: 100%;
+    right: 0;
+    top: 0;
+    width: 100%;
+ }
+
+ .woot-widget-holder iframe {
+    min-height: 100% !important;
+  }
+
+
+ .woot-widget-holder.has-unread-view {
+    height: auto;
+    right: 0;
+    width: auto;
+    bottom: 0;
+    top: auto;
+    max-height: 100vh;
+    padding: 0 8px;
+  }
+
+  .woot-widget-holder.has-unread-view iframe {
+    min-height: unset !important;
+  }
+
+ .woot-widget-holder.has-unread-view.woot-elements--left {
+    left: 0;
+  }
+
+  .woot-widget-bubble.woot--close {
+    bottom: 60px;
+    opacity: 0;
+    visibility: hidden !important;
+    z-index: -1 !important;
+  }
+}
+
+@media only screen and (min-width: 667px) {
+  .woot-widget-holder {
+    border-radius: 16px;
+    bottom: 104px;
+    height: calc(90% - 64px - 20px);
+    max-height: 640px !important;
+    min-height: 250px !important;
+    width: 400px !important;
+ }
+}
+
+.woot-hidden {
+  display: none !important;
+}
+</style><div class="woot-widget-holder woot--hide woot-elements--right" id="cw-widget-holder" data-turbo-permanent="true"><iframe src="https://chat.astrill.org/widget?website_token=nAFpeRu1WTgNJU9RumA6LXKC&amp;cw_conversation=eyJhbGciOiJIUzI1NiJ9.eyJzb3VyY2VfaWQiOiI3NGVkODc2YS1hY2I1LTRjM2UtODA3MC1kYjUyMGI5M2JhOTgiLCJpbmJveF9pZCI6MSwiZXhwIjoxNzg3MjU4MzM2LCJpYXQiOjE3NzE3MDYzMzZ9.2ViCPMgU4a22Q0Yj-ptYH93fz8LQju7LBATAOQPxfNQ" allow="camera;microphone;fullscreen;display-capture;picture-in-picture;clipboard-write;" id="chatwoot_live_chat_widget" style=""></iframe></div><div class="woot--bubble-holder" id="cw-bubble-holder" data-turbo-permanent="true"><button class="woot-widget-bubble woot-elements--right" title="Open chat window" style="background: rgb(0, 156, 224);"><svg id="woot-widget-bubble-icon" width="24" height="24" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M240.808 240.808H122.123C56.6994 240.808 3.45695 187.562 3.45695 122.122C3.45695 56.7031 56.6994 3.45697 122.124 3.45697C187.566 3.45697 240.808 56.7031 240.808 122.122V240.808Z" fill="#FFFFFF"></path></svg></button><button class="woot-elements--right woot-widget-bubble woot--close woot--hide" style="background: rgb(0, 156, 224);"></button></div></body></html>

@@ -46,6 +46,7 @@ type Handlers struct {
 	SoraClient    *SoraClientHandler
 	Setting       *SettingHandler
 	Totp          *TotpHandler
+	Metrics       *MetricsHandler
 }
 
 // BuildInfo contains build-time information

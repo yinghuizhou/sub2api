@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrill VPN 配置向导</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2236;--border:#253049;
+  --primary:#3b82f6;--primary-glow:#3b82f640;--accent:#10b981;--warn:#f59e0b;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --radius:16px;--font:'Noto Sans SC',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 0%,#1e3a5f33 0%,transparent 50%),
+                   radial-gradient(ellipse at 80% 100%,#10b98115 0%,transparent 50%)}
+.container{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+header{text-align:center;margin-bottom:48px}
+header h1{font-size:1.75rem;font-weight:700;background:linear-gradient(135deg,#60a5fa,#34d399);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+header p{color:var(--text2);font-size:.9rem}
+/* Progress */
+.progress{display:flex;align-items:center;gap:0;margin-bottom:40px;padding:0 12px}
+.progress-step{flex:1;display:flex;align-items:center}
+.progress-step .dot{width:36px;height:36px;border-radius:50%;background:var(--surface2);
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:600;color:var(--text3);transition:all .4s ease;flex-shrink:0;position:relative;z-index:1}
+.progress-step .line{flex:1;height:2px;background:var(--border);transition:background .4s}
+.progress-step.active .dot{background:var(--primary);border-color:var(--primary);color:#fff;
+  box-shadow:0 0 20px var(--primary-glow)}
+.progress-step.done .dot{background:var(--accent);border-color:var(--accent);color:#fff}
+.progress-step.done .line,.progress-step.active .line{background:var(--primary)}
+.progress-step:last-child .line{display:none}
+/* Steps */
+.step{display:none;animation:fadeUp .4s ease}
+.step.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:24px}
+.card h2{font-size:1.2rem;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.card h2 .icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:1.1rem;flex-shrink:0}
+.card .subtitle{color:var(--text2);font-size:.85rem;margin-bottom:20px}
+.card ol,.card ul{padding-left:20px;color:var(--text2);font-size:.9rem;line-height:2}
+.card ol li::marker{color:var(--primary);font-weight:600}
+.card strong{color:var(--text);font-weight:500}
+.tip{background:var(--surface2);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;
+  padding:12px 16px;margin-top:16px;font-size:.82rem;color:var(--text2)}
+.tip b{color:var(--warn);font-weight:500}
+.img-placeholder{background:var(--surface2);border:1px dashed var(--border);border-radius:12px;
+  padding:40px 20px;text-align:center;color:var(--text3);font-size:.85rem;margin:16px 0}
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:14px 18px;
+  font-family:var(--mono);font-size:.82rem;color:#7ee787;margin:12px 0;overflow-x:auto;white-space:pre;line-height:1.6}
+/* Textarea */
+textarea{width:100%;min-height:200px;background:#0d1117;border:2px solid var(--border);
+  border-radius:12px;padding:16px;font-family:var(--mono);font-size:.8rem;color:#c9d1d9;
+  resize:vertical;outline:none;transition:border-color .3s}
+textarea:focus{border-color:var(--primary)}
+textarea::placeholder{color:var(--text3)}
+/* Buttons */
+.btn-row{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+.btn{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:500;border:none;
+  cursor:pointer;transition:all .2s;font-family:var(--font)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 4px 16px var(--primary-glow)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:#059669}
+.tag{display:inline-block;padding:2px 10px;border-radius:6px;font-size:.75rem;font-weight:500;margin-left:8px}
+.tag-blue{background:#3b82f620;color:#60a5fa}
+.tag-green{background:#10b98120;color:#34d399}
+/* Server cards */
+.server-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.server-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 16px;cursor:pointer;transition:all .2s;font-size:.85rem}
+.server-card:hover,.server-card.selected{border-color:var(--primary);background:#1e3a5f30}
+.server-card .name{font-weight:500;color:var(--text)}
+.server-card .desc{color:var(--text3);font-size:.78rem;margin-top:2px}
+/* Result */
+.result-box{background:linear-gradient(135deg,#10b98115,#3b82f610);border:1px solid #10b98140;
+  border-radius:var(--radius);padding:28px;text-align:center}
+.result-box .check{font-size:3rem;margin-bottom:12px}
+.result-box h3{font-size:1.1rem;margin-bottom:8px;color:var(--accent)}
+.result-box p{color:var(--text2);font-size:.85rem;line-height:1.7}
+.copy-btn{position:absolute;top:8px;right:8px;padding:4px 12px;border-radius:6px;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text2);
+  font-size:.75rem;cursor:pointer;font-family:var(--font)}
+.copy-btn:hover{background:var(--border);color:var(--text)}
+a{color:var(--primary);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+a:hover{border-bottom-color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Astrill OpenVPN 配置向导</h1>
+    <p>跟随以下步骤获取 .ovpn 配置文件，用于服务器代理部署</p>
+  </header>
+  <div class="progress" id="progress"></div>
+  <div id="steps"></div>
+</div>
+<script>
+const STEPS = [
+  { title:'登录 Astrill 会员中心', icon:'🔐', color:'#3b82f6' },
+  { title:'进入 OpenVPN 页面', icon:'⚙️', color:'#8b5cf6' },
+  { title:'选择美国服务器', icon:'🌎', color:'#f59e0b' },
+  { title:'下载配置文件', icon:'📥', color:'#10b981' },
+  { title:'粘贴配置内容', icon:'📋', color:'#ec4899' },
+];
+let cur = 0;
+
+function renderProgress() {
+  const el = document.getElementById('progress');
+  el.innerHTML = STEPS.map((s,i) => {
+    const cls = i < cur ? 'done' : i === cur ? 'active' : '';
+    return `<div class="progress-step ${cls}"><div class="dot">${i < cur ? '✓' : i+1}</div>${i < STEPS.length-1 ? '<div class="line"></div>' : ''}</div>`;
+  }).join('');
+}
+
+function go(n) { cur = Math.max(0, Math.min(STEPS.length-1, n)); render(); }
+function render() { renderProgress(); renderStep(); }
+
+function renderStep() {
+  const box = document.getElementById('steps');
+  const s = STEPS[cur];
+  const nav = `<div class="btn-row">
+    ${cur > 0 ? '<button class="btn btn-ghost" onclick="go(cur-1)">上一步</button>' : ''}
+    ${cur < STEPS.length-1 ? `<button class="btn btn-primary" onclick="go(cur+1)">下一步</button>` : ''}
+  </div>`;
+
+  const bodies = [
+    // Step 0
+    `<div class="card">
+      <h2><span class="icon" style="background:#3b82f620">${s.icon}</span>${s.title}</h2>
+      <p class="subtitle">打开浏览器访问 Astrill 会员中心</p>
+      <ol>
+        <li>打开浏览器，访问 <a href="https://www.astrill.com/member-zone/log-in" target="_blank">www.astrill.com/member-zone/log-in</a></li>
+        <li>输入你的 Astrill <strong>邮箱</strong>和<strong>密码</strong>，完成验证码</li>
+        <li>点击 <strong>Log in</strong> 登录</li>
+        <li>登录成功后你会看到会员控制面板（Member Zone）</li>
+      </ol>
+      <div class="tip"><b>💡 提示：</b>如果你忘记密码，点击登录页的 "Forgot your password?" 重置。需要开 VPN 才能访问 Astrill 网站。</div>
+    </div>${nav}`,
+
+    // Step 1
+    `<div class="card">
+      <h2><span class="icon" style="background:#8b5cf620">${s.icon}</span>${s.title}</h2>
+      <p class="subtitle">找到 OpenVPN 配置下载入口</p>
+      <ol>
+        <li>登录后，在顶部导航找到 <strong>"VPN Services"</strong>（VPN 服务）</li>
+        <li>点击 <strong>"OpenVPN certificates generation"</strong>（OpenVPN 证书生成）</li>
+        <li>或直接访问 <a href="https://www.astrill.com/member-zone/tools/openvpn-certificates" target="_blank">www.astrill.com/member-zone/tools/openvpn-certificates</a></li>
+        <li>你会看到证书列表和生成按钮</li>
+      </ol>
+      <div class="tip"><b>💡 提示：</b>导航路径：Members → VPN Services → OpenVPN certificates generation。如果页面布局有变化，在页面内搜索 "OpenVPN" 关键词即可找到。</div>
+    </div>${nav}`,
+
+    // Step 2
+    `<div class="card">
+      <h2><span class="icon" style="background:#f59e0b20">${s.icon}</span>${s.title}</h2>
+      <p class="subtitle">生成一个新的 OpenVPN 证书</p>
+      <ol>
+        <li>在 "Add new certificate" 区域，Description 输入一个名称，如 <strong>sub2api-server</strong></li>
+        <li>点击 <strong>"Add to my certificates"</strong> 按钮</li>
+        <li>证书创建后，点击 <strong>"Download"</strong> 下载配置文件（zip 包）</li>
+        <li>解压 zip，里面有多个 .ovpn 文件，<strong>选一个美国节点</strong>的文件</li>
+      </ol>
+      <div class="server-grid">
+        <div class="server-card selected"><div class="name">🏙️ Chicago (芝加哥)</div><div class="desc">推荐 · 你的专用 IP 所在地</div></div>
+        <div class="server-card"><div class="name">🌉 Los Angeles (洛杉矶)</div><div class="desc">西海岸 · 到亚洲快</div></div>
+        <div class="server-card"><div class="name">🗽 New York (纽约)</div><div class="desc">东海岸 · 稳定</div></div>
+        <div class="server-card"><div class="name">🌊 San Francisco</div><div class="desc">硅谷 · 科技区</div></div>
+      </div>
+      <div class="tip"><b>💡 提示：</b>文件名通常包含城市名，如 <code>USA_-_Chicago.ovpn</code>。Claude API 对美国 IP 最友好。如果你有<strong>专用 IP (Dedicated IP)</strong>，优先选那个节点。</div>
+    </div>${nav}`,
+
+    // Step 3
+    `<div class="card">
+      <h2><span class="icon" style="background:#10b98120">${s.icon}</span>${s.title}</h2>
+      <p class="subtitle">用文本编辑器打开选好的 .ovpn 文件并复制内容</p>
+      <ol>
+        <li>找到解压后的 .ovpn 文件（如 <code>USA_-_Chicago.ovpn</code>）</li>
+        <li><strong>右键</strong> → <strong>打开方式</strong> → 选择<strong>文本编辑器</strong>（Mac: 文本编辑 / VS Code，Windows: 记事本）</li>
+        <li>按 <strong>Cmd+A</strong>（Mac）或 <strong>Ctrl+A</strong>（Windows）全选内容</li>
+        <li>按 <strong>Cmd+C</strong>（Mac）或 <strong>Ctrl+C</strong>（Windows）复制</li>
+      </ol>
+      <div class="tip"><b>⚠️ 注意：</b>不要用 Word 打开！用<strong>纯文本编辑器</strong>。文件内容开头通常是 <code>client</code> 或 <code>remote</code>，包含 <code>-----BEGIN CERTIFICATE-----</code> 等证书信息。</div>
+    </div>${nav}`,
+
+    // Step 4
+    `<div class="card">
+      <h2><span class="icon" style="background:#ec489920">${s.icon}</span>${s.title}</h2>
+      <p class="subtitle">把 .ovpn 文件内容粘贴到下方输入框</p>
+      <div style="position:relative">
+        <textarea id="ovpnContent" placeholder="在这里粘贴 .ovpn 文件的全部内容...&#10;&#10;内容通常以 client 或 remote 开头，包含 -----BEGIN CERTIFICATE----- 等证书信息"></textarea>
+      </div>
+      <div id="parseResult" style="margin-top:12px"></div>
+    </div>
+    <div class="card" style="padding:20px 24px">
+      <h2 style="font-size:1rem;margin-bottom:12px"><span class="icon" style="background:#f59e0b20">🔑</span>Astrill 账号信息</h2>
+      <div style="display:grid;gap:12px">
+        <div><label style="font-size:.82rem;color:var(--text2);display:block;margin-bottom:4px">Astrill 用户名（邮箱）</label>
+        <input id="astrillUser" type="text" placeholder="your@email.com" style="width:100%;padding:10px 14px;background:#0d1117;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;outline:none;font-family:var(--font)"></div>
+        <div><label style="font-size:.82rem;color:var(--text2);display:block;margin-bottom:4px">Astrill 密码</label>
+        <input id="astrillPass" type="password" placeholder="••••••••" style="width:100%;padding:10px 14px;background:#0d1117;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;outline:none;font-family:var(--font)"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="go(cur-1)">上一步</button>
+      <button class="btn btn-accent" onclick="generateResult()">✨ 生成部署命令</button>
+    </div>
+    <div id="finalResult" style="margin-top:24px"></div>`,
+  ];
+  box.innerHTML = `<div class="step active">${bodies[cur]}</div>`;
+  if (cur === 4) {
+    const ta = document.getElementById('ovpnContent');
+    if (ta) ta.addEventListener('input', validateOvpn);
+  }
+}
+
+function validateOvpn() {
+  const v = document.getElementById('ovpnContent').value.trim();
+  const el = document.getElementById('parseResult');
+  if (!v) { el.innerHTML = ''; return; }
+  const hasClient = /^client$/m.test(v) || /^remote\s/m.test(v);
+  const hasCert = v.includes('BEGIN CERTIFICATE') || v.includes('BEGIN');
+  if (hasClient && hasCert) {
+    const remoteMatch = v.match(/^remote\s+(\S+)\s+(\d+)/m);
+    const server = remoteMatch ? `${remoteMatch[1]}:${remoteMatch[2]}` : '已检测';
+    el.innerHTML = `<div style="color:var(--accent);font-size:.85rem">✅ 配置文件格式正确！服务器: <strong>${server}</strong></div>`;
+  } else if (v.length < 50) {
+    el.innerHTML = `<div style="color:var(--warn);font-size:.85rem">⏳ 继续粘贴，内容似乎不完整...</div>`;
+  } else {
+    el.innerHTML = `<div style="color:#ef4444;font-size:.85rem">❌ 格式看起来不对，请确认是 .ovpn 文件的纯文本内容</div>`;
+  }
+}
+
+function generateResult() {
+  const ovpn = document.getElementById('ovpnContent').value.trim();
+  const user = document.getElementById('astrillUser').value.trim();
+  const pass = document.getElementById('astrillPass').value.trim();
+  const el = document.getElementById('finalResult');
+  if (!ovpn) { el.innerHTML = '<div style="color:#ef4444;font-size:.85rem">请先粘贴 .ovpn 配置内容</div>'; return; }
+  if (!user || !pass) { el.innerHTML = '<div style="color:#ef4444;font-size:.85rem">请填写 Astrill 账号和密码</div>'; return; }
+
+  const data = { ovpn_config: ovpn, username: user, password: pass };
+  const json = JSON.stringify(data, null, 2);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+
+  el.innerHTML = `<div class="result-box">
+    <div class="check">🎉</div>
+    <h3>配置已就绪！</h3>
+    <p>复制下方内容，发送给 Claude Code 即可自动部署</p>
+  </div>
+  <div style="position:relative;margin-top:16px">
+    <button class="copy-btn" onclick="copyResult()">📋 复制</button>
+    <div class="code-block" id="resultCode" style="max-height:200px;overflow-y:auto;font-size:.75rem;word-break:break-all;white-space:pre-wrap">${escHtml(b64)}</div>
+  </div>
+  <div class="tip" style="margin-top:12px"><b>📌 使用方法：</b>复制上方内容，回到 Claude Code 对话中直接粘贴发送。我会自动解码并在服务器上完成部署。你的密码仅用于服务器上的 OpenVPN 认证，不会存储在其他地方。</div>`;
+}
+
+function copyResult() {
+  const text = document.getElementById('resultCode').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ 已复制';
+    setTimeout(() => btn.textContent = '📋 复制', 2000);
+  });
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+render();
+</script>
+</body>
+</html>

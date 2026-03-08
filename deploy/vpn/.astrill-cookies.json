@@ -1,0 +1,72 @@
+[
+  {
+    "name": "locale",
+    "value": "zh",
+    "domain": ".astrill.com",
+    "path": "/",
+    "expires": 1772734565.101994,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Strict"
+  },
+  {
+    "name": "PHPSESSID",
+    "value": "6adc53f9b8bd3f10dc5a3daa2030c71b",
+    "domain": ".astrill.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "_pk_id.1.9eae",
+    "value": "a8c39191ea2d1fe9.1771708954.",
+    "domain": "www.astrill.com",
+    "path": "/",
+    "expires": 1805664154,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_fbp",
+    "value": "fb.1.1771708953837.1691164512866197",
+    "domain": ".astrill.com",
+    "path": "/",
+    "expires": 1779646565,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "cw_conversation",
+    "value": "eyJhbGciOiJIUzI1NiJ9.eyJzb3VyY2VfaWQiOiI3ZWYxMWIzOS00NmY5LTRmMmUtODhlMi0zMzM5ZmU1NDAxNWUiLCJpbmJveF9pZCI6MSwiZXhwIjoxNzg3MjYwOTU0LCJpYXQiOjE3NzE3MDg5NTR9.lFrIneHCX9SXSIr8OD-NloDouZAxIXOQ8JyII78EwlM",
+    "domain": "www.astrill.com",
+    "path": "/",
+    "expires": 1803406566,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "cw_user_nAFpeRu1WTgNJU9RumA6LXKC",
+    "value": "3ae63a028da301a6b53e27826e8095c7",
+    "domain": "www.astrill.com",
+    "path": "/",
+    "expires": 1803245176,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_pk_ses.1.9eae",
+    "value": "1",
+    "domain": "www.astrill.com",
+    "path": "/",
+    "expires": 1771872365,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/config/route": "/api/config",
+  "/api/skip/route": "/api/skip",
+  "/api/stop/route": "/api/stop",
+  "/api/captcha/route": "/api/captcha",
+  "/api/start/route": "/api/start",
+  "/page": "/",
+  "/api/events/route": "/api/events"
+}
