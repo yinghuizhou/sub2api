@@ -598,11 +598,12 @@ watch(
 </script>
 
 <style scoped>
-/* 表格横向滚动 */
+/* 表格横向和纵向滚动 */
 .table-wrapper {
   --select-col-width: 52px; /* 勾选列宽度：px-6 (24px*2) + checkbox (16px) */
   position: relative;
   overflow-x: auto;
+  overflow-y: auto;
   isolation: isolate;
 }
 
