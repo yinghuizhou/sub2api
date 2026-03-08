@@ -138,6 +138,13 @@ services:
       # Proxy for accessing GitHub (online updates + pricing data)
       # Examples: http://host:port, socks5://host:port
       - UPDATE_PROXY_URL=${UPDATE_PROXY_URL:-}
+
+      # =======================================================================
+      # Go Runtime Configuration
+      # =======================================================================
+      # Force Go to use pure Go DNS resolver instead of cgo resolver
+      # This ensures DNS resolution uses /etc/resolv.conf correctly
+      - GODEBUG=netdns=go
     depends_on:
       postgres:
         condition: service_healthy
