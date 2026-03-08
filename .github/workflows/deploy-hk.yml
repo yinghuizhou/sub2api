@@ -1,0 +1,123 @@
+name: Deploy to HK Server
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'Dockerfile'
+      - '.github/workflows/deploy-hk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t sub2api:amd64-hk-$(date +%Y%m%d-%H%M%S) \
+            --load \
+            .
+
+      - name: Save Docker image
+        run: |
+          IMAGE_TAG=$(docker images sub2api --format "{{.Tag}}" | head -1)
+          docker save sub2api:${IMAGE_TAG} | gzip > /tmp/sub2api-${IMAGE_TAG}.tar.gz
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HK_SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 47.76.82.51 >> ~/.ssh/known_hosts
+
+      - name: Upload image to HK server
+        run: |
+          scp -i ~/.ssh/id_rsa /tmp/sub2api-${IMAGE_TAG}.tar.gz root@47.76.82.51:/opt/sub2api/
+
+      - name: Deploy with rolling update
+        run: |
+          ssh -i ~/.ssh/id_rsa root@47.76.82.51 << 'EOF'
+            cd /opt/sub2api
+
+            # Load new image
+            IMAGE_FILE=$(ls -t sub2api-amd64-hk-*.tar.gz | head -1)
+            docker load < ${IMAGE_FILE}
+
+            # Tag as latest
+            IMAGE_TAG=$(echo ${IMAGE_FILE} | sed 's/sub2api-\(.*\)\.tar\.gz/\1/')
+            docker tag sub2api:${IMAGE_TAG} sub2api:latest
+
+            # Rolling update (zero downtime)
+            for i in 1 2 3; do
+              echo "Updating instance ${i}..."
+              docker compose stop sub2api-${i}
+              docker compose up -d sub2api-${i}
+              sleep 15
+
+              # Health check
+              if ! curl -sf http://localhost:8888/health > /dev/null; then
+                echo "Health check failed for instance ${i}"
+                exit 1
+              fi
+              echo "Instance ${i} updated successfully"
+            done
+
+            # Verify all instances
+            docker compose ps sub2api
+
+            # Cleanup old images (keep last 3)
+            docker images sub2api --format "{{.ID}} {{.CreatedAt}}" | sort -k2 -r | tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f || true
+
+            # Cleanup old tar files (keep last 3)
+            ls -t sub2api-amd64-hk-*.tar.gz | tail -n +4 | xargs -r rm -f || true
+
+            echo "Deployment completed successfully"
+          EOF
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/id_rsa root@47.76.82.51 << 'EOF'
+            # Check service health
+            curl -sf http://localhost:8888/health
+
+            # Check metrics endpoint
+            curl -sf http://localhost:8888/metrics | head -5
+
+            # Show running containers
+            docker compose ps
+          EOF
