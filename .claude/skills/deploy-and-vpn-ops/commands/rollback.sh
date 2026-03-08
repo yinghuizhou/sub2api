@@ -36,9 +36,9 @@ IMAGE_NAME="sub2api"
 # Validation function
 validate_version() {
     local version=$1
-    if [[ ! "$version" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    if [[ ! "$version" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
         echo -e "${RED}✗ Invalid version format: $version${NC}"
-        echo "  → Version must contain only alphanumeric characters, dots, hyphens, and underscores"
+        echo "  → Version must start with alphanumeric and contain only alphanumeric characters, dots, hyphens, and underscores"
         exit 1
     fi
 }
@@ -147,8 +147,8 @@ echo ""
 
 # Step 1: Update docker-compose.yml to use target version
 echo "1. Updating docker-compose.yml..."
-# Escape special characters in version string for sed
-TARGET_VERSION_ESCAPED=$(printf '%s\n' "$TARGET_VERSION" | sed 's/[[\.*^$/]/\\&/g')
+# Escape special characters in version string for sed replacement
+TARGET_VERSION_ESCAPED=$(printf '%s\n' "$TARGET_VERSION" | sed 's/[&\\|]/\\&/g')
 ssh -i "$PEM_FILE" -o StrictHostKeyChecking=no root@$HK_SERVER <<EOF
 cd /opt/sub2api
 sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$TARGET_VERSION_ESCAPED|g" docker-compose.yml
@@ -196,4 +196,4 @@ echo ""
 echo -e "${GREEN}✓ Rollback completed successfully!${NC}"
 echo ""
 echo "Current version: $TARGET_VERSION"
-echo "Service URL: http://47.76.82.51:8080"
+echo "Service URL: http://47.76.82.51:8888"
