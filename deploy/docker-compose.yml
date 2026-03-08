@@ -145,6 +145,9 @@ services:
         condition: service_healthy
     networks:
       - sub2api-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
