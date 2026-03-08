@@ -15,6 +15,20 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Timeout command wrapper (macOS compatible)
+run_with_timeout() {
+    local timeout=$1
+    shift
+    if command -v timeout >/dev/null 2>&1; then
+        timeout "$timeout" "$@"
+    elif command -v gtimeout >/dev/null 2>&1; then
+        gtimeout "$timeout" "$@"
+    else
+        # Fallback: run without timeout on macOS
+        "$@"
+    fi
+}
+
 # Test results
 DOCKER_HUB_OK=false
 ALPINE_CDN_OK=false
@@ -23,35 +37,27 @@ GITHUB_ACTIONS_AVAILABLE=false
 
 echo -e "${BLUE}=== 网络环境检测 ===${NC}\n"
 
-# 1. Check Docker Hub connectivity
-echo -n "检测 Docker Hub 连接... "
-if timeout 5 curl -sf https://registry-1.docker.io > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ 可访问${NC}"
+# 1. Check Docker Hub connectivity (test actual docker pull)
+echo -n "检测 Docker 镜像拉取能力... "
+if run_with_timeout 10 docker pull alpine:3.21 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ 可拉取镜像${NC}"
     DOCKER_HUB_OK=true
 else
-    echo -e "${RED}✗ 无法访问${NC}"
+    echo -e "${RED}✗ 无法拉取镜像${NC}"
 fi
 
-# 2. Check Alpine CDN
-echo -n "检测 Alpine CDN 连接... "
-if timeout 5 curl -sf https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/APKINDEX.tar.gz > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ 可访问${NC}"
+# 2. Check Alpine packages availability (test apk in Docker)
+echo -n "检测 Alpine 软件包可用性... "
+if run_with_timeout 10 docker run --rm alpine:3.21 apk update > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ 可安装软件包${NC}"
     ALPINE_CDN_OK=true
 else
-    echo -e "${RED}✗ 无法访问${NC}"
-    # Try Aliyun mirror
-    echo -n "  尝试阿里云镜像... "
-    if timeout 5 curl -sf https://mirrors.aliyun.com/alpine/v3.21/main/x86_64/APKINDEX.tar.gz > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ 可访问${NC}"
-        ALPINE_CDN_OK=true
-    else
-        echo -e "${RED}✗ 无法访问${NC}"
-    fi
+    echo -e "${RED}✗ 无法安装软件包${NC}"
 fi
 
 # 3. Check npm registry
 echo -n "检测 npm registry 连接... "
-if timeout 5 curl -sf https://registry.npmjs.org/vue > /dev/null 2>&1; then
+if run_with_timeout 5 curl -sf https://registry.npmjs.org/vue > /dev/null 2>&1; then
     echo -e "${GREEN}✓ 可访问${NC}"
     NPM_REGISTRY_OK=true
 else
