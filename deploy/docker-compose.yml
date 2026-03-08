@@ -138,6 +138,13 @@ services:
       # Proxy for accessing GitHub (online updates + pricing data)
       # Examples: http://host:port, socks5://host:port
       - UPDATE_PROXY_URL=${UPDATE_PROXY_URL:-}
+
+      # =======================================================================
+      # Go Runtime Configuration
+      # =======================================================================
+      # Force Go to use pure Go DNS resolver instead of cgo resolver
+      # This ensures DNS resolution uses /etc/resolv.conf correctly
+      - GODEBUG=netdns=go
     depends_on:
       postgres:
         condition: service_healthy
@@ -145,6 +152,9 @@ services:
         condition: service_healthy
     networks:
       - sub2api-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -212,7 +222,7 @@ services:
     environment:
       - TZ=${TZ:-Asia/Shanghai}
       # REDISCLI_AUTH is used by redis-cli for authentication (safer than -a flag)
-      - REDISCLI_AUTH=${REDIS_PASSWORD:-}
+      - REDISCLI_AUTH=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     networks:
       - sub2api-network
     healthcheck:
