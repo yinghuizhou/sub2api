@@ -1,0 +1,26 @@
+{
+  "project_name": "sub2api",
+  "description": "Claude Code API 4.6 Opus 中转服务 (Proxy Service) - 首单无忧",
+  "services": {
+    "backend": {
+      "api-server": {"port": 8080, "health": "/health"}
+    },
+    "frontend": {
+      "admin-panel": {"port": 5173, "health": "/"}
+    },
+    "infrastructure": {
+      "postgres": {"port": 5432},
+      "redis": {"port": 6379}
+    }
+  },
+  "tech_stack": {
+    "backend_framework": "Go 1.25+ (Gin + Ent ORM)",
+    "frontend_framework": "Vue 3 + TypeScript + Vite",
+    "database": "PostgreSQL 15+",
+    "cache": "Redis 7+",
+    "ui_library": "TailwindCSS",
+    "package_manager": "pnpm",
+    "di_framework": "Wire"
+  },
+  "competitors": ["OpenAI API", "Azure OpenAI", "其他 Claude 中转服务"]
+}

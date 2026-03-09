@@ -1,0 +1,10 @@
+{
+  "name": "Worktree 工作流检查",
+  "description": "会话开始时检查是否需要创建 worktree",
+  "trigger": "onSessionCreate",
+  "action": {
+    "type": "sendMessage",
+    "message": "⚠️ **Worktree 工作流提醒**\n\n如果你要开始新的功能开发或 bug 修复，请先创建独立的 worktree：\n\n```bash\n/worktree-start <type>-<description>\n```\n\n类型：feature, fix, refactor, review\n示例：`/worktree-start fix-billing-bug`\n\n当前位置检查中..."
+  },
+  "enabled": true
+}
