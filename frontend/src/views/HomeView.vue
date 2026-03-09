@@ -8,8 +8,8 @@
       class="h-screen w-full border-0"
       allowfullscreen
     ></iframe>
-    <!-- HTML mode - SECURITY: homeContent is admin-only setting, XSS risk is acceptable -->
-    <div v-else v-html="homeContent"></div>
+    <!-- HTML mode - Sanitized with DOMPurify to prevent XSS -->
+    <div v-else v-html="sanitizedHomeContent"></div>
   </div>
 
   <!-- Default Home Page -->
@@ -410,6 +410,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
+import DOMPurify from 'dompurify'
 
 const { t } = useI18n()
 
@@ -427,6 +428,17 @@ const homeContent = computed(() => appStore.cachedPublicSettings?.home_content |
 const isHomeContentUrl = computed(() => {
   const content = homeContent.value.trim()
   return content.startsWith('http://') || content.startsWith('https://')
+})
+
+// Sanitize HTML content to prevent XSS
+const sanitizedHomeContent = computed(() => {
+  if (!homeContent.value || isHomeContentUrl.value) return ''
+  return DOMPurify.sanitize(homeContent.value, {
+    ALLOWED_TAGS: ['div', 'p', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'img', 'ul', 'ol', 'li', 'br', 'strong', 'em', 'b', 'i', 'u'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):)/i,
+    ALLOW_DATA_ATTR: false
+  })
 })
 
 // Theme
