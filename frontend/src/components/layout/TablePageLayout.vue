@@ -44,10 +44,18 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 桌面端：Flexbox 布局 */
+/* Desktop: Flexbox layout */
 .table-page-layout {
   @apply flex flex-col gap-6;
-  height: calc(100vh - 64px - 4rem); /* 减去 header + lg:p-8 的上下padding */
+  height: calc(100vh - 64px - 2rem); /* header + p-4 top/bottom padding */
+
+  @screen md {
+    height: calc(100vh - 64px - 3rem); /* header + md:p-6 top/bottom padding */
+  }
+
+  @screen lg {
+    height: calc(100vh - 64px - 4rem); /* header + lg:p-8 top/bottom padding */
+  }
 }
 
 .layout-section-fixed {
