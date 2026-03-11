@@ -4824,10 +4824,18 @@ func (s *GatewayService) handleStreamingResponseAnthropicAPIKeyPassthrough(
 					logger.LegacyPrintf("service.gateway", "[Anthropic passthrough] Upstream read error after client disconnect: account=%d err=%v", account.ID, ev.err)
 					return &streamingResult{usage: usage, firstTokenMs: firstTokenMs, clientDisconnect: true}, nil
 				}
-				if errors.Is(ev.err, context.Canceled) || errors.Is(ev.err, context.DeadlineExceeded) {
-					logger.LegacyPrintf("service.gateway", "[Anthropic passthrough] 流读取被取消: account=%d request_id=%s err=%v ctx_err=%v",
+				if errors.Is(ev.err, context.Canceled) {
+					logger.LegacyPrintf("service.gateway", "[Anthropic passthrough] 客户端断开连接: account=%d request_id=%s err=%v ctx_err=%v",
 						account.ID, resp.Header.Get("x-request-id"), ev.err, ctx.Err())
 					return &streamingResult{usage: usage, firstTokenMs: firstTokenMs, clientDisconnect: true}, nil
+				}
+				if errors.Is(ev.err, context.DeadlineExceeded) {
+					logger.LegacyPrintf("service.gateway", "[Anthropic passthrough] 上游读取超时: account=%d request_id=%s err=%v ctx_err=%v",
+						account.ID, resp.Header.Get("x-request-id"), ev.err, ctx.Err())
+					if clientDisconnected {
+						return &streamingResult{usage: usage, firstTokenMs: firstTokenMs, clientDisconnect: true}, nil
+					}
+					return &streamingResult{usage: usage, firstTokenMs: firstTokenMs}, fmt.Errorf("upstream read timeout: %w", ev.err)
 				}
 				if errors.Is(ev.err, bufio.ErrTooLong) {
 					logger.LegacyPrintf("service.gateway", "[Anthropic passthrough] SSE line too long: account=%d max_size=%d error=%v", account.ID, maxLineSize, ev.err)
@@ -6020,9 +6028,19 @@ func (s *GatewayService) handleStreamingResponse(ctx context.Context, resp *http
 			}
 			if ev.err != nil {
 				// 检测 context 取消（客户端断开会导致 context 取消，进而影响上游读取）
-				if errors.Is(ev.err, context.Canceled) || errors.Is(ev.err, context.DeadlineExceeded) {
-					logger.LegacyPrintf("service.gateway", "Context canceled during streaming, returning collected usage")
+				if errors.Is(ev.err, context.Canceled) {
+					logger.LegacyPrintf("service.gateway", "客户端断开连接，返回已收集 usage")
 					return &streamingResult{usage: usage, firstTokenMs: firstTokenMs, clientDisconnect: true}, nil
+				}
+				if errors.Is(ev.err, context.DeadlineExceeded) {
+					logger.LegacyPrintf("service.gateway", "上游读取超时: account=%d model=%s err=%v ctx_err=%v",
+						account.ID, originalModel, ev.err, ctx.Err())
+					if clientDisconnected {
+						logger.LegacyPrintf("service.gateway", "客户端已断开，返回已收集 usage")
+						return &streamingResult{usage: usage, firstTokenMs: firstTokenMs, clientDisconnect: true}, nil
+					}
+					sendErrorEvent("upstream_timeout")
+					return &streamingResult{usage: usage, firstTokenMs: firstTokenMs}, fmt.Errorf("upstream read timeout: %w", ev.err)
 				}
 				// 客户端已通过写入失败检测到断开，上游也出错了，返回已收集的 usage
 				if clientDisconnected {
