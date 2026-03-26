@@ -16,19 +16,7 @@ type opsRepository struct {
 	db *sql.DB
 }
 
-func NewOpsRepository(db *sql.DB) service.OpsRepository {
-	return &opsRepository{db: db}
-}
-
-func (r *opsRepository) InsertErrorLog(ctx context.Context, input *service.OpsInsertErrorLogInput) (int64, error) {
-	if r == nil || r.db == nil {
-		return 0, fmt.Errorf("nil ops repository")
-	}
-	if input == nil {
-		return 0, fmt.Errorf("nil input")
-	}
-
-	q := `
+const insertOpsErrorLogSQL = `
 INSERT INTO ops_error_logs (
   request_id,
   client_request_id,
@@ -41,6 +29,11 @@ INSERT INTO ops_error_logs (
   model,
   request_path,
   stream,
+  inbound_endpoint,
+  upstream_endpoint,
+  requested_model,
+  upstream_model,
+  request_type,
   user_agent,
   error_phase,
   error_type,
@@ -69,13 +62,78 @@ INSERT INTO ops_error_logs (
   retry_count,
   created_at
 ) VALUES (
-  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38
-) RETURNING id`
+  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43
+)`
+
+func NewOpsRepository(db *sql.DB) service.OpsRepository {
+	return &opsRepository{db: db}
+}
+
+func (r *opsRepository) InsertErrorLog(ctx context.Context, input *service.OpsInsertErrorLogInput) (int64, error) {
+	if r == nil || r.db == nil {
+		return 0, fmt.Errorf("nil ops repository")
+	}
+	if input == nil {
+		return 0, fmt.Errorf("nil input")
+	}
 
 	var id int64
 	err := r.db.QueryRowContext(
 		ctx,
-		q,
+		insertOpsErrorLogSQL+" RETURNING id",
+		opsInsertErrorLogArgs(input)...,
+	).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *opsRepository) BatchInsertErrorLogs(ctx context.Context, inputs []*service.OpsInsertErrorLogInput) (int64, error) {
+	if r == nil || r.db == nil {
+		return 0, fmt.Errorf("nil ops repository")
+	}
+	if len(inputs) == 0 {
+		return 0, nil
+	}
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	stmt, err := tx.PrepareContext(ctx, insertOpsErrorLogSQL)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		_ = stmt.Close()
+	}()
+
+	var inserted int64
+	for _, input := range inputs {
+		if input == nil {
+			continue
+		}
+		if _, err = stmt.ExecContext(ctx, opsInsertErrorLogArgs(input)...); err != nil {
+			return inserted, err
+		}
+		inserted++
+	}
+
+	if err = tx.Commit(); err != nil {
+		return inserted, err
+	}
+	return inserted, nil
+}
+
+func opsInsertErrorLogArgs(input *service.OpsInsertErrorLogInput) []any {
+	return []any{
 		opsNullString(input.RequestID),
 		opsNullString(input.ClientRequestID),
 		opsNullInt64(input.UserID),
@@ -87,6 +145,11 @@ INSERT INTO ops_error_logs (
 		opsNullString(input.Model),
 		opsNullString(input.RequestPath),
 		input.Stream,
+		opsNullString(input.InboundEndpoint),
+		opsNullString(input.UpstreamEndpoint),
+		opsNullString(input.RequestedModel),
+		opsNullString(input.UpstreamModel),
+		opsNullInt16(input.RequestType),
 		opsNullString(input.UserAgent),
 		input.ErrorPhase,
 		input.ErrorType,
@@ -114,11 +177,7 @@ INSERT INTO ops_error_logs (
 		input.IsRetryable,
 		input.RetryCount,
 		input.CreatedAt,
-	).Scan(&id)
-	if err != nil {
-		return 0, err
 	}
-	return id, nil
 }
 
 func (r *opsRepository) ListErrorLogs(ctx context.Context, filter *service.OpsErrorLogFilter) (*service.OpsErrorLogList, error) {
@@ -182,7 +241,12 @@ SELECT
   COALESCE(g.name, ''),
   CASE WHEN e.client_ip IS NULL THEN NULL ELSE e.client_ip::text END,
   COALESCE(e.request_path, ''),
-  e.stream
+  e.stream,
+  COALESCE(e.inbound_endpoint, ''),
+  COALESCE(e.upstream_endpoint, ''),
+  COALESCE(e.requested_model, ''),
+  COALESCE(e.upstream_model, ''),
+  e.request_type
 FROM ops_error_logs e
 LEFT JOIN accounts a ON e.account_id = a.id
 LEFT JOIN groups g ON e.group_id = g.id
@@ -214,6 +278,7 @@ LIMIT $` + itoa(len(args)+1) + ` OFFSET $` + itoa(len(args)+2)
 		var resolvedBy sql.NullInt64
 		var resolvedByName string
 		var resolvedRetryID sql.NullInt64
+		var requestType sql.NullInt64
 		if err := rows.Scan(
 			&item.ID,
 			&item.CreatedAt,
@@ -245,6 +310,11 @@ LIMIT $` + itoa(len(args)+1) + ` OFFSET $` + itoa(len(args)+2)
 			&clientIP,
 			&item.RequestPath,
 			&item.Stream,
+			&item.InboundEndpoint,
+			&item.UpstreamEndpoint,
+			&item.RequestedModel,
+			&item.UpstreamModel,
+			&requestType,
 		); err != nil {
 			return nil, err
 		}
@@ -285,6 +355,10 @@ LIMIT $` + itoa(len(args)+1) + ` OFFSET $` + itoa(len(args)+2)
 			item.GroupID = &v
 		}
 		item.GroupName = groupName
+		if requestType.Valid {
+			v := int16(requestType.Int64)
+			item.RequestType = &v
+		}
 		out = append(out, &item)
 	}
 	if err := rows.Err(); err != nil {
@@ -344,6 +418,11 @@ SELECT
   CASE WHEN e.client_ip IS NULL THEN NULL ELSE e.client_ip::text END,
   COALESCE(e.request_path, ''),
   e.stream,
+  COALESCE(e.inbound_endpoint, ''),
+  COALESCE(e.upstream_endpoint, ''),
+  COALESCE(e.requested_model, ''),
+  COALESCE(e.upstream_model, ''),
+  e.request_type,
   COALESCE(e.user_agent, ''),
   e.auth_latency_ms,
   e.routing_latency_ms,
@@ -378,6 +457,7 @@ LIMIT 1`
 	var responseLatency sql.NullInt64
 	var ttft sql.NullInt64
 	var requestBodyBytes sql.NullInt64
+	var requestType sql.NullInt64
 
 	err := r.db.QueryRowContext(ctx, q, id).Scan(
 		&out.ID,
@@ -415,6 +495,11 @@ LIMIT 1`
 		&clientIP,
 		&out.RequestPath,
 		&out.Stream,
+		&out.InboundEndpoint,
+		&out.UpstreamEndpoint,
+		&out.RequestedModel,
+		&out.UpstreamModel,
+		&requestType,
 		&out.UserAgent,
 		&authLatency,
 		&routingLatency,
@@ -490,6 +575,10 @@ LIMIT 1`
 	if requestBodyBytes.Valid {
 		v := int(requestBodyBytes.Int64)
 		out.RequestBodyBytes = &v
+	}
+	if requestType.Valid {
+		v := int16(requestType.Int64)
+		out.RequestType = &v
 	}
 
 	// Normalize request_body to empty string when stored as JSON null.
@@ -1429,4 +1518,11 @@ func opsNullInt(v any) any {
 	default:
 		return sql.NullInt64{}
 	}
+}
+
+func opsNullInt16(v *int16) any {
+	if v == nil {
+		return sql.NullInt64{}
+	}
+	return sql.NullInt64{Int64: int64(*v), Valid: true}
 }

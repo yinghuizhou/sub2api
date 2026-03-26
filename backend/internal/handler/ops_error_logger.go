@@ -26,11 +26,31 @@ const (
 	opsStreamKey      = "ops_stream"
 	opsRequestBodyKey = "ops_request_body"
 	opsAccountIDKey   = "ops_account_id"
+
+	opsUpstreamModelKey = "ops_upstream_model"
+	opsRequestTypeKey   = "ops_request_type"
+
+	// 错误过滤匹配常量 — shouldSkipOpsErrorLog 和错误分类共用
+	opsErrContextCanceled            = "context canceled"
+	opsErrNoAvailableAccounts        = "no available accounts"
+	opsErrInvalidAPIKey              = "invalid_api_key"
+	opsErrAPIKeyRequired             = "api_key_required"
+	opsErrInsufficientBalance        = "insufficient balance"
+	opsErrInsufficientAccountBalance = "insufficient account balance"
+	opsErrInsufficientQuota          = "insufficient_quota"
+
+	// 上游错误码常量 — 错误分类 (normalizeOpsErrorType / classifyOpsPhase / classifyOpsIsBusinessLimited)
+	opsCodeInsufficientBalance  = "INSUFFICIENT_BALANCE"
+	opsCodeUsageLimitExceeded   = "USAGE_LIMIT_EXCEEDED"
+	opsCodeSubscriptionNotFound = "SUBSCRIPTION_NOT_FOUND"
+	opsCodeSubscriptionInvalid  = "SUBSCRIPTION_INVALID"
+	opsCodeUserInactive         = "USER_INACTIVE"
 )
 
 const (
 	opsErrorLogTimeout      = 5 * time.Second
 	opsErrorLogDrainTimeout = 10 * time.Second
+	opsErrorLogBatchWindow  = 200 * time.Millisecond
 
 	opsErrorLogMinWorkerCount = 4
 	opsErrorLogMaxWorkerCount = 32
@@ -38,6 +58,7 @@ const (
 	opsErrorLogQueueSizePerWorker = 128
 	opsErrorLogMinQueueSize       = 256
 	opsErrorLogMaxQueueSize       = 8192
+	opsErrorLogBatchSize          = 32
 )
 
 type opsErrorLogJob struct {
@@ -82,25 +103,80 @@ func startOpsErrorLogWorkers() {
 	for i := 0; i < workerCount; i++ {
 		go func() {
 			defer opsErrorLogWorkersWg.Done()
-			for job := range opsErrorLogQueue {
-				opsErrorLogQueueLen.Add(-1)
-				if job.ops == nil || job.entry == nil {
-					continue
+			for {
+				job, ok := <-opsErrorLogQueue
+				if !ok {
+					return
 				}
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							log.Printf("[OpsErrorLogger] worker panic: %v\n%s", r, debug.Stack())
+				opsErrorLogQueueLen.Add(-1)
+				batch := make([]opsErrorLogJob, 0, opsErrorLogBatchSize)
+				batch = append(batch, job)
+
+				timer := time.NewTimer(opsErrorLogBatchWindow)
+			batchLoop:
+				for len(batch) < opsErrorLogBatchSize {
+					select {
+					case nextJob, ok := <-opsErrorLogQueue:
+						if !ok {
+							if !timer.Stop() {
+								select {
+								case <-timer.C:
+								default:
+								}
+							}
+							flushOpsErrorLogBatch(batch)
+							return
 						}
-					}()
-					ctx, cancel := context.WithTimeout(context.Background(), opsErrorLogTimeout)
-					_ = job.ops.RecordError(ctx, job.entry, nil)
-					cancel()
-					opsErrorLogProcessed.Add(1)
-				}()
+						opsErrorLogQueueLen.Add(-1)
+						batch = append(batch, nextJob)
+					case <-timer.C:
+						break batchLoop
+					}
+				}
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				flushOpsErrorLogBatch(batch)
 			}
 		}()
 	}
+}
+
+func flushOpsErrorLogBatch(batch []opsErrorLogJob) {
+	if len(batch) == 0 {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[OpsErrorLogger] worker panic: %v\n%s", r, debug.Stack())
+		}
+	}()
+
+	grouped := make(map[*service.OpsService][]*service.OpsInsertErrorLogInput, len(batch))
+	var processed int64
+	for _, job := range batch {
+		if job.ops == nil || job.entry == nil {
+			continue
+		}
+		grouped[job.ops] = append(grouped[job.ops], job.entry)
+		processed++
+	}
+	if processed == 0 {
+		return
+	}
+
+	for opsSvc, entries := range grouped {
+		if opsSvc == nil || len(entries) == 0 {
+			continue
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), opsErrorLogTimeout)
+		_ = opsSvc.RecordErrorBatch(ctx, entries)
+		cancel()
+	}
+	opsErrorLogProcessed.Add(processed)
 }
 
 func enqueueOpsErrorLog(ops *service.OpsService, entry *service.OpsInsertErrorLogInput) {
@@ -270,6 +346,18 @@ func setOpsRequestContext(c *gin.Context, model string, stream bool, requestBody
 		ctx := context.WithValue(c.Request.Context(), ctxkey.Model, model)
 		c.Request = c.Request.WithContext(ctx)
 	}
+}
+
+// setOpsEndpointContext stores upstream model and request type for ops error logging.
+// Called by handlers after model mapping and request type determination.
+func setOpsEndpointContext(c *gin.Context, upstreamModel string, requestType int16) {
+	if c == nil {
+		return
+	}
+	if upstreamModel = strings.TrimSpace(upstreamModel); upstreamModel != "" {
+		c.Set(opsUpstreamModelKey, upstreamModel)
+	}
+	c.Set(opsRequestTypeKey, requestType)
 }
 
 func attachOpsRequestBodyToEntry(c *gin.Context, entry *service.OpsInsertErrorLogInput) {
@@ -555,7 +643,30 @@ func OpsErrorLoggerMiddleware(ops *service.OpsService) gin.HandlerFunc {
 					}
 					return ""
 				}(),
-				Stream:    stream,
+				Stream:           stream,
+				InboundEndpoint:  GetInboundEndpoint(c),
+				UpstreamEndpoint: GetUpstreamEndpoint(c, platform),
+				RequestedModel:   modelName,
+				UpstreamModel: func() string {
+					if v, ok := c.Get(opsUpstreamModelKey); ok {
+						if s, ok := v.(string); ok {
+							return strings.TrimSpace(s)
+						}
+					}
+					return ""
+				}(),
+				RequestType: func() *int16 {
+					if v, ok := c.Get(opsRequestTypeKey); ok {
+						switch t := v.(type) {
+						case int16:
+							return &t
+						case int:
+							v16 := int16(t)
+							return &v16
+						}
+					}
+					return nil
+				}(),
 				UserAgent: c.GetHeader("User-Agent"),
 
 				ErrorPhase: "upstream",
@@ -683,7 +794,30 @@ func OpsErrorLoggerMiddleware(ops *service.OpsService) gin.HandlerFunc {
 				}
 				return ""
 			}(),
-			Stream:    stream,
+			Stream:           stream,
+			InboundEndpoint:  GetInboundEndpoint(c),
+			UpstreamEndpoint: GetUpstreamEndpoint(c, platform),
+			RequestedModel:   modelName,
+			UpstreamModel: func() string {
+				if v, ok := c.Get(opsUpstreamModelKey); ok {
+					if s, ok := v.(string); ok {
+						return strings.TrimSpace(s)
+					}
+				}
+				return ""
+			}(),
+			RequestType: func() *int16 {
+				if v, ok := c.Get(opsRequestTypeKey); ok {
+					switch t := v.(type) {
+					case int16:
+						return &t
+					case int:
+						v16 := int16(t)
+						return &v16
+					}
+				}
+				return nil
+			}(),
 			UserAgent: c.GetHeader("User-Agent"),
 
 			ErrorPhase:        phase,
@@ -967,9 +1101,9 @@ func normalizeOpsErrorType(errType string, code string) string {
 		return errType
 	}
 	switch strings.TrimSpace(code) {
-	case "INSUFFICIENT_BALANCE":
+	case opsCodeInsufficientBalance:
 		return "billing_error"
-	case "USAGE_LIMIT_EXCEEDED", "SUBSCRIPTION_NOT_FOUND", "SUBSCRIPTION_INVALID":
+	case opsCodeUsageLimitExceeded, opsCodeSubscriptionNotFound, opsCodeSubscriptionInvalid:
 		return "subscription_error"
 	default:
 		return "api_error"
@@ -981,7 +1115,7 @@ func classifyOpsPhase(errType, message, code string) string {
 	// Standardized phases: request|auth|routing|upstream|network|internal
 	// Map billing/concurrency/response => request; scheduling => routing.
 	switch strings.TrimSpace(code) {
-	case "INSUFFICIENT_BALANCE", "USAGE_LIMIT_EXCEEDED", "SUBSCRIPTION_NOT_FOUND", "SUBSCRIPTION_INVALID":
+	case opsCodeInsufficientBalance, opsCodeUsageLimitExceeded, opsCodeSubscriptionNotFound, opsCodeSubscriptionInvalid:
 		return "request"
 	}
 
@@ -1000,7 +1134,7 @@ func classifyOpsPhase(errType, message, code string) string {
 	case "upstream_error", "overloaded_error":
 		return "upstream"
 	case "api_error":
-		if strings.Contains(msg, "no available accounts") {
+		if strings.Contains(msg, opsErrNoAvailableAccounts) {
 			return "routing"
 		}
 		return "internal"
@@ -1046,7 +1180,7 @@ func classifyOpsIsRetryable(errType string, statusCode int) bool {
 
 func classifyOpsIsBusinessLimited(errType, phase, code string, status int, message string) bool {
 	switch strings.TrimSpace(code) {
-	case "INSUFFICIENT_BALANCE", "USAGE_LIMIT_EXCEEDED", "SUBSCRIPTION_NOT_FOUND", "SUBSCRIPTION_INVALID", "USER_INACTIVE":
+	case opsCodeInsufficientBalance, opsCodeUsageLimitExceeded, opsCodeSubscriptionNotFound, opsCodeSubscriptionInvalid, opsCodeUserInactive:
 		return true
 	}
 	if phase == "billing" || phase == "concurrency" {
@@ -1140,21 +1274,30 @@ func shouldSkipOpsErrorLog(ctx context.Context, ops *service.OpsService, message
 
 	// Check if context canceled errors should be ignored (client disconnects)
 	if settings.IgnoreContextCanceled {
-		if strings.Contains(msgLower, "context canceled") || strings.Contains(bodyLower, "context canceled") {
+		if strings.Contains(msgLower, opsErrContextCanceled) || strings.Contains(bodyLower, opsErrContextCanceled) {
 			return true
 		}
 	}
 
 	// Check if "no available accounts" errors should be ignored
 	if settings.IgnoreNoAvailableAccounts {
-		if strings.Contains(msgLower, "no available accounts") || strings.Contains(bodyLower, "no available accounts") {
+		if strings.Contains(msgLower, opsErrNoAvailableAccounts) || strings.Contains(bodyLower, opsErrNoAvailableAccounts) {
 			return true
 		}
 	}
 
 	// Check if invalid/missing API key errors should be ignored (user misconfiguration)
 	if settings.IgnoreInvalidApiKeyErrors {
-		if strings.Contains(bodyLower, "invalid_api_key") || strings.Contains(bodyLower, "api_key_required") {
+		if strings.Contains(bodyLower, opsErrInvalidAPIKey) || strings.Contains(bodyLower, opsErrAPIKeyRequired) {
+			return true
+		}
+	}
+
+	// Check if insufficient balance errors should be ignored
+	if settings.IgnoreInsufficientBalanceErrors {
+		if strings.Contains(bodyLower, opsErrInsufficientBalance) || strings.Contains(bodyLower, opsErrInsufficientAccountBalance) ||
+			strings.Contains(bodyLower, opsErrInsufficientQuota) ||
+			strings.Contains(msgLower, opsErrInsufficientBalance) || strings.Contains(msgLower, opsErrInsufficientAccountBalance) {
 			return true
 		}
 	}

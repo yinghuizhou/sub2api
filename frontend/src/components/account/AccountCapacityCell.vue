@@ -73,11 +73,9 @@
     </div>
 
     <!-- API Key 账号配额限制 -->
-    <div v-if="showDailyQuota || showWeeklyQuota || showTotalQuota" class="flex items-center gap-1">
-      <QuotaBadge v-if="showDailyQuota" :used="account.quota_daily_used ?? 0" :limit="account.quota_daily_limit!" label="D" />
-      <QuotaBadge v-if="showWeeklyQuota" :used="account.quota_weekly_used ?? 0" :limit="account.quota_weekly_limit!" label="W" />
-      <QuotaBadge v-if="showTotalQuota" :used="account.quota_used ?? 0" :limit="account.quota_limit!" />
-    </div>
+    <QuotaBadge v-if="showDailyQuota" :used="account.quota_daily_used ?? 0" :limit="account.quota_daily_limit!" label="D" />
+    <QuotaBadge v-if="showWeeklyQuota" :used="account.quota_weekly_used ?? 0" :limit="account.quota_weekly_limit!" label="W" />
+    <QuotaBadge v-if="showTotalQuota" :used="account.quota_used ?? 0" :limit="account.quota_limit!" />
   </div>
 </template>
 
@@ -294,17 +292,19 @@ const rpmTooltip = computed(() => {
   }
 })
 
-// 是否显示各维度配额（仅 apikey 类型）
+// 是否显示各维度配额（apikey / bedrock 类型）
+const isQuotaEligible = computed(() => props.account.type === 'apikey' || props.account.type === 'bedrock')
+
 const showDailyQuota = computed(() => {
-  return props.account.type === 'apikey' && (props.account.quota_daily_limit ?? 0) > 0
+  return isQuotaEligible.value && (props.account.quota_daily_limit ?? 0) > 0
 })
 
 const showWeeklyQuota = computed(() => {
-  return props.account.type === 'apikey' && (props.account.quota_weekly_limit ?? 0) > 0
+  return isQuotaEligible.value && (props.account.quota_weekly_limit ?? 0) > 0
 })
 
 const showTotalQuota = computed(() => {
-  return props.account.type === 'apikey' && (props.account.quota_limit ?? 0) > 0
+  return isQuotaEligible.value && (props.account.quota_limit ?? 0) > 0
 })
 
 // 格式化费用显示

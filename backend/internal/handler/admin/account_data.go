@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
+	"github.com/Wei-Shaw/sub2api/internal/pkg/openai"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
@@ -264,6 +267,9 @@ func (h *AccountHandler) importData(ctx context.Context, req DataImportRequest) 
 		}
 	}
 
+	// 收集需要异步设置隐私的 Antigravity OAuth 账号
+	var privacyAccounts []*service.Account
+
 	for i := range dataPayload.Accounts {
 		item := dataPayload.Accounts[i]
 		if err := validateDataAccount(item); err != nil {
@@ -292,6 +298,8 @@ func (h *AccountHandler) importData(ctx context.Context, req DataImportRequest) 
 			}
 		}
 
+		enrichCredentialsFromIDToken(&item)
+
 		accountInput := &service.CreateAccountInput{
 			Name:                 item.Name,
 			Notes:                item.Notes,
@@ -309,7 +317,8 @@ func (h *AccountHandler) importData(ctx context.Context, req DataImportRequest) 
 			SkipDefaultGroupBind: skipDefaultGroupBind,
 		}
 
-		if _, err := h.adminService.CreateAccount(ctx, accountInput); err != nil {
+		created, err := h.adminService.CreateAccount(ctx, accountInput)
+		if err != nil {
 			result.AccountFailed++
 			result.Errors = append(result.Errors, DataImportError{
 				Kind:    "account",
@@ -318,7 +327,28 @@ func (h *AccountHandler) importData(ctx context.Context, req DataImportRequest) 
 			})
 			continue
 		}
+		// 收集 Antigravity OAuth 账号，稍后异步设置隐私
+		if created.Platform == service.PlatformAntigravity && created.Type == service.AccountTypeOAuth {
+			privacyAccounts = append(privacyAccounts, created)
+		}
 		result.AccountCreated++
+	}
+
+	// 异步设置 Antigravity 隐私，避免大量导入时阻塞请求
+	if len(privacyAccounts) > 0 {
+		adminSvc := h.adminService
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("import_antigravity_privacy_panic", "recover", r)
+				}
+			}()
+			bgCtx := context.Background()
+			for _, acc := range privacyAccounts {
+				adminSvc.ForceAntigravityPrivacy(bgCtx, acc)
+			}
+			slog.Info("import_antigravity_privacy_done", "count", len(privacyAccounts))
+		}()
 	}
 
 	return result, nil
@@ -347,7 +377,7 @@ func (h *AccountHandler) listAccountsFiltered(ctx context.Context, platform, acc
 	pageSize := dataPageCap
 	var out []service.Account
 	for {
-		items, total, err := h.adminService.ListAccounts(ctx, page, pageSize, platform, accountType, status, search, 0)
+		items, total, err := h.adminService.ListAccounts(ctx, page, pageSize, platform, accountType, status, search, 0, "")
 		if err != nil {
 			return nil, err
 		}
@@ -533,6 +563,57 @@ func defaultProxyName(name string) string {
 		return "imported-proxy"
 	}
 	return name
+}
+
+// enrichCredentialsFromIDToken performs best-effort extraction of user info fields
+// (email, plan_type, chatgpt_account_id, etc.) from id_token in credentials.
+// Only applies to OpenAI/Sora OAuth accounts. Skips expired token errors silently.
+// Existing credential values are never overwritten — only missing fields are filled.
+func enrichCredentialsFromIDToken(item *DataAccount) {
+	if item.Credentials == nil {
+		return
+	}
+	// Only enrich OpenAI/Sora OAuth accounts
+	platform := strings.ToLower(strings.TrimSpace(item.Platform))
+	if platform != service.PlatformOpenAI && platform != service.PlatformSora {
+		return
+	}
+	if strings.ToLower(strings.TrimSpace(item.Type)) != service.AccountTypeOAuth {
+		return
+	}
+
+	idToken, _ := item.Credentials["id_token"].(string)
+	if strings.TrimSpace(idToken) == "" {
+		return
+	}
+
+	// DecodeIDToken skips expiry validation — safe for imported data
+	claims, err := openai.DecodeIDToken(idToken)
+	if err != nil {
+		slog.Debug("import_enrich_id_token_decode_failed", "account", item.Name, "error", err)
+		return
+	}
+
+	userInfo := claims.GetUserInfo()
+	if userInfo == nil {
+		return
+	}
+
+	// Fill missing fields only (never overwrite existing values)
+	setIfMissing := func(key, value string) {
+		if value == "" {
+			return
+		}
+		if existing, _ := item.Credentials[key].(string); existing == "" {
+			item.Credentials[key] = value
+		}
+	}
+
+	setIfMissing("email", userInfo.Email)
+	setIfMissing("plan_type", userInfo.PlanType)
+	setIfMissing("chatgpt_account_id", userInfo.ChatGPTAccountID)
+	setIfMissing("chatgpt_user_id", userInfo.ChatGPTUserID)
+	setIfMissing("organization_id", userInfo.OrganizationID)
 }
 
 func normalizeProxyStatus(status string) string {

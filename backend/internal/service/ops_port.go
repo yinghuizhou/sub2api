@@ -7,6 +7,7 @@ import (
 
 type OpsRepository interface {
 	InsertErrorLog(ctx context.Context, input *OpsInsertErrorLogInput) (int64, error)
+	BatchInsertErrorLogs(ctx context.Context, inputs []*OpsInsertErrorLogInput) (int64, error)
 	ListErrorLogs(ctx context.Context, filter *OpsErrorLogFilter) (*OpsErrorLogList, error)
 	GetErrorLogByID(ctx context.Context, id int64) (*OpsErrorLogDetail, error)
 	ListRequestDetails(ctx context.Context, filter *OpsRequestDetailFilter) ([]*OpsRequestDetail, int64, error)
@@ -78,6 +79,17 @@ type OpsInsertErrorLogInput struct {
 	Model       string
 	RequestPath string
 	Stream      bool
+	// InboundEndpoint is the normalized client-facing API endpoint path, e.g. /v1/chat/completions.
+	InboundEndpoint string
+	// UpstreamEndpoint is the normalized upstream endpoint path, e.g. /v1/responses.
+	UpstreamEndpoint string
+	// RequestedModel is the client-requested model name before mapping.
+	RequestedModel string
+	// UpstreamModel is the actual model sent to upstream after mapping. Empty means no mapping.
+	UpstreamModel string
+	// RequestType is the granular request type: 0=unknown, 1=sync, 2=stream, 3=ws_v2.
+	// Matches service.RequestType enum semantics from usage_log.go.
+	RequestType *int16
 	UserAgent   string
 
 	ErrorPhase        string

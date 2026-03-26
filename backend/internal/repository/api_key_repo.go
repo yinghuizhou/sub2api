@@ -409,6 +409,16 @@ func (r *apiKeyRepository) ClearGroupIDByGroupID(ctx context.Context, groupID in
 	return int64(n), err
 }
 
+// UpdateGroupIDByUserAndGroup 将用户下绑定 oldGroupID 的所有 Key 迁移到 newGroupID
+func (r *apiKeyRepository) UpdateGroupIDByUserAndGroup(ctx context.Context, userID, oldGroupID, newGroupID int64) (int64, error) {
+	client := clientFromContext(ctx, r.client)
+	n, err := client.APIKey.Update().
+		Where(apikey.UserIDEQ(userID), apikey.GroupIDEQ(oldGroupID), apikey.DeletedAtIsNil()).
+		SetGroupID(newGroupID).
+		Save(ctx)
+	return int64(n), err
+}
+
 // CountByGroupID 获取分组的 API Key 数量
 func (r *apiKeyRepository) CountByGroupID(ctx context.Context, groupID int64) (int64, error) {
 	count, err := r.activeQuery().Where(apikey.GroupIDEQ(groupID)).Count(ctx)
@@ -450,6 +460,32 @@ func (r *apiKeyRepository) IncrementQuotaUsed(ctx context.Context, id int64, amo
 		return 0, err
 	}
 	return updated.QuotaUsed, nil
+}
+
+// IncrementQuotaUsedAndGetState atomically increments quota_used, conditionally marks the key
+// as quota_exhausted, and returns the latest quota state in one round trip.
+func (r *apiKeyRepository) IncrementQuotaUsedAndGetState(ctx context.Context, id int64, amount float64) (*service.APIKeyQuotaUsageState, error) {
+	query := `
+		UPDATE api_keys
+		SET
+			quota_used = quota_used + $1,
+			status = CASE
+				WHEN quota > 0 AND quota_used + $1 >= quota THEN $2
+				ELSE status
+			END,
+			updated_at = NOW()
+		WHERE id = $3 AND deleted_at IS NULL
+		RETURNING quota_used, quota, key, status
+	`
+
+	state := &service.APIKeyQuotaUsageState{}
+	if err := scanSingleRow(ctx, r.sql, query, []any{amount, service.StatusAPIKeyQuotaExhausted, id}, &state.QuotaUsed, &state.Quota, &state.Key, &state.Status); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, service.ErrAPIKeyNotFound
+		}
+		return nil, err
+	}
+	return state, nil
 }
 
 func (r *apiKeyRepository) UpdateLastUsed(ctx context.Context, id int64, usedAt time.Time) error {

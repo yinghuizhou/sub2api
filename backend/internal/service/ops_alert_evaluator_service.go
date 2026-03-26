@@ -88,6 +88,7 @@ func (s *OpsAlertEvaluatorService) Start() {
 		if s.stopCh == nil {
 			s.stopCh = make(chan struct{})
 		}
+		s.wg.Add(1)
 		go s.run()
 	})
 }
@@ -105,7 +106,6 @@ func (s *OpsAlertEvaluatorService) Stop() {
 }
 
 func (s *OpsAlertEvaluatorService) run() {
-	s.wg.Add(1)
 	defer s.wg.Done()
 
 	// Start immediately to produce early feedback in ops dashboard.
@@ -506,6 +506,48 @@ func (s *OpsAlertEvaluatorService) computeRuleMetric(
 		return float64(countAccountsByCondition(availability.Accounts, func(acc *AccountAvailability) bool {
 			return acc.HasError && acc.TempUnschedulableUntil == nil
 		})), true
+	case "group_rate_limit_ratio":
+		if groupID == nil || *groupID <= 0 {
+			return 0, false
+		}
+		if s == nil || s.opsService == nil {
+			return 0, false
+		}
+		availability, err := s.opsService.GetAccountAvailability(ctx, platform, groupID)
+		if err != nil || availability == nil {
+			return 0, false
+		}
+		if availability.Group == nil || availability.Group.TotalAccounts <= 0 {
+			return 0, true
+		}
+		return (float64(availability.Group.RateLimitCount) / float64(availability.Group.TotalAccounts)) * 100, true
+	case "account_error_ratio":
+		if s == nil || s.opsService == nil {
+			return 0, false
+		}
+		availability, err := s.opsService.GetAccountAvailability(ctx, platform, groupID)
+		if err != nil || availability == nil {
+			return 0, false
+		}
+		total := int64(len(availability.Accounts))
+		if total <= 0 {
+			return 0, true
+		}
+		errorCount := countAccountsByCondition(availability.Accounts, func(acc *AccountAvailability) bool {
+			return acc.HasError && acc.TempUnschedulableUntil == nil
+		})
+		return (float64(errorCount) / float64(total)) * 100, true
+	case "overload_account_count":
+		if s == nil || s.opsService == nil {
+			return 0, false
+		}
+		availability, err := s.opsService.GetAccountAvailability(ctx, platform, groupID)
+		if err != nil || availability == nil {
+			return 0, false
+		}
+		return float64(countAccountsByCondition(availability.Accounts, func(acc *AccountAvailability) bool {
+			return acc.IsOverloaded
+		})), true
 	}
 
 	overview, err := s.opsRepo.GetDashboardOverview(ctx, &OpsDashboardFilter{
@@ -806,7 +848,9 @@ func (s *OpsAlertEvaluatorService) tryAcquireLeaderLock(ctx context.Context, loc
 		return nil, false
 	}
 	return func() {
-		_, _ = opsAlertEvaluatorReleaseScript.Run(ctx, s.redisClient, []string{key}, s.instanceID).Result()
+		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer releaseCancel()
+		_, _ = opsAlertEvaluatorReleaseScript.Run(releaseCtx, s.redisClient, []string{key}, s.instanceID).Result()
 	}, true
 }
 

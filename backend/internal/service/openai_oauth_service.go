@@ -29,9 +29,10 @@ type soraSessionChunk struct {
 
 // OpenAIOAuthService handles OpenAI OAuth authentication flows
 type OpenAIOAuthService struct {
-	sessionStore *openai.SessionStore
-	proxyRepo    ProxyRepository
-	oauthClient  OpenAIOAuthClient
+	sessionStore         *openai.SessionStore
+	proxyRepo            ProxyRepository
+	oauthClient          OpenAIOAuthClient
+	privacyClientFactory PrivacyClientFactory // 用于调用 chatgpt.com/backend-api（ImpersonateChrome）
 }
 
 // NewOpenAIOAuthService creates a new OpenAI OAuth service
@@ -41,6 +42,12 @@ func NewOpenAIOAuthService(proxyRepo ProxyRepository, oauthClient OpenAIOAuthCli
 		proxyRepo:    proxyRepo,
 		oauthClient:  oauthClient,
 	}
+}
+
+// SetPrivacyClientFactory 注入 ImpersonateChrome 客户端工厂，
+// 用于调用 chatgpt.com/backend-api 获取账号信息（plan_type 等）。
+func (s *OpenAIOAuthService) SetPrivacyClientFactory(factory PrivacyClientFactory) {
+	s.privacyClientFactory = factory
 }
 
 // OpenAIAuthURLResult contains the authorization URL and session info
@@ -130,6 +137,8 @@ type OpenAITokenInfo struct {
 	ChatGPTAccountID string `json:"chatgpt_account_id,omitempty"`
 	ChatGPTUserID    string `json:"chatgpt_user_id,omitempty"`
 	OrganizationID   string `json:"organization_id,omitempty"`
+	PlanType         string `json:"plan_type,omitempty"`
+	PrivacyMode      string `json:"privacy_mode,omitempty"`
 }
 
 // ExchangeCode exchanges authorization code for tokens
@@ -202,6 +211,7 @@ func (s *OpenAIOAuthService) ExchangeCode(ctx context.Context, input *OpenAIExch
 		tokenInfo.ChatGPTAccountID = userInfo.ChatGPTAccountID
 		tokenInfo.ChatGPTUserID = userInfo.ChatGPTUserID
 		tokenInfo.OrganizationID = userInfo.OrganizationID
+		tokenInfo.PlanType = userInfo.PlanType
 	}
 
 	return tokenInfo, nil
@@ -246,6 +256,31 @@ func (s *OpenAIOAuthService) RefreshTokenWithClientID(ctx context.Context, refre
 		tokenInfo.ChatGPTAccountID = userInfo.ChatGPTAccountID
 		tokenInfo.ChatGPTUserID = userInfo.ChatGPTUserID
 		tokenInfo.OrganizationID = userInfo.OrganizationID
+		tokenInfo.PlanType = userInfo.PlanType
+	}
+
+	// id_token 中缺少 plan_type 时（如 Mobile RT），尝试通过 ChatGPT backend-api 补全
+	if tokenInfo.PlanType == "" && tokenInfo.AccessToken != "" && s.privacyClientFactory != nil {
+		// 从 access_token JWT 中提取 orgID（poid），用于匹配正确的账号
+		orgID := tokenInfo.OrganizationID
+		if orgID == "" {
+			if atClaims, err := openai.DecodeIDToken(tokenInfo.AccessToken); err == nil && atClaims.OpenAIAuth != nil {
+				orgID = atClaims.OpenAIAuth.POID
+			}
+		}
+		if info := fetchChatGPTAccountInfo(ctx, s.privacyClientFactory, tokenInfo.AccessToken, proxyURL, orgID); info != nil {
+			if tokenInfo.PlanType == "" && info.PlanType != "" {
+				tokenInfo.PlanType = info.PlanType
+			}
+			if tokenInfo.Email == "" && info.Email != "" {
+				tokenInfo.Email = info.Email
+			}
+		}
+	}
+
+	// 尝试设置隐私（关闭训练数据共享），best-effort
+	if tokenInfo.AccessToken != "" && s.privacyClientFactory != nil {
+		tokenInfo.PrivacyMode = disableOpenAITraining(ctx, s.privacyClientFactory, tokenInfo.AccessToken, proxyURL)
 	}
 
 	return tokenInfo, nil
@@ -509,6 +544,9 @@ func (s *OpenAIOAuthService) BuildAccountCredentials(tokenInfo *OpenAITokenInfo)
 	}
 	if tokenInfo.OrganizationID != "" {
 		creds["organization_id"] = tokenInfo.OrganizationID
+	}
+	if tokenInfo.PlanType != "" {
+		creds["plan_type"] = tokenInfo.PlanType
 	}
 	if strings.TrimSpace(tokenInfo.ClientID) != "" {
 		creds["client_id"] = strings.TrimSpace(tokenInfo.ClientID)

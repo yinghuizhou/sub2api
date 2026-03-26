@@ -7,9 +7,9 @@
       </div>
 
       <!-- Settings Form -->
-      <form v-else @submit.prevent="saveSettings" class="space-y-6">
+      <form v-else @submit.prevent="saveSettings" class="space-y-6" novalidate>
         <!-- Tab Navigation -->
-        <div class="sticky top-0 z-10 overflow-x-auto scrollbar-hide">
+        <div class="sticky top-0 z-10 overflow-x-auto settings-tabs-scroll">
           <nav class="settings-tabs">
             <button
               v-for="tab in settingsTabs"
@@ -168,8 +168,93 @@
         </div>
         </div><!-- /Tab: Security — Admin API Key -->
 
-        <!-- Tab: Gateway — Stream Timeout -->
+        <!-- Tab: Gateway -->
         <div v-show="activeTab === 'gateway'" class="space-y-6">
+
+        <!-- Overload Cooldown (529) Settings -->
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.overloadCooldown.title') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.overloadCooldown.description') }}
+            </p>
+          </div>
+          <div class="space-y-5 p-6">
+            <div v-if="overloadCooldownLoading" class="flex items-center gap-2 text-gray-500">
+              <div class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              {{ t('common.loading') }}
+            </div>
+
+            <template v-else>
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="font-medium text-gray-900 dark:text-white">{{
+                    t('admin.settings.overloadCooldown.enabled')
+                  }}</label>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.overloadCooldown.enabledHint') }}
+                  </p>
+                </div>
+                <Toggle v-model="overloadCooldownForm.enabled" />
+              </div>
+
+              <div
+                v-if="overloadCooldownForm.enabled"
+                class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+              >
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.overloadCooldown.cooldownMinutes') }}
+                  </label>
+                  <input
+                    v-model.number="overloadCooldownForm.cooldown_minutes"
+                    type="number"
+                    min="1"
+                    max="120"
+                    class="input w-32"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.overloadCooldown.cooldownMinutesHint') }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700">
+                <button
+                  type="button"
+                  @click="saveOverloadCooldownSettings"
+                  :disabled="overloadCooldownSaving"
+                  class="btn btn-primary btn-sm"
+                >
+                  <svg
+                    v-if="overloadCooldownSaving"
+                    class="mr-1 h-4 w-4 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  {{ overloadCooldownSaving ? t('common.saving') : t('common.save') }}
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <!-- Stream Timeout Settings -->
         <div class="card">
           <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
@@ -405,6 +490,117 @@
             </template>
           </div>
         </div>
+        <!-- Beta Policy Settings -->
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.betaPolicy.title') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.betaPolicy.description') }}
+            </p>
+          </div>
+          <div class="space-y-5 p-6">
+            <!-- Loading State -->
+            <div v-if="betaPolicyLoading" class="flex items-center gap-2 text-gray-500">
+              <div class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              {{ t('common.loading') }}
+            </div>
+
+            <template v-else>
+              <!-- Rule Cards -->
+              <div
+                v-for="rule in betaPolicyForm.rules"
+                :key="rule.beta_token"
+                class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
+              >
+                <div class="mb-3 flex items-center gap-2">
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ getBetaDisplayName(rule.beta_token) }}
+                  </span>
+                  <span class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-dark-700 dark:text-gray-400">
+                    {{ rule.beta_token }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <!-- Action -->
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {{ t('admin.settings.betaPolicy.action') }}
+                    </label>
+                    <Select
+                      :modelValue="rule.action"
+                      @update:modelValue="rule.action = $event as any"
+                      :options="betaPolicyActionOptions"
+                    />
+                  </div>
+
+                  <!-- Scope -->
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {{ t('admin.settings.betaPolicy.scope') }}
+                    </label>
+                    <Select
+                      :modelValue="rule.scope"
+                      @update:modelValue="rule.scope = $event as any"
+                      :options="betaPolicyScopeOptions"
+                    />
+                  </div>
+                </div>
+
+                <!-- Error Message (only when action=block) -->
+                <div v-if="rule.action === 'block'" class="mt-3">
+                  <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {{ t('admin.settings.betaPolicy.errorMessage') }}
+                  </label>
+                  <input
+                    v-model="rule.error_message"
+                    type="text"
+                    class="input"
+                    :placeholder="t('admin.settings.betaPolicy.errorMessagePlaceholder')"
+                  />
+                  <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                    {{ t('admin.settings.betaPolicy.errorMessageHint') }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700">
+                <button
+                  type="button"
+                  @click="saveBetaPolicySettings"
+                  :disabled="betaPolicySaving"
+                  class="btn btn-primary btn-sm"
+                >
+                  <svg
+                    v-if="betaPolicySaving"
+                    class="mr-1 h-4 w-4 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  {{ betaPolicySaving ? t('common.saving') : t('common.save') }}
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
         </div><!-- /Tab: Gateway -->
 
         <!-- Tab: Security — Registration, Turnstile, LinuxDo -->
@@ -541,6 +737,24 @@
                 </p>
               </div>
               <Toggle v-model="form.password_reset_enabled" />
+            </div>
+            <!-- Frontend URL - Only show when password reset is enabled -->
+            <div
+              v-if="form.email_verify_enabled && form.password_reset_enabled"
+              class="border-t border-gray-100 pt-4 dark:border-dark-700"
+            >
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.registration.frontendUrl') }}
+              </label>
+              <input
+                v-model="form.frontend_url"
+                type="url"
+                class="input"
+                :placeholder="t('admin.settings.registration.frontendUrlPlaceholder')"
+              />
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.registration.frontendUrlHint') }}
+              </p>
             </div>
 
             <!-- TOTP 2FA -->
@@ -908,10 +1122,23 @@
                 type="text"
                 class="input max-w-xs font-mono text-sm"
                 :placeholder="t('admin.settings.claudeCode.minVersionPlaceholder')"
-                pattern="\d+\.\d+\.\d+"
               />
               <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                 {{ t('admin.settings.claudeCode.minVersionHint') }}
+              </p>
+            </div>
+            <div class="mt-4">
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.claudeCode.maxVersion') }}
+              </label>
+              <input
+                v-model="form.max_claude_code_version"
+                type="text"
+                class="input max-w-xs font-mono text-sm"
+                :placeholder="t('admin.settings.claudeCode.maxVersionPlaceholder')"
+              />
+              <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.claudeCode.maxVersionHint') }}
               </p>
             </div>
           </div>
@@ -944,6 +1171,45 @@
             </div>
           </div>
         </div>
+
+        <!-- Gateway Forwarding Behavior -->
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.gatewayForwarding.title') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.gatewayForwarding.description') }}
+            </p>
+          </div>
+          <div class="space-y-5 p-6">
+            <!-- Fingerprint Unification -->
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ t('admin.settings.gatewayForwarding.fingerprintUnification') }}
+                </label>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.gatewayForwarding.fingerprintUnificationHint') }}
+                </p>
+              </div>
+              <Toggle v-model="form.enable_fingerprint_unification" />
+            </div>
+
+            <!-- Metadata Passthrough -->
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ t('admin.settings.gatewayForwarding.metadataPassthrough') }}
+                </label>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.gatewayForwarding.metadataPassthroughHint') }}
+                </p>
+              </div>
+              <Toggle v-model="form.enable_metadata_passthrough" />
+            </div>
+          </div>
+        </div>
         </div><!-- /Tab: Gateway — Claude Code, Scheduling -->
 
         <!-- Tab: General -->
@@ -959,6 +1225,21 @@
             </p>
           </div>
           <div class="space-y-6 p-6">
+            <!-- Backend Mode -->
+            <div
+              class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+            >
+              <div>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ t('admin.settings.site.backendMode') }}
+                </h3>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.site.backendModeDescription') }}
+                </p>
+              </div>
+              <Toggle v-model="form.backend_mode_enabled" />
+            </div>
+
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1004,6 +1285,81 @@
               <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                 {{ t('admin.settings.site.apiBaseUrlHint') }}
               </p>
+            </div>
+
+            <!-- Custom Endpoints -->
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ t('admin.settings.site.customEndpoints.title') }}
+              </label>
+              <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.site.customEndpoints.description') }}
+              </p>
+
+              <div class="space-y-3">
+                <div
+                  v-for="(ep, index) in form.custom_endpoints"
+                  :key="index"
+                  class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
+                >
+                  <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.site.customEndpoints.itemLabel', { n: index + 1 }) }}
+                    </span>
+                    <button
+                      type="button"
+                      class="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                      @click="removeEndpoint(index)"
+                    >
+                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        {{ t('admin.settings.site.customEndpoints.name') }}
+                      </label>
+                      <input
+                        v-model="ep.name"
+                        type="text"
+                        class="input text-sm"
+                        :placeholder="t('admin.settings.site.customEndpoints.namePlaceholder')"
+                      />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        {{ t('admin.settings.site.customEndpoints.endpointUrl') }}
+                      </label>
+                      <input
+                        v-model="ep.endpoint"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="t('admin.settings.site.customEndpoints.endpointUrlPlaceholder')"
+                      />
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        {{ t('admin.settings.site.customEndpoints.descriptionLabel') }}
+                      </label>
+                      <input
+                        v-model="ep.description"
+                        type="text"
+                        class="input text-sm"
+                        :placeholder="t('admin.settings.site.customEndpoints.descriptionPlaceholder')"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-500 transition-colors hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
+                @click="addEndpoint"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                {{ t('admin.settings.site.customEndpoints.add') }}
+              </button>
             </div>
 
             <!-- Contact Info -->
@@ -1338,7 +1694,7 @@
             <button
               type="button"
               @click="testSmtpConnection"
-              :disabled="testingSmtp"
+              :disabled="testingSmtp || loadFailed"
               class="btn btn-secondary btn-sm"
             >
               <svg v-if="testingSmtp" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1408,6 +1764,11 @@
                   v-model="form.smtp_password"
                   type="password"
                   class="input"
+                  autocomplete="new-password"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  @keydown="smtpPasswordManuallyEdited = true"
+                  @paste="smtpPasswordManuallyEdited = true"
                   :placeholder="
                     form.smtp_password_configured
                       ? t('admin.settings.smtp.passwordConfiguredPlaceholder')
@@ -1460,6 +1821,7 @@
               </div>
               <Toggle v-model="form.smtp_use_tls" />
             </div>
+
           </div>
         </div>
 
@@ -1489,7 +1851,7 @@
               <button
                 type="button"
                 @click="sendTestEmail"
-                :disabled="sendingTestEmail || !testEmailAddress"
+                :disabled="sendingTestEmail || !testEmailAddress || loadFailed"
                 class="btn btn-secondary"
               >
                 <svg
@@ -1523,9 +1885,19 @@
         </div>
         </div><!-- /Tab: Email -->
 
+        <!-- Tab: Backup -->
+        <div v-show="activeTab === 'backup'">
+          <BackupSettings />
+        </div>
+
+        <!-- Tab: Data Management -->
+        <div v-show="activeTab === 'data'">
+          <DataManagementSettings />
+        </div>
+
         <!-- Save Button -->
-        <div class="flex justify-end">
-          <button type="submit" :disabled="saving" class="btn btn-primary">
+        <div v-show="activeTab !== 'backup' && activeTab !== 'data'" class="flex justify-end">
+          <button type="submit" :disabled="saving || loadFailed" class="btn btn-primary">
             <svg v-if="saving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle
                 class="opacity-25"
@@ -1566,6 +1938,8 @@ import GroupBadge from '@/components/common/GroupBadge.vue'
 import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
 import Toggle from '@/components/common/Toggle.vue'
 import ImageUpload from '@/components/common/ImageUpload.vue'
+import BackupSettings from '@/views/admin/BackupView.vue'
+import DataManagementSettings from '@/views/admin/DataManagementView.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { useAppStore } from '@/stores'
 import { useAdminSettingsStore } from '@/stores/adminSettings'
@@ -1580,7 +1954,7 @@ const { t } = useI18n()
 const appStore = useAppStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-type SettingsTab = 'general' | 'security' | 'users' | 'gateway' | 'email'
+type SettingsTab = 'general' | 'security' | 'users' | 'gateway' | 'email' | 'backup' | 'data'
 const activeTab = ref<SettingsTab>('general')
 const settingsTabs = [
   { key: 'general'  as SettingsTab, icon: 'home'   as const },
@@ -1588,13 +1962,17 @@ const settingsTabs = [
   { key: 'users'    as SettingsTab, icon: 'user'   as const },
   { key: 'gateway'  as SettingsTab, icon: 'server' as const },
   { key: 'email'    as SettingsTab, icon: 'mail'   as const },
+  { key: 'backup'   as SettingsTab, icon: 'database' as const },
+  { key: 'data'     as SettingsTab, icon: 'cube'     as const },
 ]
 const { copyToClipboard } = useClipboard()
 
 const loading = ref(true)
+const loadFailed = ref(false)
 const saving = ref(false)
 const testingSmtp = ref(false)
 const sendingTestEmail = ref(false)
+const smtpPasswordManuallyEdited = ref(false)
 const testEmailAddress = ref('')
 const registrationEmailSuffixWhitelistTags = ref<string[]>([])
 const registrationEmailSuffixWhitelistDraft = ref('')
@@ -1606,6 +1984,14 @@ const adminApiKeyMasked = ref('')
 const adminApiKeyOperating = ref(false)
 const newAdminApiKey = ref('')
 const subscriptionGroups = ref<AdminGroup[]>([])
+
+// Overload Cooldown (529) 状态
+const overloadCooldownLoading = ref(true)
+const overloadCooldownSaving = ref(false)
+const overloadCooldownForm = reactive({
+  enabled: true,
+  cooldown_minutes: 10
+})
 
 // Stream Timeout 状态
 const streamTimeoutLoading = ref(true)
@@ -1625,6 +2011,18 @@ const rectifierForm = reactive({
   enabled: true,
   thinking_signature_enabled: true,
   thinking_budget_enabled: true
+})
+
+// Beta Policy 状态
+const betaPolicyLoading = ref(true)
+const betaPolicySaving = ref(false)
+const betaPolicyForm = reactive({
+  rules: [] as Array<{
+    beta_token: string
+    action: 'pass' | 'filter' | 'block'
+    scope: 'all' | 'oauth' | 'apikey' | 'bedrock'
+    error_message?: string
+  }>
 })
 
 interface DefaultSubscriptionGroupOption {
@@ -1662,11 +2060,14 @@ const form = reactive<SettingsForm>({
   contact_info: '',
   doc_url: '',
   home_content: '',
+  backend_mode_enabled: false,
   hide_ccs_import_button: false,
   purchase_subscription_enabled: false,
   purchase_subscription_url: '',
   sora_client_enabled: false,
   custom_menu_items: [] as Array<{id: string; label: string; icon_svg: string; url: string; visibility: 'user' | 'admin'; sort_order: number}>,
+  custom_endpoints: [] as Array<{name: string; endpoint: string; description: string}>,
+  frontend_url: '',
   smtp_host: '',
   smtp_port: 587,
   smtp_username: '',
@@ -1702,8 +2103,12 @@ const form = reactive<SettingsForm>({
   ops_metrics_interval_seconds: 60,
   // Claude Code version check
   min_claude_code_version: '',
+  max_claude_code_version: '',
   // 分组隔离
-  allow_ungrouped_key_scheduling: false
+  allow_ungrouped_key_scheduling: false,
+  // Gateway forwarding behavior
+  enable_fingerprint_unification: true,
+  enable_metadata_passthrough: false
 })
 
 const defaultSubscriptionGroupOptions = computed<DefaultSubscriptionGroupOption[]>(() =>
@@ -1834,11 +2239,22 @@ function moveMenuItem(index: number, direction: -1 | 1) {
   })
 }
 
+// Custom endpoint management
+function addEndpoint() {
+  form.custom_endpoints.push({ name: '', endpoint: '', description: '' })
+}
+
+function removeEndpoint(index: number) {
+  form.custom_endpoints.splice(index, 1)
+}
+
 async function loadSettings() {
   loading.value = true
+  loadFailed.value = false
   try {
     const settings = await adminAPI.settings.getSettings()
     Object.assign(form, settings)
+    form.backend_mode_enabled = settings.backend_mode_enabled
     form.default_subscriptions = Array.isArray(settings.default_subscriptions)
       ? settings.default_subscriptions
           .filter((item) => item.group_id > 0 && item.validity_days > 0)
@@ -1852,9 +2268,11 @@ async function loadSettings() {
     )
     registrationEmailSuffixWhitelistDraft.value = ''
     form.smtp_password = ''
+    smtpPasswordManuallyEdited.value = false
     form.turnstile_secret_key = ''
     form.linuxdo_connect_client_secret = ''
   } catch (error: any) {
+    loadFailed.value = true
     appStore.showError(
       t('admin.settings.failedToLoad') + ': ' + (error.message || t('common.unknownError'))
     )
@@ -1917,6 +2335,35 @@ async function saveSettings() {
       return
     }
 
+    // Validate URL fields — novalidate disables browser-native checks, so we validate here
+    const isValidHttpUrl = (url: string): boolean => {
+      if (!url) return true
+      try {
+        const u = new URL(url)
+        return u.protocol === 'http:' || u.protocol === 'https:'
+      } catch {
+        return false
+      }
+    }
+    // Optional URL fields: auto-clear invalid values so they don't cause backend 400 errors
+    if (!isValidHttpUrl(form.frontend_url)) form.frontend_url = ''
+    if (!isValidHttpUrl(form.doc_url)) form.doc_url = ''
+    // Purchase URL: required when enabled; auto-clear when disabled to avoid backend rejection
+    if (form.purchase_subscription_enabled) {
+      if (!form.purchase_subscription_url) {
+        appStore.showError(t('admin.settings.purchase.url') + ': URL is required when purchase is enabled')
+        saving.value = false
+        return
+      }
+      if (!isValidHttpUrl(form.purchase_subscription_url)) {
+        appStore.showError(t('admin.settings.purchase.url') + ': must be an absolute http(s) URL (e.g. https://example.com)')
+        saving.value = false
+        return
+      }
+    } else if (!isValidHttpUrl(form.purchase_subscription_url)) {
+      form.purchase_subscription_url = ''
+    }
+
     const payload: UpdateSettingsRequest = {
       registration_enabled: form.registration_enabled,
       email_verify_enabled: form.email_verify_enabled,
@@ -1937,11 +2384,14 @@ async function saveSettings() {
       contact_info: form.contact_info,
       doc_url: form.doc_url,
       home_content: form.home_content,
+      backend_mode_enabled: form.backend_mode_enabled,
       hide_ccs_import_button: form.hide_ccs_import_button,
       purchase_subscription_enabled: form.purchase_subscription_enabled,
       purchase_subscription_url: form.purchase_subscription_url,
       sora_client_enabled: form.sora_client_enabled,
       custom_menu_items: form.custom_menu_items,
+      custom_endpoints: form.custom_endpoints,
+      frontend_url: form.frontend_url,
       smtp_host: form.smtp_host,
       smtp_port: form.smtp_port,
       smtp_username: form.smtp_username,
@@ -1964,7 +2414,10 @@ async function saveSettings() {
       enable_identity_patch: form.enable_identity_patch,
       identity_patch_prompt: form.identity_patch_prompt,
       min_claude_code_version: form.min_claude_code_version,
-      allow_ungrouped_key_scheduling: form.allow_ungrouped_key_scheduling
+      max_claude_code_version: form.max_claude_code_version,
+      allow_ungrouped_key_scheduling: form.allow_ungrouped_key_scheduling,
+      enable_fingerprint_unification: form.enable_fingerprint_unification,
+      enable_metadata_passthrough: form.enable_metadata_passthrough
     }
     const updated = await adminAPI.settings.updateSettings(payload)
     Object.assign(form, updated)
@@ -1973,6 +2426,7 @@ async function saveSettings() {
     )
     registrationEmailSuffixWhitelistDraft.value = ''
     form.smtp_password = ''
+    smtpPasswordManuallyEdited.value = false
     form.turnstile_secret_key = ''
     form.linuxdo_connect_client_secret = ''
     // Refresh cached settings so sidebar/header update immediately
@@ -1991,11 +2445,12 @@ async function saveSettings() {
 async function testSmtpConnection() {
   testingSmtp.value = true
   try {
+    const smtpPasswordForTest = smtpPasswordManuallyEdited.value ? form.smtp_password : ''
     const result = await adminAPI.settings.testSmtpConnection({
       smtp_host: form.smtp_host,
       smtp_port: form.smtp_port,
       smtp_username: form.smtp_username,
-      smtp_password: form.smtp_password,
+      smtp_password: smtpPasswordForTest,
       smtp_use_tls: form.smtp_use_tls
     })
     // API returns { message: "..." } on success, errors are thrown as exceptions
@@ -2017,12 +2472,13 @@ async function sendTestEmail() {
 
   sendingTestEmail.value = true
   try {
+    const smtpPasswordForSend = smtpPasswordManuallyEdited.value ? form.smtp_password : ''
     const result = await adminAPI.settings.sendTestEmail({
       email: testEmailAddress.value,
       smtp_host: form.smtp_host,
       smtp_port: form.smtp_port,
       smtp_username: form.smtp_username,
-      smtp_password: form.smtp_password,
+      smtp_password: smtpPasswordForSend,
       smtp_from_email: form.smtp_from_email,
       smtp_from_name: form.smtp_from_name,
       smtp_use_tls: form.smtp_use_tls
@@ -2099,6 +2555,37 @@ function copyNewKey() {
     })
 }
 
+// Overload Cooldown 方法
+async function loadOverloadCooldownSettings() {
+  overloadCooldownLoading.value = true
+  try {
+    const settings = await adminAPI.settings.getOverloadCooldownSettings()
+    Object.assign(overloadCooldownForm, settings)
+  } catch (error: any) {
+    console.error('Failed to load overload cooldown settings:', error)
+  } finally {
+    overloadCooldownLoading.value = false
+  }
+}
+
+async function saveOverloadCooldownSettings() {
+  overloadCooldownSaving.value = true
+  try {
+    const updated = await adminAPI.settings.updateOverloadCooldownSettings({
+      enabled: overloadCooldownForm.enabled,
+      cooldown_minutes: overloadCooldownForm.cooldown_minutes
+    })
+    Object.assign(overloadCooldownForm, updated)
+    appStore.showSuccess(t('admin.settings.overloadCooldown.saved'))
+  } catch (error: any) {
+    appStore.showError(
+      t('admin.settings.overloadCooldown.saveFailed') + ': ' + (error.message || t('common.unknownError'))
+    )
+  } finally {
+    overloadCooldownSaving.value = false
+  }
+}
+
 // Stream Timeout 方法
 async function loadStreamTimeoutSettings() {
   streamTimeoutLoading.value = true
@@ -2165,12 +2652,66 @@ async function saveRectifierSettings() {
   }
 }
 
+const betaPolicyActionOptions = computed(() => [
+  { value: 'pass', label: t('admin.settings.betaPolicy.actionPass') },
+  { value: 'filter', label: t('admin.settings.betaPolicy.actionFilter') },
+  { value: 'block', label: t('admin.settings.betaPolicy.actionBlock') }
+])
+
+const betaPolicyScopeOptions = computed(() => [
+  { value: 'all', label: t('admin.settings.betaPolicy.scopeAll') },
+  { value: 'oauth', label: t('admin.settings.betaPolicy.scopeOAuth') },
+  { value: 'apikey', label: t('admin.settings.betaPolicy.scopeAPIKey') },
+  { value: 'bedrock', label: t('admin.settings.betaPolicy.scopeBedrock') }
+])
+
+// Beta Policy 方法
+const betaDisplayNames: Record<string, string> = {
+  'fast-mode-2026-02-01': 'Fast Mode',
+  'context-1m-2025-08-07': 'Context 1M'
+}
+
+function getBetaDisplayName(token: string): string {
+  return betaDisplayNames[token] || token
+}
+
+async function loadBetaPolicySettings() {
+  betaPolicyLoading.value = true
+  try {
+    const settings = await adminAPI.settings.getBetaPolicySettings()
+    betaPolicyForm.rules = settings.rules
+  } catch (error: any) {
+    console.error('Failed to load beta policy settings:', error)
+  } finally {
+    betaPolicyLoading.value = false
+  }
+}
+
+async function saveBetaPolicySettings() {
+  betaPolicySaving.value = true
+  try {
+    const updated = await adminAPI.settings.updateBetaPolicySettings({
+      rules: betaPolicyForm.rules
+    })
+    betaPolicyForm.rules = updated.rules
+    appStore.showSuccess(t('admin.settings.betaPolicy.saved'))
+  } catch (error: any) {
+    appStore.showError(
+      t('admin.settings.betaPolicy.saveFailed') + ': ' + (error.message || t('common.unknownError'))
+    )
+  } finally {
+    betaPolicySaving.value = false
+  }
+}
+
 onMounted(() => {
   loadSettings()
   loadSubscriptionGroups()
   loadAdminApiKey()
+  loadOverloadCooldownSettings()
   loadStreamTimeoutSettings()
   loadRectifierSettings()
+  loadBetaPolicySettings()
 })
 </script>
 
@@ -2184,9 +2725,38 @@ onMounted(() => {
 }
 
 /* ============ Settings Tab Navigation ============ */
+
+/* Scroll container: thin scrollbar on PC, auto-hide on mobile */
+.settings-tabs-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.settings-tabs-scroll:hover {
+  scrollbar-color: rgb(0 0 0 / 0.15) transparent;
+}
+:root.dark .settings-tabs-scroll:hover {
+  scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+}
+.settings-tabs-scroll::-webkit-scrollbar {
+  height: 3px;
+}
+.settings-tabs-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.settings-tabs-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.settings-tabs-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.15);
+}
+:root.dark .settings-tabs-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.2);
+}
+
 .settings-tabs {
-  @apply inline-flex min-w-full gap-1 rounded-2xl
-         border border-gray-100 bg-white/80 p-1.5 backdrop-blur-sm
+  @apply inline-flex min-w-full gap-0.5 rounded-2xl
+         border border-gray-100 bg-white/80 p-1 backdrop-blur-sm
          dark:border-dark-700/50 dark:bg-dark-800/80;
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
 }
@@ -2198,8 +2768,8 @@ onMounted(() => {
 }
 
 .settings-tab {
-  @apply relative flex flex-1 items-center justify-center gap-2
-         whitespace-nowrap rounded-xl px-4 py-2.5
+  @apply relative flex flex-1 items-center justify-center gap-1.5
+         whitespace-nowrap rounded-xl px-2.5 py-2
          text-sm font-medium
          text-gray-500 dark:text-dark-400
          transition-all duration-200 ease-out;
@@ -2226,7 +2796,7 @@ onMounted(() => {
 }
 
 .settings-tab-icon {
-  @apply flex h-7 w-7 items-center justify-center rounded-lg
+  @apply flex h-6 w-6 items-center justify-center rounded-lg
          transition-all duration-200;
 }
 
