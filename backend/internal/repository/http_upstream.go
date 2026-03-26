@@ -796,6 +796,12 @@ func buildUpstreamTransport(settings poolSettings, proxyURL *url.URL) (*http.Tra
 		MaxConnsPerHost:       settings.maxConnsPerHost,
 		IdleConnTimeout:       settings.idleConnTimeout,
 		ResponseHeaderTimeout: settings.responseHeaderTimeout,
+		// DisableCompression prevents Go from auto-adding Accept-Encoding and auto-decompressing
+		// responses. We explicitly forward the client's Accept-Encoding header (when present)
+		// and handle decompression manually in decompressResponseBody. Without this flag,
+		// Go would add its own Accept-Encoding: gzip in addition to the forwarded header,
+		// resulting in duplicate accept-encoding headers sent to upstream.
+		DisableCompression: true,
 	}
 	if err := proxyutil.ConfigureTransportProxy(transport, proxyURL); err != nil {
 		return nil, err
@@ -828,6 +834,9 @@ func buildUpstreamTransportWithTLSFingerprint(settings poolSettings, proxyURL *u
 		ResponseHeaderTimeout: settings.responseHeaderTimeout,
 		// 禁用默认的 TLS，我们使用自定义的 DialTLSContext
 		ForceAttemptHTTP2: false,
+		// DisableCompression: same reason as buildUpstreamTransport — prevents duplicate
+		// accept-encoding headers and allows our decompressResponseBody to handle it.
+		DisableCompression: true,
 	}
 
 	// 根据代理类型选择合适的 TLS 指纹 Dialer
